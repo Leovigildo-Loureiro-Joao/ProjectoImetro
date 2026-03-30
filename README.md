@@ -2,7 +2,7 @@
 
 Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com **análise adaptativa** e **feedback orientado a dados** para Estudante e Orientador.
 
-> Nota (estado atual): este repositório contém um esqueleto JavaFX (telas `primary/secondary`) para arrancar a interface. As funcionalidades de simulador, banco de questões e análise ainda estão em desenvolvimento.
+> Nota (estado atual): este repositório já tem a navegação base por layouts (Auth → Candidato/Orientador) e páginas placeholder. As funcionalidades de simulador, banco de questões e análise ainda estão em desenvolvimento.
 
 ## Objetivo
 
@@ -57,10 +57,10 @@ mvn clean javafx:run
 ## Estrutura do projeto
 
 - `src/main/java/com/imetro/App.java`: entrypoint JavaFX
-- `src/main/java/com/imetro/PrimaryController.java`: controller da view primária (exemplo)
-- `src/main/java/com/imetro/SecondaryController.java`: controller da view secundária (exemplo)
-- `src/main/resources/com/imetro/primary.fxml`: layout da view primária (exemplo)
-- `src/main/resources/com/imetro/secondary.fxml`: layout da view secundária (exemplo)
+- `src/main/java/com/imetro/ui/controller`: controllers das views JavaFX (FXML)
+- `src/main/resources/com/imetro/views/layouts`: layouts principais (Auth, Candidato, Orientador)
+- `src/main/resources/com/imetro/views/pages`: subpáginas de cada perfil (ex.: dashboard, testes, relatórios)
+- `src/main/resources/com/imetro/styles`: CSS global e CSS por layout
 
 ## Roadmap (sugestão)
 
@@ -88,4 +88,3 @@ Sugestões e PRs são bem-vindos. Para contribuir:
 ## Licença
 
 Ainda não foi definida uma licença para o projeto.
-

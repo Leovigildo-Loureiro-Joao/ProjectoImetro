@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.imetro.ui.controller.RegisterController"
+      spacing="12" styleClass="card">
+    <padding>
+        <Insets top="18" right="18" bottom="18" left="18" />
+    </padding>
+
+    <Label text="Registar" styleClass="h1" />
+    <Label text="Cria uma conta (MVP: ainda sem persistência)." wrapText="true" styleClass="muted" />
+
+    <TextField fx:id="nomeField" promptText="Nome completo" />
+    <TextField fx:id="emailField" promptText="Email" />
+    <PasswordField fx:id="passwordField" promptText="Palavra-passe" />
+    <ComboBox fx:id="roleCombo" promptText="Perfil (Candidato/Orientador)" />
+
+    <Label fx:id="statusLabel" text="" styleClass="muted" />
+    <Button text="Registar" onAction="#onRegister" styleClass="btn-secondary" maxWidth="1.7976931348623157E308" />
+</VBox>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
+      spacing="10" styleClass="page">
+    <padding>
+        <Insets top="18" right="18" bottom="18" left="18" />
+    </padding>
+    <Label text="Relatórios (Orientador)" styleClass="h1" />
+    <Label text="Relatórios minuciosos com erros mais notáveis, evolução e recomendações sugeridas pelo sistema para validação do orientador (MVP: placeholder)."
+           wrapText="true" styleClass="muted" />
+</VBox>
+

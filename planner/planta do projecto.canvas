@@ -1,0 +1,123 @@
+{
+  "nodes": [
+    {
+      "id": "f7bbe8a7ea6975b1",
+      "x": -735.1185280266926,
+      "y": -767.2197974578988,
+      "width": 250,
+      "height": 240,
+      "type": "text",
+      "text": "### Teste\n- perguntas\n- respostas\n- data\n- orientador\n- candidato\n- relatorio\n"
+    },
+    {
+      "id": "0b4937ae74eb4458",
+      "x": -680,
+      "y": -1120,
+      "width": 250,
+      "height": 220,
+      "type": "text",
+      "text": "### Orientador\n- nome\n- email\n- idOrientador\n- candidatos\n- relatórios"
+    },
+    {
+      "id": "ada072ddeb8a76ca",
+      "x": -1120,
+      "y": -943,
+      "width": 250,
+      "height": 220,
+      "type": "text",
+      "text": "### Candidato\n- nome\n- email\n- idCandidato\n- senha\n- disciplinas estudo"
+    },
+    {
+      "id": "6d07ab63fcd6aeea",
+      "x": -360,
+      "y": -790,
+      "width": 250,
+      "height": 300,
+      "type": "text",
+      "text": "### Relatório\n- dificuldades\n- melhorias\n- ponto forte\n- velocidade\n- duvidas\n- falhas\n- progresso"
+    },
+    {
+      "id": "92346c78680af3e1",
+      "x": -1320,
+      "y": -640,
+      "width": 250,
+      "height": 220,
+      "type": "text",
+      "text": "### Disciplina\n- nome\n- peso\n- nível\n- objectivo"
+    },
+    {
+      "id": "20d4f038e06678db",
+      "x": -740,
+      "y": -260,
+      "width": 250,
+      "height": 220,
+      "type": "text",
+      "text": "### Pergunta\n- questao\n- respsotas[]\n- precisao\n- tempo\n- duvida"
+    }
+  ],
+  "edges": [
+    {
+      "id": "c0f93d9c2d3e37ed",
+      "fromNode": "0b4937ae74eb4458",
+      "fromSide": "left",
+      "toNode": "ada072ddeb8a76ca",
+      "toSide": "top"
+    },
+    {
+      "id": "b6e79bd2e3ed774c",
+      "fromNode": "ada072ddeb8a76ca",
+      "fromSide": "right",
+      "toNode": "f7bbe8a7ea6975b1",
+      "toSide": "left"
+    },
+    {
+      "id": "45ac9355111f4c6c",
+      "fromNode": "0b4937ae74eb4458",
+      "fromSide": "bottom",
+      "toNode": "f7bbe8a7ea6975b1",
+      "toSide": "top"
+    },
+    {
+      "id": "53ddabd71bfe0fa9",
+      "fromNode": "0b4937ae74eb4458",
+      "fromSide": "right",
+      "toNode": "6d07ab63fcd6aeea",
+      "toSide": "top"
+    },
+    {
+      "id": "2ee1e5ec54f91175",
+      "fromNode": "f7bbe8a7ea6975b1",
+      "fromSide": "right",
+      "toNode": "6d07ab63fcd6aeea",
+      "toSide": "left"
+    },
+    {
+      "id": "31f07ee74cd1ed9d",
+      "fromNode": "6d07ab63fcd6aeea",
+      "fromSide": "bottom",
+      "toNode": "ada072ddeb8a76ca",
+      "toSide": "bottom"
+    },
+    {
+      "id": "6ac875bdc4b87ccf",
+      "fromNode": "f7bbe8a7ea6975b1",
+      "fromSide": "bottom",
+      "toNode": "92346c78680af3e1",
+      "toSide": "bottom"
+    },
+    {
+      "id": "06c90f646a447960",
+      "fromNode": "ada072ddeb8a76ca",
+      "fromSide": "left",
+      "toNode": "92346c78680af3e1",
+      "toSide": "top"
+    },
+    {
+      "id": "ede5ebc50c53eccb",
+      "fromNode": "20d4f038e06678db",
+      "fromSide": "top",
+      "toNode": "f7bbe8a7ea6975b1",
+      "toSide": "bottom"
+    }
+  ]
+}
