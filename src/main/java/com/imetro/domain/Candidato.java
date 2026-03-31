@@ -1,4 +1,4 @@
-package com.imetro.model;
+package com.imetro.domain;
 
 import java.util.ArrayList;
 import java.util.UUID;

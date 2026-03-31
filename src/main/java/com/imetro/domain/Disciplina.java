@@ -1,6 +1,6 @@
-package com.imetro.model;
+package com.imetro.domain;
 
-import com.imetro.enums.NivelDisciplina;
+import com.imetro.domain.enums.NivelDisciplina;
 
 public class Disciplina {
     private String nome;

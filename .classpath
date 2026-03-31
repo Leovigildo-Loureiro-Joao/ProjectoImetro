@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
+  <classpathentry kind="src" path="src/main/resources" excluding="**/*.java"/>
+  <classpathentry kind="output" path="target/classes"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-controls/13/javafx-controls-13.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-controls/13/javafx-controls-13-linux.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-graphics/13/javafx-graphics-13.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-graphics/13/javafx-graphics-13-linux.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-base/13/javafx-base-13.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-base/13/javafx-base-13-linux.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-fxml/13/javafx-fxml-13.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/openjfx/javafx-fxml/13/javafx-fxml-13-linux.jar"/>
+  
+</classpath>

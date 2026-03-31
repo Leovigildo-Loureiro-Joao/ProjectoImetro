@@ -1,6 +1,5 @@
-package com.imetro.model;
+package com.imetro.domain;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;

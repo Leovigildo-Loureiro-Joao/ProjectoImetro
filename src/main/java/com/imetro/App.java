@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import com.imetro.persistence.Database;
+
 /**
  * JavaFX App
  */
@@ -22,6 +24,8 @@ public class App extends Application {
 
     @Override 
     public void start(Stage stage) throws IOException {
+        Database.tryWarmup();
+
         App.stage= stage;
         App.stage.setTitle("SimulatorBolsaStudy");
         App.stage.setMinWidth(1100);

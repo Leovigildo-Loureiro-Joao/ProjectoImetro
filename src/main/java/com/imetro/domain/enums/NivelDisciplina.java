@@ -1,4 +1,4 @@
-package com.imetro.enums;
+package com.imetro.domain.enums;
 
 public enum NivelDisciplina {
     BAIXO("Baixo"),

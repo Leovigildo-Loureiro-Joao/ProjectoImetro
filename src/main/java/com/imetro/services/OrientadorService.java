@@ -1,6 +1,6 @@
 package com.imetro.services;
 
-import com.imetro.interfaces.User;
+import com.imetro.domain.interfaces.User;
 
 public class OrientadorService implements User{
 

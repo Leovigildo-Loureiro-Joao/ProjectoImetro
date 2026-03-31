@@ -1,4 +1,4 @@
-package com.imetro.interfaces;
+package com.imetro.domain.interfaces;
 
 public interface User {
     

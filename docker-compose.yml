@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: simulatorbolsastudy-db
+    environment:
+      POSTGRES_DB: simulatorbolsastudy
+      POSTGRES_USER: simulator
+      POSTGRES_PASSWORD: simulator
+    ports:
+      - "5432:5432"
+    volumes:
+      - simulatorbolsastudy_pgdata:/var/lib/postgresql/data
+      - ./scripts/db:/docker-entrypoint-initdb.d
+
+volumes:
+  simulatorbolsastudy_pgdata:

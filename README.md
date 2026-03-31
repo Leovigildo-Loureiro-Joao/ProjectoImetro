@@ -54,9 +54,53 @@ O sistema recolhe dados de desempenho (ex.: acerto/erro, tempo, tópicos) e usa 
 mvn clean javafx:run
 ```
 
+## Base de dados (PostgreSQL / Supabase)
+
+O projeto está preparado para usar Postgres local no MVP e, no futuro, apontar para o Postgres do Supabase.
+
+> Nota: neste momento o repositório usa **JDBC puro** (sem HikariCP/Flyway no `pom.xml`) para não depender de downloads de dependências no ambiente. Quando quiseres “produção a sério”, adicionamos: PostgreSQL JDBC driver + HikariCP (pool) + Flyway (migrations automáticas).
+
+### Postgres local (recomendado para MVP)
+
+1) Subir o banco:
+
+```bash
+docker compose up -d
+```
+
+Na primeira vez que o volume estiver vazio, o container executa automaticamente `scripts/db/001_schema.sql`.
+
+2) Configurar variáveis de ambiente (exemplo):
+
+- copia `.env.example` e exporta no teu terminal/OS
+- define pelo menos: `DB_ENABLED=true`, `DB_URL`, `DB_USER`, `DB_PASSWORD`
+
+> Quando `DB_ENABLED=true` e as variáveis existirem, o app tenta conectar (warmup). As migrations estão em `src/main/resources/db/migration`.
+
+### Executar o schema manualmente (se já tinhas volume/criado antes)
+
+Se o teu volume já existia antes de montares `scripts/db`, o init automático não corre. Executa manualmente:
+
+```bash
+psql -h localhost -p 5432 -U simulator -d simulatorbolsastudy -f scripts/db/001_schema.sql
+```
+
+### Supabase (quando for para 2 PCs)
+
+No Supabase, vais usar o Postgres gerido por eles. O fluxo recomendado é:
+
+- criar o projeto no Supabase
+- pegar no host/porta/user/password do Postgres
+- apontar o `DB_URL` (JDBC) com `sslmode=require`
+- manter migrations no repositório (Flyway) para versionar o schema
+
 ## Estrutura do projeto
 
 - `src/main/java/com/imetro/App.java`: entrypoint JavaFX
+- `src/main/java/com/imetro/app`: fluxo/navegação e controllers de aplicação (não-UI)
+- `src/main/java/com/imetro/domain`: modelos puros de domínio (ex.: Pergunta, Teste, Relatorio)
+- `src/main/java/com/imetro/services`: casos de uso (análise, recomendações, relatórios)
+- `src/main/java/com/imetro/persistence`: acesso a dados (Postgres/Supabase), DataSource e migrations
 - `src/main/java/com/imetro/ui/controller`: controllers das views JavaFX (FXML)
 - `src/main/resources/com/imetro/views/layouts`: layouts principais (Auth, Candidato, Orientador)
 - `src/main/resources/com/imetro/views/pages`: subpáginas de cada perfil (ex.: dashboard, testes, relatórios)

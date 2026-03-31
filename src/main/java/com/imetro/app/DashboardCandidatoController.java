@@ -1,4 +1,4 @@
-package com.imetro.controller;
+package com.imetro.app;
 
 public class DashboardCandidatoController {
     
