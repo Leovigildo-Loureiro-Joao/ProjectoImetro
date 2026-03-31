@@ -17,6 +17,7 @@ Documento de acompanhamento do projeto (MVP → versão utilizável).
 - Implementada classe `Relatorio` com campos para Candidato e Orientador.
 - Adicionado Postgres local via `docker-compose.yml` + `.env.example`.
 - Criado schema SQL do MVP (tabelas de candidatos/orientadores/relatórios/perguntas/testes) e integração de init no Docker.
+- Adicionado as dependencias Postgres, Jfxextrax, Jfoenix
 
 ## Objetivo de “projeto terminado”
 
