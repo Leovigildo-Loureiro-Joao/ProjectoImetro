@@ -1,6 +1,8 @@
 package com.imetro.domain;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 public class Candidato {
@@ -9,6 +11,7 @@ public class Candidato {
     private String nome;
     private String email;
     private String senha;
+    private LocalDateTime criado_em;
     private ArrayList<Disciplina> disciplinas;
     private ArrayList<Teste> testes;
     private ArrayList<Relatorio> relatorios;
@@ -19,6 +22,7 @@ public class Candidato {
         testes=new ArrayList<>();
         relatorios=new ArrayList<>();
         idCandidato=UUID.randomUUID();
+        criado_em = LocalDateTime.now();
     }
 
 
@@ -64,7 +68,17 @@ public class Candidato {
     public void setRelatorios(ArrayList<Relatorio> relatorios) {
         this.relatorios = relatorios;
     }
-  
+    
+    public Map<String,?> toMap(){
+        return Map.of("id",idCandidato,"nome",nome,"email",email,"senha_hash",senha,"criado_em",criado_em);
+    }
+
+
+    @Override
+    public String toString() {
+        return "Candidato [idCandidato=" + idCandidato + ", nome=" + nome + ", email=" + email + ", senha=" + senha
+                + ", disciplinas=" + disciplinas + ", testes=" + testes + ", relatorios=" + relatorios + "]";
+    }
 
     
 

@@ -1,17 +1,23 @@
 .auth-brand {
-  -fx-background-color: rgba(37, 99, 235, 0.10);
-  -fx-border-color: rgba(37, 99, 235, 0.25);
+  -fx-background-color: linear-gradient(to bottom right, #f2c14a, #ebac25, #d58f1e);
+  -fx-border-color: rgba(235, 172, 37, 0.85);
   -fx-border-width: 0 1 0 0;
   -fx-min-width: 420px;
 }
 
 .brand-title {
-  -fx-font-size: 22px;
-  -fx-font-weight: 800;
+  -fx-font-size: 30px;
+  -fx-font-weight: 900;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, rgba(13, 27, 42, 0.35), 14, 0.18, 0, 2);
 }
 
 .brand-subtitle {
-  -fx-text-fill: rgba(229, 231, 235, 0.82);
+  -fx-font-size: 14px;
+  -fx-font-weight: 600;
+  -fx-text-fill: rgba(255, 255, 255, 0.92);
+  -fx-padding: 0 0 6 0;
+  -fx-effect: dropshadow(gaussian, rgba(13, 27, 42, 0.22), 10, 0.15, 0, 1);
 }
 
 .auth-shell {
@@ -25,4 +31,57 @@
 
 .tab-button:hover {
   -fx-background-color: rgba(255, 255, 255, 0.09);
+}
+
+
+.cardleft {
+  -fx-background-radius:10 0 0 10;
+  -fx-background-color: white;
+}
+
+.auth-card-stage {
+  -fx-padding: 56;
+}
+
+.auth-card-decor {
+  -fx-opacity: 0.50;
+}
+
+.auth-decor-icon {
+  -fx-fill: transparent;
+  -fx-stroke: rgba(255, 255, 255, 0.85);
+  -fx-stroke-width: 1.6;
+  -fx-stroke-line-cap: round;
+  -fx-stroke-line-join: round;
+}
+
+.carousel-dots {
+  -fx-padding: 10 0 6 0;
+}
+
+.carousel-dot {
+  -fx-fill: rgba(255, 255, 255, 0.38);
+}
+
+.carousel-dot-active {
+  -fx-fill: rgba(255, 255, 255, 0.92);
+}
+
+
+.auth-back{
+  -fx-background-radius: 0 10 10 0;
+  -fx-background-insets: 0;
+}
+
+.auth-back-overlay {
+  -fx-background-color: linear-gradient(to bottom right, rgba(13, 27, 42, 0.10), rgba(13, 27, 42, 0.55));
+  -fx-background-radius: 0 10 10 0;
+  -fx-background-insets: 0;
+  -fx-opacity: 1.0;
+}
+
+.auth-back-text {
+  -fx-fill: rgba(255, 255, 255, 0.96);
+  -fx-font-weight: 800;
+  -fx-effect: dropshadow(gaussian, rgba(13, 27, 42, 0.50), 12, 0.25, 0, 2);
 }

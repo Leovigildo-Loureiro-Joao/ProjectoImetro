@@ -1,14 +1,14 @@
 .root {
-  -fx-font-family: "Segoe UI", Arial, sans-serif;
-  -fx-background-color: #0b1220;
+  -fx-font-family: "Roboto";
+  -fx-background-color: #ebac25;
 }
 
 .label {
-  -fx-text-fill: #e5e7eb;
+  -fx-text-fill: #818181;
 }
 
 .muted {
-  -fx-text-fill: rgba(229, 231, 235, 0.78);
+  -fx-text-fill: rgb(155, 155, 155);
 }
 
 .h1 {
@@ -23,17 +23,17 @@
 }
 
 .btn-primary {
-  -fx-background-color: #2563eb;
+  -fx-background-color: #eb9c25;
   -fx-text-fill: white;
 }
 
 .btn-secondary {
-  -fx-background-color: rgba(255, 255, 255, 0.08);
+  -fx-background-color: rgb(2, 7, 29);
   -fx-text-fill: #e5e7eb;
 }
 
 .card {
-  -fx-background-color: rgba(255, 255, 255, 0.06);
+  -fx-background-color: rgb(255, 255, 255);
   -fx-background-radius: 14;
 }
 

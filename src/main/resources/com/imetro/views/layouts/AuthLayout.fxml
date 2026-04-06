@@ -1,39 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.imetro.ui.controller.AuthLayoutController"
-            stylesheets="@../../styles/auth-layout.css">
-    <left>
-        <VBox spacing="10" styleClass="auth-brand">
+<StackPane stylesheets="@../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.AuthLayoutController">
+   <children>
+        <VBox alignment="CENTER" prefHeight="283.0" prefWidth="540.0" spacing="10.0" styleClass="auth-shell" StackPane.alignment="CENTER">
             <padding>
-                <Insets top="28" right="28" bottom="28" left="28" />
+                <Insets bottom="28" left="28" right="28" top="28" />
             </padding>
-            <Label text="SimulatorBolsaStudy" styleClass="brand-title" />
-            <Label text="Simulador de exames de bolsas com análise adaptativa e relatórios para Estudante e Orientador."
-                   wrapText="true" styleClass="brand-subtitle" />
+         <Label styleClass="brand-title" text="Simulator Bolsa Study" />
+
+                        <StackPane fx:id="contentHost" maxWidth="460" />
+         <Label maxWidth="600.0" styleClass="brand-subtitle" text="Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com análise adaptativa e feedback orientado a dados para Estudante e Orientador." textAlignment="CENTER" textFill="#030202" wrapText="true" />
         </VBox>
-    </left>
-
-    <center>
-        <VBox alignment="CENTER" spacing="14" styleClass="auth-shell">
-            <padding>
-                <Insets top="28" right="28" bottom="28" left="28" />
-            </padding>
-
-            <HBox alignment="CENTER" spacing="10">
-                <Button text="Entrar" onAction="#showLogin" styleClass="tab-button" />
-                <Button text="Registar" onAction="#showRegister" styleClass="tab-button" />
-            </HBox>
-
-            <StackPane fx:id="contentHost" maxWidth="460" />
-        </VBox>
-    </center>
-</BorderPane>
+   </children>
+</StackPane>

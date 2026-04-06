@@ -4,6 +4,8 @@ public interface User {
     
     public void Login();
 
+    public void CriarConta(Object conta);
+
     public void Logout();
 
     public void RemoverConta();

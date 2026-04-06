@@ -1,4 +1,4 @@
-package com.imetro.persistence;
+package com.imetro.persistence.connection;
 
 import java.util.Optional;
 
@@ -11,18 +11,20 @@ public final class DbConfig {
 
     private DbConfig(boolean enabled, String url, String user, String password) {
         this.enabled = enabled;
-        this.url = url;
-        this.user = user;
-        this.password = password;
+        this.url = "jdbc:postgresql://localhost:5432/simulatorbolsastudy";
+        this.user = "simulator";
+        this.password = "simulator";
     }
 
     public static Optional<DbConfig> fromEnv() {
-        boolean enabled = Boolean.parseBoolean(envOrDefault("DB_ENABLED", "false"));
-        String url = envOrNull("DB_URL");
-        String user = envOrNull("DB_USER");
-        String password = envOrNull("DB_PASSWORD");
+        boolean enabled = true;
+
+        String url = "jdbc:postgresql://localhost:5432/simulatorbolsastudy";
+        String user = "simulator";
+        String password = "simulator";
 
         if (!enabled || isBlank(url) || isBlank(user) || password == null) {
+            System.out.println("vazio");
             return Optional.empty();
         }
 

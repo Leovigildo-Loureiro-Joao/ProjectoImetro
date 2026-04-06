@@ -30,13 +30,13 @@ Para considerar o projeto “terminado” (MVP), o sistema deve permitir:
 ## Checklist de conclusão (passos recomendados)
 
 ### 1) Persistência real (Postgres)
-- [ ] Definir se o MVP vai usar apenas SQL manual ou migrations (Flyway) quando o ambiente permitir dependências.
-- [ ] Criar camada `persistence` com Repositories/DAOs:
-  - [ ] `CandidatoRepository`
-  - [ ] `OrientadorRepository`
-  - [ ] `PerguntaRepository`
-  - [ ] `TesteRepository`
-  - [ ] `RelatorioRepository`
+- [x] Definir se o MVP vai usar apenas SQL manual ou migrations (Flyway) quando o ambiente permitir dependências.
+- [x] Criar camada `persistence` com Repositories/DAOs:
+  - [x] `CandidatoRepository`
+  - [x] `OrientadorRepository`
+  - [x] `PerguntaRepository`
+  - [x] `TesteRepository`
+  - [x] `RelatorioRepository`
 - [ ] Garantir operações mínimas: criar, ler por id, listar por utilizador, atualizar.
 - [ ] Criar seeds mínimos (algumas perguntas por disciplina) para testar o fluxo.
 

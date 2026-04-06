@@ -33,5 +33,13 @@ public class OrientadorService implements User{
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'VerPerfil'");
     }
+
+  
+
+    @Override
+    public void CriarConta(Object conta) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'CriarConta'");
+    }
     
 }

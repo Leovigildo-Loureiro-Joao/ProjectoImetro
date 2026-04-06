@@ -6,13 +6,12 @@ import java.util.ResourceBundle;
 
 import com.imetro.App;
 
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 
 public class LoginController implements Initializable {
 
@@ -23,19 +22,19 @@ public class LoginController implements Initializable {
     private PasswordField passwordField;
 
     @FXML
-    private ComboBox<String> roleCombo;
+    private Label statusLabel;
 
     @FXML
-    private Label statusLabel;
+    private StackPane telaLogin;
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        roleCombo.setItems(FXCollections.observableArrayList("CANDIDATO", "ORIENTADOR"));
+        // no-op
     }
 
     @FXML
     private void onLogin() throws IOException {
-        String role = roleCombo.getValue();
+        String role = "";
         if (role == null || role.isBlank()) {
             statusLabel.setText("Seleciona o perfil para continuar.");
             return;
@@ -46,6 +45,13 @@ public class LoginController implements Initializable {
         } else {
             App.setRoot("views/layouts/CandidatoLayout");
         }
+    }
+
+    
+    @FXML
+    private void onRegister() throws IOException {
+        StackPane contentHost =(StackPane) telaLogin.getParent();
+        App.swapContent(contentHost, "views/pages/auth/register");
     }
     
 }

@@ -1,28 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
+<StackPane fx:id="telaLogin" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.LoginController">
+   <children>
+      <HBox>
+         <children>
+            <StackPane styleClass="auth-card-stage">
+               <children>
+                  <SVGPath content="M2 8 L10 4 L18 8 L10 12 Z M4 9 L10 12 L16 9 M6 11 V14 C6 16 14 16 14 14 V11 M18 8 V14" mouseTransparent="true" opacity="0.55" rotate="-16.0" scaleX="5.2" scaleY="5.2" styleClass="auth-decor-icon" translateX="-28.0" translateY="-22.0" StackPane.alignment="TOP_LEFT" />
+                  <SVGPath content="M2 2 H18 V22 H2 Z M5 5 H15 V9 H5 Z M5 12 H7 V14 H5 Z M9 12 H11 V14 H9 Z M13 12 H15 V14 H13 Z M5 16 H7 V18 H5 Z M9 16 H11 V18 H9 Z M13 16 H15 V18 H13 Z" mouseTransparent="true" opacity="0.5" rotate="-10.0" scaleX="4.8" scaleY="4.8" style="-fx-stroke-width: 1.3;" styleClass="auth-decor-icon" translateX="24.0" translateY="-18.0" StackPane.alignment="TOP_RIGHT" />
+                  <SVGPath content="M3 2 H13 L18 7 V22 H3 Z M13 2 V7 H18 M6 14 L8 16 L12 12" mouseTransparent="true" opacity="0.5" rotate="-18.0" scaleX="4.8" scaleY="4.8" styleClass="auth-decor-icon" translateX="28.0" translateY="16.0" StackPane.alignment="BOTTOM_RIGHT" />
 
-<VBox xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.imetro.ui.controller.LoginController"
-      spacing="12" styleClass="card">
-   <padding>
-      <Insets top="18" right="18" bottom="18" left="18" />
-   </padding>
-
-   <Label text="Entrar" styleClass="h1" />
-   <Label text="Escolhe o teu perfil e entra no sistema (MVP)." wrapText="true" styleClass="muted" />
-
-   <TextField fx:id="usernameField" promptText="Email ou utilizador" />
-   <PasswordField fx:id="passwordField" promptText="Palavra-passe" />
-   <ComboBox fx:id="roleCombo" promptText="Perfil (Candidato/Orientador)" />
-
-   <Label fx:id="statusLabel" text="" styleClass="muted" />
-   <Button text="Entrar" onAction="#onLogin" styleClass="btn-primary" maxWidth="1.7976931348623157E308" />
-</VBox>
+                  <SVGPath content="M3 12 L10 3 L17 12 M6 12 V19 H14 V12" mouseTransparent="true" opacity="0.32" rotate="-24.0" scaleX="3.6" scaleY="3.6" style="-fx-stroke-width: 1.2;" styleClass="auth-decor-icon" translateX="-30.0" translateY="-10.0" StackPane.alignment="CENTER_LEFT" />
+                  <SVGPath content="M4 6 H20 M6 6 V20 M18 6 V20 M4 20 H20 M8 10 H16 M8 14 H16" mouseTransparent="true" opacity="0.28" rotate="-18.0" scaleX="3.4" scaleY="3.4" style="-fx-stroke-width: 1.2;" styleClass="auth-decor-icon" translateX="30.0" translateY="-24.0" StackPane.alignment="CENTER_RIGHT" />
+                  <SVGPath content="M12 2 C6 2 2 6 2 12 C2 18 6 22 12 22 C18 22 22 18 22 12 C22 6 18 2 12 2 M12 7 V12 L16 14" mouseTransparent="true" opacity="0.22" rotate="-12.0" scaleX="3.0" scaleY="3.0" style="-fx-stroke-width: 1.1;" styleClass="auth-decor-icon" translateX="-12.0" translateY="18.0" StackPane.alignment="BOTTOM_LEFT" />
+                  <HBox styleClass="borda">
+                     <children>
+      
+                        <VBox minWidth="400.0" spacing="16.0" styleClass="cardleft">
+                           <padding>
+                              <Insets bottom="20.0" left="20.0" right="20.0" top="26.0" />
+                           </padding>
+                        
+                           <Label styleClass="h1" text="Entrar" />
+                           <Label styleClass="muted" text="Escolhe o teu perfil e entra no sistema." wrapText="true" />
+                        
+                           <TextField fx:id="usernameField" prefHeight="41.0" prefWidth="364.0" promptText="Email ou utilizador" />
+                           <PasswordField fx:id="passwordField" prefHeight="44.0" prefWidth="364.0" promptText="Palavra-passe" />
+                        
+                           <Label fx:id="statusLabel" styleClass="muted" text="" />
+                           <JFXButton onAction="#onLogin" prefHeight="40.0" prefWidth="364.0" styleClass="btn-primary" text="Entrar">
+                              <VBox.margin>
+                                 <Insets top="50.0" />
+                              </VBox.margin>
+                           </JFXButton>
+                           <JFXButton onAction="#onRegister" prefHeight="40.0" prefWidth="364.0" styleClass="btn-secondary" text="Criar conta" />
+                        </VBox>
+                         <StackPane maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back">
+                           <children>
+                              <ImageView fitHeight="470.0" fitWidth="512.0">
+                                 <image>
+                                    <Image url="@../../../assets/imgs/aluno.png" />
+                                 </image>
+                              </ImageView>
+                              <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Bem vindo " translateY="50.0">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Text>
+                           </children>
+                        </StackPane>
+                     </children>
+                  </HBox>
+               </children>
+            </StackPane>
+         </children>
+      </HBox>
+   </children>
+</StackPane>
