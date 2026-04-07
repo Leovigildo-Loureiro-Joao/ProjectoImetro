@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="telaOrientadorDisciplina" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.imetro.ui.controller.OrientadorDisciplinaOnboardingController">
+    <children>
+        <VBox spacing="14" styleClass="cardleft" maxWidth="400">
+            <padding>
+                <Insets bottom="20" left="20" right="20" top="26"/>
+            </padding>
+
+            <Label text="Disciplina para orientar" styleClass="h1"/>
+            <Label text="Escolha a disciplina que deseja orientar." styleClass="muted" wrapText="true"/>
+
+            <ComboBox fx:id="disciplinaCombo" promptText="Selecionar disciplina" prefHeight="38" />
+
+            <Label fx:id="statusLabel" text="" styleClass="muted" wrapText="true"/>
+
+            <JFXButton onAction="#onContinue" text="Entrar no sistema" styleClass="btn-primary" prefHeight="40"/>
+        </VBox>
+    </children>
+</StackPane>
+

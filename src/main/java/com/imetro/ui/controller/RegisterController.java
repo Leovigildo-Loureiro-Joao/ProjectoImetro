@@ -9,7 +9,11 @@ import java.util.ResourceBundle;
 
 import com.imetro.App;
 import com.imetro.app.CandidatoController;
-import com.imetro.domain.dto.candidato.CandidatoRegister;
+import com.imetro.app.OrientadorController;
+import com.imetro.domain.dto.candidato.UserRegister;
+import com.imetro.ui.OnboardingRouter;
+import com.imetro.util.Authentication;
+import com.imetro.util.PasswordHasher;
 
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -71,17 +75,58 @@ public class RegisterController implements Initializable {
     private int extendedPageCount = 0;
 
     private CandidatoController candidatoController;
+    private OrientadorController orientadorController;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         roleCombo.setItems(FXCollections.observableArrayList("CANDIDATO", "ORIENTADOR"));
         candidatoController=new CandidatoController();
+        orientadorController = new OrientadorController();
         setupCarousel();
     }
 
     @FXML
-    private void onRegister() {
-        candidatoController.RegistrarCandidato(new CandidatoRegister(nomeField.getText(), emailField.getText(), passwordField.getText(), LocalDateTime.now()));
+    private void onRegisterUser() {
+        String nome = nomeField == null ? null : nomeField.getText();
+        String email = emailField == null ? null : emailField.getText();
+        String password = passwordField == null ? null : passwordField.getText();
+        String role = roleCombo == null ? null : roleCombo.getValue();
+
+        if (role == null || role.isBlank()) {
+            statusLabel.setText("Selecione o perfil (Candidato/Orientador).");
+            return;
+        }
+
+        if (nome == null || nome.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
+            statusLabel.setText("Preencha nome, email e palavra-passe.");
+            return;
+        }
+
+        String senhaHash = PasswordHasher.sha256Base64(password);
+        UserRegister register = new UserRegister(nome.trim(), email.trim(), senhaHash, role.trim().toUpperCase(), LocalDateTime.now());
+        if (!register.ValidateData()) {
+            statusLabel.setText("Dados inválidos. Verifique email, senha e perfil.");
+            return;
+        }
+
+        boolean created;
+        if ("ORIENTADOR".equalsIgnoreCase(register.role())) {
+            created = orientadorController.RegistrarOrientador(register);
+        } else {
+            created = candidatoController.RegistrarCandidato(register);
+        }
+
+        if (!created) {
+            statusLabel.setText("Não foi possível criar a conta. Email pode já existir.");
+            return;
+        }
+
+        statusLabel.setText("Conta criada com sucesso.");
+
+        if (Authentication.login(register.email(), password)) {
+            StackPane contentHost = (StackPane) telaRegister.getParent();
+            OnboardingRouter.routeAfterAuth(contentHost);
+        }
     }
 
     @FXML

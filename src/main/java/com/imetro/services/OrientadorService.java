@@ -1,9 +1,16 @@
 package com.imetro.services;
 
+import java.sql.SQLException;
+
+import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.domain.interfaces.User;
+import com.imetro.persistence.repository.UserRepository;
 
 public class OrientadorService implements User{
-
+    private final UserRepository userRepository;
+    public OrientadorService(){
+        userRepository = new UserRepository();
+    }
     @Override
     public void Login() {
         // TODO Auto-generated method stub
@@ -36,10 +43,21 @@ public class OrientadorService implements User{
 
   
 
-    @Override
-    public void CriarConta(Object conta) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'CriarConta'");
+  @Override
+    public boolean CriarConta(UserRegister conta) {
+        try {
+            if (conta == null || !conta.ValidateData()) {
+                return false;
+            }
+            if (!"ORIENTADOR".equalsIgnoreCase(conta.role())) {
+                return false;
+            }
+
+            userRepository.insert(conta.toMap());
+            return true;
+        } catch (SQLException e) {
+            return false;
+        }
     }
     
 }

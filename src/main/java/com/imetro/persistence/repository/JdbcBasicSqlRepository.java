@@ -151,7 +151,7 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
         return rows;
     }
 
-    private static Connection openRequiredConnection() throws SQLException {
+    public static Connection openRequiredConnection() throws SQLException {
         Optional<Connection> connOpt = Database.openConnectionFromEnv();
         if (connOpt.isEmpty()) {
             throw new IllegalStateException("DB não configurada. Defina DB_ENABLED=true, DB_URL, DB_USER e DB_PASSWORD.");

@@ -48,7 +48,7 @@
                            <JFXComboBox fx:id="roleCombo" prefHeight="26.0" prefWidth="362.0" promptText="Perfil (Candidato/Orientador)" />
 
                            <Label fx:id="statusLabel" styleClass="muted" text="" />
-                           <JFXButton onAction="#onRegister" prefHeight="44.0" prefWidth="364.0" styleClass="btn-primary" text="Registar" />
+                           <JFXButton onAction="#onRegisterUser" prefHeight="44.0" prefWidth="364.0" styleClass="btn-primary" text="Registar" />
                            <JFXButton onAction="#onLogin" prefHeight="44.0" prefWidth="361.0" styleClass="btn-secondary" text="Já tenho conta" />
                         </VBox>
                         <AnchorPane maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0">

@@ -2,16 +2,15 @@ package com.imetro.services;
 
 import java.sql.SQLException;
 
-import com.imetro.domain.Candidato;
-import com.imetro.domain.dto.candidato.CandidatoRegister;
+import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.domain.interfaces.User;
-import com.imetro.persistence.repository.CandidatoRepository;
+import com.imetro.persistence.repository.UserRepository;
 
 public class CandidatoService implements User{
 
-    private CandidatoRepository candidatoRepository;
+    private final UserRepository userRepository;
     public CandidatoService(){
-        candidatoRepository= new CandidatoRepository(); 
+        userRepository = new UserRepository();
     }
 
     @Override
@@ -45,13 +44,21 @@ public class CandidatoService implements User{
     }
 
     @Override
-    public void CriarConta(Object conta) {
-        CandidatoRegister candidato= (CandidatoRegister)conta;
+    public boolean CriarConta(UserRegister conta) {
         try {
-            candidatoRepository.insert(candidato.toMap());
+            if (conta == null || !conta.ValidateData()) {
+                return false;
+            }
+            if (!"CANDIDATO".equalsIgnoreCase(conta.role())) {
+                return false;
+            }
 
+            userRepository.insert(conta.toMap());
+            return true;
         } catch (SQLException e) {
+            return false;
         }
     }
     
 }
+

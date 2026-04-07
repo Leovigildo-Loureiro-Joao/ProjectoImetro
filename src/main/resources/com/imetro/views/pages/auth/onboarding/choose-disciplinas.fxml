@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="telaChooseDisciplinas" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.imetro.ui.controller.ChooseDisciplinasOnboardingController">
+    <children>
+        <VBox spacing="14" styleClass="cardleft" maxWidth="400">
+            <padding>
+                <Insets bottom="20" left="20" right="20" top="26"/>
+            </padding>
+
+            <Label text="Escolher disciplinas" styleClass="h1"/>
+            <Label text="Selecione as disciplinas para o simulado da bolsa." styleClass="muted" wrapText="true"/>
+
+            <ScrollPane fitToWidth="true" prefViewportHeight="240" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                        style="-fx-background-color: transparent; -fx-background: transparent;">
+                <content>
+                    <VBox fx:id="disciplinasBox" spacing="6" />
+                </content>
+            </ScrollPane>
+
+            <Label fx:id="statusLabel" text="" styleClass="muted" wrapText="true"/>
+
+            <JFXButton onAction="#onContinue" text="Entrar no sistema" styleClass="btn-primary" prefHeight="40"/>
+        </VBox>
+    </children>
+</StackPane>
+

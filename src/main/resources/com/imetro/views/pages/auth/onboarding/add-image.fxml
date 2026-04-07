@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<StackPane fx:id="telaAddImage" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.AddImageOnboardingController">
+    <children>
+        <VBox alignment="TOP_CENTER" maxWidth="400" spacing="14" styleClass="cardleft">
+            <padding>
+                <Insets bottom="20" left="20" right="20" top="26" />
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <children>
+                    <ProgressIndicator fx:id="stepProgress" prefHeight="26" prefWidth="26" progress="0.0" />
+                    <Label fx:id="stepLabel" styleClass="muted" text="" />
+                </children>
+            </HBox>
+
+            <Label styleClass="h1" text="Adicionar foto (opcional)" />
+            <Label styleClass="muted" text="Pode pular e adicionar depois." wrapText="true" />
+
+            <StackPane prefHeight="130" prefWidth="130">
+                <children>
+                    <ImageView fx:id="avatarPreview" fitHeight="120" fitWidth="120" preserveRatio="true" smooth="true">
+                        <clip>
+                            <Circle centerX="60" centerY="60" radius="60" />
+                        </clip>
+                    </ImageView>
+                    <Circle onMouseClicked="#onChooseImage" radius="60" style="-fx-fill: rgba(13, 27, 42, 0.06); -fx-stroke: rgba(13, 27, 42, 0.10);" />
+                </children>
+            </StackPane>
+
+            <JFXButton onAction="#onChooseImage" prefHeight="38" styleClass="btn-secondary" text="Escolher imagem" />
+
+            <Label fx:id="statusLabel" styleClass="muted" text="" wrapText="true" />
+
+            <HBox spacing="10">
+                <children>
+                    <JFXButton onAction="#onSkip" prefHeight="38" prefWidth="150" styleClass="btn-secondary" text="Pular" />
+                    <JFXButton onAction="#onContinue" prefHeight="38" prefWidth="210" styleClass="btn-primary" text="Continuar" />
+                </children>
+            </HBox>
+        </VBox>
+    </children>
+</StackPane>
