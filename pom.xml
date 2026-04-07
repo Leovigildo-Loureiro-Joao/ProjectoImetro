@@ -7,7 +7,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
-        <javafx.version>23.0.1</javafx.version>
+        <javafx.version>25.0.2</javafx.version>
     </properties>
     <dependencies>
         <dependency>
@@ -89,6 +89,10 @@
             <version>0.0.8</version>  <!-- Mude de 0.0.6 para 0.0.8 -->
             <configuration>
                 <mainClass>com.imetro.App</mainClass>
+                <options>
+                    <option>--enable-native-access=javafx.graphics,ALL-UNNAMED</option>
+                    <option>--add-opens java.base/java.lang=javafx.graphics</option>
+                </options>
             </configuration>
         </plugin>
     </plugins>
