@@ -14,7 +14,6 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
@@ -35,13 +34,13 @@
          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
       </padding>
    </HBox>
-   <HBox spacing="28.0">
+   <HBox prefHeight="422.0" prefWidth="1175.0" spacing="28.0">
       <children>
          <AnchorPane>
             <children>
-               <VBox prefHeight="391.0" prefWidth="472.0" spacing="20.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox prefHeight="419.0" prefWidth="472.0" spacing="20.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
-                     <VBox prefHeight="235.0" prefWidth="472.0" spacing="10.0">
+                     <VBox prefHeight="252.0" prefWidth="472.0" spacing="10.0">
                         <children>
                            <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Indicador de nivel do estudante" />
                            <Separator prefHeight="5.0" prefWidth="486.0" />
@@ -64,20 +63,23 @@
                            </HBox>
                            <VBox spacing="10.0" translateY="-10.0">
                               <children>
-                                 <ProgressBar fx:id="progresso" prefHeight="20.0" prefWidth="262.0" progress="0.0" />
+                                 <ProgressBar fx:id="progresso" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso" />
                                  <Label fx:id="progressText" styleClass="h3-thin" text="0% progresso" />
                               </children>
+                              <VBox.margin>
+                                 <Insets bottom="10.0" top="10.0" />
+                              </VBox.margin>
                            </VBox>
                         </children>
                         <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                         </padding>
                         <styleClass>
-                           <String fx:value="card" />
+                           <String fx:value="card-blur" />
                            <String fx:value="shadow" />
                         </styleClass>
                      </VBox>
-                     <VBox prefHeight="156.0" prefWidth="472.0">
+                     <VBox prefHeight="179.0" prefWidth="472.0">
                         <children>
                            <Label styleClass="h3-thin" text="AÇAO RAPIDA" textFill="#8d8d8d">
                               <VBox.margin>
@@ -104,7 +106,7 @@
                            </HBox>
                         </children>
                         <styleClass>
-                           <String fx:value="card" />
+                           <String fx:value="card-blur" />
                            <String fx:value="shadow" />
                         </styleClass>
                         <VBox.margin>
@@ -118,46 +120,148 @@
                </VBox>
             </children>
          </AnchorPane>
-         <VBox prefHeight="473.0" prefWidth="666.0" spacing="10.0">
+         <VBox prefHeight="453.0" prefWidth="666.0" spacing="10.0">
             <children>
                <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Analise da Performance" />
                <Separator prefHeight="5.0" prefWidth="486.0" />
-               <HBox prefHeight="320.0" prefWidth="522.0" spacing="18.0">
+               <HBox prefHeight="366.0" prefWidth="626.0" spacing="18.0">
                   <children>
-                     <VBox prefHeight="357.0" prefWidth="325.0" spacing="10.0">
+                     <VBox prefHeight="319.0" prefWidth="325.0" spacing="10.0" styleClass="sub-card">
                         <children>
-                           <Label styleClass="h3-thin" text="SUAS HABILIDADES" />
-                           <StackPane fx:id="radarHost" minHeight="310.0" minWidth="305.0" prefHeight="310.0" prefWidth="305.0" />
-                        </children>
-                        <padding>
-                           <Insets bottom="10.0" right="10.0" top="10.0" />
-                        </padding>
-                     </VBox>
-                     <VBox prefHeight="320.0" prefWidth="209.0" spacing="15.0">
-                        <children>
-                           <VBox prefHeight="146.0" prefWidth="208.0" spacing="2.0">
-                              <children>
-                                 <Label styleClass="h3-thin" text=" RESULTADO DAS AVALIAÇOES" />
-                                 <VBox fx:id="lastResult" prefHeight="200.0" prefWidth="100.0" />
-                              </children>
-                              <padding>
-                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                              </padding>
-                           </VBox>
-                           <VBox alignment="BOTTOM_LEFT" prefHeight="146.0" prefWidth="208.0" spacing="5.0">
-                              <children>
-                                 <Label fx:id="percentMelhoria" styleClass="h1-thin" text="85% de melhoria" />
-                                 <Label fx:id="descMelhoRia" styleClass="h3-thin" text="(Melhoria)" />
-                              </children>
+                           <Label styleClass="h3-thin" text="SUAS HABILIDADES">
                               <VBox.margin>
                                  <Insets />
                               </VBox.margin>
                               <padding>
-                                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                              </padding>
+                                 <Insets left="10.0" right="10.0" top="10.0" />
+                              </padding></Label>
+                           <VBox>
+                              <children>
+                                 <Label styleClass="muted" text="Velocidade">
+                                    <padding>
+                                       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                    </padding>
+                                    <font>
+                                       <Font size="11.0" />
+                                    </font>
+                                 </Label>
+                                 <ProgressBar fx:id="velocidade" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
+                                    <padding>
+                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                 </ProgressBar>
+                              </children>
+                           </VBox>
+                           <VBox>
+                              <children>
+                                 <Label styleClass="muted" text="Resiliência">
+                                    <padding>
+                                       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                    </padding>
+                                    <font>
+                                       <Font size="11.0" />
+                                    </font>
+                                 </Label>
+                                 <ProgressBar fx:id="resiliencia" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
+                                    <padding>
+                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                 </ProgressBar>
+                              </children>
+                           </VBox>
+                           <VBox>
+                              <children>
+                                 <Label styleClass="muted" text="Precisão">
+                                    <padding>
+                                       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                    </padding>
+                                    <font>
+                                       <Font size="11.0" />
+                                    </font>
+                                 </Label>
+                                 <ProgressBar fx:id="precisao" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
+                                    <padding>
+                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                 </ProgressBar>
+                              </children>
+                           </VBox>
+                           <VBox>
+                              <children>
+                                 <Label styleClass="muted" text="Consistência">
+                                    <padding>
+                                       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                    </padding>
+                                    <font>
+                                       <Font size="11.0" />
+                                    </font>
+                                 </Label>
+                                 <ProgressBar fx:id="consistencia" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
+                                    <padding>
+                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                 </ProgressBar>
+                              </children>
+                           </VBox>
+                           <VBox>
+                              <children>
+                                 <Label styleClass="muted" text="Lógica">
+                                    <padding>
+                                       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                    </padding>
+                                    <font>
+                                       <Font size="11.0" />
+                                    </font>
+                                 </Label>
+                                 <ProgressBar fx:id="logica" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
+                                    <padding>
+                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                 </ProgressBar>
+                                 <ProgressBar fx:id="logica" layoutX="10.0" layoutY="36.0" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
+                                    <padding>
+                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                 </ProgressBar>
+                              </children>
                            </VBox>
                         </children>
+                        <padding>
+                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </padding>
                      </VBox>
+                    <!-- Versão melhorada mantendo sua estrutura -->
+<VBox prefHeight="303.0" prefWidth="266.0" spacing="15.0">
+   <children>
+      <!-- Card de Resultados com indicador visual -->
+      <VBox prefHeight="146.0" prefWidth="208.0" spacing="8.0" styleClass="sub-card">
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="5.0">
+               <Label styleClass="h3-thin" text="RESULTADO DAS AVALIAÇÕES" />
+               <Label styleClass="badge-new" text="4 novas" />
+            </HBox>
+            <Separator style="-fx-background-color: #f3f4f6;" />
+            <VBox fx:id="lastResult" spacing="8.0" />
+         </children>
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
+      </VBox>
+      
+      <!-- Card de Melhoria com barra de progresso -->
+      <VBox alignment="CENTER" prefHeight="146.0" prefWidth="208.0" spacing="8.0" styleClass="sub-card">
+         <children>
+            <Label styleClass="h3-thin" text="TAXA DE MELHORIA" />
+            <Label fx:id="percentMelhoria" styleClass="percent-value" text="85%" />
+            <ProgressBar fx:id="melhoria" prefWidth="150.0" progress="0.85" styleClass="mini-progress" />
+            <Label fx:id="descMelhoRia" styleClass="desc-text" text="(Melhoria)" />
+         </children>
+         <padding>
+            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+         </padding>
+      </VBox>
+   </children>
+</VBox>
                   </children>
                   <padding>
                      <Insets bottom="14.0" right="14.0" top="14.0" />
@@ -168,7 +272,7 @@
                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
             <styleClass>
-               <String fx:value="card" />
+               <String fx:value="card-blur" />
                <String fx:value="shadow" />
             </styleClass>
          </VBox>
@@ -187,7 +291,7 @@
                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
             <styleClass>
-               <String fx:value="card" />
+               <String fx:value="card-blur" />
                <String fx:value="shadow" />
             </styleClass>
          </VBox>
@@ -206,7 +310,7 @@
               </AreaChart>
             </children>
             <styleClass>
-               <String fx:value="card" />
+               <String fx:value="card-blur" />
                <String fx:value="shadow" />
             </styleClass>
             <padding>

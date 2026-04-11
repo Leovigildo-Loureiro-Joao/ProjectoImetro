@@ -7,15 +7,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.SplittableRandom;
 
-import eu.hansolo.tilesfx.chart.ChartData;
-import eu.hansolo.tilesfx.chart.RadarChart;
-import eu.hansolo.tilesfx.chart.RadarChartMode;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -33,24 +31,28 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
-public class DashboardOrientadoController implements Initializable{
+public class DashboardOrientadoController implements Initializable {
 
     @FXML
     private AreaChart<String,Integer> areaActivityChart;
 
     @FXML
-    private Label descMelhoRia;
-
-    private RadarChart radarPerformace;
+    private ProgressBar consistencia;
 
     @FXML
-    private StackPane radarHost;
+    private Label descMelhoRia;
 
     @FXML
     private VBox lastResult;
 
     @FXML
     private Label localDate;
+
+    @FXML
+    private ProgressBar logica;
+
+    @FXML
+    private ProgressBar melhoria;
 
     @FXML
     private Label next_level;
@@ -62,55 +64,65 @@ public class DashboardOrientadoController implements Initializable{
     private Label percentMelhoria;
 
     @FXML
-    private ProgressBar progresso;
-
-    @FXML
-    private ListView<DisciplineStatus> status_disciplina;
+    private ProgressBar precisao;
 
     @FXML
     private Label progressText;
 
     @FXML
+    private ProgressBar progresso;
+
+    @FXML
+    private ProgressBar resiliencia;
+
+    @FXML
+    private ListView<DisciplineStatus> status_disciplina;
+
+    @FXML
+    private ProgressBar velocidade;
+
+    @FXML
     private Label welcome;
+
 
     private XYChart.Series<String,Integer> dificuldadesSeries;
     private XYChart.Series<String,Integer> evolucoesSeries;
 
-    private final SplittableRandom random = new SplittableRandom();
-    private Timeline demoTimeline;
-    private int demoTick = 0;
+    private Timeline startupTimeline;
 
-    private ChartData velocidade;
-    private ChartData logica;
-    private ChartData precisao;
-    private ChartData resiliencia;
-    private ChartData consistencia;
+    private static final int[] DIFICULDADES_TARGET = {32, 40, 70, 55, 60};
+    private static final int[] EVOLUCOES_TARGET = {25, 45, 80, 60, 75};
+    private static final double VELOCIDADE_TARGET = 0.75;
+    private static final double LOGICA_TARGET = 0.68;
+    private static final double PRECISAO_TARGET = 0.55;
+    private static final double RESILIENCIA_TARGET = 0.82;
+    private static final double CONSISTENCIA_TARGET = 0.78;
+    private static final double PROGRESSO_TARGET = 0.68;
 
     @FXML
-    public void StartDiagnostic(ActionEvent event) {
+    public void StartDiagnostic(javafx.event.ActionEvent event) {
 
     }
 
     @FXML
-    public void StartExam(ActionEvent event) {
+    public void StartExam(javafx.event.ActionEvent event) {
 
     }
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
         setupDemo();
-        setupLifecycle();
     }
 
     private void setupDemo() {
         updateHeader();
         setupAreaChart();
         setupRadar();
-        setupStatusDisciplina();
         setupLastResults();
-        startDemoTimeline();
+        setupStatusList();
+        animateStartup();
     }
- 
+
     private void updateHeader() {
         if (welcome != null) {
             welcome.setText("Bem-vindo novamente, Candidato");
@@ -130,6 +142,7 @@ public class DashboardOrientadoController implements Initializable{
         areaActivityChart.setLegendVisible(true);
         areaActivityChart.setAnimated(false);
         areaActivityChart.setCreateSymbols(false);
+        areaActivityChart.setOpacity(0);
 
         dificuldadesSeries = new XYChart.Series<>();
         dificuldadesSeries.setName("Dificuldades");
@@ -148,82 +161,25 @@ public class DashboardOrientadoController implements Initializable{
         areaActivityChart.getData().clear();
         areaActivityChart.getData().add(dificuldadesSeries);
         areaActivityChart.getData().add(evolucoesSeries);
-        seedAreaValues();
-    }
-
-    private void seedAreaValues() {
-        if (dificuldadesSeries == null || evolucoesSeries == null) {
-            return;
-        }
-        for (int i = 0; i < 5; i++) {
-            dificuldadesSeries.getData().get(i).setYValue(random.nextInt(15, 90));
-            evolucoesSeries.getData().get(i).setYValue(random.nextInt(10, 100));
-        }
     }
 
     private void setupRadar() {
-        
-      Platform.runLater(()->{
-          if (radarHost == null) {
+        if (velocidade == null || logica == null || precisao == null || resiliencia == null || consistencia == null) {
             return;
         }
 
-        velocidade = new ChartData("Velocidade", 40d,Color.GREEN);
-        logica = new ChartData("Lógica", 55d,Color.BLUE);
-        precisao = new ChartData("Precisão", 68d,Color.RED);
-        resiliencia = new ChartData("Resiliência", 85d,Color.VIOLET);
-        consistencia = new ChartData("Consistência", 22d,Color.ORANGE);
-        
-        radarPerformace = new RadarChart(List.of(
-                velocidade, logica, precisao, resiliencia, consistencia
-        ));
-        radarPerformace.getStyleClass().add("radar-demo");
-      
-        radarPerformace.setMinSize(270, 270);
-        radarPerformace.setPrefSize(270, 270);
-        radarPerformace.setMaxSize(270, 270);
-       
-
-        // Make labels + legend readable on a light card
-        Color text = Color.web("#0f172a");
-        radarPerformace.setChartForegroundColor(text);
-        radarPerformace.setChartTextColor(text);
-        radarPerformace.setGridColor(Color.web("#e2e8f0"));
-        radarPerformace.setChartBackgroundColor(Color.TRANSPARENT);
-        radarPerformace.setChartFill(Color.TRANSPARENT);
-
-        velocidade.setTextColor(text);
-        logica.setTextColor(text);
-        precisao.setTextColor(text);
-        resiliencia.setTextColor(text);
-        consistencia.setTextColor(text);
-
-        radarPerformace.setMode(RadarChartMode.SECTOR);
-        radarPerformace.setLegendVisible(false);
-        radarHost.getChildren().setAll(radarPerformace);
-      });
-    }
-
-    private void setupStatusDisciplina() {
-        if (status_disciplina == null) {
-            return;
-        }
-
-        status_disciplina.getItems().setAll(
-                new DisciplineStatus("Matemática", 0.72),
-                new DisciplineStatus("Programação", 0.61),
-                new DisciplineStatus("Lógica", 0.68),
-                new DisciplineStatus("Inglês", 0.54),
-                new DisciplineStatus("Ciências", 0.45)
-        );
-
-        status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
+        velocidade.setProgress(0);
+        logica.setProgress(0);
+        precisao.setProgress(0);
+        resiliencia.setProgress(0);
+        consistencia.setProgress(0);
     }
 
     private void setupLastResults() {
         if (lastResult == null) {
             return;
         }
+        lastResult.setOpacity(0);
         lastResult.getChildren().clear();
 
         lastResult.getChildren().addAll(
@@ -245,116 +201,122 @@ public class DashboardOrientadoController implements Initializable{
         return row;
     }
 
-    private void startDemoTimeline() {
-        stopDemoTimeline();
-
-        demoTick = 0;
-        demoTimeline = new Timeline(
-                new KeyFrame(Duration.seconds(0), e -> onDemoTick()),
-                new KeyFrame(Duration.seconds(1))
-        );
-        demoTimeline.setCycleCount(Timeline.INDEFINITE);
-        demoTimeline.play();
-    }
-
-    private void stopDemoTimeline() {
-        if (demoTimeline != null) {
-            demoTimeline.stop();
-            demoTimeline = null;
-        }
-    }
-
-    private void onDemoTick() {
-        demoTick++;
-        updateAreaValues();
-        updateRadarValues();
-        updateProgress();
-    }
-
-    private void updateAreaValues() {
-        if (dificuldadesSeries == null || evolucoesSeries == null) {
+    private void setupStatusList() {
+        if (status_disciplina == null) {
             return;
         }
 
-        for (int i = 0; i < 5; i++) {
-            int v1 = curve(55, 32, demoTick + i, 0.55);
-            int v2 = curve(45, 40, demoTick + i + 3, 0.45);
-            dificuldadesSeries.getData().get(i).setYValue(v1);
-            evolucoesSeries.getData().get(i).setYValue(v2);
-        }
+        status_disciplina.setOpacity(0);
+        status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
+        status_disciplina.setItems(FXCollections.observableArrayList(
+                new DisciplineStatus("Lógica", 0.75),
+                new DisciplineStatus("Velocidade", 0.62),
+                new DisciplineStatus("Precisão", 0.55),
+                new DisciplineStatus("Resiliência", 0.82),
+                new DisciplineStatus("Consistência", 0.78)
+        ));
     }
 
-    private void updateRadarValues() {
-        if (velocidade == null) {
-            return;
+    private void animateStartup() {
+        if (startupTimeline != null) {
+            startupTimeline.stop();
         }
 
-        setChartValue(velocidade, curve(60, 25, demoTick, 0.65));
-        setChartValue(logica, curve(55, 22, demoTick + 2, 0.55));
-        setChartValue(precisao, curve(50, 18, demoTick + 4, 0.50));
-        setChartValue(resiliencia, curve(45, 28, demoTick + 6, 0.45));
-        setChartValue(consistencia, curve(58, 16, demoTick + 8, 0.52));
-    }
-
-    private void updateProgress() {
-        if (progresso == null) {
-            return;
+        if (progresso != null) {
+            progresso.setProgress(0);
         }
-
-        double progress = (Math.sin(demoTick * 0.35) + 1.0) / 2.0; // 0..1
-        progresso.setProgress(progress);
-
-        int percent = (int) Math.round(progress * 100);
         if (progressText != null) {
-            progressText.setText(percent + "% progresso");
+            progressText.setText("0% progresso");
         }
         if (percentMelhoria != null) {
-            percentMelhoria.setText(percent + "% de melhoria");
+            percentMelhoria.setText("0% de melhoria");
         }
-
-        if (nivel_actual != null && next_level != null) {
-            if (percent < 35) {
-                nivel_actual.setText("INICIANTE");
-                next_level.setText("INTERMEDIÁRIO");
-            } else if (percent < 70) {
-                nivel_actual.setText("INTERMEDIÁRIO");
-                next_level.setText("AVANÇADO");
-            } else {
-                nivel_actual.setText("AVANÇADO");
-                next_level.setText("EXCELENTE");
-            }
+        if (nivel_actual != null) {
+            nivel_actual.setText("INICIANTE");
+        }
+        if (next_level != null) {
+            next_level.setText("INTERMEDIÁRIO");
         }
         if (descMelhoRia != null) {
-            descMelhoRia.setText(percent >= 50 ? "(Melhoria)" : "(A ajustar)");
+            descMelhoRia.setText("(A ajustar)");
+        }
+
+        startupTimeline = new Timeline();
+        startupTimeline.getKeyFrames().add(new KeyFrame(Duration.seconds(1.2),
+                new KeyValue(velocidade.progressProperty(), VELOCIDADE_TARGET, Interpolator.EASE_BOTH),
+                new KeyValue(logica.progressProperty(), LOGICA_TARGET, Interpolator.EASE_BOTH),
+                new KeyValue(precisao.progressProperty(), PRECISAO_TARGET, Interpolator.EASE_BOTH),
+                new KeyValue(resiliencia.progressProperty(), RESILIENCIA_TARGET, Interpolator.EASE_BOTH),
+                new KeyValue(consistencia.progressProperty(), CONSISTENCIA_TARGET, Interpolator.EASE_BOTH),
+                new KeyValue(progresso.progressProperty(), PROGRESSO_TARGET, Interpolator.EASE_BOTH),
+                new KeyValue(dificuldadesSeries.getData().get(0).YValueProperty(), DIFICULDADES_TARGET[0], Interpolator.EASE_BOTH),
+                new KeyValue(dificuldadesSeries.getData().get(1).YValueProperty(), DIFICULDADES_TARGET[1], Interpolator.EASE_BOTH),
+                new KeyValue(dificuldadesSeries.getData().get(2).YValueProperty(), DIFICULDADES_TARGET[2], Interpolator.EASE_BOTH),
+                new KeyValue(dificuldadesSeries.getData().get(3).YValueProperty(), DIFICULDADES_TARGET[3], Interpolator.EASE_BOTH),
+                new KeyValue(dificuldadesSeries.getData().get(4).YValueProperty(), DIFICULDADES_TARGET[4], Interpolator.EASE_BOTH),
+                new KeyValue(evolucoesSeries.getData().get(0).YValueProperty(), EVOLUCOES_TARGET[0], Interpolator.EASE_BOTH),
+                new KeyValue(evolucoesSeries.getData().get(1).YValueProperty(), EVOLUCOES_TARGET[1], Interpolator.EASE_BOTH),
+                new KeyValue(evolucoesSeries.getData().get(2).YValueProperty(), EVOLUCOES_TARGET[2], Interpolator.EASE_BOTH),
+                new KeyValue(evolucoesSeries.getData().get(3).YValueProperty(), EVOLUCOES_TARGET[3], Interpolator.EASE_BOTH),
+                new KeyValue(evolucoesSeries.getData().get(4).YValueProperty(), EVOLUCOES_TARGET[4], Interpolator.EASE_BOTH)
+        ));
+
+        startupTimeline.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
+            if (progresso == null) {
+                return;
+            }
+            int percent = (int) Math.round(progresso.getProgress() * 100.0);
+            if (progressText != null) {
+                progressText.setText(percent + "% progresso");
+            }
+            if (percentMelhoria != null) {
+                percentMelhoria.setText(percent + "% de melhoria");
+            }
+            if (nivel_actual != null && next_level != null) {
+                if (percent < 35) {
+                    nivel_actual.setText("INICIANTE");
+                    next_level.setText("INTERMEDIÁRIO");
+                } else if (percent < 70) {
+                    nivel_actual.setText("INTERMEDIÁRIO");
+                    next_level.setText("AVANÇADO");
+                } else {
+                    nivel_actual.setText("AVANÇADO");
+                    next_level.setText("EXCELENTE");
+                }
+            }
+            if (descMelhoRia != null) {
+                descMelhoRia.setText(percent >= 50 ? "(Melhoria)" : "(A ajustar)");
+            }
+        });
+
+        startupTimeline.play();
+
+        if (areaActivityChart != null) {
+            FadeTransition fadeChart = new FadeTransition(Duration.seconds(0.8), areaActivityChart);
+            fadeChart.setFromValue(0);
+            fadeChart.setToValue(1);
+            fadeChart.play();
+        }
+        if (lastResult != null) {
+            FadeTransition fadeResults = new FadeTransition(Duration.seconds(0.8), lastResult);
+            fadeResults.setFromValue(0);
+            fadeResults.setToValue(1);
+            fadeResults.play();
+        }
+        if (status_disciplina != null) {
+            FadeTransition fadeStatus = new FadeTransition(Duration.seconds(0.8), status_disciplina);
+            fadeStatus.setFromValue(0);
+            fadeStatus.setToValue(1);
+            fadeStatus.play();
         }
     }
 
-    private int curve(int base, int amplitude, int tick, double speed) {
-        double value = base + amplitude * Math.sin(tick * speed);
-        int jitter = random.nextInt(-4, 5);
-        int result = (int) Math.round(value + jitter);
-        return Math.max(0, Math.min(100, result));
-    }
-
-    private void setChartValue(ChartData data, double value) {
+    private void setChartValue(eu.hansolo.tilesfx.chart.ChartData data, double value) {
         try {
             data.setValue(value);
         } catch (Exception ignored) {
-            // TilesFX versions vary; fail gracefully without crashing the UI.
+            // TilesFX versions vary; fail gracefully without crashing a UI.
         }
-    }
-
-    private void setupLifecycle() {
-        if (areaActivityChart == null) {
-            return;
-        }
-        areaActivityChart.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene == null) {
-                stopDemoTimeline();
-            } else if (demoTimeline == null) {
-                startDemoTimeline();
-            }
-        });
     }
 
     private record DisciplineStatus(String name, double progress) {}
@@ -363,14 +325,14 @@ public class DashboardOrientadoController implements Initializable{
         private final Label name = new Label();
         private final ProgressBar progress = new ProgressBar();
         private final Label percent = new Label();
-        private final HBox root = new HBox(12, name, progress, percent);
+        private final VBox root = new VBox(12, name, progress, percent);
 
         private DisciplineStatusCell() {
             root.getStyleClass().add("status-row");
             name.getStyleClass().add("status-name");
             progress.getStyleClass().add("status-progress");
             progress.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(progress, javafx.scene.layout.Priority.ALWAYS);
+            VBox.setVgrow(progress, javafx.scene.layout.Priority.ALWAYS);
             percent.getStyleClass().add("status-percent");
         }
 
