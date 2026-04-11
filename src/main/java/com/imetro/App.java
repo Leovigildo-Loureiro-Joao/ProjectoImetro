@@ -44,8 +44,6 @@ public class App extends Application {
         stage.setMaximized(true);
 
         scene = new Scene(loadView("views/layouts/AuthLayout"), 1100, 600);
-        scene.getStylesheets()
-                .add(App.class.getResource("/com/imetro/styles/global.css").toExternalForm());
         stage.setScene(scene);
         stage.show();
     }
@@ -91,15 +89,15 @@ public class App extends Application {
         fadeOut.setOnFinished(e -> {
             ProgressIndicator progress = new ProgressIndicator();
             progress.setMaxSize(30, 30);
-            progress.setStyle("    -fx-progress-color: #FFFFFF; \r\n" + //
-                                "    -fx-background-color: transparent;");
+            progress.getStyleClass().add("loading-progress");
             VBox vb=new VBox();
             vb.setSpacing(1);
             vb.setAlignment(Pos.CENTER);
             Text txt=new Text("Processando...");
-            txt.setStyle("-fx-fill:#FFFFFF; ");
+            txt.getStyleClass().add("loading-text");
             vb.getChildren().addAll(txt,progress);
             StackPane loading = new StackPane(vb);
+            loading.getStyleClass().add("loading-overlay");
             loading.setMinHeight(host.getHeight());
             loading.setPrefHeight(host.getHeight());
             

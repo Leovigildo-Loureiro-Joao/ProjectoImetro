@@ -15,10 +15,12 @@ import com.imetro.ui.OnboardingRouter;
 import com.imetro.util.Authentication;
 import com.imetro.util.PasswordHasher;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.concurrent.Task;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -29,12 +31,13 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
 public class RegisterController implements Initializable {
@@ -69,6 +72,16 @@ public class RegisterController implements Initializable {
     @FXML
     private HBox carouselDots;
 
+    @FXML
+    private VBox formBox;
+
+    @FXML
+    private JFXButton registerButton;
+
+    @FXML
+    private JFXButton loginButton;
+
+    @FXML
     private Timeline carouselTimeline;
     private int carouselIndex = 0;
     private int realPageCount = 0;
@@ -76,6 +89,7 @@ public class RegisterController implements Initializable {
 
     private CandidatoController candidatoController;
     private OrientadorController orientadorController;
+    private volatile boolean registrationInProgress = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -87,6 +101,10 @@ public class RegisterController implements Initializable {
 
     @FXML
     private void onRegisterUser() {
+        if (registrationInProgress) {
+            return;
+        }
+
         String nome = nomeField == null ? null : nomeField.getText();
         String email = emailField == null ? null : emailField.getText();
         String password = passwordField == null ? null : passwordField.getText();
@@ -102,31 +120,64 @@ public class RegisterController implements Initializable {
             return;
         }
 
+        setFormDisabled(true);
+        registrationInProgress = true;
+        statusLabel.setText("A criar conta...");
+
         String senhaHash = PasswordHasher.sha256Base64(password);
         UserRegister register = new UserRegister(nome.trim(), email.trim(), senhaHash, role.trim().toUpperCase(), LocalDateTime.now());
         if (!register.ValidateData()) {
             statusLabel.setText("Dados inválidos. Verifique email, senha e perfil.");
+            setFormDisabled(false);
+            registrationInProgress = false;
             return;
         }
 
-        boolean created;
-        if ("ORIENTADOR".equalsIgnoreCase(register.role())) {
-            created = orientadorController.RegistrarOrientador(register);
-        } else {
-            created = candidatoController.RegistrarCandidato(register);
-        }
+        Task<Boolean> registerTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                boolean created;
+                if ("ORIENTADOR".equalsIgnoreCase(register.role())) {
+                    created = orientadorController.RegistrarOrientador(register);
+                } else {
+                    created = candidatoController.RegistrarCandidato(register);
+                }
 
-        if (!created) {
-            statusLabel.setText("Não foi possível criar a conta. Email pode já existir.");
-            return;
-        }
+                if (!created) {
+                    return false;
+                }
 
-        statusLabel.setText("Conta criada com sucesso.");
+                return Authentication.login(register.email(), password);
+            }
+        };
 
-        if (Authentication.login(register.email(), password)) {
-            StackPane contentHost = (StackPane) telaRegister.getParent();
-            OnboardingRouter.routeAfterAuth(contentHost);
-        }
+        registerTask.setOnSucceeded(e -> {
+            boolean ok = Boolean.TRUE.equals(registerTask.getValue());
+            if (!ok) {
+                statusLabel.setText("Não foi possível criar/entrar. Email pode já existir.");
+                setFormDisabled(false);
+                registrationInProgress = false;
+                return;
+            }
+
+            statusLabel.setText("Conta criada. A entrar...");
+
+            Timeline delay = new Timeline(new KeyFrame(Duration.millis(160), ev -> {
+                StackPane contentHost = (StackPane) telaRegister.getParent();
+                OnboardingRouter.routeAfterAuth(contentHost);
+            }));
+            delay.play();
+        });
+
+        registerTask.setOnFailed(e -> {
+            statusLabel.setText("Falha ao registar. Tente novamente.");
+            setFormDisabled(false);
+            registrationInProgress = false;
+        });
+
+        Thread thread = new Thread(registerTask);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @FXML
@@ -166,6 +217,28 @@ public class RegisterController implements Initializable {
             }
         });
     }
+
+    private void setFormDisabled(boolean disabled) {
+        if (nomeField != null) {
+            nomeField.setDisable(disabled);
+        }
+        if (emailField != null) {
+            emailField.setDisable(disabled);
+        }
+        if (passwordField != null) {
+            passwordField.setDisable(disabled);
+        }
+        if (roleCombo != null) {
+            roleCombo.setDisable(disabled);
+        }
+        if (registerButton != null) {
+            registerButton.setDisable(disabled);
+        }
+        if (loginButton != null) {
+            loginButton.setDisable(disabled);
+        }
+    }
+
 
     private void setupInfiniteCarouselPages() {
         List<Node> realPages = new ArrayList<>(carouselContent.getChildren());

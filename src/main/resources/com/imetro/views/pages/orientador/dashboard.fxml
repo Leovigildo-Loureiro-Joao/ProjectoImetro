@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
-      spacing="10" styleClass="page">
+      spacing="10" styleClass="page" stylesheets="@../../../../../styles/orientador-layout.css">
     <padding>
         <Insets top="18" right="18" bottom="18" left="18" />
     </padding>
@@ -13,4 +13,3 @@
     <Label text="Visão geral dos candidatos e progresso, com indicadores principais e alertas (MVP: placeholder)."
            wrapText="true" styleClass="muted" />
 </VBox>
-

@@ -1,0 +1,5 @@
+@import "global.css";
+
+.topbar-title {
+  -fx-text-fill: -color-text;
+}

@@ -12,7 +12,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.imetro.ui.controller.OrientadorLayoutController"
-            stylesheets="@../../styles/orientador-layout.css">
+            stylesheets="@../../../../styles/orientador-layout.css">
     <top>
         <HBox spacing="10" styleClass="topbar" BorderPane.alignment="CENTER">
             <padding>

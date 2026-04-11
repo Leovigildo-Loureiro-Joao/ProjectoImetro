@@ -3,51 +3,80 @@
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<StackPane fx:id="telaAddImage" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.AddImageOnboardingController">
+<StackPane fx:id="telaAddImage" stylesheets="@../../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.AddImageOnboardingController">
     <children>
-        <VBox alignment="TOP_CENTER" maxWidth="400" spacing="14" styleClass="cardleft">
-            <padding>
-                <Insets bottom="20" left="20" right="20" top="26" />
-            </padding>
+        <HBox>
+            <children>
+                <StackPane styleClass="auth-card-stage">
+                    <children>
+                        <SVGPath content="M2 8 L10 4 L18 8 L10 12 Z M4 9 L10 12 L16 9 M6 11 V14 C6 16 14 16 14 14 V11 M18 8 V14" mouseTransparent="true" opacity="0.55" rotate="-16.0" scaleX="5.2" scaleY="5.2" styleClass="auth-decor-icon" translateX="-28.0" translateY="-22.0" StackPane.alignment="TOP_LEFT" />
+                        <SVGPath content="M2 2 H18 V22 H2 Z M5 5 H15 V9 H5 Z M5 12 H7 V14 H5 Z M9 12 H11 V14 H9 Z M13 12 H15 V14 H13 Z M5 16 H7 V18 H5 Z M9 16 H11 V18 H9 Z M13 16 H15 V18 H13 Z" mouseTransparent="true" opacity="0.5" rotate="-10.0" scaleX="4.8" scaleY="4.8" style="-fx-stroke-width: 1.3;" styleClass="auth-decor-icon" translateX="24.0" translateY="-18.0" StackPane.alignment="TOP_RIGHT" />
+                        <SVGPath content="M3 2 H13 L18 7 V22 H3 Z M13 2 V7 H18 M6 14 L8 16 L12 12" mouseTransparent="true" opacity="0.5" rotate="-18.0" scaleX="4.8" scaleY="4.8" styleClass="auth-decor-icon" translateX="28.0" translateY="16.0" StackPane.alignment="BOTTOM_RIGHT" />
 
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <children>
-                    <ProgressIndicator fx:id="stepProgress" prefHeight="26" prefWidth="26" progress="0.0" />
-                    <Label fx:id="stepLabel" styleClass="muted" text="" />
-                </children>
-            </HBox>
+                        <HBox styleClass="auth-card">
+                            <children>
+                                <VBox alignment="TOP_CENTER" minWidth="400.0" spacing="14.0" styleClass="cardleft">
+                                    <padding>
+                                        <Insets bottom="20" left="20" right="20" top="26" />
+                                    </padding>
 
-            <Label styleClass="h1" text="Adicionar foto (opcional)" />
-            <Label styleClass="muted" text="Pode pular e adicionar depois." wrapText="true" />
+                                    <Label styleClass="h1" text="Adicionar foto (opcional)" />
+                                    <Label styleClass="muted" text="Pode pular e adicionar depois." wrapText="true" />
 
-            <StackPane prefHeight="130" prefWidth="130">
-                <children>
-                    <ImageView fx:id="avatarPreview" fitHeight="120" fitWidth="120" preserveRatio="true" smooth="true">
-                        <clip>
-                            <Circle centerX="60" centerY="60" radius="60" />
-                        </clip>
-                    </ImageView>
-                    <Circle onMouseClicked="#onChooseImage" radius="60" style="-fx-fill: rgba(13, 27, 42, 0.06); -fx-stroke: rgba(13, 27, 42, 0.10);" />
-                </children>
-            </StackPane>
+                                    <StackPane prefHeight="130" prefWidth="130">
+                                        <children>
+                                            <ImageView fx:id="avatarPreview" fitHeight="120" fitWidth="120" preserveRatio="true" smooth="true">
+                                                <clip>
+                                                    <Circle centerX="60" centerY="60" radius="60" />
+                                                </clip>
+                                            </ImageView>
+                                            <Circle onMouseClicked="#onChooseImage" radius="60" style="-fx-fill: rgba(13, 27, 42, 0.06); -fx-stroke: rgba(13, 27, 42, 0.10);" />
+                                        </children>
+                                    </StackPane>
 
-            <JFXButton onAction="#onChooseImage" prefHeight="38" styleClass="btn-secondary" text="Escolher imagem" />
+                                    <JFXButton onAction="#onChooseImage" prefHeight="38" styleClass="btn-secondary" text="Escolher imagem" />
 
-            <Label fx:id="statusLabel" styleClass="muted" text="" wrapText="true" />
+                                    <Label fx:id="statusLabel" styleClass="muted" text="" wrapText="true" />
 
-            <HBox spacing="10">
-                <children>
-                    <JFXButton onAction="#onSkip" prefHeight="38" prefWidth="150" styleClass="btn-secondary" text="Pular" />
-                    <JFXButton onAction="#onContinue" prefHeight="38" prefWidth="210" styleClass="btn-primary" text="Continuar" />
-                </children>
-            </HBox>
-        </VBox>
+                                    <HBox spacing="10">
+                                        <children>
+                                            <JFXButton onAction="#onSkip" prefHeight="38" prefWidth="150" styleClass="btn-secondary" text="Pular" />
+                                            <JFXButton onAction="#onContinue" prefHeight="38" prefWidth="210" styleClass="btn-primary" text="Continuar" />
+                                        </children>
+                                    </HBox>
+                                </VBox>
+
+                                <StackPane maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back">
+                                    <children>
+                                        <ImageView fitHeight="470.0" fitWidth="512.0">
+                                            <image>
+                                                <Image url="@../../../../assets/imgs/profile.png" />
+                                            </image>
+                                        </ImageView>
+                                        <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
+                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Uma boa foto ajuda a personalizar o teu perfil." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
+                                            <font>
+                                                <Font size="18.0" />
+                                            </font>
+                                        </Text>
+                                    </children>
+                                </StackPane>
+                            </children>
+                        </HBox>
+                    </children>
+                </StackPane>
+            </children>
+        </HBox>
     </children>
 </StackPane>

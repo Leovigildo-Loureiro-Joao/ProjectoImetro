@@ -4,26 +4,64 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<StackPane fx:id="telaOrientadorDisciplina" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+<StackPane fx:id="telaOrientadorDisciplina" stylesheets="@../../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.imetro.ui.controller.OrientadorDisciplinaOnboardingController">
     <children>
-        <VBox spacing="14" styleClass="cardleft" maxWidth="400">
-            <padding>
-                <Insets bottom="20" left="20" right="20" top="26"/>
-            </padding>
+        <HBox>
+            <children>
+                <StackPane styleClass="auth-card-stage">
+                    <children>
+                        <SVGPath content="M2 8 L10 4 L18 8 L10 12 Z M4 9 L10 12 L16 9 M6 11 V14 C6 16 14 16 14 14 V11 M18 8 V14" mouseTransparent="true" opacity="0.55" rotate="-16.0" scaleX="5.2" scaleY="5.2" styleClass="auth-decor-icon" translateX="-28.0" translateY="-22.0" StackPane.alignment="TOP_LEFT" />
+                        <SVGPath content="M2 2 H18 V22 H2 Z M5 5 H15 V9 H5 Z M5 12 H7 V14 H5 Z M9 12 H11 V14 H9 Z M13 12 H15 V14 H13 Z M5 16 H7 V18 H5 Z M9 16 H11 V18 H9 Z M13 16 H15 V18 H13 Z" mouseTransparent="true" opacity="0.5" rotate="-10.0" scaleX="4.8" scaleY="4.8" style="-fx-stroke-width: 1.3;" styleClass="auth-decor-icon" translateX="24.0" translateY="-18.0" StackPane.alignment="TOP_RIGHT" />
+                        <SVGPath content="M3 2 H13 L18 7 V22 H3 Z M13 2 V7 H18 M6 14 L8 16 L12 12" mouseTransparent="true" opacity="0.5" rotate="-18.0" scaleX="4.8" scaleY="4.8" styleClass="auth-decor-icon" translateX="28.0" translateY="16.0" StackPane.alignment="BOTTOM_RIGHT" />
 
-            <Label text="Disciplina para orientar" styleClass="h1"/>
-            <Label text="Escolha a disciplina que deseja orientar." styleClass="muted" wrapText="true"/>
+                        <HBox styleClass="auth-card">
+                            <children>
+                                <VBox spacing="14" styleClass="cardleft" minWidth="400.0">
+                                    <padding>
+                                        <Insets bottom="20" left="20" right="20" top="26"/>
+                                    </padding>
 
-            <ComboBox fx:id="disciplinaCombo" promptText="Selecionar disciplina" prefHeight="38" />
+                                    <Label text="Disciplina para orientar" styleClass="h1"/>
+                                    <Label text="Escolha a disciplina que deseja orientar." styleClass="muted" wrapText="true"/>
 
-            <Label fx:id="statusLabel" text="" styleClass="muted" wrapText="true"/>
+                                    <ComboBox fx:id="disciplinaCombo" promptText="Selecionar disciplina" prefHeight="38" />
 
-            <JFXButton onAction="#onContinue" text="Entrar no sistema" styleClass="btn-primary" prefHeight="40"/>
-        </VBox>
+                                    <Label fx:id="statusLabel" text="" styleClass="muted" wrapText="true"/>
+
+                                    <JFXButton onAction="#onContinue" text="Entrar no sistema" styleClass="btn-primary" prefHeight="40"/>
+                                </VBox>
+
+                                <StackPane maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back">
+                                    <children>
+                                        <ImageView fitHeight="470.0" fitWidth="512.0">
+                                            <image>
+                                                <Image url="@../../../../assets/imgs/choose.png" />
+                                            </image>
+                                        </ImageView>
+                                        <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
+                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Define a tua área e começa a orientar." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
+                                            <font>
+                                                <Font size="18.0" />
+                                            </font>
+                                        </Text>
+                                    </children>
+                                </StackPane>
+                            </children>
+                        </HBox>
+                    </children>
+                </StackPane>
+            </children>
+        </HBox>
     </children>
 </StackPane>
-

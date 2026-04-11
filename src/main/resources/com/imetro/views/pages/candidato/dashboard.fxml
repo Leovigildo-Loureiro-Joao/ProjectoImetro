@@ -1,16 +1,222 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
+<?import java.lang.String?>
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.AreaChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<VBox xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
-      spacing="10" styleClass="page">
+<VBox prefHeight="994.0" prefWidth="1211.0" spacing="20.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.DashboardOrientadoController">
     <padding>
-        <Insets top="18" right="18" bottom="18" left="18" />
+        <Insets bottom="18" left="18" right="18" top="18" />
     </padding>
-    <Label text="Dashboard (Candidato)" styleClass="h1" />
-    <Label text="Aqui vai o resumo de desempenho: tempo médio, taxa de acerto por tópico, evolução semanal, erros recorrentes e dificuldade atingida."
-           wrapText="true" styleClass="muted" />
+   <HBox alignment="CENTER_LEFT" spacing="20.0">
+      <children>
+         <Label fx:id="welcome" styleClass="big-h1" text="Bem-vindo novamente" />
+         <Label fx:id="localDate" styleClass="muted" text="" wrapText="true" />
+      </children>
+      <VBox.margin>
+         <Insets bottom="10.0" top="10.0" />
+      </VBox.margin>
+      <padding>
+         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+      </padding>
+   </HBox>
+   <HBox spacing="28.0">
+      <children>
+         <AnchorPane>
+            <children>
+               <VBox prefHeight="391.0" prefWidth="472.0" spacing="20.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <children>
+                     <VBox prefHeight="235.0" prefWidth="472.0" spacing="10.0">
+                        <children>
+                           <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Indicador de nivel do estudante" />
+                           <Separator prefHeight="5.0" prefWidth="486.0" />
+                           <HBox prefHeight="56.0" prefWidth="417.0">
+                              <children>
+                                 <VBox spacing="10.0">
+                                    <children>
+                                       <Label styleClass="h3-thin" text="NIVEL ACTUAL" textFill="#8d8d8d" />
+                                       <Label fx:id="nivel_actual" text="INICIANTE" />
+                                    </children>
+                                 </VBox>
+                                 <Region prefHeight="200.0" prefWidth="200.0" />
+                                 <VBox spacing="10.0">
+                                    <children>
+                                       <Label styleClass="h3-thin" text="PROXIMO NIVEL" />
+                                       <Label fx:id="next_level" text="INTERMEDIARIO" />
+                                    </children>
+                                 </VBox>
+                              </children>
+                           </HBox>
+                           <VBox spacing="10.0" translateY="-10.0">
+                              <children>
+                                 <ProgressBar fx:id="progresso" prefHeight="20.0" prefWidth="262.0" progress="0.0" />
+                                 <Label fx:id="progressText" styleClass="h3-thin" text="0% progresso" />
+                              </children>
+                           </VBox>
+                        </children>
+                        <padding>
+                           <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                        </padding>
+                        <styleClass>
+                           <String fx:value="card" />
+                           <String fx:value="shadow" />
+                        </styleClass>
+                     </VBox>
+                     <VBox prefHeight="156.0" prefWidth="472.0">
+                        <children>
+                           <Label styleClass="h3-thin" text="AÇAO RAPIDA" textFill="#8d8d8d">
+                              <VBox.margin>
+                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              </VBox.margin>
+                           </Label>
+                           <HBox>
+                              <children>
+                                 <JFXButton contentDisplay="BOTTOM" onAction="#StartExam" prefHeight="60.0" prefWidth="253.0" styleClass="btn-primary" text="INICIAR EXAME ADAPTATIVO">
+                                    <graphic>
+                                       <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Avaliação Inteligente" />
+                                    </graphic>
+                                    <font>
+                                       <Font name="System Bold" size="13.0" />
+                                    </font>
+                                 </JFXButton>
+                                 <Region prefHeight="60.0" prefWidth="42.0" />
+                                 <JFXButton contentDisplay="BOTTOM" onAction="#StartDiagnostic" prefHeight="60.0" prefWidth="271.0" styleClass="btn-primary-two" text="EXECUTAR DIAGNOSTICO">
+                                    <graphic>
+                                       <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Avaliação completa do sistema" />
+                                    </graphic>
+                                 </JFXButton>
+                              </children>
+                           </HBox>
+                        </children>
+                        <styleClass>
+                           <String fx:value="card" />
+                           <String fx:value="shadow" />
+                        </styleClass>
+                        <VBox.margin>
+                           <Insets />
+                        </VBox.margin>
+                        <padding>
+                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </padding>
+                     </VBox>
+                  </children>
+               </VBox>
+            </children>
+         </AnchorPane>
+         <VBox prefHeight="473.0" prefWidth="666.0" spacing="10.0">
+            <children>
+               <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Analise da Performance" />
+               <Separator prefHeight="5.0" prefWidth="486.0" />
+               <HBox prefHeight="320.0" prefWidth="522.0" spacing="18.0">
+                  <children>
+                     <VBox prefHeight="357.0" prefWidth="325.0" spacing="10.0">
+                        <children>
+                           <Label styleClass="h3-thin" text="SUAS HABILIDADES" />
+                           <StackPane fx:id="radarHost" minHeight="310.0" minWidth="305.0" prefHeight="310.0" prefWidth="305.0" />
+                        </children>
+                        <padding>
+                           <Insets bottom="10.0" right="10.0" top="10.0" />
+                        </padding>
+                     </VBox>
+                     <VBox prefHeight="320.0" prefWidth="209.0" spacing="15.0">
+                        <children>
+                           <VBox prefHeight="146.0" prefWidth="208.0" spacing="2.0">
+                              <children>
+                                 <Label styleClass="h3-thin" text=" RESULTADO DAS AVALIAÇOES" />
+                                 <VBox fx:id="lastResult" prefHeight="200.0" prefWidth="100.0" />
+                              </children>
+                              <padding>
+                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              </padding>
+                           </VBox>
+                           <VBox alignment="BOTTOM_LEFT" prefHeight="146.0" prefWidth="208.0" spacing="5.0">
+                              <children>
+                                 <Label fx:id="percentMelhoria" styleClass="h1-thin" text="85% de melhoria" />
+                                 <Label fx:id="descMelhoRia" styleClass="h3-thin" text="(Melhoria)" />
+                              </children>
+                              <VBox.margin>
+                                 <Insets />
+                              </VBox.margin>
+                              <padding>
+                                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                              </padding>
+                           </VBox>
+                        </children>
+                     </VBox>
+                  </children>
+                  <padding>
+                     <Insets bottom="14.0" right="14.0" top="14.0" />
+                  </padding>
+               </HBox>
+            </children>
+            <padding>
+               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <styleClass>
+               <String fx:value="card" />
+               <String fx:value="shadow" />
+            </styleClass>
+         </VBox>
+      </children>
+   </HBox>
+   <HBox prefHeight="428.0" prefWidth="1034.0" spacing="20.0">
+      <children>
+         <VBox prefHeight="382.0" prefWidth="473.0" spacing="10.0">
+            <children>
+               <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Status da Evolucao" />
+               <Separator prefHeight="5.0" prefWidth="455.0" />
+               <Label styleClass="h3-thin" text="STATUS POR DISCIPLINA" textFill="#8d8d8d" />
+               <ListView id="status_disciplina" fx:id="status_disciplina" prefHeight="322.0" prefWidth="432.0" />
+            </children>
+            <padding>
+               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <styleClass>
+               <String fx:value="card" />
+               <String fx:value="shadow" />
+            </styleClass>
+         </VBox>
+         <VBox prefHeight="368.0" prefWidth="675.0" spacing="10.0">
+            <children>
+               <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Actividades Recente" />
+               <Separator prefHeight="5.0" prefWidth="455.0" />
+               <Label styleClass="h3-thin" text="NIVEL ACTUAL" textFill="#8d8d8d" />
+               <AreaChart fx:id="areaActivityChart" prefHeight="345.0" prefWidth="502.0" styleClass="area-demo">
+                 <xAxis>
+                   <CategoryAxis side="BOTTOM" />
+                 </xAxis>
+                 <yAxis>
+                   <NumberAxis side="LEFT" />
+                 </yAxis>
+              </AreaChart>
+            </children>
+            <styleClass>
+               <String fx:value="card" />
+               <String fx:value="shadow" />
+            </styleClass>
+            <padding>
+               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+         </VBox>
+      </children>
+   </HBox>
+   <stylesheets>
+      <URL value="@../../../../styles/global.css" />
+      <URL value="@../../../../styles/candidato-layout.css" />
+   </stylesheets>
 </VBox>
-

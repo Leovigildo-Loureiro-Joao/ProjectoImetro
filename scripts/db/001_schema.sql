@@ -85,7 +85,10 @@ create index if not exists idx_teste_perguntas_pergunta_id on teste_perguntas (p
 -- Disciplinas + preferências do onboarding (MVP).
 create table if not exists disciplinas (
   id uuid primary key default uuid_generate_v4(),
-  nome text not null unique
+  nome text not null unique,
+  peso double precision not null default 1.0,
+  nivel text not null default 'BASICO',
+  objectivo text null
 );
 
 create table if not exists candidato_disciplinas (

@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane stylesheets="@../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.AuthLayoutController">
+<StackPane stylesheets="@../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.AuthLayoutController">
    <children>
         <VBox alignment="CENTER" prefHeight="283.0" prefWidth="540.0" spacing="10.0" styleClass="auth-shell" StackPane.alignment="CENTER">
             <padding>
@@ -14,7 +14,7 @@
          <Label styleClass="brand-title" text="Simulator Bolsa Study" />
 
                         <StackPane fx:id="contentHost" maxWidth="460" />
-         <Label maxWidth="600.0" styleClass="brand-subtitle" text="Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com análise adaptativa e feedback orientado a dados para Estudante e Orientador." textAlignment="CENTER" textFill="#030202" wrapText="true" />
+         <Label maxWidth="600.0" styleClass="brand-subtitle" text="Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com análise adaptativa e feedback orientado a dados para Estudante e Orientador." textAlignment="CENTER" wrapText="true" />
         </VBox>
    </children>
 </StackPane>

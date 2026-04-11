@@ -1,6 +1,8 @@
+@import "global.css";
+
 .auth-brand {
-  -fx-background-color: linear-gradient(to bottom right, #f2c14a, #ebac25, #d58f1e);
-  -fx-border-color: rgba(235, 172, 37, 0.85);
+  -fx-background-color: linear-gradient(to bottom right, rgba(29, 78, 216, 0.10), rgba(245, 158, 11, 0.10));
+  -fx-border-color: -color-border;
   -fx-border-width: 0 1 0 0;
   -fx-min-width: 420px;
 }
@@ -8,16 +10,14 @@
 .brand-title {
   -fx-font-size: 30px;
   -fx-font-weight: 900;
-  -fx-text-fill: #ffffff;
-  -fx-effect: dropshadow(gaussian, rgba(13, 27, 42, 0.35), 14, 0.18, 0, 2);
+  -fx-text-fill: -color-text;
 }
 
 .brand-subtitle {
   -fx-font-size: 14px;
   -fx-font-weight: 600;
-  -fx-text-fill: rgba(255, 255, 255, 0.92);
+  -fx-text-fill: -color-muted;
   -fx-padding: 0 0 6 0;
-  -fx-effect: dropshadow(gaussian, rgba(13, 27, 42, 0.22), 10, 0.15, 0, 1);
 }
 
 .auth-shell {
@@ -25,13 +25,18 @@
 }
 
 .tab-button {
-  -fx-background-color: rgba(255, 255, 255, 0.06);
-  -fx-text-fill: #e5e7eb;
+  -fx-background-color: rgba(15, 23, 42, 0.04);
+  -fx-text-fill: -color-text;
 }
 
 .tab-button:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.09);
+  -fx-background-color: rgba(15, 23, 42, 0.06);
 }
+
+.auth-card {
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.22), 28, 0.16, 0, 12);
+}
+
 
 
 .cardleft {
@@ -49,7 +54,7 @@
 
 .auth-decor-icon {
   -fx-fill: transparent;
-  -fx-stroke: rgba(255, 255, 255, 0.85);
+  -fx-stroke: rgba(15, 23, 42, 0.10);
   -fx-stroke-width: 1.6;
   -fx-stroke-line-cap: round;
   -fx-stroke-line-join: round;
