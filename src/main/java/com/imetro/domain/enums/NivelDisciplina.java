@@ -14,4 +14,8 @@ public enum NivelDisciplina {
         this.descricao = descricao;
     }
 
+    public String getDescricao() {
+        return descricao;
+    }
+
 }

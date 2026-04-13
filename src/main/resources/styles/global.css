@@ -223,9 +223,8 @@
 }
 
 .status-row {
-  -fx-alignment: CENTER_LEFT;
   -fx-padding: 10 12 10 12;
-  -fx-background-color: rgba(15, 23, 42, 0.02);
+  -fx-background-color: rgba(102, 118, 155, 0.02);
   -fx-background-radius: 12;
   -fx-border-color: -color-border;
   -fx-border-radius: 12;
@@ -242,7 +241,13 @@
   -fx-font-weight: 700;
 }
 
-.status-progress {
+.status-detail {
+  -fx-text-fill: -color-muted;
+  -fx-font-size: 12px;
+}
+
+.status-progress-bar {
+  -fx-pref-height: 8px;
   -fx-accent: -color-primary;
 }
 

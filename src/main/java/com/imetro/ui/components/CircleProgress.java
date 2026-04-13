@@ -17,7 +17,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Glow;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -29,7 +28,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 
-public class CircleProgress extends StackPane {
+public class CircleProgress extends Group {
     
     private Arc backgroundArc;
     private Arc progressArc;
@@ -60,9 +59,7 @@ public class CircleProgress extends StackPane {
     }
     
     private void init(int radius, int size, double translate, float initialValue) {
-        setPrefSize(size, size);
-        setMaxSize(size, size);
-        setAlignment(Pos.CENTER);
+       
         
         // Arco de fundo (cinza claro)
         backgroundArc = createArc(radius, 360, backgroundColor.get());
@@ -79,6 +76,9 @@ public class CircleProgress extends StackPane {
         percentLabel.setTextFill(textColor.get());
         percentLabel.setAlignment(Pos.CENTER);
         percentLabel.getStyleClass().add("percent-label");
+      
+        percentLabel.setLayoutX(0);
+        percentLabel.setLayoutY(0);
         
         // Label do subtítulo (opcional)
         subtitleLabel = new Label("");
@@ -86,16 +86,11 @@ public class CircleProgress extends StackPane {
         subtitleLabel.setTextFill(Color.web("#6b7280"));
         subtitleLabel.setAlignment(Pos.CENTER);
         subtitleLabel.getStyleClass().add("subtitle-label");
+        subtitleLabel.setLayoutX(radius);
+        subtitleLabel.setLayoutY(radius + size * 0.15);
         
-        // Layout empilhado
-        StackPane textContainer = new StackPane();
-        textContainer.setAlignment(Pos.CENTER);
-        textContainer.getChildren().addAll(percentLabel, subtitleLabel);
-        StackPane.setAlignment(subtitleLabel, Pos.BOTTOM_CENTER);
-        subtitleLabel.setTranslateY(size * 0.15);
-        
-        getChildren().addAll(backgroundArc, progressArc, textContainer);
-        
+        getChildren().addAll(backgroundArc, progressArc, percentLabel, subtitleLabel);
+        percentLabel.setPrefSize(size*2, size*2);
         // Configurar gradientes
         setupGradients();
         
@@ -105,19 +100,6 @@ public class CircleProgress extends StackPane {
         textColor.addListener((obs, oldVal, newVal) -> percentLabel.setTextFill(newVal));
         
         setValue(initialValue);
-        
-        // Efeito hover
-        setOnMouseEntered(e -> {
-            progressArc.setEffect(createGlowEffect());
-            setScaleX(1.02);
-            setScaleY(1.02);
-        });
-        
-        setOnMouseExited(e -> {
-            progressArc.setEffect(createGlowEffect());
-            setScaleX(1.0);
-            setScaleY(1.0);
-        });
     }
     
     private Arc createArc(int radius, int length, Color color) {

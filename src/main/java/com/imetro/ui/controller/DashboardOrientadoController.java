@@ -10,8 +10,10 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.ResourceBundle;
 
+import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
+import com.imetro.util.DisciplinaCatalog;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -92,6 +94,16 @@ public class DashboardOrientadoController implements Initializable {
     private Label welcome;
 
 
+    @FXML
+    private Label descSucesso;
+
+    @FXML
+    private Label percentSucesso;
+
+    @FXML
+    private StackPane sucesso;
+
+
     private XYChart.Series<String,Integer> dificuldadesSeries;
     private XYChart.Series<String,Integer> evolucoesSeries;
 
@@ -126,9 +138,30 @@ public class DashboardOrientadoController implements Initializable {
         updateHeader();
         setupAreaChart();
         setupRadar();
+        setupDisciplineStatus();
         setupImprovementData();
         setupLastResults();
         animateStartup();
+    }
+
+    private void setupDisciplineStatus() {
+        if (status_disciplina == null) {
+            return;
+        }
+
+        List<DisciplineStatus> demoStatuses = List.of(
+            new DisciplineStatus("Matemática", 0.85, 4.5f, NivelDisciplina.ALTO, 0.8, 0.75, 0.9),
+            new DisciplineStatus("Português", 0.72, 3.0f, NivelDisciplina.MEDIO, 0.7, 0.8, 0.85),
+            new DisciplineStatus("Física", 0.68, 4.0f, NivelDisciplina.ALTO, 0.6, 0.7, 0.75),
+            new DisciplineStatus("Química", 0.54, 3.5f, NivelDisciplina.MEDIO, 0.5, 0.65, 0.7),
+            new DisciplineStatus("Biologia", 0.91, 2.5f, NivelDisciplina.BAIXO, 0.9, 0.85, 0.95),
+            new DisciplineStatus("História", 0.76, 2.0f, NivelDisciplina.BAIXO, 0.75, 0.8, 0.8),
+            new DisciplineStatus("Geografia", 0.63, 2.5f, NivelDisciplina.BAIXO, 0.65, 0.7, 0.75),
+            new DisciplineStatus("Inglês", 0.79, 3.0f, NivelDisciplina.MEDIO, 0.8, 0.75, 0.85)
+        );
+
+        status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
+        status_disciplina.setItems(FXCollections.observableArrayList(demoStatuses));
     }
 
     private void setupImprovementData() {
@@ -162,8 +195,31 @@ public class DashboardOrientadoController implements Initializable {
         percentMelhoria.setStyle("-fx-text-fill: #dc2626; ");
         descMelhoRia.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
     }
-    CircleProgress circleProgress = new CircleProgress(50, 50);
+    CircleProgress circleProgress = new CircleProgress(30, 30);
     melhoria.getChildren().add(circleProgress);
+    circleProgress.setValue(percentValue / 100.0);
+
+    // Mesmo para sucesso
+    int idxSucesso = rand.nextInt(5) * 2;
+    percentSucesso.setText(melhorias[idxSucesso]);
+    descSucesso.setText(melhorias[idxSucesso + 1]);
+    
+    String percentTextSucesso = melhorias[idxSucesso].replace("%", "");
+    int percentValueSucesso = Integer.parseInt(percentTextSucesso);
+    
+    if (percentValueSucesso >= 80) {
+        percentSucesso.setStyle("-fx-text-fill: #059669;");
+        descSucesso.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
+    } else if (percentValueSucesso >= 70) {
+        percentSucesso.setStyle("-fx-text-fill: #d97706; ");
+        descSucesso.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
+    } else {
+        percentSucesso.setStyle("-fx-text-fill: #dc2626; ");
+        descSucesso.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
+    }
+    CircleProgress circleProgressSucesso = new CircleProgress(30, 30);
+    sucesso.getChildren().add(circleProgressSucesso);
+    circleProgressSucesso.setValue(percentValueSucesso / 100.0);
 } 
 
     private void updateHeader() {
@@ -392,21 +448,34 @@ public class DashboardOrientadoController implements Initializable {
         }
     }
 
-    private record DisciplineStatus(String name, double progress) {}
+    private record DisciplineStatus(String name, double progress, float peso, NivelDisciplina nivel, double velocidade, double consistencia, double precisao) {}
 
     private static final class DisciplineStatusCell extends ListCell<DisciplineStatus> {
         private final Label name = new Label();
-        private final ProgressBar progress = new ProgressBar();
+        private final CircleProgress progress = new CircleProgress(30,30);
+        private final ProgressBar velocidade = new ProgressBar(0);
+        private final ProgressBar consistencia = new ProgressBar(0);
+        private final ProgressBar precisao = new ProgressBar(0);
         private final Label percent = new Label();
-        private final VBox root = new VBox(12, name, progress, percent);
-
+        private final Label peso = new Label();
+        private final Label nivel = new Label();
+        private final VBox progressos= new VBox(3, new Label("Velocidade"),velocidade,new Label("Consistência"), consistencia, new Label("Precisão"), precisao);
+        private final HBox root = new HBox(10, progress, new VBox(5, name, percent, peso, nivel),progressos);
+        
+        
         private DisciplineStatusCell() {
             root.getStyleClass().add("status-row");
             name.getStyleClass().add("status-name");
-            progress.getStyleClass().add("status-progress");
-            progress.setMaxWidth(Double.MAX_VALUE);
-            VBox.setVgrow(progress, javafx.scene.layout.Priority.ALWAYS);
-            percent.getStyleClass().add("status-percent");
+            peso.getStyleClass().add("status-detail");
+            nivel.getStyleClass().add("status-detail");
+            velocidade.getStyleClass().add("status-progress-bar");
+            consistencia.getStyleClass().add("status-progress-bar");
+            precisao.getStyleClass().add("status-progress-bar");
+            velocidade.setPrefWidth(150);
+            consistencia.setPrefWidth(150);
+            precisao.setPrefWidth(150);
+            progressos.setStyle("-fx-font-size:10px;-fx-text-fill:-color-muted ;-fx-translate-x:20px");
+            HBox.setHgrow(progress, javafx.scene.layout.Priority.ALWAYS);
         }
 
         @Override
@@ -419,8 +488,13 @@ public class DashboardOrientadoController implements Initializable {
             }
 
             name.setText(item.name());
-            progress.setProgress(item.progress());
+            progress.setValue(item.progress());
             percent.setText((int) Math.round(item.progress() * 100) + "%");
+            peso.setText("Peso: " + item.peso());
+            nivel.setText("Nível: " + item.nivel().getDescricao());
+            velocidade.setProgress(item.velocidade());
+            consistencia.setProgress(item.consistencia());
+            precisao.setProgress(item.precisao());
             setText(null);
             setGraphic(root);
         }
