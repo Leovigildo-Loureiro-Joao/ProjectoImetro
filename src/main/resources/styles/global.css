@@ -597,7 +597,7 @@
 /* Seção de labels */
 .section-label {
     -fx-font-size: 11px;
-    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-text-fill: rgba(71, 71, 71, 0.8);
     -fx-font-weight: bold;
     -fx-letter-spacing: 1px;
 }
@@ -619,7 +619,7 @@
 .result-title {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: rgb(75, 75, 75);
 }
 
 .result-score {
@@ -630,7 +630,7 @@
 
 .result-date {
     -fx-font-size: 10px;
-    -fx-text-fill: rgba(255, 255, 255, 0.7);
+    -fx-text-fill: rgba(158, 158, 158, 0.7);
 }
 
 /* Progresso de melhoria */
@@ -643,12 +643,12 @@
 .improvement-label {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: rgb(68, 68, 68);
 }
 
 .improvement-detail {
     -fx-font-size: 11px;
-    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-text-fill: rgba(54, 54, 54, 0.8);
 }
 
 .improvement-progress {
@@ -687,13 +687,13 @@
 .goal-percent {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #a7f3d0;
+    -fx-text-fill: #2ebb79;
 }
 
 /* Pill badges para resultados */
 .pill-good {
     -fx-background-color: rgba(167, 243, 208, 0.3);
-    -fx-text-fill: #a7f3d0;
+    -fx-text-fill: #44bd84;
     -fx-padding: 4 12 4 12;
     -fx-background-radius: 20;
     -fx-font-size: 11px;
@@ -707,4 +707,40 @@
     -fx-background-radius: 20;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
+}
+
+/* CircleProgress Component Styles */
+.circle-progress {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 8, 0.1, 0, 4);
+}
+
+.arc-background {
+    -fx-opacity: 0.3;
+}
+
+.arc-progress {
+    -fx-effect: dropshadow(gaussian, rgba(79, 70, 229, 0.3), 6, 0.2, 0, 2);
+}
+
+.percent-label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-weight: bold;
+    -fx-effect: null;
+}
+
+.subtitle-label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 10px;
+    -fx-opacity: 0.8;
+}
+
+/* Animações */
+@keyframes pulse {
+    0% { -fx-opacity: 0.6; }
+    50% { -fx-opacity: 1; }
+    100% { -fx-opacity: 0.6; }
+}
+
+.circle-progress:pulse {
+    -fx-animation: pulse 1.5s infinite;
 }

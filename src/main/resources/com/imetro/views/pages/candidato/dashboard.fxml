@@ -14,6 +14,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
@@ -126,7 +127,7 @@
                <Separator prefHeight="5.0" prefWidth="486.0" />
                <HBox prefHeight="366.0" prefWidth="626.0" spacing="18.0">
                   <children>
-                     <VBox prefHeight="319.0" prefWidth="325.0" spacing="10.0" styleClass="sub-card">
+                     <VBox prefHeight="303.0" prefWidth="298.0" spacing="10.0" styleClass="sub-card">
                         <children>
                            <Label styleClass="h3-thin" text="SUAS HABILIDADES">
                               <VBox.margin>
@@ -218,11 +219,6 @@
                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                     </padding>
                                  </ProgressBar>
-                                 <ProgressBar fx:id="logica" layoutX="10.0" layoutY="36.0" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
-                                    <padding>
-                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                    </padding>
-                                 </ProgressBar>
                               </children>
                            </VBox>
                         </children>
@@ -231,7 +227,7 @@
                         </padding>
                      </VBox>
                     <!-- Versão melhorada mantendo sua estrutura -->
-<VBox prefHeight="303.0" prefWidth="266.0" spacing="15.0">
+<VBox prefHeight="303.0" prefWidth="298.0" spacing="15.0">
    <children>
       <!-- Card de Resultados com indicador visual -->
       <VBox prefHeight="146.0" prefWidth="208.0" spacing="8.0" styleClass="sub-card">
@@ -253,7 +249,7 @@
          <children>
             <Label styleClass="h3-thin" text="TAXA DE MELHORIA" />
             <Label fx:id="percentMelhoria" styleClass="percent-value" text="85%" />
-            <ProgressBar fx:id="melhoria" prefWidth="150.0" progress="0.85" styleClass="mini-progress" />
+                                 <StackPane fx:id="melhoria" prefHeight="150.0" prefWidth="200.0" />
             <Label fx:id="descMelhoRia" styleClass="desc-text" text="(Melhoria)" />
          </children>
          <padding>
@@ -285,7 +281,7 @@
                <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Status da Evolucao" />
                <Separator prefHeight="5.0" prefWidth="455.0" />
                <Label styleClass="h3-thin" text="STATUS POR DISCIPLINA" textFill="#8d8d8d" />
-               <ListView id="status_disciplina" fx:id="status_disciplina" prefHeight="322.0" prefWidth="432.0" />
+               <ListView id="status_disciplina" fx:id="status_disciplina" prefHeight="322.0" prefWidth="432.0" styleClass="nav-bar" />
             </children>
             <padding>
                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

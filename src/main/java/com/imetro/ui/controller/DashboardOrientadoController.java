@@ -4,9 +4,14 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.ResourceBundle;
+
+import com.imetro.ui.components.CircleProgress;
+import com.imetro.ui.components.ResultData;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -17,6 +22,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
@@ -24,6 +30,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -52,7 +59,7 @@ public class DashboardOrientadoController implements Initializable {
     private ProgressBar logica;
 
     @FXML
-    private ProgressBar melhoria;
+    private StackPane melhoria;
 
     @FXML
     private Label next_level;
@@ -109,6 +116,7 @@ public class DashboardOrientadoController implements Initializable {
 
     }
 
+
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
         setupDemo();
@@ -118,10 +126,45 @@ public class DashboardOrientadoController implements Initializable {
         updateHeader();
         setupAreaChart();
         setupRadar();
+        setupImprovementData();
         setupLastResults();
-        setupStatusList();
         animateStartup();
     }
+
+    private void setupImprovementData() {
+    // Array de dados fictícios que mudam com o tempo
+    String[] melhorias = {
+        "85%", "Excelente! Você está acima da média",
+        "72%", "Bom progresso, continue assim!",
+        "91%", "Incrível! Melhor performance do mês",
+        "64%", "Foco! Você pode melhorar ainda mais",
+        "78%", "Consistente! Mantenha o ritmo"
+    };
+    
+    // Escolhe um aleatório
+    Random rand = new Random();
+    int idx = rand.nextInt(5) * 2;
+    
+    percentMelhoria.setText(melhorias[idx]);
+    descMelhoRia.setText(melhorias[idx + 1]);
+    
+    // Cor dinâmica baseada na porcentagem
+    String percentText = melhorias[idx].replace("%", "");
+    int percentValue = Integer.parseInt(percentText);
+    
+    if (percentValue >= 80) {
+        percentMelhoria.setStyle("-fx-text-fill: #059669;");
+        descMelhoRia.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
+    } else if (percentValue >= 70) {
+        percentMelhoria.setStyle("-fx-text-fill: #d97706; ");
+        descMelhoRia.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
+    } else {
+        percentMelhoria.setStyle("-fx-text-fill: #dc2626; ");
+        descMelhoRia.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
+    }
+    CircleProgress circleProgress = new CircleProgress(50, 50);
+    melhoria.getChildren().add(circleProgress);
+} 
 
     private void updateHeader() {
         if (welcome != null) {
@@ -176,45 +219,75 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void setupLastResults() {
-        if (lastResult == null) {
-            return;
-        }
-        lastResult.setOpacity(0);
+        if (lastResult == null) return;
         lastResult.getChildren().clear();
-
-        lastResult.getChildren().addAll(
-                buildResultRow("Exame adaptativo", "82%", true),
-                buildResultRow("Diagnóstico", "76%", true),
-                buildResultRow("Treino rápido", "58%", false)
+        
+        // Dados fictícios mais detalhados e variados
+        List<ResultData> resultados = Arrays.asList(
+            new ResultData("Exame Adaptativo", "89%", LocalDate.now().minusDays(1), "excelente", "+12%"),
+            new ResultData("Diagnóstico Rápido", "76%", LocalDate.now().minusDays(3), "bom", "+5%"),
+            new ResultData("Simulado Final", "94%", LocalDate.now().minusDays(5), "excelente", "+18%"),
+            new ResultData("Quiz Semanal", "68%", LocalDate.now().minusDays(7), "regular", "-3%")
         );
-    }
-
-    private HBox buildResultRow(String title, String score, boolean good) {
-        Label label = new Label(title);
-        label.getStyleClass().add("result-title");
-
-        Label value = new Label(score);
-        value.getStyleClass().addAll("pill", good ? "pill-good" : "pill-warn");
-
-        HBox row = new HBox(10, label, value);
-        row.getStyleClass().add("result-row");
-        return row;
-    }
-
-    private void setupStatusList() {
-        if (status_disciplina == null) {
-            return;
+        
+        for (ResultData data : resultados) {
+            lastResult.getChildren().add(createResultCard(data));
         }
+    }
 
-        status_disciplina.setOpacity(0);
-        status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
-        status_disciplina.setItems(FXCollections.observableArrayList(
-                new DisciplineStatus("Lógica", 0.75),
-                new DisciplineStatus("Velocidade", 0.62),
-                new DisciplineStatus("Precisão", 0.55),
-                new DisciplineStatus("Resiliência", 0.82),
-                new DisciplineStatus("Consistência", 0.78)
-        ));
+    private VBox createResultCard(ResultData data) {
+        VBox card = new VBox(6);
+        card.getStyleClass().add("result-item");
+        
+        // Linha superior: título e score
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        Label titleLabel = new Label(data.title);
+        titleLabel.getStyleClass().add("result-title");
+        
+        Label scoreLabel = new Label(data.score);
+        scoreLabel.getStyleClass().addAll("pill", getPillStyle(data.type));
+        
+        HBox.setHgrow(titleLabel, Priority.ALWAYS);
+        header.getChildren().addAll(titleLabel, scoreLabel);
+        
+        // Linha inferior: data e variação
+        HBox footer = new HBox(15);
+        footer.setAlignment(Pos.CENTER_LEFT);
+        
+        Label dateLabel = new Label(data.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        dateLabel.getStyleClass().add("result-date");
+        
+        Label variationLabel = new Label(data.variation);
+        variationLabel.getStyleClass().add("result-date");
+        if (data.variation.contains("+")) {
+            variationLabel.setTextFill(Color.web("#059669"));
+            variationLabel.setGraphic(createIcon("▲"));
+        } else if (data.variation.contains("-")) {
+            variationLabel.setTextFill(Color.web("#dc2626"));
+            variationLabel.setGraphic(createIcon("▼"));
+        }
+        
+        footer.getChildren().addAll(dateLabel, variationLabel);
+        
+        card.getChildren().addAll(header, footer);
+        return card;
+    }
+
+    private String getPillStyle(String type) {
+        switch (type) {
+            case "excelente": return "pill-good";
+            case "bom": return "pill-neutral";
+            case "regular": return "pill-warn";
+            default: return "pill-neutral";
+        }
+    }
+
+    private Label createIcon(String symbol) {
+        Label icon = new Label(symbol);
+        icon.setStyle("-fx-font-size: 8px; -fx-font-weight: bold;");
+        return icon;
     }
 
     private void animateStartup() {
@@ -354,3 +427,4 @@ public class DashboardOrientadoController implements Initializable {
     }
 
 }
+
