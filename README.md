@@ -37,15 +37,104 @@ O sistema recolhe dados de desempenho (ex.: acerto/erro, tempo, tópicos) e usa 
 
 ## Tecnologias
 
-- Java 11
+- Java 21
 - JavaFX
 - Maven
+
+## Configuração do Ambiente
+
+Para executar o projeto, você precisa configurar o ambiente de desenvolvimento. Siga os passos abaixo para Windows ou Linux.
+
+### Pré-requisitos Gerais
+
+- JDK 21 (Java Development Kit)
+- Maven 3.6 ou superior
+- VS Code (recomendado)
+- Docker (opcional, para banco de dados local)
+
+### Configuração no Windows
+
+1. **Baixar e Instalar JDK 21:**
+   - Acesse o site oficial: [Eclipse Temurin (Adoptium)](https://adoptium.net/temurin/releases/?version=21)
+   - Baixe a versão para Windows (arquivo .msi ou .zip).
+   - Execute o instalador e siga as instruções. Anote o caminho de instalação (ex.: `C:\Program Files\Eclipse Adoptium\jdk-21`).
+
+2. **Baixar e Instalar Maven:**
+   - Acesse: [Maven Downloads](https://maven.apache.org/download.cgi)
+   - Baixe o arquivo binário (apache-maven-X.X.X-bin.zip).
+   - Extraia o arquivo para uma pasta, ex.: `C:\apache-maven-3.9.5`.
+
+3. **Configurar Variáveis de Ambiente:**
+   - Abra o Painel de Controle > Sistema > Configurações Avançadas do Sistema > Variáveis de Ambiente.
+   - Em "Variáveis do Sistema", clique em "Novo":
+     - Nome: `JAVA_HOME`
+     - Valor: caminho do JDK (ex.: `C:\Program Files\Eclipse Adoptium\jdk-21`)
+   - Clique em "Novo" novamente:
+     - Nome: `MAVEN_HOME`
+     - Valor: caminho do Maven (ex.: `C:\apache-maven-3.9.5`)
+   - Edite a variável `Path` (em "Variáveis do Sistema"):
+     - Adicione: `%JAVA_HOME%\bin`
+     - Adicione: `%MAVEN_HOME%\bin`
+   - Reinicie o prompt de comando e verifique: `java -version` e `mvn -version`.
+
+4. **Instalar VS Code:**
+   - Baixe e instale do site: [VS Code](https://code.visualstudio.com/).
+   - Abra o VS Code e instale as extensões:
+     - Extension Pack for Java (Microsoft)
+     - Maven for Java (Microsoft)
+     - JavaFX Support (opcional, se disponível)
+
+5. **Clonar o Repositório:**
+   - Abra o VS Code, vá para Source Control, clone o repositório ou baixe o ZIP e extraia.
+
+### Configuração no Linux
+
+1. **Instalar JDK 21:**
+   - Use o gerenciador de pacotes. Para Ubuntu/Debian:
+     ```
+     sudo apt update
+     sudo apt install openjdk-21-jdk
+     ```
+   - Verifique: `java -version` (deve mostrar OpenJDK 21).
+   - Se precisar de uma versão específica, baixe do [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21) e extraia para `/opt/jdk-21`, então configure `JAVA_HOME=/opt/jdk-21`.
+
+2. **Instalar Maven:**
+   - Para Ubuntu/Debian:
+     ```
+     sudo apt install maven
+     ```
+   - Ou baixe manualmente:
+     - `wget https://downloads.apache.org/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz`
+     - `tar -xzf apache-maven-3.9.5-bin.tar.gz`
+     - Mova para `/opt/apache-maven-3.9.5`
+
+3. **Configurar Variáveis de Ambiente:**
+   - Edite `~/.bashrc` ou `~/.profile`:
+     ```
+     export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64  # ou o caminho correto
+     export MAVEN_HOME=/opt/apache-maven-3.9.5  # se instalado manualmente
+     export PATH=$JAVA_HOME/bin:$MAVEN_HOME/bin:$PATH
+     ```
+   - Recarregue: `source ~/.bashrc`
+   - Verifique: `java -version` e `mvn -version`.
+
+4. **Instalar VS Code:**
+   - Baixe o .deb do site: [VS Code](https://code.visualstudio.com/).
+   - Instale: `sudo dpkg -i code_*.deb` (ou use Snap: `sudo snap install code --classic`).
+   - Abra o VS Code e instale as extensões:
+     - Extension Pack for Java (Microsoft)
+     - Maven for Java (Microsoft)
+     - JavaFX Support (opcional)
+
+5. **Clonar o Repositório:**
+   - Use Git: `git clone <url-do-repo>`
+   - Ou baixe o ZIP e extraia.
 
 ## Executar o projeto
 
 ### Pré-requisitos
 
-- JDK 11 instalado
+- JDK 21 instalado
 - Maven instalado
 
 ### Comando

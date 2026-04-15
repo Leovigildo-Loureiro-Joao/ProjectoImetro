@@ -573,6 +573,12 @@
     -fx-text-fill: white;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 2, 0.1, 0, 1);
 }
+.card-title-secondary {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-muted;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 2, 0.1, 0, 1);
+}
 
 /* Métricas principais */
 .metric-value {
