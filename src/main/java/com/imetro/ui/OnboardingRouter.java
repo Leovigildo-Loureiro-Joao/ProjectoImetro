@@ -21,11 +21,19 @@ public final class OnboardingRouter {
     private OnboardingRouter() {
     }
 
+    public static void CandidatoRoute(StackPane contentHost){
+          App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
+                    return;
+    }
+
     public static void routeAfterAuth(StackPane contentHost) {
         if (contentHost == null) {
             return;
         }
-
+        if (true) {
+            CandidatoRoute(contentHost);    
+        }
+        
         String role = Authentication.getCurrentUserRole();
         String email = Authentication.getCurrentUserEmail();
         UUID userId = parseUuid(Authentication.getCurrentUserId());
@@ -51,8 +59,7 @@ public final class OnboardingRouter {
                     App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
                     return;
                 }
-                App.setRoot("views/layouts/CandidatoLayout");
-                return;
+               CandidatoRoute(contentHost);
             }
 
             if ("ORIENTADOR".equalsIgnoreCase(role)) {

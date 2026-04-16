@@ -1,83 +1,208 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
-<?import com.jfoenix.controls.JFXCheckBox?>
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane prefHeight="747.0" prefWidth="860.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<StackPane prefHeight="924.0" prefWidth="860.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.DiagnosticoCandidatoController">
    <AnchorPane>
       <children>
-          <VBox alignment="TOP_LEFT" layoutX="14.0" layoutY="12.0" spacing="10.0" styleClass="placeholder-card" AnchorPane.bottomAnchor="12.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="12.0">
+          <VBox alignment="TOP_LEFT" layoutX="-2.0" layoutY="-2.0" prefHeight="722.0" prefWidth="820.0" spacing="10.0" styleClass="placeholder-card" AnchorPane.bottomAnchor="-13.0" AnchorPane.leftAnchor="-2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="-2.0">
               <padding>
                   <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
               </padding>
-              
-              <Label styleClass="big-h1" text="Diagnóstico" />
-              <Label styleClass="muted" text="Avaliação inicial / análise de nível (em breve)." />
-            <Label layoutX="29.0" layoutY="76.0" styleClass="muted" text="Escolha as disciplinas para o diagnostico" />
-            <StackPane>
+            <HBox alignment="CENTER_LEFT" spacing="70.0">
                <children>
-                  <VBox spacing="15.0" visible="false">
+                  <VBox spacing="10.0">
                      <children>
                           
-                          <HBox alignment="CENTER_LEFT" prefWidth="683.0" spacing="16.0" styleClass="diagnostic-summary">
-                              <children>
-                                  <VBox alignment="TOP_LEFT" prefWidth="158.0" spacing="6.0" styleClass="card small-card">
-                                      <Label styleClass="card-title" text="Desempenho" />
-                                      <Label text="Acertos: 8 / 15" />
-                                      <Label text="Percentual: 52%" />
-                                      <Label text="Nível: Intermediário" />
+                          <Label styleClass="big-h1" text="Diagnóstico" />
+                          <Label styleClass="muted" text="Avaliação inicial / análise de nível (em breve)." />
+                     </children>
+                  </VBox>
+                  <HBox alignment="CENTER" prefHeight="68.0" prefWidth="444.0" spacing="20.0">
+                     <children>
+                        <JFXButton prefHeight="35.0" prefWidth="212.0" styleClass="btn-primary" text="Diagnosticar" />
+                        <JFXButton prefHeight="35.0" prefWidth="212.0" styleClass="btn-secondary" text="Ver Relatorio" />
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+            <AnchorPane prefHeight="771.0" prefWidth="782.0">
+               <children>
+                  <VBox fx:id="end" prefHeight="694.0" prefWidth="782.0" spacing="15.0" AnchorPane.bottomAnchor="-2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
+                     <children>
+                        <FlowPane hgap="20.0" vgap="20.0">
+                           <children>
+                                  <VBox alignment="TOP_LEFT" prefHeight="119.0" prefWidth="200.0" spacing="6.0" styleClass="card">
+                                 <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                    <VBox.margin>
+                                       <Insets bottom="5.0" />
+                                    </VBox.margin>
+                                    <children>
+                                       <ImageView fitHeight="29.0" fitWidth="82.0" pickOnBounds="true" preserveRatio="true">
+                                          <image>
+                                             <Image url="@../../../assets/imgs/quick_mode_on_24px.png" />
+                                          </image>
+                                       </ImageView>
+                                            <Label styleClass="card-title-secondary" text="Desempenho" />
+                                    </children>
+                                 </HBox>
+                                      <Label fx:id="acertos" text="Acertos: 8 / 15">
+                                    <VBox.margin>
+                                       <Insets left="10.0" />
+                                    </VBox.margin>
+                                 </Label>
+                                      <Label fx:id="percentual" text="Percentual: 52%">
+                                    <VBox.margin>
+                                       <Insets left="10.0" />
+                                    </VBox.margin>
+                                 </Label>
+                                      <Label fx:id="nivel" text="Nível: Intermediário">
+                                    <VBox.margin>
+                                       <Insets left="10.0" />
+                                    </VBox.margin>
+                                 </Label>
+                                 <padding>
+                                    <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
                                   </VBox>
-                                  <VBox alignment="TOP_LEFT" prefWidth="158.0" spacing="6.0" styleClass="card small-card">
-                                      <Label styleClass="card-title" text="Tempo" />
-                                      <Label text="Total: 22m 14s" />
-                                      <Label text="Médio: 1m 28s" />
-                                      <Label text="Restante: 5m 00s" />
+                                  <VBox alignment="TOP_LEFT" prefHeight="119.0" prefWidth="200.0" spacing="6.0" styleClass="card">
+                                 <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                    <children>
+                                       <ImageView fitHeight="29.0" fitWidth="82.0" pickOnBounds="true" preserveRatio="true">
+                                          <image>
+                                             <Image url="@../../../assets/imgs/time_24px.png" />
+                                          </image>
+                                       </ImageView>
+                                       <Label styleClass="card-title-secondary" text="Tempo" />
+                                    </children>
+                                    <VBox.margin>
+                                       <Insets bottom="5.0" />
+                                    </VBox.margin>
+                                 </HBox>
+                                      <Label fx:id="tempoTot" text="Total: 22m 14s">
+                                    <VBox.margin>
+                                       <Insets left="10.0" />
+                                    </VBox.margin>
+                                 </Label>
+                                      <Label fx:id="tempoMed" text="Médio: 1m 28s">
+                                    <VBox.margin>
+                                       <Insets left="10.0" />
+                                    </VBox.margin>
+                                 </Label>
+                                      <Label fx:id="tempoRes" text="Restante: 5m 00s">
+                                    <VBox.margin>
+                                       <Insets left="10.0" />
+                                    </VBox.margin>
+                                 </Label>
+                                 <padding>
+                                    <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
                                   </VBox>
-                                  <VBox alignment="TOP_LEFT" prefWidth="158.0" spacing="6.0" styleClass="card small-card">
-                                      <Label styleClass="card-title" text="Pontos fracos" />
-                                      <Label text="Frações" wrapText="true" />
-                                      <Label text="Geometria" wrapText="true" />
+                                  <VBox alignment="TOP_LEFT" prefHeight="119.0" prefWidth="200.0" spacing="6.0" styleClass="card">
+                                 <VBox fx:id="pontosFracos" prefHeight="119.0" prefWidth="231.0" spacing="5.0">
+                                    <children>
+                                       <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                          <children>
+                                             <ImageView fitHeight="29.0" fitWidth="82.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                   <Image url="@../../../assets/imgs/decrease_font_50px.png" />
+                                                </image>
+                                             </ImageView>
+                                             <Label styleClass="card-title-secondary" text="Pontos fracos" />
+                                          </children>
+                                          <VBox.margin>
+                                             <Insets bottom="5.0" />
+                                          </VBox.margin>
+                                       </HBox>
+                                            <Label text="Frações" wrapText="true">
+                                          <VBox.margin>
+                                             <Insets left="10.0" />
+                                          </VBox.margin>
+                                       </Label>
+                                            <Label text="Geometria" wrapText="true">
+                                          <VBox.margin>
+                                             <Insets left="10.0" />
+                                          </VBox.margin>
+                                       </Label>
+                                    </children>
+                                 </VBox>
+                                 <padding>
+                                    <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
                                   </VBox>
-                                  <VBox alignment="TOP_LEFT" prefWidth="158.0" spacing="6.0" styleClass="card small-card">
-                                      <Label styleClass="card-title" text="Próximo passo" />
-                                      <Label text="Rever conceitos básicos" wrapText="true" />
-                                      <Label text="Fazer exercícios de cálculo" wrapText="true" />
+                                  <VBox alignment="TOP_LEFT" prefHeight="119.0" prefWidth="200.0" spacing="6.0" styleClass="card">
+                                 <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                    <children>
+                                       <ImageView fitHeight="29.0" fitWidth="82.0" pickOnBounds="true" preserveRatio="true">
+                                          <image>
+                                             <Image url="@../../../assets/imgs/footsteps_26px.png" />
+                                          </image>
+                                       </ImageView>
+                                       <Label styleClass="card-title-secondary" text="Próximo passo" />
+                                    </children>
+                                    <VBox.margin>
+                                       <Insets bottom="5.0" />
+                                    </VBox.margin>
+                                 </HBox>
+                                 <VBox fx:id="proximoPassos" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                                    <children>
+                                            <Label text="Rever conceitos básicos" wrapText="true">
+                                          <VBox.margin>
+                                             <Insets left="10.0" />
+                                          </VBox.margin>
+                                       </Label>
+                                            <Label text="Fazer exercícios de cálculo" wrapText="true">
+                                          <VBox.margin>
+                                             <Insets left="10.0" />
+                                          </VBox.margin>
+                                       </Label>
+                                    </children>
+                                 </VBox>
+                                 <padding>
+                                    <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
                                   </VBox>
-                              </children>
-                          </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </FlowPane>
                           
-                          <ProgressBar maxHeight="7.0" prefHeight="7.0" prefWidth="683.0" progress="0.52" />
+                                      <ProgressBar maxHeight="19.0" maxWidth="1.7976931348623157E308" prefHeight="9.0" prefWidth="783.0" progress="0.52" />
                           
-                          <!-- Container principal responsivo -->
-                          <HBox prefWidth="688.0" spacing="20.0">
+                                      <!-- Container principal responsivo -->
+                          <HBox prefHeight="376.0" prefWidth="782.0" spacing="20.0">
                               <children>
                                   <!-- Coluna do Enunciado -->
-                                  <VBox prefHeight="347.0" prefWidth="156.0" spacing="0" HBox.hgrow="ALWAYS">
+                                  <VBox prefHeight="404.0" prefWidth="782.0" spacing="0" HBox.hgrow="ALWAYS">
                                       <children>
-                                          <Label alignment="CENTER" maxWidth="Infinity" prefHeight="40.0" style="-fx-background-color: #1d4ed8; -fx-background-radius: 10 10 0 0;" styleClass="card-title" text="MATEMATICA" />
-                                          <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="305.0" prefWidth="349.0" styleClass="card-blur" VBox.vgrow="ALWAYS">
+                                          <Label fx:id="nomeDisc" alignment="CENTER" maxWidth="Infinity" prefHeight="42.0" prefWidth="780.0" style="-fx-background-color: #1d4ed8; -fx-background-radius: 10 10 0 0;" styleClass="card-title" text="MATEMATICA" />
+                                          <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="360.0" prefWidth="780.0" styleClass="card-blur" VBox.vgrow="ALWAYS">
                                               <content>
-                                          <HBox prefHeight="380.0" prefWidth="684.0">
+                                          <HBox prefHeight="350.0" prefWidth="684.0">
                                              <children>
-                                                        <VBox prefHeight="281.0" prefWidth="336.0" spacing="10">
+                                                        <VBox prefHeight="406.0" prefWidth="354.0" spacing="10">
                                                            <VBox spacing="10">
                                                       <padding>
                                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                       </padding>
                                                       <children>
-                                                                  <Label prefWidth="334.0" styleClass="h1" text="Nº 1" wrapText="true" />
-                                                         <Label prefWidth="334.0" text="Aqui vai o texto do enunciado da questão. Este texto vai quebrar linha automaticamente quando a largura da coluna diminuir." wrapText="true" />
+                                                                  <Label fx:id="nPergunta" prefWidth="334.0" styleClass="h1" text="Nº 1" wrapText="true" />
+                                                         <Label fx:id="bloco1" prefWidth="334.0" styleClass="h3-thin" text="Aqui vai o texto do enunciado da questão. Este texto vai quebrar linha automaticamente quando a largura da coluna diminuir." wrapText="true" />
                                                       </children>
                                                            </VBox>
                                                    <padding>
@@ -86,11 +211,31 @@
                                                             <!-- Adicione mais conteúdo aqui -->
                                                         </VBox>
                                                 <Separator orientation="VERTICAL" prefHeight="200.0" />
+                                                <VBox prefHeight="406.0" prefWidth="349.0" spacing="10">
+                                                   <padding>
+                                                      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                   </padding>
+                                                   <children>
+                                                      <VBox spacing="10">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                         </padding>
+                                                      </VBox>
+                                                      <Label fx:id="bloco2" prefWidth="334.0" styleClass="h3-thin" text="Aqui vai o texto do enunciado da questão. Este texto vai quebrar linha automaticamente quando a largura da coluna diminuir." wrapText="true" />
+                                                      <ImageView fx:id="imgBloco2" fitHeight="209.0" fitWidth="233.0" pickOnBounds="true" preserveRatio="true" />
+                                                   </children>
+                                                </VBox>
+                                                <Separator orientation="VERTICAL" prefHeight="200.0" />
                                                          <!-- Alternativas -->
-                                                         <VBox prefHeight="312.0" prefWidth="342.0" spacing="8">
+                                                         <VBox prefHeight="406.0" prefWidth="371.0" spacing="8">
                                                    <HBox>
                                                       <children>
-                                                                   <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="A" wrapText="true">
+                                                                   <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="A" wrapText="true">
+                                                            <padding>
+                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                            </padding>
+                                                         </Label>
+                                                         <Label fx:id="ResA" prefHeight="40.0" prefWidth="168.0" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -99,7 +244,12 @@
                                                    </HBox>
                                                    <HBox>
                                                       <children>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="B" wrapText="true">
+                                                         <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="B" wrapText="true">
+                                                            <padding>
+                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                            </padding>
+                                                         </Label>
+                                                         <Label fx:id="ResB" prefHeight="40.0" prefWidth="168.0" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -108,7 +258,12 @@
                                                    </HBox>
                                                    <HBox>
                                                       <children>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="C" wrapText="true">
+                                                         <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="C" wrapText="true">
+                                                            <padding>
+                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                            </padding>
+                                                         </Label>
+                                                         <Label fx:id="ResC" prefHeight="40.0" prefWidth="168.0" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -117,7 +272,12 @@
                                                    </HBox>
                                                    <HBox>
                                                       <children>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="D" wrapText="true">
+                                                         <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="D" wrapText="true">
+                                                            <padding>
+                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                            </padding>
+                                                         </Label>
+                                                         <Label fx:id="ResD" prefHeight="40.0" prefWidth="168.0" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -129,14 +289,14 @@
                                                       <children>
                                                          <HBox>
                                                             <children>
-                                                               <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="E" wrapText="true">
+                                                               <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="E" wrapText="true">
                                                                   <padding>
                                                                      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                   </padding>
                                                                </Label>
                                                             </children>
                                                          </HBox>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="168.0" text="Nao sei como fazer" wrapText="true">
+                                                         <Label prefHeight="40.0" prefWidth="168.0" text="Nao sei como fazer" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -145,12 +305,12 @@
                                                    </HBox>
                                                    <HBox>
                                                       <children>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="F" wrapText="true">
+                                                         <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="F" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
                                                          </Label>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="178.0" text="Ta complexo demais" wrapText="true">
+                                                         <Label prefHeight="40.0" prefWidth="178.0" text="Ta complexo demais" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -159,12 +319,12 @@
                                                    </HBox>
                                                    <HBox>
                                                       <children>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="G" wrapText="true">
+                                                         <Label alignment="CENTER" minWidth="43.0" prefHeight="40.0" prefWidth="43.0" style="-fx-background-radius: 8;" styleClass="card" text="G" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
                                                          </Label>
-                                                         <Label alignment="CENTER" prefHeight="40.0" prefWidth="282.0" text="To confuso se devo usar que metodo" wrapText="true">
+                                                         <Label alignment="TOP_LEFT" prefHeight="60.0" prefWidth="206.0" style="-fx-wrap-text: 500;" text="To confuso se devo usar que metodo" wrapText="true">
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                             </padding>
@@ -190,104 +350,49 @@
                                   </VBox>
                               </children>
                           </HBox>
+                        <HBox alignment="TOP_RIGHT" spacing="20.0">
+                           <children>
+                              <JFXButton prefHeight="35.0" prefWidth="212.0" styleClass="btn-primary" text="Comfirmar" />
+                              <JFXButton prefHeight="35.0" prefWidth="212.0" styleClass="btn-primary-two" text="Proximo" />
+                           </children>
+                        </HBox>
                      </children>
                   </VBox>
-                  <VBox spacing="15.0">
+                  <VBox fx:id="start" prefHeight="552.0" prefWidth="688.0" spacing="15.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <FlowPane hgap="16.0" prefWrapLength="720.0" vgap="16.0">
+                        <HBox alignment="CENTER_LEFT">
+                           <children>
+                              <TextField maxHeight="37.0" prefHeight="37.0" prefWidth="738.0" promptText="Pesquisar disciplina">
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </TextField>
+                              <JFXButton contentDisplay="CENTER" prefWidth="21.0" text=" ">
+                                 <graphic>
+                                    <ImageView fitHeight="16.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../assets/imgs/search_32px.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                                 <HBox.margin>
+                                    <Insets left="-44.0" />
+                                 </HBox.margin>
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </JFXButton>
+                           </children>
+                        </HBox>
+                        <FlowPane fx:id="diagnoticos" hgap="16.0" prefWidth="738.0" prefWrapLength="720.0" vgap="16.0">
                            <padding>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </padding>
-                           <children>
-                              <VBox alignment="TOP_LEFT" prefHeight="255.0" prefWidth="196.0" spacing="10.0">
-                                 <children>
-                                    <JFXCheckBox prefHeight="34.0" prefWidth="189.0" text="Matemática" />
-                                    <Label styleClass="card-title-secondary" text="Último diagnóstico" />
-                                    <Label text="52% de acerto" />
-                                    <ProgressBar prefWidth="150.0" progress="0.52" />
-                                    <Label text="Progresso anterior: +5%" wrapText="true" />
-                                    <JFXButton prefHeight="38.0" prefWidth="155.0" styleClass="btn-primary" text="Fazer diagnostico">
-                                       <VBox.margin>
-                                          <Insets top="20.0" />
-                                       </VBox.margin>
-                                    </JFXButton>
-                                 </children>
-                                 <styleClass>
-                                    <String fx:value="card" />
-                                    <String fx:value="small-card" />
-                                 </styleClass>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </VBox>
-                              <VBox alignment="TOP_LEFT" prefHeight="255.0" prefWidth="196.0" spacing="10.0">
-                                 <children>
-                                    <JFXCheckBox prefHeight="34.0" prefWidth="189.0" text="Matemática" />
-                                    <Label styleClass="card-title-secondary" text="Último diagnóstico" />
-                                    <Label text="52% de acerto" />
-                                    <ProgressBar prefWidth="150.0" progress="0.52" />
-                                    <Label text="Progresso anterior: +5%" wrapText="true" />
-                                    <JFXButton prefHeight="38.0" prefWidth="155.0" styleClass="btn-primary" text="Fazer diagnostico">
-                                       <VBox.margin>
-                                          <Insets top="20.0" />
-                                       </VBox.margin>
-                                    </JFXButton>
-                                 </children>
-                                 <styleClass>
-                                    <String fx:value="card" />
-                                    <String fx:value="small-card" />
-                                 </styleClass>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </VBox>
-                              <VBox alignment="TOP_LEFT" prefHeight="255.0" prefWidth="196.0" spacing="10.0">
-                                 <children>
-                                    <JFXCheckBox prefHeight="34.0" prefWidth="189.0" text="Matemática" />
-                                    <Label styleClass="card-title-secondary" text="Último diagnóstico" />
-                                    <Label text="52% de acerto" />
-                                    <ProgressBar prefWidth="150.0" progress="0.52" />
-                                    <Label text="Progresso anterior: +5%" wrapText="true" />
-                                    <JFXButton prefHeight="38.0" prefWidth="155.0" styleClass="btn-primary" text="Fazer diagnostico">
-                                       <VBox.margin>
-                                          <Insets top="20.0" />
-                                       </VBox.margin>
-                                    </JFXButton>
-                                 </children>
-                                 <styleClass>
-                                    <String fx:value="card" />
-                                    <String fx:value="small-card" />
-                                 </styleClass>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </VBox>
-                              <VBox alignment="TOP_LEFT" prefHeight="255.0" prefWidth="196.0" spacing="10.0">
-                                 <children>
-                                    <JFXCheckBox prefHeight="34.0" prefWidth="189.0" text="Matemática" />
-                                    <Label styleClass="card-title-secondary" text="Último diagnóstico" />
-                                    <Label text="52% de acerto" />
-                                    <ProgressBar prefWidth="150.0" progress="0.52" />
-                                    <Label text="Progresso anterior: +5%" wrapText="true" />
-                                    <JFXButton prefHeight="38.0" prefWidth="155.0" styleClass="btn-primary" text="Fazer diagnostico">
-                                       <VBox.margin>
-                                          <Insets top="20.0" />
-                                       </VBox.margin>
-                                    </JFXButton>
-                                 </children>
-                                 <styleClass>
-                                    <String fx:value="card" />
-                                    <String fx:value="small-card" />
-                                 </styleClass>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </VBox>
-                           </children>
                         </FlowPane>
-                     </children></VBox>
+                     </children>
+                  </VBox>
                </children>
-            </StackPane>
+            </AnchorPane>
           </VBox>
       </children>
    </AnchorPane>

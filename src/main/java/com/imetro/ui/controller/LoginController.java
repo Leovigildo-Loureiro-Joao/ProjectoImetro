@@ -76,11 +76,11 @@ public class LoginController implements Initializable {
             return;
         }
 
-        boolean ok = Authentication.login(email.trim(), password);
+       /*  boolean ok = Authentication.login(email.trim(), password);
         if (!ok) {
             statusLabel.setText("Credenciais inválidas.");
             return;
-        }
+        }*/
 
         StackPane contentHost = (StackPane) telaLogin.getParent();
         OnboardingRouter.routeAfterAuth(contentHost);

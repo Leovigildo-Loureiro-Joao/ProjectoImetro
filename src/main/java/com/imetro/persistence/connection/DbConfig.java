@@ -11,20 +11,19 @@ public final class DbConfig {
 
     private DbConfig(boolean enabled, String url, String user, String password) {
         this.enabled = enabled;
-        this.url = "jdbc:postgresql://localhost:5432/simulatorbolsastudy";
-        this.user = "simulator";
-        this.password = "simulator";
+        this.url = url;
+        this.user = user;
+        this.password = password;
     }
 
     public static Optional<DbConfig> fromEnv() {
-        boolean enabled = true;
+        boolean enabled = Boolean.parseBoolean(envOrDefault("DB_ENABLED", "true"));
 
-        String url = "jdbc:postgresql://localhost:5432/simulatorbolsastudy";
-        String user = "simulator";
-        String password = "simulator";
+        String url = envOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/simulatorbolsastudy");
+        String user = envOrDefault("DB_USER", "simulator");
+        String password = envOrDefault("DB_PASSWORD", "simulator");
 
-        if (!enabled || isBlank(url) || isBlank(user) || password == null) {
-            System.out.println("vazio");
+        if (!enabled || isBlank(url) || isBlank(user) || isBlank(password)) {
             return Optional.empty();
         }
 
