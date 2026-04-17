@@ -1,5 +1,7 @@
 package com.imetro.ui.controller;
 
+import java.sql.Time;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +43,18 @@ public class DiagnosticoCandidatoController {
     @FXML private ProgressBar loadingProgress;
     @FXML private Label loadingMessage;
     @FXML private VBox tela;
+    private int h=0,m=0,s=0,a=0,e=0;
+    @FXML
+    private Label corretas;
+    @FXML
+    private Label errada;
+    @FXML
+    private Label tempo;
+
     private JFXToggleNode selected;
     private char correta;
+    private boolean diagnostico;
+    private Timeline time;
     
     private CircleProgress circleProgress;
     private List<Questao> questoes;
@@ -67,6 +79,33 @@ public class DiagnosticoCandidatoController {
         Diagnosticar(true);
         iniciarLoadingInicial();
     }
+
+    private void TimerDiagnostic(){
+        diagnostico=true;
+        
+        
+        time=new Timeline(new KeyFrame(
+            Duration.seconds(1),
+            e-> {
+              
+                    if(s==60){
+                        m++;
+                        if (m==60) {
+                            h++;
+                            m=0;
+                        }
+                        s=0;
+                    }   
+                    tempo.setText(LocalTime.of(h, m, s).toString()+(s==0?":00":""));    
+                    s++;
+                    
+                }
+              
+        ));
+       time.setCycleCount(Timeline.INDEFINITE);
+        time.play();
+        
+    }
     
     private void iniciarLoadingInicial() {
         tela.setVisible(false);
@@ -78,10 +117,10 @@ public class DiagnosticoCandidatoController {
         loadingProgress.setProgress(0);
         
         String[] mensagens = {
-            "🔍 Analisando seu perfil...",
-            "📚 Preparando questões personalizadas...",
-            "⚙️ Configurando nível de dificuldade...",
-            "🎯 Quase lá..."
+            "Analisando seu perfil...",
+            "Preparando questões personalizadas...",
+            "Configurando nível de dificuldade...",
+            "Quase lá..."
         };
         
         loadingTimeline = new Timeline();
@@ -120,6 +159,7 @@ public class DiagnosticoCandidatoController {
                 loadingOverlay.setVisible(false);
                 // Iniciar primeira questão
                 tela.setVisible(true);
+                TimerDiagnostic();
                 carregarQuestao(0);
             });
             fadeOut.play();
@@ -216,11 +256,13 @@ public class DiagnosticoCandidatoController {
         this.selected=selected;
         // Feedback visual no toggle
         if (acertou) {
+            a++;
             selected.setStyle("-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;");
-            mostrarMensagemTemporaria("✅ Correta!");
+            mostrarMensagemTemporaria("Correta!");
         } else {
+            e++;
             selected.setStyle("-fx-background-color: #ef4444; -fx-border-color: #ef4444; -fx-text-fill: white;");
-            mostrarMensagemTemporaria("❌ Errada! Resposta correta: " + q.getRespostaCorreta());
+            mostrarMensagemTemporaria("Errada! Resposta correta: " + q.getRespostaCorreta());
             
             // Destacar resposta correta (opcional)
             destacarRespostaCorreta(q.getRespostaCorreta());
@@ -228,6 +270,8 @@ public class DiagnosticoCandidatoController {
         
         // Habilitar botão próximo
         btnProximo.setDisable(false);
+        corretas.setText(a+"");
+        errada.setText(e+"");
         btnConfirmar.setDisable(true);
     }
     
@@ -272,6 +316,7 @@ public class DiagnosticoCandidatoController {
 
     private void finalizarDiagnostico() {
         // Calcular pontuação
+       time.stop();
         int acertos = 0;
         for (int i = 0; i < questoes.size(); i++) {
             if (respostasUsuario.get(i) == questoes.get(i).getRespostaCorreta()) {
@@ -282,10 +327,10 @@ public class DiagnosticoCandidatoController {
         double porcentagem = (acertos * 100.0) / totalQuestoes;
         
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("🏆 Diagnóstico Concluído");
+        alert.setTitle(" Diagnóstico Concluído");
         alert.setHeaderText("Resultado Final");
         alert.setContentText(String.format(
-            "📊 Você acertou %d de %d questões\n\n📈 Porcentagem: %.1f%%\n\n🎓 Nível: %s\n\n%s",
+            "Você acertou %d de %d questões\n\nPorcentagem: %.1f%%\n\n🎓 Nível: %s\n\n%s",
             acertos, totalQuestoes, porcentagem,
             getNivelPorPorcentagem(porcentagem),
             getMensagemMotivacional(porcentagem)
@@ -299,19 +344,19 @@ public class DiagnosticoCandidatoController {
     }
 
     private String getNivelPorPorcentagem(double pct) {
-        if (pct >= 80) return "Scholarship Ready 🎓";
-        if (pct >= 60) return "Avançado 🚀";
-        if (pct >= 40) return "Intermediário 📚";
-        if (pct >= 20) return "ISAF ⚠️";
-        return "INAF 🔴";
+        if (pct >= 80) return "Scholarship Ready";
+        if (pct >= 60) return "Avançado";
+        if (pct >= 40) return "Intermediário";
+        if (pct >= 20) return "ISAF";
+        return "INAF";
     }
     
     private String getMensagemMotivacional(double pct) {
-        if (pct >= 80) return "🚀 Parabéns! Você está pronto para bolsas de estudo!";
-        if (pct >= 60) return "💪 Bom trabalho! Continue praticando para alcançar o próximo nível.";
-        if (pct >= 40) return "📚 Vamos melhorar! Foque nos pontos fracos identificados.";
-        if (pct >= 20) return "⚠️ Você precisa de mais prática. Não desista!";
-        return "🔴 Vamos recomeçar? O diagnóstico identificou áreas para melhoria.";
+        if (pct >= 80) return "Parabéns! Você está pronto para bolsas de estudo!";
+        if (pct >= 60) return "Bom trabalho! Continue praticando para alcançar o próximo nível.";
+        if (pct >= 40) return "Vamos melhorar! Foque nos pontos fracos identificados.";
+        if (pct >= 20) return "Você precisa de mais prática. Não desista!";
+        return "Vamos recomeçar? O diagnóstico identificou áreas para melhoria.";
     }
     
     private void mostrarAlerta(String titulo, String mensagem) {

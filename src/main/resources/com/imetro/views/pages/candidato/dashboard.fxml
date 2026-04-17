@@ -19,7 +19,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<VBox prefHeight="1163.0" prefWidth="1211.0" spacing="20.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.DashboardOrientadoController">
+<VBox prefHeight="1163.0" prefWidth="1211.0" spacing="20.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.DashboardOrientadoController">
     <padding>
         <Insets bottom="18" left="18" right="18" top="18" />
     </padding>
@@ -75,10 +75,10 @@
                               <children>
                                  <VBox alignment="CENTER" prefHeight="141.0" prefWidth="191.0" spacing="8.0" styleClass="sub-card">
                                     <children>
-                                       <Label styleClass="h3-thin" text="TAXA DE MELHORIA" />
-                                       <Label fx:id="percentMelhoria" styleClass="percent-value" text="85%" />
+                                       <Label styleClass="h3-thin" text="TAXA DE MELHORIA" textAlignment="CENTER" />
+                                       <Label fx:id="percentMelhoria" styleClass="percent-value" text="85%" textAlignment="CENTER" />
                                        <StackPane fx:id="melhoria" maxHeight="50.0" minHeight="50.0" prefHeight="56.0" prefWidth="150.0" />
-                                       <Label fx:id="descMelhoRia" styleClass="desc-text" text="(Melhoria)" />
+                                       <Label fx:id="descMelhoRia" styleClass="desc-text" text="(Melhoria)" textAlignment="CENTER" wrapText="true" />
                                     </children>
                                     <padding>
                                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
@@ -87,10 +87,10 @@
                                  <Region prefHeight="141.0" prefWidth="59.0" />
                                  <VBox alignment="CENTER" prefHeight="125.0" prefWidth="208.0" spacing="8.0" styleClass="sub-card">
                                     <children>
-                                       <Label styleClass="h3-thin" text="TAXA DE SUCESSO" />
-                                       <Label fx:id="percentSucesso" styleClass="percent-value" text="85%" />
+                                       <Label styleClass="h3-thin" text="TAXA DE SUCESSO" textAlignment="CENTER" />
+                                       <Label fx:id="percentSucesso" styleClass="percent-value" text="85%" textAlignment="CENTER" />
                                        <StackPane fx:id="sucesso" maxHeight="50.0" minHeight="50.0" prefHeight="150.0" prefWidth="200.0" />
-                                       <Label fx:id="descSucesso" styleClass="desc-text" text="(Melhoria)" />
+                                       <Label fx:id="descSucesso" styleClass="desc-text" text="(Melhoria)" textAlignment="CENTER" wrapText="true" />
                                     </children>
                                     <padding>
                                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />

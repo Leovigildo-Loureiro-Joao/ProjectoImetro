@@ -89,13 +89,6 @@
     -fx-background-radius: 20;
 }
 
-/* Valores percentuais */
-.percent-value {
-    -fx-text-fill: -color-primary;
-    -fx-font-weight: 700;
-    -fx-font-size: 28px;
-}
-
 /* Radio buttons estilizados */
 .radio-option {
     -fx-background-color: white;

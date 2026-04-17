@@ -21,18 +21,21 @@ public final class OnboardingRouter {
     private OnboardingRouter() {
     }
 
-    public static void CandidatoRoute(StackPane contentHost) throws IOException{
-        App.setRoot( "views/layouts/CandidatoLayout");
-        return;
+    public static void CandidatoRoute(StackPane contentHost) {
+        try {
+            App.setRoot( "views/layouts/CandidatoLayout");    
+        } catch (Exception e) {
+        }
     }
 
     public static void routeAfterAuth(StackPane contentHost) {
         if (contentHost == null) {
             return;
         }
-        /*if (true) {
+        if (true) {
             CandidatoRoute(contentHost);    
-        }*/
+            return;
+        }
         
         String role = Authentication.getCurrentUserRole();
         String email = Authentication.getCurrentUserEmail();

@@ -68,7 +68,7 @@ public class LoginController implements Initializable {
 
     @FXML
     private void onLogin() throws IOException {
-        String email = usernameField == null ? null : usernameField.getText();
+        /*String email = usernameField == null ? null : usernameField.getText();
         String password = passwordField == null ? null : passwordField.getText();
 
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
@@ -81,7 +81,7 @@ public class LoginController implements Initializable {
             statusLabel.setText("Credenciais inválidas.");
             return;
         }
-
+        */
         StackPane contentHost = (StackPane) telaLogin.getParent();
         OnboardingRouter.routeAfterAuth(contentHost);
     }

@@ -347,7 +347,7 @@
 .percent-value {
     -fx-text-fill: -color-primary;
     -fx-font-weight: 700;
-    -fx-font-size: 28px;
+    -fx-font-size: 14px;
 }
 
 /* ==================== RESULTADOS ==================== */
