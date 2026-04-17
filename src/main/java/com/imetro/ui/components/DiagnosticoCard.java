@@ -51,7 +51,7 @@ public class DiagnosticoCard extends VBox {
         
         //------------------------
         diciplina.setMinWidth(150);
-        diciplina.setPadding(new Insets(10, 10, 10, -10));
+        diciplina.setPadding(new Insets(10, 10, 10, 10));
         diciplina.setAlignment(Pos.CENTER);
         
         // Configure button

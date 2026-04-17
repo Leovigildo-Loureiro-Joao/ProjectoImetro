@@ -41,11 +41,11 @@ Para considerar o projeto “terminado” (MVP), o sistema deve permitir:
 - [ ] Criar seeds mínimos (algumas perguntas por disciplina) para testar o fluxo.
 
 ### 2) Autenticação e perfis (local)
-- [ ] Definir modelo de login (MVP):
-  - [ ] email + password (hash) local no Postgres, ou
-  - [ ] login “simples” (sem password) só para navegar (apenas para demo)
-- [ ] Implementar fluxo de registo e login no UI.
-- [ ] Criar sessão do utilizador (quem está logado + papel).
+- [x] Definir modelo de login (MVP):
+  - [x] email + password (hash) local no Postgres, ou
+  - [x] login “simples” (sem password) só para navegar (apenas para demo)
+- [x] Implementar fluxo de registo e login no UI.
+- [x] Criar sessão do utilizador (quem está logado + papel).
 
 ### 3) Banco de questões
 - [ ] Modelar pergunta: disciplina/tópico/dificuldade/respostas/resposta correta/explicação.

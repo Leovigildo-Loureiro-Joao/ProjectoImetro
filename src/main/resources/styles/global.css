@@ -1,269 +1,296 @@
+/* ==================== VARIÁVEIS GLOBAIS ==================== */
 .root {
-  -fx-font-family: "Roboto";
-  -color-bg: #f8fafc;
-  -color-surface: #ffffff;
-  -color-text: #0f172a;
-  -color-muted: #64748b;
-  -color-none: #bbc9e4;
-  -color-border: rgba(15, 23, 42, 0.12);
-  -color-primary: #1d4ed8;
-  -color-primary-two: #0d0046;
-  -color-primary-contrast: #ffffff;
-  -color-accent: #f59e0b;
-  -color-accent-two: #f5880b;
-  -fx-background-color: -color-bg;
+    -fx-font-family: "Roboto", "Segoe UI", system-font;
+    
+    /* Cores principais - Light Theme */
+    -color-bg: #f8fafc;
+    -color-surface: #ffffff;
+    -color-text: #0f172a;
+    -color-text-secondary: #475569;
+    -color-muted: #64748b;
+    -color-border: #e2e8f0;
+    
+    /* Cores de ação */
+    -color-primary: #3b82f6;
+    -color-primary-light: #eff6ff;
+    -color-primary-dark: #2563eb;
+    -color-primary-contrast: #ffffff;
+    
+    -color-secondary: #8b5cf6;
+    -color-secondary-light: #f5f3ff;
+    
+    -color-success: #10b981;
+    -color-success-light: #ecfdf5;
+    
+    -color-warning: #f59e0b;
+    -color-warning-light: #fffbeb;
+    
+    -color-danger: #ef4444;
+    -color-danger-light: #fef2f2;
+    
+    /* Cores neutras */
+    -color-none: #94a3b8;
 }
 
-.label {
-  -fx-text-fill: -color-text;
+/* ==================== FUNDO ==================== */
+.root, .page, .content {
+    -fx-background-color: -color-bg;
 }
 
-.muted {
-  -fx-text-fill: -color-muted;
+/* ==================== CARDS ==================== */
+.card, .card-blur, .placeholder-card {
+    -fx-background-color: -color-surface;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 12, 0, 0, 2);
+    -fx-border-color: -color-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
 }
 
-.h1 {
-  -fx-font-size: 20px;
-  -fx-font-weight: 700;
+.sub-card {
+    -fx-background-color: #fafcff;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.02), 8, 0, 0, 2);
+    -fx-border-color: -color-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
 }
 
-.shadow {
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.11), 28, 0.16, 0, 12);
-}
-
-.h1-thin {
-  -fx-font-size: 18px;
-}
-
-.h3-thin {
-  -fx-font-size: 12px;
-  -fx-font-weight: 500;
-  -fx-text-fill: -color-muted;
+/* ==================== TEXTOS ==================== */
+.label, .text {
+    -fx-text-fill: -color-text;
 }
 
 .big-h1 {
-  -fx-font-size: 26px;
-  -fx-font-weight: bold;
-  -fx-text-fill: -color-primary;
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text;
 }
 
+.h1 {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text;
+}
 
-.button {
-  -fx-background-radius: 10;
-  -fx-padding: 10 14 10 14;
-  -fx-cursor: hand;
-  -fx-font-weight: 600;
+.h1-thin {
+    -fx-font-size: 18px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -color-text;
+}
+
+.h3-thin {
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -color-text-secondary;
+}
+
+.muted {
+    -fx-text-fill: -color-muted;
+}
+
+/* ==================== BOTÕES ==================== */
+.button, .btn-primary, .btn-primary-two, .btn-secondary {
+    -fx-background-radius: 10;
+    -fx-padding: 10 14 10 14;
+    -fx-cursor: hand;
+    -fx-font-weight: 600;
 }
 
 .btn-primary {
-  -fx-background-color: -color-primary;
-  -fx-text-fill: -color-primary-contrast;
+    -fx-background-color: -color-primary;
+    -fx-text-fill: -color-primary-contrast;
+    -fx-background-radius: 12;
+    -fx-padding: 12 24 12 24;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.3), 8, 0, 0, 2);
+}
+
+.btn-primary:hover {
+    -fx-background-color: -color-primary-dark;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 12, 0, 0, 4);
 }
 
 .btn-primary-two {
-  -fx-background-color: -color-accent-two;
-  -fx-text-fill: -color-primary-contrast;
+    -fx-background-color: -color-success;
+    -fx-text-fill: -color-primary-contrast;
+    -fx-background-radius: 12;
+    -fx-font-weight: 600;
+}
+
+.btn-primary-two:hover {
+    -fx-background-color: #0d9668;
 }
 
 .btn-secondary {
--fx-background-color: -color-surface;
-  -fx-text-fill: -color-text;
-  -fx-border-color: -color-border;
-  -fx-border-width: 1;
-  -fx-border-radius: 10;
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text;
+    -fx-border-color: -color-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
 }
 
 .btn-secondary:hover {
-  -fx-background-color: rgba(15, 23, 42, 0.04);
+    -fx-background-color: rgba(0, 0, 0, 0.04);
 }
 
-.card {
-  -fx-background-color: -color-surface;
-  -fx-background-radius: 14;
+/* ==================== PROGRESSBAR ==================== */
+.progress-bar {
+    -fx-pref-height: 8px;
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 4;
 }
 
-.topbar {
-  -fx-background-color: -color-surface;
-  -fx-border-color: -color-border;
-  -fx-border-width: 0 0 1 0;
+.progress-bar .bar {
+    -fx-background-color: -color-primary;
+    -fx-background-radius: 4;
 }
 
-.topbar-title {
-  -fx-font-size: 16px;
-  -fx-font-weight: 700;
-  -fx-text-fill: -color-text;
+.progress-bar .track {
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 4;
 }
 
-.sidebar {
-  -fx-background-color: -color-primary;
-  -fx-border-color: -color-border;
-  -fx-border-width: 0 1 0 0;
-  -fx-min-width: 240px;
+#progresso {
+    -fx-pref-height: 24px;
+    -fx-background-radius: 12;
 }
 
-.nav-button {
-  -fx-background-color: transparent;
-  -fx-text-fill: -color-bg;
-  -fx-alignment: CENTER_LEFT;
+#progresso .bar {
+    -fx-background-color: linear-gradient(to right, -color-primary, -color-secondary);
+    -fx-background-radius: 12;
 }
 
-.nav-button:hover {
-  -fx-background-color: rgba(15, 23, 42, 0.04);
+/* ==================== SEPARATOR ==================== */
+.separator {
+    -fx-background-color: -color-border;
 }
 
-.content {
-  -fx-background-color: -color-bg;
+/* ==================== SCROLLPANE ==================== */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background-radius: 12;
 }
 
-.page {
-  -fx-background-color: -color-bg;
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
 }
 
-.text-field,
-.password-field,
-.combo-box {
-  -fx-background-color: -color-surface;
-  -fx-background-radius: 10;
-  -fx-border-color: -color-border;
-  -fx-border-radius: 10;
-  -fx-border-width: 1;
-  -fx-text-fill: -color-text;
+/* ==================== TEXTFIELD ==================== */
+.text-field, .password-field, .combo-box {
+    -fx-background-color: -color-surface;
+    -fx-background-radius: 10;
+    -fx-border-color: -color-border;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-text-fill: -color-text;
+    -fx-padding: 10 12 10 12;
 }
 
+.text-field:focused, .password-field:focused, .combo-box:focused {
+    -fx-border-color: -color-primary;
+}
+
+/* ==================== RADIO BUTTON ==================== */
+.radio-option {
+    -fx-background-color: white;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 30;
+    -fx-background-radius: 30;
+    -fx-text-fill: #1e293b;
+    -fx-font-weight: bold;
+}
+
+.radio-option:selected {
+    -fx-border-color: -color-primary;
+    -fx-background-color: -color-primary-light;
+}
+
+.radio-option .radio {
+    -fx-border-width: 0;
+}
+
+.radio-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-secondary;
+    -fx-padding: 8 0 8 0;
+}
+
+/* ==================== CHECKBOX ==================== */
 .check-box {
-  -fx-text-fill: -color-text;
+    -fx-text-fill: -color-text;
 }
 
 .check-box .text {
-  -fx-fill: -color-text;
+    -fx-fill: -color-text;
 }
 
-.text-field:focused,
-.password-field:focused,
-.combo-box:focused {
-  -fx-border-color: rgba(29, 78, 216, 0.6);
+/* ==================== LISTVIEW ==================== */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
-.loading-overlay {
-  -fx-background-color: transparent;
-}
-
-.loading-text {
-  -fx-fill: -color-text;
-}
-
-.loading-progress {
-  -fx-progress-color: -color-primary;
-}
-
-.nav-bar {
-    -fx-background-color: transparent; 
-}
-
-.nav-bar * {
-    -fx-background-color: transparent; 
-    -fx-padding: 0;
-    -fx-margin: 0;
-}
-
-.nav-bar *:selected {
-    -fx-background-color: rgba(255, 255, 255, 0.185);   
-}
-
-.list-cell:selected .item-cell .glyph-icon,.list-cell:selected ItemNotif .glyph-icon {
-    -fx-fill: -color-primary;
-}
-
-.list-cell:selected .item-cell Label {
-    -fx-text-fill:-color-primary;
-}
-
-
-.item-cell Label {
-    -fx-text-fill: -color-none;
-    -fx-fill: -color-none;
-    -fx-font-size: 14;
-}
-
-.item-cell .glyph-icon {
-    -fx-fill: -color-none;
-}
-
-/* Dashboard (candidato) */
-.result-row {
-  -fx-alignment: CENTER_LEFT;
-  -fx-padding: 4 0 4 0;
-}
-
-.result-title {
-  -fx-text-fill: -color-text;
-  -fx-font-size: 12px;
-  -fx-font-weight: 600;
-}
-
-.pill {
-  -fx-padding: 3 8 3 8;
-  -fx-background-radius: 999;
-  -fx-font-size: 11px;
-  -fx-font-weight: 800;
-}
-
-.pill-good {
-  -fx-background-color: rgba(34, 197, 94, 0.18);
-  -fx-text-fill: #166534;
-}
-
-.pill-warn {
-  -fx-background-color: rgba(245, 158, 11, 0.22);
-  -fx-text-fill: #92400e;
-}
-
-#status_disciplina .list-cell {
-  -fx-background-color: transparent;
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 8 0 8 0;
 }
 
 .status-row {
-  -fx-padding: 10 12 10 12;
-  -fx-background-color: rgba(102, 118, 155, 0.02);
-  -fx-background-radius: 12;
-  -fx-border-color: -color-border;
-  -fx-border-radius: 12;
-  -fx-border-width: 1;
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: -color-border;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 12;
 }
 
 .status-name {
-  -fx-text-fill: -color-text;
-  -fx-font-weight: 700;
+    -fx-text-fill: -color-text;
+    -fx-font-weight: 600;
 }
 
 .status-percent {
-  -fx-text-fill: -color-muted;
-  -fx-font-weight: 700;
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: 700;
 }
 
-.status-detail {
-  -fx-text-fill: -color-muted;
-  -fx-font-size: 12px;
+/* ==================== TABPANE ==================== */
+.tab-pane {
+    -fx-background-color: transparent;
 }
 
-.status-progress-bar {
-  -fx-pref-height: 8px;
-  -fx-accent: -color-primary;
+.tab-header-background {
+    -fx-background-color: transparent;
 }
 
+.tab {
+    -fx-background-color: transparent;
+    -fx-padding: 8 16 8 16;
+}
+
+.tab:selected {
+    -fx-background-color: -color-primary-light;
+    -fx-background-radius: 20;
+}
+
+.tab .tab-label {
+    -fx-text-fill: -color-text;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: -color-primary;
+}
+
+/* ==================== CHARTS ==================== */
 .area-demo .chart-series-area-fill {
-  -fx-opacity: 0.18;
+    -fx-opacity: 0.18;
 }
 
 .area-demo .chart-series-line {
-  -fx-stroke-width: 2.2px;
+    -fx-stroke-width: 2.2px;
 }
 
-.radar-demo *{
- -fx-font-size: 14px;
-}
-
-/* No seu arquivo candidato-layout.css */
 .radar-demo {
     -fx-padding: 5;
 }
@@ -280,11 +307,6 @@
     -fx-font-weight: bold;
 }
 
-.radar-demo .chart-legend-item-symbol {
-    -fx-background-radius: 6;
-}
-
-/* Estilizar as áreas do radar */
 .radar-demo .chart-series-area-line {
     -fx-stroke-width: 2;
 }
@@ -293,434 +315,140 @@
     -fx-opacity: 0.35;
 }
 
-
-/* Efeito Glassmorphism para todos os cards */
-.card {
-    -fx-background-color: rgba(255, 255, 255, 0.75);
-    -fx-background-radius: 20;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 20, 0.08, 0, 8);
-    -fx-border-color: rgba(255, 255, 255, 0.8);
-    -fx-border-width: 1;
-    -fx-border-radius: 20;
-}
-
-/* Versão com mais transparência para subcards */
-.sub-card {
-    -fx-background-color: rgba(255, 255, 255, 0.55);
-    -fx-background-radius: 16;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 12, 0.05, 0, 4);
-    -fx-border-color: rgba(255, 255, 255, 0.6);
-    -fx-border-width: 1;
-    -fx-border-radius: 16;
-}
-
-/* Card interno para itens específicos */
-.inner-card {
-    -fx-background-color: rgba(255, 255, 255, 0.4);
-    -fx-background-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.5);
-    -fx-border-width: 1;
-    -fx-border-radius: 12;
-}
-
-/* Para dar efeito de blur real (requer JavaFX 17+) */
-.card-blur {
-    -fx-background-color: rgba(255, 255, 255, 0.6);
-    -fx-background-radius: 20;
-    -fx-background-insets: 0;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 15, 0.06, 0, 5);
-}
-
-/* ==================== PROGRESSBAR PRINCIPAL ==================== */
-/* Estilo base da ProgressBar */
-.progress-bar {
-    -fx-pref-height: 15px;
-    -fx-background-color: rgba(0, 0, 0, 0.08);
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.3);
-    -fx-border-width: 1;
-}
-
-/* Barra de progresso (a parte preenchida) */
-.progress-bar .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #1d4ed8,
-        #3b82f6,
-        #60a5fa
-    );
-    -fx-background-radius: 12;
-    -fx-background-insets: 0;
-    -fx-padding: 0;
-    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 4, 0.3, 0, 1);
-}
-
-/* Track (fundo vazio) */
-.progress-bar .track {
-    -fx-background-color: rgba(0, 0, 0, 0.05);
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-}
-
-/* ==================== VARIAÇÕES DE CORES ==================== */
-
-/* ProgressBar Azul (Padrão) */
-.progress-bar-blue .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #2563eb,
-        #3b82f6,
-        #60a5fa
-    );
-}
-
-/* ProgressBar Verde (Sucesso) */
-.progress-bar-green .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #059669,
-        #10b981,
-        #34d399
-    );
-    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.4), 4, 0.3, 0, 1);
-}
-
-/* ProgressBar Laranja (Atenção) */
-.progress-bar-orange .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #ea580c,
-        #f97316,
-        #fb923c
-    );
-    -fx-effect: dropshadow(gaussian, rgba(249, 115, 22, 0.4), 4, 0.3, 0, 1);
-}
-
-/* ProgressBar Roxo (Premium) */
-.progress-bar-purple .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #6d28d9,
-        #8b5cf6,
-        #a78bfa
-    );
-    -fx-effect: dropshadow(gaussian, rgba(139, 92, 246, 0.4), 4, 0.3, 0, 1);
-}
-
-/* ==================== PROGRESSBAR COM ANIMAÇÃO ==================== */
-.progress-bar-animated .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #1d4ed8,
-        #3b82f6,
-        #1d4ed8
-    );
-    -fx-background-size: 200% 100%;
-    -fx-animation: shimmer 2s infinite;
-}
-
-/* ==================== PROGRESSBAR ESTILO NÍVEL (GAMIFICATION) ==================== */
-/* Para indicador de nível do estudante */
-.level-progress {
-    -fx-pref-height: 28px;
-    -fx-background-color: rgba(0, 0, 0, 0.15);
-    -fx-background-radius: 14;
-    -fx-border-color: rgba(255, 255, 255, 0.4);
-    -fx-border-width: 1.5;
-    -fx-border-radius: 14;
-}
-
-.level-progress .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #f59e0b,
-        #fbbf24,
-        #fcd34d
-    );
-    -fx-background-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.5), 6, 0.3, 0, 2);
-}
-
-/* ==================== PROGRESSBAR PEQUENA (para listas/cards) ==================== */
-.progress-bar-small {
-    -fx-pref-height: 8px;
-    -fx-max-height: 8px;
-    -fx-background-radius: 4;
-}
-
-.progress-bar-small .bar {
-    -fx-background-radius: 4;
-}
-
-.progress-bar-small .track {
-    -fx-background-radius: 4;
-}
-
-/* ==================== PROGRESSBAR COM GLOW EFFECT ==================== */
-.progress-bar-glow .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #1d4ed8,
-        #3b82f6
-    );
-    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.6), 8, 0.4, 0, 2);
-}
-
-/* ==================== PROGRESSBAR COM BORDA ARREDONDADA EXTREMA ==================== */
-.progress-bar-rounded {
-    -fx-pref-height: 30px;
-    -fx-background-radius: 15;
-}
-
-.progress-bar-rounded .bar {
-    -fx-background-radius: 15;
-}
-
-/* ==================== PROGRESSBAR ESTILO NEUMORFISMO ==================== */
-.progress-bar-neumorph {
-    -fx-pref-height: 20px;
-    -fx-background-color: #e0e5ec;
-    -fx-background-radius: 10;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0.2, 2, 2),
-                dropshadow(gaussian, rgba(255, 255, 255, 0.6), 5, 0.2, -2, -2);
-}
-
-.progress-bar-neumorph .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #4a90e2,
-        #5c9ce6
-    );
-    -fx-background-radius: 10;
-}
-
-/* ==================== PROGRESSBAR ESTILO GRADIENTE DIAGONAL ==================== */
-.progress-bar-diagonal .bar {
-    -fx-background-color: linear-gradient(
-        135deg,
-        #1d4ed8 0%,
-        #3b82f6 30%,
-        #60a5fa 60%,
-        #93c5fd 100%
-    );
-    -fx-background-radius: 12;
-}
-
-/* ==================== ANIMAÇÃO DE SHIMMER (para usar com .progress-bar-animated) ==================== */
-@keyframes shimmer {
-    0% {
-        -fx-background-position: 0% 0%;
-    }
-    100% {
-        -fx-background-position: 200% 0%;
-    }
-}
-
-/* ==================== ESTILO PARA O PROGRESSO DO NÍVEL ESPECÍFICO ==================== */
-/* Para o seu componente de nível do estudante */
-#progresso {
-    -fx-pref-height: 24px;
-    -fx-background-color: rgba(0, 0, 0, 0.1);
-    -fx-background-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.3);
-    -fx-border-width: 1;
-    -fx-border-radius: 12;
-}
-
-#progresso .bar {
-    -fx-background-color: linear-gradient(
-        to right,
-        #8b5cf6,
-        #a78bfa,
-        #c4b5fd
-    );
-    -fx-background-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(139, 92, 246, 0.4), 6, 0.3, 0, 1);
-}
-
-#progresso .track {
-    -fx-background-color: rgba(0, 0, 0, 0.05);
-    -fx-background-radius: 12;
-}
-
-/* ==================== CARDS DE RESULTADOS ==================== */
-
-/* Card principal de resultados */
-.results-card {
-    -fx-background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -fx-background-radius: 20;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 20, 0.1, 0, 10);
-    -fx-border-color: rgba(255, 255, 255, 0.2);
-    -fx-border-width: 1;
-    -fx-border-radius: 20;
-}
-
-/* Card de melhoria */
-.improvement-card {
-    -fx-background-color: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    -fx-background-radius: 20;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 20, 0.1, 0, 10);
-    -fx-border-color: rgba(255, 255, 255, 0.2);
-    -fx-border-width: 1;
-    -fx-border-radius: 20;
-}
-
-/* Títulos dos cards */
-.card-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: white;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 2, 0.1, 0, 1);
-}
-.card-title-secondary {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: -color-muted;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 2, 0.1, 0, 1);
-}
-
-/* Métricas principais */
-.metric-value {
-    -fx-font-size: 32px;
-    -fx-font-weight: bold;
-    -fx-text-fill: white;
-}
-
-.metric-label {
-    -fx-font-size: 12px;
-    -fx-text-fill: rgba(255, 255, 255, 0.9);
-    -fx-font-weight: 600;
-}
-
-.metric-trend-up {
+/* ==================== BADGES ==================== */
+.badge-new {
+    -fx-background-color: -color-primary-light;
+    -fx-text-fill: -color-primary;
     -fx-font-size: 10px;
-    -fx-text-fill: #a7f3d0;
-    -fx-font-weight: bold;
+    -fx-font-weight: 700;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 20;
 }
 
-/* Separador dos cards */
-.card-separator {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
-    -fx-pref-height: 1;
-}
-
-/* Seção de labels */
-.section-label {
-    -fx-font-size: 11px;
-    -fx-text-fill: rgba(71, 71, 71, 0.8);
-    -fx-font-weight: bold;
-    -fx-letter-spacing: 1px;
-}
-
-/* Estilo dos resultados individuais */
-.result-item {
-    -fx-background-color: rgba(255, 255, 255, 0.15);
-    -fx-background-radius: 12;
-    -fx-padding: 10;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-radius: 12;
-}
-
-.result-item:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.25);
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0.05, 0, 2);
-}
-
-.result-title {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-text-fill: rgb(75, 75, 75);
-}
-
-.result-score {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #fbbf24;
-}
-
-.result-date {
-    -fx-font-size: 10px;
-    -fx-text-fill: rgba(158, 158, 158, 0.7);
-}
-
-/* Progresso de melhoria */
-.improvement-percent {
-    -fx-font-size: 48px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #fef08a;
-}
-
-.improvement-label {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: rgb(68, 68, 68);
-}
-
-.improvement-detail {
-    -fx-font-size: 11px;
-    -fx-text-fill: rgba(54, 54, 54, 0.8);
-}
-
-.improvement-progress {
-    -fx-pref-height: 10px;
-    -fx-background-color: rgba(0, 0, 0, 0.2);
-    -fx-background-radius: 5;
-}
-
-.improvement-progress .bar {
-    -fx-background-color: #fef08a;
-    -fx-background-radius: 5;
-}
-
-/* Objetivos */
-.goal-icon {
-    -fx-font-size: 20px;
-}
-
-.goal-title {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: rgb(255, 208, 0);
-}
-
-.goal-progress {
-    -fx-pref-height: 6px;
-    -fx-background-color: rgba(0, 0, 0, 0.2);
-    -fx-background-radius: 3;
-}
-
-.goal-progress .bar {
-    -fx-background-color: #a7f3d0;
-    -fx-background-radius: 3;
-}
-
-.goal-percent {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #2ebb79;
-}
-
-/* Pill badges para resultados */
 .pill-good {
-    -fx-background-color: rgba(167, 243, 208, 0.3);
-    -fx-text-fill: #44bd84;
-    -fx-padding: 4 12 4 12;
-    -fx-background-radius: 20;
+    -fx-background-color: rgba(34, 197, 94, 0.18);
+    -fx-text-fill: #166534;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 999;
     -fx-font-size: 11px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
 }
 
 .pill-warn {
-    -fx-background-color: rgba(253, 230, 138, 0.3);
-    -fx-text-fill: #fde68a;
-    -fx-padding: 4 12 4 12;
-    -fx-background-radius: 20;
+    -fx-background-color: rgba(245, 158, 11, 0.22);
+    -fx-text-fill: #92400e;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 999;
     -fx-font-size: 11px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
 }
 
-/* CircleProgress Component Styles */
+/* ==================== VALORES PERCENTUAIS ==================== */
+.percent-value {
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: 700;
+    -fx-font-size: 28px;
+}
+
+/* ==================== RESULTADOS ==================== */
+.result-row {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 4 0 4 0;
+}
+
+.result-title {
+    -fx-text-fill: -color-text;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+/* ==================== TOPBAR ==================== */
+.topbar {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.topbar-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text;
+}
+
+/* ==================== SIDEBAR ==================== */
+.sidebar {
+    -fx-background-color: -color-primary;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-min-width: 240px;
+}
+
+.sidebar-title {
+    -fx-text-fill: rgba(255, 255, 255, 0.92);
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+    -fx-padding: 4 6 0 6;
+    -fx-letter-spacing: 0.6px;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-bg;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(15, 23, 42, 0.04);
+}
+
+/* ==================== NAV BAR ==================== */
+.nav-bar {
+    -fx-background-color: transparent;
+}
+
+.nav-bar .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 10 12 10 12;
+    -fx-background-radius: 12;
+}
+
+.nav-bar .list-cell:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+}
+
+.nav-bar .list-cell:selected {
+    -fx-background-color: rgba(255, 255, 255, 0.16);
+}
+
+.item-cell {
+    -fx-padding: 2;
+    -fx-spacing: 12;
+    -fx-max-width: 150;
+}
+
+.item-cell Label {
+    -fx-text-fill: -color-none;
+    -fx-font-size: 14;
+}
+
+.item-cell .glyph-icon {
+    -fx-fill: -color-none;
+}
+
+/* ==================== LOADING ==================== */
+.loading-overlay {
+    -fx-background-color: transparent;
+}
+
+.loading-text {
+    -fx-fill: -color-text;
+}
+
+.loading-progress {
+    -fx-progress-color: -color-primary;
+}
+
+/* ==================== CIRCLE PROGRESS ==================== */
 .circle-progress {
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 8, 0.1, 0, 4);
 }
@@ -736,7 +464,6 @@
 .percent-label {
     -fx-font-family: "Segoe UI";
     -fx-font-weight: bold;
-    -fx-effect: null;
 }
 
 .subtitle-label {
@@ -745,13 +472,101 @@
     -fx-opacity: 0.8;
 }
 
-/* Animações */
-@keyframes pulse {
-    0% { -fx-opacity: 0.6; }
-    50% { -fx-opacity: 1; }
-    100% { -fx-opacity: 0.6; }
+/* ==================== PROGRESSBAR VARIAÇÕES ==================== */
+.progress-bar-green .bar {
+    -fx-background-color: linear-gradient(to right, #059669, #10b981, #34d399);
 }
 
-.circle-progress:pulse {
-    -fx-animation: pulse 1.5s infinite;
+.progress-bar-orange .bar {
+    -fx-background-color: linear-gradient(to right, #ea580c, #f97316, #fb923c);
+}
+
+.progress-bar-purple .bar {
+    -fx-background-color: linear-gradient(to right, #6d28d9, #8b5cf6, #a78bfa);
+}
+
+/* ==================== MISC ==================== */
+.shadow {
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.11), 28, 0.16, 0, 12);
+}
+
+.desc-text {
+    -fx-font-size: 11px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #6b7280;
+}
+
+
+/* JFXToggleNode estilo circular com letra */
+.toggle-letter {
+    -fx-pref-width: 46px;
+    -fx-pref-height: 46px;
+    -fx-background-radius: 30;
+    -fx-border-radius: 30;
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 2;
+    -fx-text-fill: -color-text;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.toggle-letter:selected {
+    -fx-background-color: -color-primary;
+    -fx-border-color: -color-primary;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 8, 0, 0, 2);
+}
+
+.toggle-letter:hover {
+    -fx-border-color: -color-primary;
+    -fx-background-color: -color-primary-light;
+}
+
+/* Opção inteira clicável */
+.toggle-option {
+    -fx-padding: 5;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-min-width: 400;
+}
+
+.toggle-option:hover {
+    -fx-background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Loading Overlay estilo Duolingo */
+.loading-overlay {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0, 0, 0);
+}
+
+.loading-card {
+    -fx-background-color: -color-surface;
+    -fx-background-radius: 24;
+    -fx-padding: 40 60 40 60;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 30, 0, 0, 10);
+}
+
+.loading-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text;
+}
+
+.loading-progress-bar {
+    -fx-pref-width: 300px;
+    -fx-pref-height: 8px;
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 4;
+}
+
+.loading-progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, -color-primary, -color-secondary);
+    -fx-background-radius: 4;
+}
+
+.loading-message {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-muted;
 }

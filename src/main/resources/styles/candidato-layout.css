@@ -1,8 +1,6 @@
 @import "global.css";
 
-.topbar-title {
-  -fx-text-fill: -color-text;
-}
+/* Estilos específicos do candidato que não estão no global */
 
 .sidebar-title {
   -fx-text-fill: rgba(255, 255, 255, 0.92);
@@ -20,7 +18,6 @@
     );
 }
 
-/* Menu (ListView) */
 .nav-bar {
   -fx-background-radius: 14;
   -fx-padding: 8;
@@ -31,15 +28,13 @@
 
 .nav-bar-pai {
   -fx-background-color: #ffffff1a;
-   -fx-background-insets: 0;
-
+  -fx-background-insets: 0;
 }
 
 .nav-bar .list-cell {
   -fx-background-color: transparent;
   -fx-padding: 10 12 10 12;
   -fx-background-radius: 12;
-  -fx-margin:10 0 10 0;
 }
 
 .nav-bar .list-cell:hover {
@@ -61,7 +56,6 @@
   -fx-padding: 2;
   -fx-spacing: 12;
   -fx-max-width: 150;
-  
 }
 
 .nav-bar .list-cell:selected .item-cell Label {
@@ -85,37 +79,90 @@
   -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.10), 22, 0.16, 0, 10);
 }
 
-/* Badge de novas avaliações */
+/* Badge de novas avaliações - mais clean */
 .badge-new {
-    -fx-background-color: #e0e7ff;
-    -fx-text-fill: #4338ca;
-    -fx-font-size: 9px;
-    -fx-font-weight: 800;
+    -fx-background-color: -color-primary-light;
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
     -fx-padding: 2 8 2 8;
-    -fx-background-radius: 12;
+    -fx-background-radius: 20;
 }
 
-/* Valor percentual grande */
+/* Valores percentuais */
 .percent-value {
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: 700;
+    -fx-font-size: 28px;
+}
+
+/* Radio buttons estilizados */
+.radio-option {
+    -fx-background-color: white;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 30;
+    -fx-background-radius: 30;
+    -fx-text-fill: #1e293b;
     -fx-font-weight: bold;
-    -fx-text-fill: #4f46e5;
 }
 
-/* Mini progress bar */
-.mini-progress {
+.radio-option:selected {
+    -fx-border-color: -color-primary;
+    -fx-background-color: -color-primary-light;
+}
+
+.radio-option .radio {
+    -fx-border-width: 0;
+}
+
+.radio-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-secondary;
+    -fx-padding: 8 0 8 0;
+}
+
+/* Progress bar geral */
+#progressoGeral {
     -fx-pref-height: 6px;
-    -fx-background-color: #f3f4f6;
     -fx-background-radius: 3;
 }
 
-.mini-progress .bar {
-    -fx-background-color: linear-gradient(to right, #4f46e5, #818cf8);
+#progressoGeral .bar {
+    -fx-background-color: linear-gradient(to right, -color-primary, -color-secondary);
     -fx-background-radius: 3;
 }
 
-/* Texto de descrição */
-.desc-text {
-    -fx-font-size: 11px;
+/* Alternativas com letras maiores */
+.radio-label {
+    -fx-font-size: 16px;  /* Antigo 14px */
+    -fx-text-fill: -color-text-secondary;
+    -fx-padding: 8 0 8 0;
     -fx-font-weight: 500;
-    -fx-text-fill: #6b7280;
+}
+
+
+/* Enunciado maior */
+#bloco1, #bloco2 {
+    -fx-font-size: 16px;    /* Antigo 12px (h3-thin) */
+    -fx-line-spacing: 4px;
+}
+
+/* Título da disciplina maior */
+#nomeDisc {
+    -fx-font-size: 14px;    /* Antigo 12px */
+}
+
+.countdown-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.7);
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0, 0, 0);
+}
+
+.countdown-label {
+    -fx-font-size: 120px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 10, 0, 0, 2);
 }
