@@ -159,3 +159,84 @@
     -fx-alignment: center;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 10, 0, 0, 2);
 }
+
+/* Cards de estatística */
+.stat-card {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+
+.stat-label {
+    -fx-font-size: 12;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7f8c8d;
+    -fx-letter-spacing: 1;
+}
+
+.stat-value {
+    -fx-font-size: 28;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.stat-sub {
+    -fx-font-size: 11;
+    -fx-text-fill: #95a5a6;
+}
+
+.stat-progress {
+    -fx-accent: #3498db;
+    -fx-pref-height: 6;
+}
+
+.stat-progress-large {
+    -fx-accent: #27ae60;
+    -fx-pref-height: 20;
+    -fx-background-radius: 10;
+}
+
+.h2 {
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.muted {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 13;
+}
+
+.nav-container {
+    -fx-padding: 10 0 0 0;
+}
+
+.nav-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 14;
+    -fx-padding: 10 20;
+}
+
+.nav-btn-active {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-font-size: 14;
+    -fx-padding: 10 20;
+    -fx-background-radius: 25;
+}
+
+
+
+.nav-btn-active SVGPath {
+    -fx-fill: #ffffff;
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 2;
+}
+
+.nav-btn SVGPath {
+    -fx-fill: #7f8c8d;
+    -fx-stroke: #7f8c8d;
+    -fx-stroke-width: 2;
+}

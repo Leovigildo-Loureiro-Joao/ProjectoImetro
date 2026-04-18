@@ -1,145 +1,297 @@
 package com.imetro.ui.controller;
 
-import java.sql.Time;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.imetro.services.TesteMatematicaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.DiagnosticoCard;
 import com.imetro.ui.model.Questao;
-import com.imetro.services.TesteMatematicaService;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXToggleNode;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXToggleNode;
-
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-
 public class DiagnosticoCandidatoController {
-    @FXML 
-    private FlowPane diagnoticos;
-    @FXML private StackPane circleProgressContainer;
-    @FXML private Label nomeDisc, nPergunta, bloco1, bloco2;
-    @FXML private Label ResA, ResB, ResC, ResD, ResE, ResF, ResG;
-    @FXML private JFXToggleNode toggleA, toggleB, toggleC, toggleD, toggleE, toggleF, toggleG;
-    @FXML private ToggleGroup alternativas;
-    @FXML private VBox end, start;
-    @FXML private ImageView imgBloco2;
-    @FXML private JFXButton btnConfirmar, btnProximo;
-    @FXML private StackPane loadingOverlay;
-    @FXML private ProgressBar loadingProgress;
-    @FXML private Label loadingMessage;
-    @FXML private VBox tela;
-    private int h=0,m=0,s=0,a=0,e=0;
+
+    @FXML
+    private Label ResA;
+
+    @FXML
+    private Label ResB;
+
+    @FXML
+    private Label ResC;
+
+    @FXML
+    private Label ResD;
+
+    @FXML
+    private Label ResE;
+
+    @FXML
+    private Label ResF;
+
+    @FXML
+    private Label ResG;
+
+    @FXML
+    private ToggleGroup alternativas;
+
+    @FXML
+    private Label bloco1;
+
+    @FXML
+    private Label bloco2;
+
+    @FXML
+    private JFXButton btnConfirmar;
+
+    @FXML
+    private JFXButton btnDiagnosticos;
+
+    @FXML
+    private JFXButton btnEstatisticas;
+
+    @FXML
+    private JFXButton btnProximo;
+
+    @FXML
+    private JFXButton btnTimeline;
+
+    @FXML
+    private StackPane circleProgressContainer;
+
+    @FXML
+    private HBox containerPrincipal;
+
     @FXML
     private Label corretas;
+
+    @FXML
+    private VBox detalhamentoDisciplinas;
+
+    @FXML
+    private FlowPane diagnosticosPane;
+
+    @FXML
+    private VBox end;
+
     @FXML
     private Label errada;
+
+    @FXML
+    private VBox estatisticasPane;
+
+    @FXML
+    private ImageView imgBloco2;
+
+    @FXML
+    private Label lblDisciplinaLenta;
+
+    @FXML
+    private Label lblDisciplinaRapida;
+
+    @FXML
+    private Label lblMediaGeral;
+
+    @FXML
+    private Label lblMelhorDisciplina;
+
+    @FXML
+    private Label lblMelhorPontuacao;
+
+    @FXML
+    private Label lblPiorDisciplina;
+
+    @FXML
+    private Label lblPiorPontuacao;
+
+    @FXML
+    private Label lblTaxaAcerto;
+
+    @FXML
+    private Label lblTempoMaisLento;
+
+    @FXML
+    private Label lblTempoMaisRapido;
+
+    @FXML
+    private Label lblTempoMedio;
+
+    @FXML
+    private Label lblTotalAcertos;
+
+    @FXML
+    private Label lblTotalErros;
+
+    @FXML
+    private Label lblTotalQuestoes;
+
+    @FXML
+    private Label lblTotalTestes;
+
+    @FXML
+    private Label loadingMessage;
+
+    @FXML
+    private StackPane loadingOverlay;
+
+    @FXML
+    private ProgressBar loadingProgress;
+
+    @FXML
+    private Label nPergunta;
+
+    @FXML
+    private Label nomeDisc;
+
+    @FXML
+    private ProgressBar progressMediaGeral;
+
+    @FXML
+    private ProgressBar progressTaxaAcerto;
+
+    @FXML
+    private ScrollPane scroll;
+
+    @FXML
+    private HBox start;
+
+    @FXML
+    private VBox tela;
+
     @FXML
     private Label tempo;
 
+    @FXML
+    private VBox timelineContent;
+
+    @FXML
+    private VBox timelinePane;
+
+    @FXML
+    private JFXToggleNode toggleA;
+
+    @FXML
+    private JFXToggleNode toggleB;
+
+    @FXML
+    private JFXToggleNode toggleC;
+
+    @FXML
+    private JFXToggleNode toggleD;
+
+    @FXML
+    private JFXToggleNode toggleE;
+
+    @FXML
+    private JFXToggleNode toggleF;
+
+    @FXML
+    private JFXToggleNode toggleG;
+
+    private int h = 0, m = 0, s = 0, a = 0, e = 0;
+
     private JFXToggleNode selected;
-    private char correta;
-    private boolean diagnostico;
+    private char corretaLetra;
     private Timeline time;
-    
+
     private CircleProgress circleProgress;
     private List<Questao> questoes;
     private int questaoAtual = 0;
     private int totalQuestoes;
     private char respostaSelecionada;
-    private List<Character> respostasUsuario = new ArrayList<Character>();
+    private List<Character> respostasUsuario = new ArrayList<>();
     private Timeline loadingTimeline;
-    
+
     @FXML
     public void initialize() {
-        // Criar CircleProgress
-        circleProgress = new CircleProgress(35, 35, 35, 0);
-        circleProgressContainer.getChildren().add(circleProgress);
-        
-        // Carregar questões
-        TesteMatematicaService service = new TesteMatematicaService();
-        questoes = service.carregarQuestoes();
-        totalQuestoes = questoes.size();
-        
-        // Iniciar com loading e depois primeira questão
-        Diagnosticar(false);
-       
+        Platform.runLater(() -> {
+            // Criar CircleProgress
+            circleProgress = new CircleProgress(35, 35, 35, 0);
+            circleProgressContainer.getChildren().add(circleProgress);
+
+            // Carregar questões
+            TesteMatematicaService service = new TesteMatematicaService();
+            questoes = service.carregarQuestoes();
+            totalQuestoes = questoes.size();
+
+            // Configurar visibilidade inicial
+            end.setVisible(false);
+            start.setVisible(true);
+            tela.setVisible(true);
+            
+            // Carregar diagnósticos
+            BuscarDiagnosticos();
+            
+            // Configurar scroll horizontal
+            scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        });
     }
 
-    private void TimerDiagnostic(){
-        diagnostico=true;
-        
-        
-        time=new Timeline(new KeyFrame(
-            Duration.seconds(1),
-            e-> {
-              
-                    if(s==60){
-                        m++;
-                        if (m==60) {
-                            h++;
-                            m=0;
-                        }
-                        s=0;
-                    }   
-                    tempo.setText(LocalTime.of(h, m, s).toString()+(s==0?":00":""));    
-                    s++;
-                    
+    private void TimerDiagnostic() {
+        time = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
+            s++;
+            if (s == 60) {
+                s = 0;
+                m++;
+                if (m == 60) {
+                    m = 0;
+                    h++;
                 }
-              
-        ));
-       time.setCycleCount(Timeline.INDEFINITE);
+            }
+            tempo.setText(String.format("%02d:%02d:%02d", h, m, s));
+        }));
+        time.setCycleCount(Timeline.INDEFINITE);
         time.play();
-        
     }
-    
+
     private void iniciarLoadingInicial() {
         tela.setVisible(false);
-        // Mostrar overlay
         loadingOverlay.setVisible(true);
         loadingOverlay.setOpacity(1);
-        
-        // Animar progress bar de 0 a 100%
         loadingProgress.setProgress(0);
-        
+
         String[] mensagens = {
             "Analisando seu perfil...",
             "Preparando questões personalizadas...",
             "Configurando nível de dificuldade...",
             "Quase lá..."
         };
-        
+
         loadingTimeline = new Timeline();
         
         for (int i = 0; i <= 100; i++) {
             final int progresso = i;
-            KeyFrame kf = new KeyFrame(Duration.millis(i * 30), e -> {
+            KeyFrame kf = new KeyFrame(Duration.millis(i * 25), ev -> {
                 loadingProgress.setProgress(progresso / 100.0);
                 
-                // Mudar mensagem a cada 25%
                 if (progresso == 25) loadingMessage.setText(mensagens[0]);
                 if (progresso == 50) loadingMessage.setText(mensagens[1]);
                 if (progresso == 75) loadingMessage.setText(mensagens[2]);
                 if (progresso == 95) loadingMessage.setText(mensagens[3]);
                 
-                // Quando completar
                 if (progresso == 100) {
                     finalizarLoading();
                 }
@@ -149,18 +301,15 @@ public class DiagnosticoCandidatoController {
         
         loadingTimeline.play();
     }
-    
+
     private void finalizarLoading() {
-        // Pequena pausa antes de esconder
-        PauseTransition pause = new PauseTransition(Duration.millis(500));
-        pause.setOnFinished(e -> {
-            // Fade out do overlay
-            FadeTransition fadeOut = new FadeTransition(Duration.millis(300), loadingOverlay);
+        PauseTransition pause = new PauseTransition(Duration.millis(300));
+        pause.setOnFinished(ev -> {
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(200), loadingOverlay);
             fadeOut.setFromValue(1);
             fadeOut.setToValue(0);
-            fadeOut.setOnFinished(ev -> {
+            fadeOut.setOnFinished(e -> {
                 loadingOverlay.setVisible(false);
-                // Iniciar primeira questão
                 tela.setVisible(true);
                 TimerDiagnostic();
                 carregarQuestao(0);
@@ -169,39 +318,22 @@ public class DiagnosticoCandidatoController {
         });
         pause.play();
     }
-     
+
     private void carregarQuestao(int index) {
-        // Animação de fade out/in
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(200), end);
-        fadeOut.setFromValue(1);
-        fadeOut.setToValue(0);
-        
-        fadeOut.setOnFinished(e -> {
-            // Atualizar conteúdo
-            atualizarConteudoQuestao(index);
-            
-            // Fade in
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), end);
-            fadeIn.setFromValue(0);
-            fadeIn.setToValue(1);
-            fadeIn.play();
-        });
-        
-        fadeOut.play();
+        atualizarConteudoQuestao(index);
     }
 
     private void atualizarConteudoQuestao(int index) {
-        Questao q = questoes.get(index);
+        if (index >= questoes.size()) return;
         
-        // Atualizar header
+        Questao q = questoes.get(index);
+
         nomeDisc.setText(q.getDisciplina());
         nPergunta.setText("Questão " + (index + 1) + " / " + totalQuestoes);
-        
-        // Atualizar enunciado
+
         bloco1.setText(q.getEnunciado());
-        bloco2.setText(q.getBloco2());
-        
-        // Atualizar alternativas
+        bloco2.setText(q.getBloco2() != null ? q.getBloco2() : "");
+
         ResA.setText(q.getOpcaoA());
         ResB.setText(q.getOpcaoB());
         ResC.setText(q.getOpcaoC());
@@ -209,110 +341,88 @@ public class DiagnosticoCandidatoController {
         ResE.setText(q.getOpcaoE());
         ResF.setText(q.getOpcaoF());
         ResG.setText(q.getOpcaoG());
-        
-        // Atualizar texto dos toggles
-        toggleA.setText("A");
-        toggleB.setText("B");
-        toggleC.setText("C");
-        toggleD.setText("D");
-        toggleE.setText("E");
-        toggleF.setText("F");
-        toggleG.setText("G");
-        
-        // Carregar imagem se existir
+
         if (q.getImagem() != null) {
             imgBloco2.setImage(q.getImagem());
             imgBloco2.setVisible(true);
         } else {
             imgBloco2.setVisible(false);
         }
-        
-        // Limpar seleção anterior
+
         alternativas.selectToggle(null);
         respostaSelecionada = '\0';
-        
-        // Atualizar CircleProgress
+
         double progresso = (double) (index + 1) / totalQuestoes;
         circleProgress.setValue(progresso);
-        
-        // Reabilitar botões
+
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
     }
-    
+
     @FXML
-    private void confirmarResposta() {
+    void confirmarResposta(ActionEvent event) {
         if (alternativas.getSelectedToggle() == null) {
             mostrarAlerta("Atenção", "Selecione uma alternativa antes de confirmar.");
             return;
         }
-        
-        JFXToggleNode selected = (JFXToggleNode) alternativas.getSelectedToggle();
+
+        selected = (JFXToggleNode) alternativas.getSelectedToggle();
         respostaSelecionada = selected.getText().charAt(0);
-        
-        // Salvar resposta
         respostasUsuario.add(respostaSelecionada);
-        
-        // Verificar se acertou
+
         Questao q = questoes.get(questaoAtual);
         boolean acertou = (respostaSelecionada == q.getRespostaCorreta());
-        this.selected=selected;
-        // Feedback visual no toggle
+
         if (acertou) {
             a++;
-            selected.getStyleClass().remove("error");
             selected.getStyleClass().add("sucess");
-            mostrarMensagemTemporaria("Correta!");
         } else {
             e++;
-            selected.getStyleClass().remove("sucess");
             selected.getStyleClass().add("error");
-            mostrarMensagemTemporaria("Errada! Resposta correta: " + q.getRespostaCorreta());
-            
-            // Destacar resposta correta (opcional)
-
             destacarRespostaCorreta(q.getRespostaCorreta());
         }
-        
-        // Habilitar botão próximo
+
         btnProximo.setDisable(false);
-        corretas.setText(a+"");
-        errada.setText(e+"");
+        corretas.setText(String.valueOf(a));
+        errada.setText(String.valueOf(e));
         btnConfirmar.setDisable(true);
     }
-    
+
     private void destacarRespostaCorreta(char letra) {
-        this.correta=letra;
-        JFXToggleNode correta = null;
-        switch(letra) {
-            case 'A': correta = toggleA; break;
-            case 'B': correta = toggleB; break;
-            case 'C': correta = toggleC; break;
-            case 'D': correta = toggleD; break;
-        }
-        if (correta != null) {
-            correta.getStyleClass().add("sucess");
+        this.corretaLetra = letra;
+        JFXToggleNode corretaNode = getToggleByLetra(letra);
+        if (corretaNode != null) {
+            corretaNode.getStyleClass().add("sucess");
         }
     }
 
     private void removerDestaqueRespostaCorreta() {
-        JFXToggleNode correta = null;
-        switch(this.correta) {
-            case 'A': correta = toggleA; break;
-            case 'B': correta = toggleB; break;
-            case 'C': correta = toggleC; break;
-            case 'D': correta = toggleD; break;
-        }
-        if (correta != null) {
-          correta.getStyleClass().remove("sucess");
+        JFXToggleNode corretaNode = getToggleByLetra(corretaLetra);
+        if (corretaNode != null) {
+            corretaNode.getStyleClass().remove("sucess");
         }
     }
     
+    private JFXToggleNode getToggleByLetra(char letra) {
+        switch (letra) {
+            case 'A': return toggleA;
+            case 'B': return toggleB;
+            case 'C': return toggleC;
+            case 'D': return toggleD;
+            case 'E': return toggleE;
+            case 'F': return toggleF;
+            case 'G': return toggleG;
+            default: return null;
+        }
+    }
+
     @FXML
-    private void proximaQuestao() {
-        selected.getStyleClass().remove("error");
-        selected.getStyleClass().remove("sucess");
+    void proximaQuestao(ActionEvent event) {
+        if (selected != null) {
+            selected.getStyleClass().removeAll("error", "sucess");
+        }
         removerDestaqueRespostaCorreta();
+        
         if (questaoAtual + 1 < totalQuestoes) {
             questaoAtual++;
             carregarQuestao(questaoAtual);
@@ -322,19 +432,21 @@ public class DiagnosticoCandidatoController {
     }
 
     private void finalizarDiagnostico() {
-        // Calcular pontuação
-       time.stop();
+        if (time != null) {
+            time.stop();
+        }
+        
         int acertos = 0;
         for (int i = 0; i < questoes.size(); i++) {
             if (respostasUsuario.get(i) == questoes.get(i).getRespostaCorreta()) {
                 acertos++;
             }
         }
-        
+
         double porcentagem = (acertos * 100.0) / totalQuestoes;
-        
+
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle(" Diagnóstico Concluído");
+        alert.setTitle("Diagnóstico Concluído");
         alert.setHeaderText("Resultado Final");
         alert.setContentText(String.format(
             "Você acertou %d de %d questões\n\nPorcentagem: %.1f%%\n\n🎓 Nível: %s\n\n%s",
@@ -343,11 +455,21 @@ public class DiagnosticoCandidatoController {
             getMensagemMotivacional(porcentagem)
         ));
         alert.showAndWait();
-        
-        // Limpar e voltar
+
+        // Reset
         respostasUsuario.clear();
         questaoAtual = 0;
-        Diagnosticar(false);
+        a = 0;
+        e = 0;
+        h = 0;
+        m = 0;
+        s = 0;
+        corretas.setText("0");
+        errada.setText("0");
+        tempo.setText("00:00:00");
+        
+        end.setVisible(false);
+        start.setVisible(true);
     }
 
     private String getNivelPorPorcentagem(double pct) {
@@ -357,7 +479,7 @@ public class DiagnosticoCandidatoController {
         if (pct >= 20) return "ISAF";
         return "INAF";
     }
-    
+
     private String getMensagemMotivacional(double pct) {
         if (pct >= 80) return "Parabéns! Você está pronto para bolsas de estudo!";
         if (pct >= 60) return "Bom trabalho! Continue praticando para alcançar o próximo nível.";
@@ -365,7 +487,7 @@ public class DiagnosticoCandidatoController {
         if (pct >= 20) return "Você precisa de mais prática. Não desista!";
         return "Vamos recomeçar? O diagnóstico identificou áreas para melhoria.";
     }
-    
+
     private void mostrarAlerta(String titulo, String mensagem) {
         Alert alert = new Alert(AlertType.WARNING);
         alert.setTitle(titulo);
@@ -373,25 +495,65 @@ public class DiagnosticoCandidatoController {
         alert.setContentText(mensagem);
         alert.showAndWait();
     }
-    
-    private void mostrarMensagemTemporaria(String mensagem) {
-        System.out.println(mensagem);
-        // TODO: Implementar Toast notification
-    }
-    
-    private void BuscarDiagnosticos(){
+
+    private void BuscarDiagnosticos() {
+        diagnosticosPane.getChildren().clear();
         for (int i = 0; i < 5; i++) {
-            diagnoticos.getChildren().add(new DiagnosticoCard("Matematica", "-6%", 50, ()-> Diagnosticar(true)));
+            final int index = i;
+            diagnosticosPane.getChildren().add(new DiagnosticoCard(
+                "Matemática", 
+                "-6%", 
+                50, 
+                () -> Diagnosticar(true)
+            ));
         }
     }
 
     private void Diagnosticar(boolean iniciar) {
         end.setVisible(iniciar);
         start.setVisible(!iniciar);
-        if (end.isVisible()) {
-             iniciarLoadingInicial();
-        }else{
-            BuscarDiagnosticos();
+        if (iniciar) {
+            iniciarLoadingInicial();
         }
+    }
+
+    private void SwitchPane(int i) {
+        diagnosticosPane.setVisible(i == 0);
+        timelinePane.setVisible(i == 1);
+        estatisticasPane.setVisible(i == 2);
+        
+        btnDiagnosticos.getStyleClass().clear();
+        btnTimeline.getStyleClass().clear();
+        btnEstatisticas.getStyleClass().clear();
+        
+        btnDiagnosticos.getStyleClass().add(i == 0 ? "nav-btn-active" : "nav-btn");
+        btnTimeline.getStyleClass().add(i == 1 ? "nav-btn-active" : "nav-btn");
+        btnEstatisticas.getStyleClass().add(i == 2 ? "nav-btn-active" : "nav-btn");
+        
+        // Scroll horizontal
+        double target = 0.0;
+        if (i == 0) target = 0.0;
+        else if (i == 1) target = 0.5;
+        else target = 1.0;
+        
+        Timeline l = new Timeline(
+            new KeyFrame(Duration.seconds(0.3), new KeyValue(scroll.hvalueProperty(), target))
+        );
+        l.play();
+    }
+
+    @FXML
+    void switchToDiagnosticos(ActionEvent event) {
+        SwitchPane(0);
+    }
+
+    @FXML
+    void switchToEstatisticas(ActionEvent event) {
+        SwitchPane(2);
+    }
+
+    @FXML
+    void switchToTimeline(ActionEvent event) {
+        SwitchPane(1);
     }
 }
