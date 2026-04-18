@@ -260,15 +260,17 @@ public class DiagnosticoCandidatoController {
         // Feedback visual no toggle
         if (acertou) {
             a++;
-            selected.getStyleClass().clear();
-            selected.setStyle("-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;");
+            selected.getStyleClass().remove("error");
+            selected.getStyleClass().add("sucess");
             mostrarMensagemTemporaria("Correta!");
         } else {
             e++;
-            selected.setStyle("-fx-background-color: #ef4444; -fx-border-color: #ef4444; -fx-text-fill: white;");
+            selected.getStyleClass().remove("sucess");
+            selected.getStyleClass().add("error");
             mostrarMensagemTemporaria("Errada! Resposta correta: " + q.getRespostaCorreta());
             
             // Destacar resposta correta (opcional)
+
             destacarRespostaCorreta(q.getRespostaCorreta());
         }
         
@@ -289,27 +291,28 @@ public class DiagnosticoCandidatoController {
             case 'D': correta = toggleD; break;
         }
         if (correta != null) {
-            correta.setStyle("-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;");
+            correta.getStyleClass().add("sucess");
         }
     }
 
-    private void removerDestaqueRespostaCorreta(char letra) {
+    private void removerDestaqueRespostaCorreta() {
         JFXToggleNode correta = null;
-        switch(letra) {
+        switch(this.correta) {
             case 'A': correta = toggleA; break;
             case 'B': correta = toggleB; break;
             case 'C': correta = toggleC; break;
             case 'D': correta = toggleD; break;
         }
         if (correta != null) {
-            correta.setStyle("");
+          correta.getStyleClass().remove("sucess");
         }
     }
     
     @FXML
     private void proximaQuestao() {
-        this.selected.setStyle("");
-        removerDestaqueRespostaCorreta(correta);
+        selected.getStyleClass().remove("error");
+        selected.getStyleClass().remove("sucess");
+        removerDestaqueRespostaCorreta();
         if (questaoAtual + 1 < totalQuestoes) {
             questaoAtual++;
             carregarQuestao(questaoAtual);

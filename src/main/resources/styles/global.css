@@ -32,6 +32,9 @@
     -color-none: #94a3b8;
 }
 
+.list-view * {
+    -fx-background-color: transparent;
+}
 /* ==================== FUNDO ==================== */
 .root, .page, .content {
     -fx-background-color: -color-bg;
@@ -380,7 +383,8 @@
     -fx-background-color: -color-primary;
     -fx-border-color: -color-border;
     -fx-border-width: 0 1 0 0;
-    -fx-min-width: 240px;
+    -fx-min-width: 24px;
+    -fx-max-width: 240px;
 }
 
 .sidebar-title {
@@ -429,12 +433,27 @@
 .item-cell Label {
     -fx-text-fill: -color-none;
     -fx-font-size: 14;
+      -fx-opacity:1;
 }
 
 .item-cell .glyph-icon {
     -fx-fill: -color-none;
 }
 
+.nav-bar.min .list-cell {
+    -fx-padding: 10;
+    -fx-margin:5;
+}
+
+.nav-bar.min .item-cell Label{
+    -fx-opacity:0;
+}
+
+.nav-bar.min .item-cell{
+    -fx-max-width: 0;
+    -fx-pref-width: 0;
+    -fx-min-width: 0;
+}
 /* ==================== LOADING ==================== */
 .loading-overlay {
     -fx-background-color: transparent;
@@ -512,6 +531,26 @@
     -fx-font-weight: bold;
 }
 
+    .toggle-letter.sucess  {
+        -fx-background-color: #10b981; 
+        -fx-border-color: #10b981; 
+        -fx-text-fill: white;
+    }
+
+    .toggle-letter.error  {
+       -fx-background-color: #ef4444; 
+       -fx-border-color: #ef4444; 
+       -fx-text-fill: white;
+    }
+
+    .toggle-letter.error .radio-label{
+        -fx-text-fill: white;
+    }
+
+    .toggle-letter.sucess .radio-label{
+        -fx-text-fill: white;
+    }
+
 .toggle-letter:selected {
     -fx-background-color: -color-primary;
     -fx-border-color: -color-primary;
@@ -572,4 +611,6 @@
     -fx-font-size: 14px;
     -fx-text-fill: -color-muted;
 }
+
+
 

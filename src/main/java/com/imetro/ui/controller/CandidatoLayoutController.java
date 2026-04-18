@@ -11,11 +11,18 @@ import org.kordamp.ikonli.remixicon.RemixiconAL;
 import com.imetro.App;
 import com.imetro.ui.components.Item_Cell;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 public class CandidatoLayoutController implements Initializable {
     private record MenuEntry(String key, String title, Ikon icon) {}
@@ -25,6 +32,8 @@ public class CandidatoLayoutController implements Initializable {
 
     @FXML 
     private ListView<MenuEntry> menu;
+    @FXML 
+    private VBox sidebar;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -69,6 +78,26 @@ public class CandidatoLayoutController implements Initializable {
     @FXML
     private void logout() throws IOException {
         App.setRoot("views/layouts/AuthLayout");
+    }
+
+    @FXML
+    private void PopPup(ActionEvent a){
+        Platform.runLater(() ->   {
+            if (menu.getStyleClass().contains("min")) {
+                menu.getStyleClass().remove("min");
+            
+                Timeline p = new Timeline(
+                    new KeyFrame(Duration.seconds(.3), new KeyValue(sidebar.prefWidthProperty(),69),new KeyValue(sidebar.prefWidthProperty(),240)));
+                    p.play();
+            
+            }else{
+                menu.getStyleClass().add("min");
+                Timeline p = new Timeline(
+                    new KeyFrame(Duration.seconds(.3), new KeyValue(sidebar.prefWidthProperty(),240),new KeyValue(sidebar.prefWidthProperty(),69)));
+                    p.play();
+                
+            }
+        });
     }
 
     private void navigate(String key) {
