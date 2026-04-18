@@ -12,9 +12,11 @@ import com.imetro.App;
 import com.imetro.persistence.repository.CandidatoDisciplinaRepository;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
+import com.imetro.ui.components.DisciplinaCard;
 import com.imetro.util.Authentication;
 import com.imetro.util.DisciplinaCatalog;
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -60,29 +62,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
         checkBoxes.clear();
 
         for (DisciplinaCatalog.DisciplinaSeed seed : seeds) {
-            CheckBox cb = new CheckBox(seed.nome());
-            cb.getStyleClass().add("disciplina-check");
-            cb.setStyle("-fx-font-weight: 700;");
-
-            Label meta = new Label("Nível: " + seed.nivel() + "  •  Peso: " + seed.peso());
-            meta.getStyleClass().add("muted");
-            meta.setStyle("-fx-font-size: 11px;");
-
-            VBox left = new VBox(2, cb, meta);
-            left.setPrefWidth(260);
-
-            int total = counts.getOrDefault(seed.nome(), 0);
-            Label badge = new Label(total > 0 ? "Orientador disponível" : "Sem orientador");
-            badge.setStyle(total > 0
-                    ? "-fx-text-fill: #0f5132; -fx-background-color: rgba(25,135,84,0.18); -fx-padding: 4 8; -fx-background-radius: 999;"
-                    : "-fx-text-fill: #842029; -fx-background-color: rgba(220,53,69,0.14); -fx-padding: 4 8; -fx-background-radius: 999;");
-
-            HBox row = new HBox(10, left, badge);
-            row.setAlignment(Pos.TOP_LEFT);
-            row.setStyle("-fx-padding: 6 0;");
-
-            disciplinasBox.getChildren().add(row);
-            checkBoxes.add(cb);
+            disciplinasBox.getChildren().add(new DisciplinaCard(seed,counts));
         }
     }
 

@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="735.0" prefWidth="820.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.TesteAdaptativoController">
+<AnchorPane prefHeight="852.0" prefWidth="820.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.TesteAdaptativoController">
    <children>
       <VBox alignment="TOP_LEFT" prefHeight="722.0" prefWidth="820.0" spacing="15.0" styleClass="placeholder-card" AnchorPane.bottomAnchor="-13.0" AnchorPane.leftAnchor="-2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="-2.0">
          <padding>
@@ -39,7 +39,7 @@
             <children>
                
                <!-- TELA DE SELECAO (START) -->
-               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <Label styleClass="h3-thin" text="Selecione uma disciplina para iniciar o teste adaptativo" />
                      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="550.0" VBox.vgrow="ALWAYS">
@@ -55,7 +55,7 @@
                </VBox>
                
                <!-- TELA DO TESTE ADAPTATIVO -->
-               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <StackPane>
                         <children>
@@ -75,7 +75,7 @@
                            <VBox fx:id="tela" spacing="15.0">
                               <children>
                                  <!-- HEADER DA QUESTAO -->
-                                 <HBox alignment="CENTER_LEFT" prefHeight="97.0" prefWidth="778.0" spacing="20.0">
+                                 <HBox alignment="CENTER_RIGHT" prefHeight="97.0" prefWidth="778.0" spacing="20.0" translateX="10.0" translateY="-80.0">
                                     <children>
                                        <HBox spacing="20.0">
                                           <children>
@@ -89,12 +89,14 @@
                                           </children>
                                        </HBox>
                                        
-                                       <Region HBox.hgrow="ALWAYS" />
-                                       
                                        <!-- INDICADORES ADAPTATIVOS -->
                                        <VBox alignment="CENTER" spacing="5.0">
                                           <children>
-                                             <Label styleClass="h3-thin" text="NIVEL" />
+                                             <HBox alignment="CENTER" spacing="5.0">
+                                                <children>
+                                                   <Label styleClass="h3-thin" text="NIVEL" />
+                                                </children>
+                                             </HBox>
                                              <Label fx:id="nivelAtual" styleClass="h1" text="MEDIO" />
                                           </children>
                                        </VBox>
@@ -103,7 +105,11 @@
                                        
                                        <VBox alignment="CENTER" spacing="5.0">
                                           <children>
-                                             <Label styleClass="h3-thin" text="DIFICULDADE" />
+                                             <HBox alignment="CENTER" spacing="5.0">
+                                                <children>
+                                                   <Label styleClass="h3-thin" text="DIFICULDADE" />
+                                                </children>
+                                             </HBox>
                                              <Label fx:id="dificuldadeAtual" styleClass="h1" text="**" />
                                           </children>
                                        </VBox>
@@ -161,9 +167,9 @@
                                  </HBox>
                                  
                                  <!-- CORPO DA QUESTAO -->
-                                 <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="card-blur">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="card-blur" translateY="-80.0">
                                     <content>
-                                       <VBox prefWidth="720.0" spacing="20.0">
+                                       <VBox prefHeight="596.0" prefWidth="830.0" spacing="20.0">
                                           <padding>
                                              <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                                           </padding>
@@ -174,7 +180,7 @@
                                                 <children>
                                                    <HBox>
                                                       <children>
-                                                         <VBox alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
+                                                         <VBox alignment="CENTER_LEFT" prefHeight="150.0" prefWidth="478.0" spacing="10.0">
                                                             <children>
                                                                <Label fx:id="bloco1" style="-fx-font-size: 16;" styleClass="h3-thin" text="Aqui vai o texto do enunciado da questao." wrapText="true" />
                                                                <Label fx:id="bloco2" styleClass="h3-thin" text="" wrapText="true" />
@@ -185,6 +191,7 @@
                                                          </VBox>
                                                          <Separator orientation="VERTICAL" />
                                                          <ImageView fx:id="imgBloco2" fitHeight="150.0" preserveRatio="true" visible="false" />
+                                                         <Region prefHeight="150.0" prefWidth="84.0" />
                                                       </children>
                                                    </HBox>
                                                 </children>
@@ -193,13 +200,13 @@
                                              <Separator />
                                              
                                              <!-- FEEDBACK ADAPTATIVO -->
-                                             <VBox fx:id="feedbackContainer" visible="false" spacing="10.0" styleClass="sub-card" alignment="CENTER">
+                                             <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card" visible="false">
                                                 <padding>
                                                    <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
                                                 </padding>
                                                 <children>
                                                    <Label fx:id="feedbackIcon" styleClass="h1" text="OK" />
-                                                   <Label fx:id="feedbackMessage" styleClass="h3-thin" text="Excelente! Subindo de nivel..." wrapText="true" alignment="CENTER" />
+                                                   <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h3-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
                                                 </children>
                                              </VBox>
                                              
@@ -207,78 +214,139 @@
                                              <VBox>
                                                 <children>
                                                    <Label styleClass="h3-thin" text="Selecione uma alternativa:" />
-                                                   <VBox spacing="10.0">
+                                                   <VBox>
                                                       <children>
-                                                         <!-- Linha A-B -->
-                                                         <HBox spacing="20.0">
+                                                         <HBox>
                                                             <children>
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
+                                                               <HBox alignment="CENTER_LEFT" minHeight="46.0" minWidth="300.0" spacing="20.0" styleClass="toggle-option">
                                                                   <children>
-                                                                     <JFXToggleNode fx:id="toggleA" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="A">
+                                                                     <JFXToggleNode fx:id="toggleA" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" minHeight="45.0" minWidth="350.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="60.0" prefWidth="300.0" styleClass="toggle-letter" text="A">
                                                                         <toggleGroup>
                                                                            <ToggleGroup fx:id="alternativas" />
                                                                         </toggleGroup>
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResA" minWidth="306.0" prefHeight="36.0" prefWidth="245.0" styleClass="radio-label" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
                                                                      </JFXToggleNode>
-                                                                     <Label fx:id="ResA" styleClass="radio-label" wrapText="true" />
                                                                   </children>
                                                                </HBox>
                                                                
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
+                                                               <HBox alignment="CENTER_LEFT" minWidth="300.0" spacing="20.0" styleClass="toggle-option">
                                                                   <children>
-                                                                     <JFXToggleNode fx:id="toggleB" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="B" toggleGroup="$alternativas" />
-                                                                     <Label fx:id="ResB" styleClass="radio-label" wrapText="true" />
+                                                                     <JFXToggleNode fx:id="toggleB" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="B" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResB" minWidth="306.0" prefHeight="36.0" prefWidth="234.0" styleClass="radio-label" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
                                                                   </children>
                                                                </HBox>
                                                             </children>
                                                          </HBox>
                                                          
-                                                         <!-- Linha C-D -->
-                                                         <HBox spacing="20.0">
+                                                         <HBox>
                                                             <children>
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
+                                                               <HBox alignment="CENTER_LEFT" minHeight="46.0" minWidth="300.0" prefHeight="55.0" prefWidth="358.0" spacing="20.0" styleClass="toggle-option">
                                                                   <children>
-                                                                     <JFXToggleNode fx:id="toggleC" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="C" toggleGroup="$alternativas" />
-                                                                     <Label fx:id="ResC" styleClass="radio-label" wrapText="true" />
+                                                                     <JFXToggleNode fx:id="toggleC" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="C" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResC" minWidth="306.0" prefHeight="36.0" prefWidth="246.0" styleClass="radio-label" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
                                                                   </children>
                                                                </HBox>
                                                                
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
+                                                               <HBox alignment="CENTER_LEFT" minWidth="300.0" spacing="20.0" styleClass="toggle-option">
                                                                   <children>
-                                                                     <JFXToggleNode fx:id="toggleD" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="D" toggleGroup="$alternativas" />
-                                                                     <Label fx:id="ResD" styleClass="radio-label" wrapText="true" />
+                                                                     <JFXToggleNode fx:id="toggleD" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="D" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResD" minWidth="306.0" prefHeight="36.0" prefWidth="236.0" styleClass="radio-label" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
                                                                   </children>
                                                                </HBox>
                                                             </children>
                                                          </HBox>
                                                          
-                                                         <!-- Linha E-F -->
-                                                         <HBox spacing="20.0">
+                                                         <HBox>
                                                             <children>
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
+                                                               <HBox alignment="CENTER_LEFT" minWidth="300.0" spacing="20.0" styleClass="toggle-option">
                                                                   <children>
-                                                                     <JFXToggleNode fx:id="toggleE" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="E" toggleGroup="$alternativas" />
-                                                                     <Label fx:id="ResE" styleClass="radio-label" wrapText="true" />
+                                                                     <JFXToggleNode fx:id="toggleE" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="E" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResE" minWidth="306.0" prefHeight="36.0" prefWidth="251.0" styleClass="radio-label" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
                                                                   </children>
                                                                </HBox>
                                                                
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
+                                                               <HBox alignment="CENTER_LEFT" minWidth="300.0" spacing="20.0" styleClass="toggle-option">
                                                                   <children>
-                                                                     <JFXToggleNode fx:id="toggleF" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="F" toggleGroup="$alternativas" />
-                                                                     <Label fx:id="ResF" styleClass="radio-label" wrapText="true" />
+                                                                     <JFXToggleNode fx:id="toggleF" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="F" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResF" minWidth="306.0" prefHeight="36.0" prefWidth="242.0" styleClass="radio-label" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
                                                                   </children>
                                                                </HBox>
                                                             </children>
                                                          </HBox>
                                                          
-                                                         <!-- Linha G -->
-                                                         <HBox spacing="20.0">
+                                                         <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option">
                                                             <children>
-                                                               <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="toggle-option" HBox.hgrow="ALWAYS">
-                                                                  <children>
-                                                                     <JFXToggleNode fx:id="toggleG" maxWidth="46.0" minWidth="46.0" styleClass="toggle-letter" text="G" toggleGroup="$alternativas" />
-                                                                     <Label fx:id="ResG" styleClass="radio-label" wrapText="true" />
-                                                                  </children>
-                                                               </HBox>
+                                                               <JFXToggleNode fx:id="toggleG" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="G" toggleGroup="$alternativas">
+                                                                  <padding>
+                                                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                  </padding>
+                                                                  <graphic>
+                                                                     <Label fx:id="ResG" minWidth="306.0" prefHeight="36.0" prefWidth="251.0" styleClass="radio-label" wrapText="true">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                        </padding>
+                                                                     </Label>
+                                                                  </graphic>
+                                                               </JFXToggleNode>
                                                             </children>
                                                          </HBox>
                                                       </children>
@@ -292,10 +360,10 @@
                                  </ScrollPane>
                                  
                                  <!-- BOTOES -->
-                                 <HBox alignment="CENTER_RIGHT" spacing="15.0">
+                                 <HBox alignment="CENTER" spacing="20.0" translateY="-70.0">
                                     <children>
                                        <JFXButton fx:id="btnConfirmar" onAction="#confirmarResposta" prefHeight="40.0" prefWidth="160.0" styleClass="btn-secondary" text="Confirmar" />
-                                       <JFXButton fx:id="btnProximo" onAction="#proximaQuestao" prefHeight="40.0" prefWidth="160.0" styleClass="btn-primary" text="Proxima Questao" disable="true" />
+                                       <JFXButton fx:id="btnProximo" disable="true" onAction="#proximaQuestao" prefHeight="40.0" prefWidth="160.0" styleClass="btn-primary" text="Proxima Questao" />
                                     </children>
                                  </HBox>
                               </children>

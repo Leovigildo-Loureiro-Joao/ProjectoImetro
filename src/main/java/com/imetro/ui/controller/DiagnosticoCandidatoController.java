@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.imetro.ui.components.CircleProgress;
+import com.imetro.ui.components.DiagnosticoCard;
 import com.imetro.ui.model.Questao;
 import com.imetro.services.TesteMatematicaService;
 
@@ -19,6 +20,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -30,7 +32,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
 public class DiagnosticoCandidatoController {
-    
+    @FXML 
+    private FlowPane diagnoticos;
     @FXML private StackPane circleProgressContainer;
     @FXML private Label nomeDisc, nPergunta, bloco1, bloco2;
     @FXML private Label ResA, ResB, ResC, ResD, ResE, ResF, ResG;
@@ -76,8 +79,8 @@ public class DiagnosticoCandidatoController {
         totalQuestoes = questoes.size();
         
         // Iniciar com loading e depois primeira questão
-        Diagnosticar(true);
-        iniciarLoadingInicial();
+        Diagnosticar(false);
+       
     }
 
     private void TimerDiagnostic(){
@@ -257,6 +260,7 @@ public class DiagnosticoCandidatoController {
         // Feedback visual no toggle
         if (acertou) {
             a++;
+            selected.getStyleClass().clear();
             selected.setStyle("-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;");
             mostrarMensagemTemporaria("Correta!");
         } else {
@@ -372,8 +376,19 @@ public class DiagnosticoCandidatoController {
         // TODO: Implementar Toast notification
     }
     
+    private void BuscarDiagnosticos(){
+        for (int i = 0; i < 5; i++) {
+            diagnoticos.getChildren().add(new DiagnosticoCard("Matematica", "-6%", 50, ()-> Diagnosticar(true)));
+        }
+    }
+
     private void Diagnosticar(boolean iniciar) {
         end.setVisible(iniciar);
         start.setVisible(!iniciar);
+        if (end.isVisible()) {
+             iniciarLoadingInicial();
+        }else{
+            BuscarDiagnosticos();
+        }
     }
 }

@@ -498,18 +498,18 @@
 
 
 /* JFXToggleNode estilo circular com letra */
+
 .toggle-letter {
-    -fx-pref-width: 46px;
+
     -fx-pref-height: 46px;
-    -fx-background-radius: 30;
-    -fx-border-radius: 30;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
     -fx-background-color: -color-surface;
     -fx-border-color: -color-border;
     -fx-border-width: 2;
     -fx-text-fill: -color-text;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-alignment: center;
 }
 
 .toggle-letter:selected {
@@ -517,6 +517,10 @@
     -fx-border-color: -color-primary;
     -fx-text-fill: white;
     -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 8, 0, 0, 2);
+}
+
+.toggle-letter:selected *{
+    -fx-text-fill: white;
 }
 
 .toggle-letter:hover {
@@ -532,9 +536,7 @@
     -fx-min-width: 400;
 }
 
-.toggle-option:hover {
-    -fx-background-color: rgba(59, 130, 246, 0.05);
-}
+
 
 /* Loading Overlay estilo Duolingo */
 .loading-overlay {
@@ -570,3 +572,4 @@
     -fx-font-size: 14px;
     -fx-text-fill: -color-muted;
 }
+
