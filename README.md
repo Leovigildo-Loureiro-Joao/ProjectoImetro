@@ -1,223 +1,131 @@
-# SimulatorBolsaStudy
+# Projecto Imetro
 
-Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com **análise adaptativa** e **feedback orientado a dados** para Estudante e Orientador.
+Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, com onboarding por perfil, diagnosticos por disciplina, estatisticas de desempenho e persistencia em PostgreSQL.
 
-> Nota (estado atual): este repositório já tem a navegação base por layouts (Auth → Candidato/Orientador) e páginas placeholder. As funcionalidades de simulador, banco de questões e análise ainda estão em desenvolvimento.
+## Estado atual
 
-## Objetivo
+- navegacao base entre autenticacao, area do candidato e area do orientador
+- onboarding com selecao de disciplinas e avatar
+- modulo de diagnostico academico no candidato com:
+  - lista de diagnosticos
+  - linha do tempo
+  - estatisticas
+  - fluxo de perguntas e resultado final
+- persistencia JDBC para utilizadores, disciplinas, perguntas, testes e relatorios
+- schema SQL versionado em `src/main/resources/db/migration`
 
-- Ajudar o **Estudante** a treinar para testes/exames de bolsas (genérico) em áreas como: Matemática, Português, Física, Química, Inglês e Cultura Geral.
-- Dar ao **Orientador** visibilidade do progresso e dos padrões de erro, para orientar o estudante com base em evidências.
-
-## Perfis no sistema
-
-- **Estudante**: realiza simulados/exames, responde questões e acompanha o próprio desempenho ao longo do tempo.
-- **Orientador**: consulta relatórios e valida recomendações sugeridas pelo sistema (human-in-the-loop), tornando a intervenção mais certeira.
-
-## Métricas mínimas (MVP)
-
-- **Tempo médio** por questão e por sessão
-- **Taxa de acerto por tópico**
-- **Evolução semanal** (tendência de acerto/tempo)
-- **Erros recorrentes** (padrões por tópico e tipo de questão)
-- **Dificuldade atingida** (progressão e estabilização)
-
-## Como funciona (visão de produto)
-
-O sistema recolhe dados de desempenho (ex.: acerto/erro, tempo, tópicos) e usa esses sinais para:
-
-- Ajustar a seleção de questões (dificuldade/tópicos) de forma **adaptativa**
-- Gerar recomendações de estudo e exercícios
-- Produzir relatórios para Estudante e Orientador, destacando pontos fortes e fracos
-
-## Armazenamento de dados
-
-- **Inicialmente (MVP):** multiutilizador no **mesmo PC** (perfis locais).
-- **Evolução possível:** sincronização entre dois PCs usando **Supabase** (armazenamento/autenticação), mantendo a análise e a experiência focadas no simulador.
-
-## Tecnologias
+## Stack
 
 - Java 21
-- JavaFX
+- JavaFX 23
 - Maven
+- JFoenix, ControlsFX, Ikonli e TilesFX
+- PostgreSQL
+- MyBatis
+- Flyway (dependencias adicionadas; execucao automatica ainda nao esta ligada no arranque da app)
 
-## Configuração do Ambiente
+## Requisitos
 
-Para executar o projeto, você precisa configurar o ambiente de desenvolvimento. Siga os passos abaixo para Windows ou Linux.
+- JDK 21
+- Maven 3.9+ para executar localmente
+- Docker Desktop (opcional, para base local e para usar a imagem de Maven)
 
-### Pré-requisitos Gerais
-
-- JDK 21 (Java Development Kit)
-- Maven 3.6 ou superior
-- VS Code (recomendado)
-- Docker (opcional, para banco de dados local)
-
-### Configuração no Windows
-
-1. **Baixar e Instalar JDK 21:**
-   - Acesse o site oficial: [Eclipse Temurin (Adoptium)](https://adoptium.net/temurin/releases/?version=21)
-   - Baixe a versão para Windows (arquivo .msi ou .zip).
-   - Execute o instalador e siga as instruções. Anote o caminho de instalação (ex.: `C:\Program Files\Eclipse Adoptium\jdk-21`).
-
-2. **Baixar e Instalar Maven:**
-   - Acesse: [Maven Downloads](https://maven.apache.org/download.cgi)
-   - Baixe o arquivo binário (apache-maven-X.X.X-bin.zip).
-   - Extraia o arquivo para uma pasta, ex.: `C:\apache-maven-3.9.5`.
-
-3. **Configurar Variáveis de Ambiente:**
-   - Abra o Painel de Controle > Sistema > Configurações Avançadas do Sistema > Variáveis de Ambiente.
-   - Em "Variáveis do Sistema", clique em "Novo":
-     - Nome: `JAVA_HOME`
-     - Valor: caminho do JDK (ex.: `C:\Program Files\Eclipse Adoptium\jdk-21`)
-   - Clique em "Novo" novamente:
-     - Nome: `MAVEN_HOME`
-     - Valor: caminho do Maven (ex.: `C:\apache-maven-3.9.5`)
-   - Edite a variável `Path` (em "Variáveis do Sistema"):
-     - Adicione: `%JAVA_HOME%\bin`
-     - Adicione: `%MAVEN_HOME%\bin`
-   - Reinicie o prompt de comando e verifique: `java -version` e `mvn -version`.
-
-4. **Instalar VS Code:**
-   - Baixe e instale do site: [VS Code](https://code.visualstudio.com/).
-   - Abra o VS Code e instale as extensões:
-     - Extension Pack for Java (Microsoft)
-     - Maven for Java (Microsoft)
-     - JavaFX Support (opcional, se disponível)
-
-5. **Clonar o Repositório:**
-   - Abra o VS Code, vá para Source Control, clone o repositório ou baixe o ZIP e extraia.
-
-### Configuração no Linux
-
-1. **Instalar JDK 21:**
-   - Use o gerenciador de pacotes. Para Ubuntu/Debian:
-     ```
-     sudo apt update
-     sudo apt install openjdk-21-jdk
-     ```
-   - Verifique: `java -version` (deve mostrar OpenJDK 21).
-   - Se precisar de uma versão específica, baixe do [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21) e extraia para `/opt/jdk-21`, então configure `JAVA_HOME=/opt/jdk-21`.
-
-2. **Instalar Maven:**
-   - Para Ubuntu/Debian:
-     ```
-     sudo apt install maven
-     ```
-   - Ou baixe manualmente:
-     - `wget https://downloads.apache.org/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz`
-     - `tar -xzf apache-maven-3.9.5-bin.tar.gz`
-     - Mova para `/opt/apache-maven-3.9.5`
-
-3. **Configurar Variáveis de Ambiente:**
-   - Edite `~/.bashrc` ou `~/.profile`:
-     ```
-     export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64  # ou o caminho correto
-     export MAVEN_HOME=/opt/apache-maven-3.9.5  # se instalado manualmente
-     export PATH=$JAVA_HOME/bin:$MAVEN_HOME/bin:$PATH
-     ```
-   - Recarregue: `source ~/.bashrc`
-   - Verifique: `java -version` e `mvn -version`.
-
-4. **Instalar VS Code:**
-   - Baixe o .deb do site: [VS Code](https://code.visualstudio.com/).
-   - Instale: `sudo dpkg -i code_*.deb` (ou use Snap: `sudo snap install code --classic`).
-   - Abra o VS Code e instale as extensões:
-     - Extension Pack for Java (Microsoft)
-     - Maven for Java (Microsoft)
-     - JavaFX Support (opcional)
-
-5. **Clonar o Repositório:**
-   - Use Git: `git clone <url-do-repo>`
-   - Ou baixe o ZIP e extraia.
-
-## Executar o projeto
-
-### Pré-requisitos
-
-- JDK 21 instalado
-- Maven instalado
-
-### Comando
+## Como executar
 
 ```bash
 mvn clean javafx:run
 ```
 
-## Base de dados (PostgreSQL / Supabase)
+A app faz um `warmup` de base no arranque. Se fores correr sem Postgres configurado, define `DB_ENABLED=false` nas variaveis de ambiente.
 
-O projeto está preparado para usar Postgres local no MVP e, no futuro, apontar para o Postgres do Supabase.
+## Maven sem instalacao local
 
-> Nota: neste momento o repositório usa **JDBC puro** (sem HikariCP/Flyway no `pom.xml`) para não depender de downloads de dependências no ambiente. Quando quiseres “produção a sério”, adicionamos: PostgreSQL JDBC driver + HikariCP (pool) + Flyway (migrations automáticas).
+Para PCs que ainda nao tem Maven instalado, o projeto agora inclui uma imagem Docker propria em `docker/maven/Dockerfile` e um servico `maven` no `docker-compose.yml`.
 
-### Postgres local (recomendado para MVP)
+### Construir a imagem
 
-1) Subir o banco:
+```bash
+docker compose --profile tools build maven
+```
+
+### Executar comandos Maven via Docker
+
+```bash
+docker compose --profile tools run --rm maven clean compile
+docker compose --profile tools run --rm maven clean package -DskipTests
+```
+
+As dependencias baixadas pelo Maven ficam persistidas no volume `maven_cache`, o que evita downloads completos a cada execucao.
+
+Nota: esta imagem foi preparada para compilar, testar e empacotar o projeto. A execucao da interface JavaFX desktop a partir do container nao esta configurada neste momento.
+
+## Base de dados
+
+### Subir Postgres local
 
 ```bash
 docker compose up -d
 ```
 
-Na primeira vez que o volume estiver vazio, o container executa automaticamente `scripts/db/001_schema.sql`.
+Na primeira criacao do volume, o container executa automaticamente `scripts/db/001_schema.sql`.
 
-2) Configurar variáveis de ambiente (exemplo):
+### Variaveis de ambiente
 
-- copia `.env.example` e exporta no teu terminal/OS
-- define pelo menos: `DB_ENABLED=true`, `DB_URL`, `DB_USER`, `DB_PASSWORD`
+Usa `.env.example` como referencia:
 
-> Quando `DB_ENABLED=true` e as variáveis existirem, o app tenta conectar (warmup). As migrations estão em `src/main/resources/db/migration`.
-
-### Executar o schema manualmente (se já tinhas volume/criado antes)
-
-Se o teu volume já existia antes de montares `scripts/db`, o init automático não corre. Executa manualmente:
-
-```bash
-psql -h localhost -p 5432 -U simulator -d simulatorbolsastudy -f scripts/db/001_schema.sql
+```env
+DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
+DB_USER=simulator
+DB_PASSWORD=simulator
+DB_ENABLED=true
 ```
 
-### Supabase (quando for para 2 PCs)
+### Migrations
 
-No Supabase, vais usar o Postgres gerido por eles. O fluxo recomendado é:
+- schema inicial do Docker: `scripts/db/001_schema.sql`
+- migrations versionadas: `src/main/resources/db/migration`
+- nova migration adicionada para diagnosticos: `V5__diagnosticos.sql`
 
-- criar o projeto no Supabase
-- pegar no host/porta/user/password do Postgres
-- apontar o `DB_URL` (JDBC) com `sslmode=require`
-- manter migrations no repositório (Flyway) para versionar o schema
+Observacao importante: embora o projeto ja tenha as dependencias de `Flyway`, nao encontrei no codigo atual a execucao automatica de `migrate()` no arranque. Hoje, o Docker usa o schema inicial no primeiro boot, e migrations incrementais precisam ser aplicadas manualmente numa base ja existente.
 
-## Estrutura do projeto
+### Aplicar SQL manualmente
 
-- `src/main/java/com/imetro/App.java`: entrypoint JavaFX
-- `src/main/java/com/imetro/app`: fluxo/navegação e controllers de aplicação (não-UI)
-- `src/main/java/com/imetro/domain`: modelos puros de domínio (ex.: Pergunta, Teste, Relatorio)
-- `src/main/java/com/imetro/services`: casos de uso (análise, recomendações, relatórios)
-- `src/main/java/com/imetro/persistence`: acesso a dados (Postgres/Supabase), DataSource e migrations
-- `src/main/java/com/imetro/ui/controller`: controllers das views JavaFX (FXML)
-- `src/main/resources/com/imetro/views/layouts`: layouts principais (Auth, Candidato, Orientador)
-- `src/main/resources/com/imetro/views/pages`: subpáginas de cada perfil (ex.: dashboard, testes, relatórios)
-- `src/main/resources/com/imetro/styles`: CSS global e CSS por layout
+Se a base ja existia antes desta alteracao, aplica a migration nova manualmente:
 
-## Roadmap (sugestão)
+```bash
+psql -h localhost -p 5432 -U simulator -d simulatorbolsastudy -f src/main/resources/db/migration/V5__diagnosticos.sql
+```
 
-1. **Modelo de domínio**
-   - Perfis (Estudante/Orientador), Sessão, Questão, Resposta, Tópico, Métricas
-2. **Banco de questões**
-   - Importação/CRUD, tags por tópico, nível de dificuldade, explicações
-3. **Simulador**
-   - Configuração de prova, temporizador, submissão, correção e revisão
-4. **Análise**
-   - Cálculo de métricas, detecção de erros recorrentes, evolução semanal
-5. **Recomendações**
-   - Sugestões automáticas + validação do orientador
-6. **Persistência**
-   - Local (ex.: SQLite) e opcional sync com Supabase
+Se preferires recriar uma base local do zero, remove o volume do Docker e sobe novamente para que `scripts/db/001_schema.sql` seja reexecutado.
 
-## Contribuição
+## Tabela de diagnosticos
 
-Sugestões e PRs são bem-vindos. Para contribuir:
+A tabela `diagnosticos` foi preparada para guardar o historico do modulo de diagnostico academico:
 
-- Cria uma branch com a tua mudança
-- Mantém o escopo pequeno e bem descrito
-- Explica o motivo (problema) e a solução (como foi resolvido)
+- candidato e disciplina do diagnostico
+- horario de inicio e conclusao
+- duracao, total de questoes, acertos e erros
+- percentual de acerto e evolucao
+- nivel final
+- metricas de velocidade, precisao, consistencia, logica e resiliencia
+- respostas em `jsonb`
 
-## Licença
+## Estrutura principal
 
-Ainda não foi definida uma licença para o projeto.
+- `src/main/java/com/imetro/App.java`: arranque da aplicacao JavaFX
+- `src/main/java/com/imetro/persistence`: conexao e repositorios JDBC
+- `src/main/java/com/imetro/services`: regras de negocio e cargas de perguntas
+- `src/main/java/com/imetro/ui/controller`: controllers JavaFX
+- `src/main/resources/com/imetro/views`: layouts, paginas e componentes FXML
+- `src/main/resources/db/migration`: migrations SQL versionadas
+- `scripts/db`: schema usado pelo container Postgres no primeiro boot
+
+## Proximos passos recomendados
+
+- ligar `Flyway.migrate()` no arranque para aplicar `V1...V5` automaticamente
+- persistir o resultado real do diagnostico da UI na tabela `diagnosticos`
+- criar repositorio/servico para alimentar a linha do tempo e estatisticas a partir da base
+
+## Licenca
+
+Licenca ainda nao definida.

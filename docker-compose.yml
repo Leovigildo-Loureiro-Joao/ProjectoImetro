@@ -12,5 +12,20 @@ services:
       - simulatorbolsastudy_pgdata:/var/lib/postgresql/data
       - ./scripts/db:/docker-entrypoint-initdb.d
 
+  maven:
+    build:
+      context: .
+      dockerfile: docker/maven/Dockerfile
+    container_name: simulatorbolsastudy-maven
+    working_dir: /workspace
+    entrypoint: ["mvn"]
+    command: ["-version"]
+    profiles:
+      - tools
+    volumes:
+      - ./:/workspace
+      - maven_cache:/root/.m2
+
 volumes:
   simulatorbolsastudy_pgdata:
+  maven_cache:

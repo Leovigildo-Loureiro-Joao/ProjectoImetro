@@ -3,56 +3,90 @@ package com.imetro.ui.controller.diagnosticos;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.imetro.domain.dto.Stats;
+
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class DiagnosticoStatics implements Initializable {
+    @FXML
+    private BarChart<String, Integer> barDisciplina;
+
+    @FXML
+    private VBox estatisticasPane;
+
+    @FXML
+    private Label lblDisciplinaLenta;
+
+    @FXML
+    private Label lblDisciplinaRapida;
 
     @FXML
     private Label lblMediaGeral;
-    @FXML
-    private ProgressBar progressMediaGeral;
-    @FXML
-    private Label lblTotalTestes;
-    @FXML
-    private Label lblMelhorPontuacao;
+
     @FXML
     private Label lblMelhorDisciplina;
+
     @FXML
-    private Label lblPiorPontuacao;
+    private Label lblMelhorPontuacao;
+
     @FXML
     private Label lblPiorDisciplina;
+
     @FXML
-    private ProgressBar progressTaxaAcerto;
+    private Label lblPiorPontuacao;
+
     @FXML
     private Label lblTaxaAcerto;
-    @FXML
-    private VBox detalhamentoDisciplinas;
-    @FXML
-    private Label lblTempoMedio;
-    @FXML
-    private Label lblTempoMaisRapido;
-    @FXML
-    private Label lblDisciplinaRapida;
+
     @FXML
     private Label lblTempoMaisLento;
+
     @FXML
-    private Label lblDisciplinaLenta;
+    private Label lblTempoMaisRapido;
+
+    @FXML
+    private Label lblTempoMedio;
+
     @FXML
     private Label lblTotalAcertos;
+
     @FXML
     private Label lblTotalErros;
+
     @FXML
     private Label lblTotalQuestoes;
+
+    @FXML
+    private Label lblTotalTestes;
+
+    @FXML
+    private ProgressBar progressMediaGeral;
+
+    @FXML
+    private ProgressBar progressTaxaAcerto;
+
+    private XYChart.Series<String,Integer> veloChart;
+    private XYChart.Series<String,Integer> resChart;
+    private XYChart.Series<String,Integer> logChart;
+    private XYChart.Series<String,Integer> conChart;
+    private XYChart.Series<String,Integer> preChart;
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
         // Placeholder (até ligar com dados reais)
+        veloChart = new XYChart.Series<>();
+        resChart = new XYChart.Series<>();
+        logChart = new XYChart.Series<>();
+        conChart = new XYChart.Series<>();
+        preChart = new XYChart.Series<>();
         setPercent(lblMediaGeral, progressMediaGeral, 0.58);
         if (lblTotalTestes != null) lblTotalTestes.setText("3");
         if (lblMelhorPontuacao != null) lblMelhorPontuacao.setText("78%");
@@ -71,14 +105,26 @@ public class DiagnosticoStatics implements Initializable {
         if (lblTotalErros != null) lblTotalErros.setText("12");
         if (lblTotalQuestoes != null) lblTotalQuestoes.setText("30");
 
-        if (detalhamentoDisciplinas != null) {
-            detalhamentoDisciplinas.getChildren().clear();
-            detalhamentoDisciplinas.getChildren().addAll(
-                disciplinaRow("Matemática", "78%"),
-                disciplinaRow("Português", "64%"),
-                disciplinaRow("Física", "52%")
-            );
+        if (barDisciplina != null) {
+           veloChart.getData().add(new XYChart.Data<>("Mat", 10));
+           resChart.getData().add(new XYChart.Data<>("Mat", 50));
+           logChart.getData().add(new XYChart.Data<>("Mat", 75));
+           conChart.getData().add(new XYChart.Data<>("Mat", 25));
+           preChart.getData().add(new XYChart.Data<>("Mat", 35));
+
+            veloChart.getData().add(new XYChart.Data<>("Ling P", 80));
+           resChart.getData().add(new XYChart.Data<>("Ling P", 40));
+           logChart.getData().add(new XYChart.Data<>("Ling P", 55));
+           conChart.getData().add(new XYChart.Data<>("Ling P", 95));
+           preChart.getData().add(new XYChart.Data<>("Ling P", 15));
         }
+
+        barDisciplina.getData().clear();
+        barDisciplina.getData().add(veloChart);
+        barDisciplina.getData().add(resChart);
+        barDisciplina.getData().add(logChart);
+        barDisciplina.getData().add(conChart);
+        barDisciplina.getData().add(preChart);
     }
 
     private static void setPercent(Label label, ProgressBar bar, double value) {
@@ -90,16 +136,4 @@ public class DiagnosticoStatics implements Initializable {
         }
     }
 
-    private static HBox disciplinaRow(String disciplina, String media) {
-        Label left = new Label(disciplina);
-        left.getStyleClass().add("muted");
-        Label right = new Label(media);
-        right.getStyleClass().add("h3-thin");
-
-        HBox row = new HBox(left, right);
-        row.setSpacing(12);
-        row.setPadding(new Insets(6, 0, 6, 0));
-        HBox.setMargin(right, new Insets(0, 0, 0, 12));
-        return row;
-    }
 }
