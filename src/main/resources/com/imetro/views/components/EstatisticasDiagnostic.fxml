@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="estatisticasPane" minWidth="1122.0" prefHeight="581.0" prefWidth="1122.0" spacing="20.0" visible="true" stylesheets="@../../../../styles/candidato-layout.css"  xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.diagnosticos.DiagnosticoStatics">
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+   <children>
+      <Label styleClass="h2" text="ESTATÍSTICAS GERAIS" />
+      <Label styleClass="muted" text="Métricas e indicadores de desempenho" />
+      <Separator />
+      <HBox prefHeight="153.0" prefWidth="1102.0" spacing="20.0">
+         <children>
+            <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="266.0" prefWidth="267.0" HBox.hgrow="ALWAYS">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <styleClass>
+                  <String fx:value="stat-card" />
+                  <String fx:value="card" />
+               </styleClass>
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="20.0">
+                     <children>
+                        <Label prefHeight="17.0" prefWidth="177.0" styleClass="stat-label" text=" MÉDIA GERAL" />
+                        <Region prefHeight="38.0" prefWidth="12.0" />
+                        <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../assets/imgs/statistics_50px.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <Label fx:id="lblMediaGeral" styleClass="stat-value" text="0%" />
+                  <ProgressBar fx:id="progressMediaGeral" prefHeight="7.0" prefWidth="129.0" progress="0.0" styleClass="stat-progress" />
+                  <Label styleClass="stat-sub" text="dos últimos testes" />
+               </children>
+            </VBox>
+            <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="266.0" prefWidth="260.0" HBox.hgrow="ALWAYS">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <styleClass>
+                  <String fx:value="stat-card" />
+                  <String fx:value="card" />
+               </styleClass>
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="20.0">
+                     <children>
+                        <Label prefHeight="17.0" prefWidth="171.0" styleClass="stat-label" text="TOTAL DE TESTES" />
+                        <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../assets/imgs/exam_24px.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <Label fx:id="lblTotalTestes" styleClass="stat-value" text="0" />
+                  <Label styleClass="stat-sub" text="diagnósticos realizados" />
+               </children>
+            </VBox>
+            <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="266.0" prefWidth="281.0" HBox.hgrow="ALWAYS">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <styleClass>
+                  <String fx:value="stat-card" />
+                  <String fx:value="card-blur" />
+               </styleClass>
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="12.0">
+                     <children>
+                        <Label prefHeight="17.0" prefWidth="187.0" styleClass="stat-label" text="MELHOR RESULTADO" />
+                        <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../assets/imgs/trophy_24px.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <Label fx:id="lblMelhorPontuacao" styleClass="stat-value" text="0%" />
+                  <Label fx:id="lblMelhorDisciplina" styleClass="stat-sub" text="-" />
+               </children>
+            </VBox>
+            <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="266.0" prefWidth="207.0" HBox.hgrow="ALWAYS">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <styleClass>
+                  <String fx:value="stat-card" />
+                  <String fx:value="card-blur" />
+               </styleClass>
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="10.0">
+                     <children>
+                        <Label prefHeight="30.0" prefWidth="150.0" styleClass="stat-label" text="ÁREA DE ATENÇÃO" wrapText="true" />
+                        <Region prefHeight="38.0" prefWidth="12.0" />
+                        <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../assets/imgs/layers_30px.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <Label fx:id="lblPiorPontuacao" styleClass="stat-value" text="0%" />
+                  <Label fx:id="lblPiorDisciplina" styleClass="stat-sub" text="-" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+      <VBox styleClass="stat-card">
+         <children>
+            <Label styleClass="stat-label" text="✅ TAXA DE ACERTO GERAL" />
+            <HBox alignment="CENTER_LEFT" spacing="20.0">
+               <children>
+                  <ProgressBar fx:id="progressTaxaAcerto" prefHeight="20.0" prefWidth="400.0" progress="0.0" styleClass="stat-progress-large" />
+                  <Label fx:id="lblTaxaAcerto" styleClass="stat-value" text="0%" />
+               </children>
+            </HBox>
+            <Label styleClass="stat-sub" text="Total de acertos em relação ao total de questões respondidas" />
+         </children>
+      </VBox>
+      <VBox prefHeight="133.0" prefWidth="843.0" styleClass="stat-card">
+         <children>
+            <Label styleClass="stat-label" text="📚 DESEMPENHO POR DISCIPLINA" />
+            <Label styleClass="stat-sub" text="Média de acertos por matéria" />
+            <VBox fx:id="detalhamentoDisciplinas" spacing="15.0" />
+         </children>
+      </VBox>
+      <GridPane>
+         <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+         </rowConstraints>
+         <children>
+            <VBox styleClass="stat-card">
+               <children>
+                  <Label styleClass="stat-label" text="⏱️ TEMPO MÉDIO" />
+                  <Label fx:id="lblTempoMedio" styleClass="stat-value" text="00:00" />
+                  <Label styleClass="stat-sub" text="por diagnóstico" />
+               </children>
+            </VBox>
+            <VBox styleClass="stat-card" GridPane.rowIndex="1">
+               <children>
+                  <Label styleClass="stat-label" text="⚡ MAIS RÁPIDO" />
+                  <Label fx:id="lblTempoMaisRapido" styleClass="stat-value" text="00:00" />
+                  <Label fx:id="lblDisciplinaRapida" styleClass="stat-sub" text="-" />
+               </children>
+            </VBox>
+            <VBox styleClass="stat-card" GridPane.rowIndex="2">
+               <children>
+                  <Label styleClass="stat-label" text="🐢 MAIS LENTO" />
+                  <Label fx:id="lblTempoMaisLento" styleClass="stat-value" text="00:00" />
+                  <Label fx:id="lblDisciplinaLenta" styleClass="stat-sub" text="-" />
+               </children>
+            </VBox>
+         </children>
+      </GridPane>
+      <HBox spacing="20.0">
+         <children>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label styleClass="stat-label" text="✅ TOTAL DE ACERTOS" />
+                  <Label fx:id="lblTotalAcertos" styleClass="stat-value" text="0" />
+                  <Label styleClass="stat-sub" text="questões corretas" />
+               </children>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label styleClass="stat-label" text="❌ TOTAL DE ERROS" />
+                  <Label fx:id="lblTotalErros" styleClass="stat-value" text="0" />
+                  <Label styleClass="stat-sub" text="questões incorretas" />
+               </children>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label styleClass="stat-label" text="📊 TOTAL DE QUESTÕES" />
+                  <Label fx:id="lblTotalQuestoes" styleClass="stat-value" text="0" />
+                  <Label styleClass="stat-sub" text="respondidas no total" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </children>
+</VBox>

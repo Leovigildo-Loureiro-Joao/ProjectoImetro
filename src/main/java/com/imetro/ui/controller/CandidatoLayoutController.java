@@ -9,6 +9,7 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import org.kordamp.ikonli.remixicon.RemixiconAL;
 
 import com.imetro.App;
+import com.imetro.domain.dto.MenuEntry;
 import com.imetro.ui.components.Item_Cell;
 
 import javafx.animation.KeyFrame;
@@ -25,7 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 public class CandidatoLayoutController implements Initializable {
-    private record MenuEntry(String key, String title, Ikon icon) {}
+   
 
     @FXML
     private StackPane contentHost;

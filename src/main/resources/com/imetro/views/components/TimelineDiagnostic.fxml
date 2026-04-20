@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXComboBox?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import jfxtras.scene.control.LocalDateTimeTextField?>
+
+<VBox fx:id="timelinePane" minWidth="1122.0" prefHeight="581.0" prefWidth="1122.0" spacing="20.0" stylesheets="@../../../../styles/candidato-layout.css" visible="true" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.diagnosticos.DiagnosticoTimeline">
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+   <children>
+      <Label styleClass="h2" text="LINHA DO TEMPO" />
+      <Label styleClass="muted" text="Histórico completo dos seus diagnósticos" />
+      <HBox prefHeight="36.0" prefWidth="1102.0" spacing="20.0">
+         <children>
+            <LocalDateTimeTextField pickerShowing="true" prefHeight="40.0" prefWidth="371.0" promptText="Procura aqui a data" />
+            <JFXComboBox maxHeight="40.0" minHeight="40.0" prefHeight="20.0" prefWidth="251.0" promptText="Seleciona uma disciplina" />
+            <JFXButton prefHeight="38.0" prefWidth="151.0" styleClass="btn-primary" text="Procurar" />
+         </children>
+      </HBox>
+      <Separator />
+      <ScrollPane fitToWidth="true" prefHeight="500.0">
+         <content>
+            <VBox fx:id="timelineContent" spacing="15.0">
+               <children>
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Circle fill="DODGERBLUE" radius="11.0" stroke="#0033ff" strokeType="INSIDE" />
+                              <Label styleClass="h2-thin" text="19  de Janeiro de 2025" />
+                           </children>
+                        </HBox>
+                        <VBox minHeight="200.0" prefHeight="203.0" prefWidth="1100.0">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <Circle fill="#215eff" radius="8.0" stroke="#0033ff" strokeType="INSIDE" />
+                                    <Label styleClass="h2-thin" text="15:00" />
+                                 </children>
+                              </HBox>
+                              <VBox maxWidth="759.0" prefHeight="182.0" prefWidth="759.0" spacing="10.0" styleClass="card">
+                                 <children>
+                                    <HBox>
+                                       <children>
+                                          <Label prefHeight="18.0" prefWidth="295.0" styleClass="h3-thin-big" text="MATEMATICA" />
+                                          <HBox spacing="20.0">
+                                             <children>
+                                                <Label styleClass="h3-thin-big" text="Evoluçao: 50%" />
+                                                <Label styleClass="h3-thin-big" text="ERROS : 20" />
+                                                <Label styleClass="h3-thin-big" text="ACERTOS: 15" />
+                                                <Label styleClass="h3-thin-big" text="DURAÇAO: 2min" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                    <VBox>
+                                       <children>
+                                          <HBox>
+                                             <children>
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label styleClass="h3-thin" text="Velocidade" />
+                                                      <ProgressBar prefWidth="200.0" progress="0.0" />
+                                                   </children>
+                                                   <padding>
+                                                      <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+                                                   </padding>
+                                                </VBox>
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label styleClass="h3-thin" text="Logica" />
+                                                      <ProgressBar prefWidth="200.0" progress="0.0" />
+                                                   </children>
+                                                   <padding>
+                                                      <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+                                                   </padding>
+                                                </VBox>
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label styleClass="h3-thin" text="Consistencia" />
+                                                      <ProgressBar prefWidth="200.0" progress="0.0" />
+                                                   </children>
+                                                   <padding>
+                                                      <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+                                                   </padding>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
+                                          <HBox>
+                                             <children>
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label styleClass="h3-thin" text="Resiliencia" />
+                                                      <ProgressBar prefWidth="200.0" progress="0.0" />
+                                                   </children>
+                                                   <padding>
+                                                      <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+                                                   </padding>
+                                                </VBox>
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label styleClass="h3-thin" text="Precisao" />
+                                                      <ProgressBar prefWidth="200.0" progress="0.0" />
+                                                   </children>
+                                                   <padding>
+                                                      <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+                                                   </padding>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                 </padding>
+                                 <VBox.margin>
+                                    <Insets left="40.0" />
+                                 </VBox.margin>
+                              </VBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="40.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children></VBox>
+         </content>
+      </ScrollPane>
+   </children>
+</VBox>

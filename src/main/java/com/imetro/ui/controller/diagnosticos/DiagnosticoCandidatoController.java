@@ -1,19 +1,21 @@
-package com.imetro.ui.controller;
+package com.imetro.ui.controller.diagnosticos;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
+
+import com.imetro.App;
+import com.imetro.domain.dto.MenuEntry;
 import com.imetro.services.TesteMatematicaService;
 import com.imetro.ui.components.CircleProgress;
-import com.imetro.ui.components.DiagnosticoCard;
+import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.model.Questao;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXToggleNode;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -22,17 +24,20 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-public class DiagnosticoCandidatoController {
+import com.imetro.ui.controller.lifecycle.DisposableController;
+
+public class DiagnosticoCandidatoController implements DisposableController, DiagnosticoCoordinator.DiagnosticoHost {
 
     @FXML
     private Label ResA;
@@ -66,33 +71,21 @@ public class DiagnosticoCandidatoController {
 
     @FXML
     private JFXButton btnConfirmar;
+    
+    @FXML
+    private ListView<MenuEntry> sublist;
 
     @FXML
-    private JFXButton btnDiagnosticos;
-
-    @FXML
-    private JFXButton btnEstatisticas;
+    private StackPane swcDiagnos;
 
     @FXML
     private JFXButton btnProximo;
 
     @FXML
-    private JFXButton btnTimeline;
-
-    @FXML
     private StackPane circleProgressContainer;
 
     @FXML
-    private HBox containerPrincipal;
-
-    @FXML
     private Label corretas;
-
-    @FXML
-    private VBox detalhamentoDisciplinas;
-
-    @FXML
-    private FlowPane diagnosticosPane;
 
     @FXML
     private VBox end;
@@ -105,51 +98,6 @@ public class DiagnosticoCandidatoController {
 
     @FXML
     private ImageView imgBloco2;
-
-    @FXML
-    private Label lblDisciplinaLenta;
-
-    @FXML
-    private Label lblDisciplinaRapida;
-
-    @FXML
-    private Label lblMediaGeral;
-
-    @FXML
-    private Label lblMelhorDisciplina;
-
-    @FXML
-    private Label lblMelhorPontuacao;
-
-    @FXML
-    private Label lblPiorDisciplina;
-
-    @FXML
-    private Label lblPiorPontuacao;
-
-    @FXML
-    private Label lblTaxaAcerto;
-
-    @FXML
-    private Label lblTempoMaisLento;
-
-    @FXML
-    private Label lblTempoMaisRapido;
-
-    @FXML
-    private Label lblTempoMedio;
-
-    @FXML
-    private Label lblTotalAcertos;
-
-    @FXML
-    private Label lblTotalErros;
-
-    @FXML
-    private Label lblTotalQuestoes;
-
-    @FXML
-    private Label lblTotalTestes;
 
     @FXML
     private Label loadingMessage;
@@ -176,19 +124,13 @@ public class DiagnosticoCandidatoController {
     private ScrollPane scroll;
 
     @FXML
-    private HBox start;
+    private VBox start;
 
     @FXML
     private VBox tela;
 
     @FXML
     private Label tempo;
-
-    @FXML
-    private VBox timelineContent;
-
-    @FXML
-    private VBox timelinePane;
 
     @FXML
     private JFXToggleNode toggleA;
@@ -227,6 +169,31 @@ public class DiagnosticoCandidatoController {
 
     @FXML
     public void initialize() {
+        DiagnosticoCoordinator.setHost(this);
+
+        sublist.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(MenuEntry item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                setGraphic(empty || item == null ? null : new Item_Cell(item.title(), item.icon()));
+            }
+        });
+
+        sublist.getItems().setAll(
+            new MenuEntry("mydiagnostic", "Meus diagnósticos", FontAwesomeSolid.BOLT),
+            new MenuEntry("timeline", "Linha do tempo", FontAwesomeSolid.CALENDAR_TIMES),
+            new MenuEntry("statics", "Estatisticas", FontAwesomeSolid.DATABASE)
+        );
+
+        sublist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null) {
+                navigate(newValue.key());
+            }
+        });
+
+        sublist.getSelectionModel().selectFirst();
+
         Platform.runLater(() -> {
             // Criar CircleProgress
             circleProgress = new CircleProgress(35, 35, 35, 0);
@@ -241,12 +208,6 @@ public class DiagnosticoCandidatoController {
             end.setVisible(false);
             start.setVisible(true);
             tela.setVisible(true);
-            
-            // Carregar diagnósticos
-            BuscarDiagnosticos();
-            
-            // Configurar scroll horizontal
-            scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         });
     }
 
@@ -467,9 +428,8 @@ public class DiagnosticoCandidatoController {
         corretas.setText("0");
         errada.setText("0");
         tempo.setText("00:00:00");
-        
-        end.setVisible(false);
-        start.setVisible(true);
+
+        setDiagnosticMode(false);
     }
 
     private String getNivelPorPorcentagem(double pct) {
@@ -496,20 +456,12 @@ public class DiagnosticoCandidatoController {
         alert.showAndWait();
     }
 
-    private void BuscarDiagnosticos() {
-        diagnosticosPane.getChildren().clear();
-        for (int i = 0; i < 5; i++) {
-            final int index = i;
-            diagnosticosPane.getChildren().add(new DiagnosticoCard(
-                "Matemática", 
-                "-6%", 
-                50, 
-                () -> Diagnosticar(true)
-            ));
-        }
+    @Override
+    public void startDiagnostico() {
+        setDiagnosticMode(true);
     }
 
-    private void Diagnosticar(boolean iniciar) {
+    private void setDiagnosticMode(boolean iniciar) {
         end.setVisible(iniciar);
         start.setVisible(!iniciar);
         if (iniciar) {
@@ -517,43 +469,26 @@ public class DiagnosticoCandidatoController {
         }
     }
 
-    private void SwitchPane(int i) {
-        diagnosticosPane.setVisible(i == 0);
-        timelinePane.setVisible(i == 1);
-        estatisticasPane.setVisible(i == 2);
-        
-        btnDiagnosticos.getStyleClass().clear();
-        btnTimeline.getStyleClass().clear();
-        btnEstatisticas.getStyleClass().clear();
-        
-        btnDiagnosticos.getStyleClass().add(i == 0 ? "nav-btn-active" : "nav-btn");
-        btnTimeline.getStyleClass().add(i == 1 ? "nav-btn-active" : "nav-btn");
-        btnEstatisticas.getStyleClass().add(i == 2 ? "nav-btn-active" : "nav-btn");
-        
-        // Scroll horizontal
-        double target = 0.0;
-        if (i == 0) target = 0.0;
-        else if (i == 1) target = 0.5;
-        else target = 1.0;
-        
-        Timeline l = new Timeline(
-            new KeyFrame(Duration.seconds(0.3), new KeyValue(scroll.hvalueProperty(), target))
-        );
-        l.play();
+    @Override
+    public void dispose() {
+        DiagnosticoCoordinator.clearHost(this);
+        if (time != null) {
+            time.stop();
+            time = null;
+        }
+        if (loadingTimeline != null) {
+            loadingTimeline.stop();
+            loadingTimeline = null;
+        }
     }
 
-    @FXML
-    void switchToDiagnosticos(ActionEvent event) {
-        SwitchPane(0);
-    }
-
-    @FXML
-    void switchToEstatisticas(ActionEvent event) {
-        SwitchPane(2);
-    }
-
-    @FXML
-    void switchToTimeline(ActionEvent event) {
-        SwitchPane(1);
+     private void navigate(String key) {            
+     
+        switch (key) {
+            case "mydiagnostic" -> App.swapContent(swcDiagnos, "views/components/DiagnosticoList");
+            case "statics" -> App.swapContent(swcDiagnos, "views/components/EstatisticasDiagnostic");
+            case "timeline" -> App.swapContent(swcDiagnos, "views/components/TimelineDiagnostic");
+        }
+      
     }
 }

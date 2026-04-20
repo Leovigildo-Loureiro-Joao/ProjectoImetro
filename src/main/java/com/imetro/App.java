@@ -20,9 +20,11 @@ import javafx.util.Duration;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.imetro.persistence.connection.Database;
+import com.imetro.ui.controller.lifecycle.DisposableController;
 
 /**
  * JavaFX App
@@ -31,6 +33,14 @@ public class App extends Application {
 
     public static Scene scene;
     private static Stage stage;
+    private static final String CONTROLLER_PROPERTY_KEY = "__imetro_controller__";
+
+    private static final ExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("imetro-app-executor");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     @Override 
     public void start(Stage stage) throws IOException {
@@ -46,6 +56,11 @@ public class App extends Application {
         scene = new Scene(loadView("views/layouts/AuthLayout"), 1100, 600);
         stage.setScene(scene);
         stage.show();
+    }
+
+    @Override
+    public void stop() {
+        EXECUTOR.shutdownNow();
     }
 
     private static void loadAppFonts() {
@@ -69,13 +84,21 @@ public class App extends Application {
     }
 
     public static void setRoot(String fxml) throws IOException {
+        if (scene != null) {
+            disposeIfPossible(scene.getRoot());
+        }
         scene.setRoot(loadView(fxml));
     }
 
     public static Parent loadView(String fxml) throws IOException {
         String resourcePath = "/com/imetro/" + fxml + ".fxml";
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(resourcePath));
-        return fxmlLoader.load();
+        Parent root = fxmlLoader.load();
+        Object controller = fxmlLoader.getController();
+        if (root != null && controller != null) {
+            root.getProperties().put(CONTROLLER_PROPERTY_KEY, controller);
+        }
+        return root;
     }
 
     public static void swapContent(StackPane host, String fxml) {
@@ -83,10 +106,14 @@ public class App extends Application {
             return;
         }
 
+        Node previous = host.getChildren().isEmpty() ? null : host.getChildren().getFirst();
+
         FadeTransition fadeOut = new FadeTransition(Duration.millis(140), host);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);
         fadeOut.setOnFinished(e -> {
+            disposeIfPossible(previous);
+
             ProgressIndicator progress = new ProgressIndicator();
             progress.setMaxSize(30, 30);
             progress.getStyleClass().add("loading-progress");
@@ -123,6 +150,19 @@ public class App extends Application {
         fadeOut.play();
     }
 
+    private static void disposeIfPossible(Node node) {
+        if (!(node instanceof Parent parent)) {
+            return;
+        }
+        Object controller = parent.getProperties().get(CONTROLLER_PROPERTY_KEY);
+        if (controller instanceof DisposableController disposable) {
+            try {
+                disposable.dispose();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     public static  DialogPane loadFXMLDialog(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(
                 App.class.getResource("/com/imetro/components/dialogs/" + fxml + ".fxml")
@@ -142,13 +182,7 @@ public class App extends Application {
     }
 
     public static Executor getExecutorService() {
-       return Executors.newSingleThreadScheduledExecutor(
-                runnable -> {
-                    Thread thread = new Thread(runnable);
-                    thread.setDaemon(true); // Set the thread as a daemon thread
-                    return thread;
-                }
-        );
+        return EXECUTOR;
     }
 
 }
