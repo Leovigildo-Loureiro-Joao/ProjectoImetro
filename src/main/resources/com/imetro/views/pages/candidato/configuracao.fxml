@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXComboBox?>
+<?import com.jfoenix.controls.JFXRadioButton?>
+<?import com.jfoenix.controls.JFXToggleButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane prefHeight="1473.0" prefWidth="784.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.ConfiguracaoController">
+    <VBox alignment="TOP_LEFT" maxWidth="879.0" prefHeight="1473.0" prefWidth="879.0" spacing="20.0">
+        <padding>
+            <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+        </padding>
+      <HBox prefHeight="90.0" prefWidth="700.0" spacing="10.0">
+         <children>
+            <VBox prefHeight="84.0" prefWidth="413.0" spacing="10.0">
+               <children>
+                    <Label styleClass="h1" text="Configurações" />
+                    <Label minHeight="50.0" prefHeight="59.0" prefWidth="378.0" styleClass="muted" text="Configure seus testes e diagonosticos aqui de modo a melhorar sua produtividade" wrapText="true" />
+               </children>
+            </VBox>
+            <HBox alignment="CENTER" spacing="20.0">
+               <children>
+                  <JFXButton maxHeight="39.0" minHeight="39.0" onAction="#Alterar" prefHeight="35.0" prefWidth="150.0" styleClass="btn-primary" text="Editar alterações" />
+                  <JFXButton maxHeight="39.0" minHeight="39.0" onAction="#Reiniciar" prefHeight="39.0" styleClass="btn-secondary" text="Reiniciar para o padrão" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
+         <children>
+            <JFXToggleButton fx:id="togDiagTest" disable="true" onAction="#alterarConfTestDiag" text="Alterar Configuração dos testes e diagnosticos" />
+            <VBox>
+               <children>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Label styleClass="h3-thin-big" text="Tempo de duracao dos testes" />
+                        <Label styleClass="h3-thin" text="Quanto tempo deve durar os testes adaptativos" />
+                        <HBox>
+                           <children>
+                              <TextField fx:id="tempAdapt" disable="true" prefHeight="37.0" prefWidth="313.0" />
+                              <JFXComboBox fx:id="varTempAdapt" disable="true" minHeight="37.0" prefHeight="37.0" prefWidth="99.0" promptText="Tempo " />
+                           </children>
+                        </HBox>
+                        <Label styleClass="h3-thin" text="Quantas tempo a resposta deve durar em testes speed" />
+                        <HBox>
+                           <children>
+                              <TextField fx:id="speedTemp" disable="true" prefHeight="37.0" prefWidth="313.0" promptText="Quanto tempo deve durar os testes adaptativos" />
+                              <JFXComboBox fx:id="varSpeedTemp" disable="true" minHeight="37.0" prefHeight="37.0" prefWidth="99.0" promptText="Tempo " />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Label styleClass="h3-thin-big" text="Quantidade de questão " />
+                        <VBox spacing="10.0">
+                           <children>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes longos" />
+                                    <TextField fx:id="longTest" disable="true" maxWidth="313.0" prefHeight="37.0" prefWidth="633.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes normais" />
+                                    <TextField fx:id="normTest" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes desafiantes" />
+                                    <TextField fx:id="desafTest" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes extra dificies" />
+                                    <TextField fx:id="extraTest" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </children>
+                     <VBox.margin>
+                        <Insets top="20.0" />
+                     </VBox.margin>
+                  </VBox>
+               </children>
+               <VBox.margin>
+                  <Insets left="10.0" />
+               </VBox.margin>
+            </VBox>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+      <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
+         <children>
+            <JFXToggleButton fx:id="togNivelDif" disable="true" onAction="#alterarNivelDif" text="Nivel de dificuldade" />
+            <VBox>
+               <children>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Label styleClass="h3-thin-big" text="Respostas" />
+                        <VBox spacing="10.0">
+                           <children>
+                              <VBox spacing="10.0">
+                                 <children>
+                                    <HBox spacing="20.0">
+                                       <children>
+                                          <JFXRadioButton fx:id="radFac" disable="true" text="Fácil">
+                                             <toggleGroup>
+                                                <ToggleGroup fx:id="resposta" />
+                                             </toggleGroup></JFXRadioButton>
+                                          <JFXRadioButton fx:id="radMed" disable="true" text="Médio" toggleGroup="$resposta" />
+                                          <JFXRadioButton fx:id="radDesa" disable="true" text="Desafiante" toggleGroup="$resposta" />
+                                          <JFXRadioButton fx:id="radExtra" disable="true" text="Extra dificil" toggleGroup="$resposta" />
+                                       </children>
+                                    </HBox>
+                                    <VBox spacing="5.0">
+                                       <children>
+                                          <JFXToggleButton fx:id="nivDifTogNEsc" disable="true" text="Não permitir escolhas" />
+                                          <JFXToggleButton fx:id="nivDifTogAEsc" disable="true" text="Permitir escolhas ambiguas" />
+                                          <JFXToggleButton fx:id="nivDifTogDEsc" disable="true" text="Permitir escolhas diagnosticas" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets left="10.0" top="20.0" />
+                                 </VBox.margin>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children>
+               <VBox.margin>
+                  <Insets left="10.0" />
+               </VBox.margin>
+            </VBox>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+      <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
+         <children>
+            <JFXToggleButton fx:id="togVarDiag" disable="true" onAction="#alterarVarDiag" text="Variaveis de diagnostico" />
+            <VBox>
+               <children>
+                  <VBox spacing="5.0">
+                     <children>
+                        <Label styleClass="h3-thin-big" text="Defina o comportamento das variaveis" />
+                        <VBox spacing="10.0">
+                           <children>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Velocidade - defina quanto segundos determina 1% " />
+                                    <TextField fx:id="velociDiag" disable="true" maxWidth="313.0" prefHeight="37.0" prefWidth="633.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Resiliencia - defina quantas vezes deve repetir o teste por dia para marcar como resiliente" />
+                                    <TextField fx:id="resiliDiag" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Precisão - defina quantidade de respostas certas consecutivas da area de estudo" />
+                                    <TextField fx:id="precisDiag" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Logica - defina a quantidade de respostas feitas no modo desafiante e extra dificil" />
+                                    <TextField fx:id="logDiag" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Consistencia - defina a percentagem de desempenho e necessario para demostrar o tal" />
+                                    <TextField fx:id="consisDiag" disable="true" maxWidth="313.0" promptText="Q" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" />
+                           </VBox.margin>
+                           <padding>
+                              <Insets top="10.0" />
+                           </padding>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children>
+               <VBox.margin>
+                  <Insets left="10.0" />
+               </VBox.margin>
+            </VBox>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+    </VBox>
+</StackPane>

@@ -54,6 +54,7 @@ public class CandidatoLayoutController implements Initializable {
             new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
             new MenuEntry("bolsas", "Recomendações", FontAwesomeSolid.HAND_HOLDING_USD),
             new MenuEntry("perfil", "Perfil", FontAwesomeSolid.USER),
+            new MenuEntry("configuracao", "Configurações", RemixiconAL.FILE_SETTINGS_FILL),
             new MenuEntry("logout", "Logout", FontAwesomeSolid.SIGN_OUT_ALT)
         );
 
@@ -110,6 +111,7 @@ public class CandidatoLayoutController implements Initializable {
                 case "relatorios" -> App.swapContent(contentHost, "views/pages/candidato/relatorios");
                 case "bolsas" -> App.swapContent(contentHost, "views/pages/candidato/bolsas");
                 case "perfil" -> App.swapContent(contentHost, "views/pages/candidato/perfil");
+                case "configuracao" -> App.swapContent(contentHost, "views/pages/candidato/configuracao");
                 case "logout" -> logout();
                 default -> openDashboard();
             }

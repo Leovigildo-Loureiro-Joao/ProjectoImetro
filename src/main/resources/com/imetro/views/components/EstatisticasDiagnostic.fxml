@@ -146,7 +146,7 @@
                         <Label styleClass="stat-sub" text="Média de acertos por matéria" />
                      </children>
                   </VBox>
-                  <BarChart fx:id="barDisciplina" prefHeight="298.0" prefWidth="719.0">
+                  <BarChart fx:id="barDisciplina" minHeight="298.0" prefHeight="298.0" prefWidth="719.0">
                     <xAxis>
                       <CategoryAxis side="BOTTOM" />
                     </xAxis>

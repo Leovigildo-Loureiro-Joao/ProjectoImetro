@@ -1,10 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXCheckBox?>
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<FlowPane fx:id="diagnosticosPane" fx:controller="com.imetro.ui.controller.diagnosticos.DiagnosticoListController" hgap="16.0" minWidth="1122.0" prefHeight="581.0" prefWidth="1122.0" prefWrapLength="740.0" vgap="16.0" visible="true" stylesheets="@../../../../styles/candidato-layout.css"  xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <padding>
-      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-   </padding>
-</FlowPane>
+<StackPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.diagnosticos.DiagnosticoListController">
+   <children>
+      <VBox>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <VBox prefHeight="113.0" prefWidth="658.0" spacing="10.0">
+                     <children>
+                        <Label styleClass="h3-thin-big" text="FACA AGORA SEU DIAGNOSTICO" />
+                        <Label styleClass="h3-thin" text="Seus diagnosticos" />
+                     </children>
+                     <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                     </padding>
+                  </VBox>
+                  <JFXButton prefHeight="26.0" prefWidth="205.0" styleClass="btn-primary" text="Iniciar diagnostico em massa" />
+                  <JFXButton minHeight="39.0" prefHeight="26.0" prefWidth="158.0" styleClass="btn-primary-two" text="Limpar todos dados" />
+               </children>
+            </HBox>
+            <FlowPane fx:id="diagnosticosPane" hgap="16.0" minWidth="1122.0" prefHeight="581.0" prefWidth="1122.0" prefWrapLength="740.0" vgap="16.0" visible="true">
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </FlowPane>
+         </children>
+      </VBox>
+      <StackPane style="-fx-background-color: #14141413;" visible="false">
+         <children>
+            <VBox maxHeight="410.0" maxWidth="400.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+               <children>
+                  <Label styleClass="h2-thin" text="Iniciando Diagnostico..." />
+                  <HBox prefHeight="127.0" prefWidth="269.0" spacing="10.0">
+                     <children>
+                        <VBox prefHeight="127.0" prefWidth="166.0" spacing="10.0">
+                           <children>
+                              <Label styleClass="h3-thin" text="Deseja que teste seja?" />
+                              <VBox spacing="10.0">
+                                 <children>
+                                    <JFXCheckBox text="Facíl" />
+                                    <JFXCheckBox text="Normal" />
+                                    <JFXCheckBox text="Desafiante" />
+                                    <JFXCheckBox text="Extra dificil" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </VBox>
+                           </children>
+                        </VBox>
+                        <VBox spacing="10.0">
+                           <children>
+                              <Label styleClass="h3-thin" text="Foco principal" />
+                              <VBox spacing="10.0">
+                                 <children>
+                                    <JFXCheckBox text="Pontos fracos" />
+                                    <JFXCheckBox text="Erros comuns" />
+                                    <JFXCheckBox text="Pontos fortes" />
+                                    <JFXCheckBox text="Novas aplicações" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="99.0" prefWidth="302.0">
+                     <children>
+                        <VBox prefHeight="99.0" prefWidth="168.0" spacing="10.0">
+                           <children>
+                              <Label styleClass="h3-thin" text="Quanto a duração" />
+                              <VBox prefHeight="74.0" prefWidth="303.0" spacing="10.0">
+                                 <children>
+                                    <JFXCheckBox text="Longo" />
+                                    <JFXCheckBox text="Médio" />
+                                    <JFXCheckBox text="Curto" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <JFXButton prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary" text="Iniciar diagnostico inteligente">
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                     <VBox.margin>
+                        <Insets top="10.0" />
+                     </VBox.margin>
+                  </JFXButton>
+                  <JFXButton minHeight="39.0" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary-two" text="Pular fazer apenas o padrão" />
+               </children>
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <styleClass>
+                  <String fx:value="card" />
+                  <String fx:value="card-blur" />
+               </styleClass></VBox>
+         </children>
+         <styleClass>
+            <String fx:value="card-blur" />
+            <String fx:value="modal" />
+         </styleClass>
+      </StackPane>
+   </children>
+</StackPane>

@@ -29,7 +29,7 @@
                            </ImageView>
                         </graphic>
                      </JFXButton>
-                        <ListView fx:id="menu" prefHeight="357.0" prefWidth="64.0">
+                        <ListView fx:id="menu" prefHeight="371.0" prefWidth="64.0">
                         <styleClass>
                            <String fx:value="nav-bar" />
                            <String fx:value="min" />

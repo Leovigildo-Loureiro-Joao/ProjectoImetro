@@ -566,7 +566,7 @@
 .toggle-letter:selected {
     -fx-background-color: -color-primary;
     -fx-border-color: -color-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: rgba(20, 20, 20, 0.452);
     -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 8, 0, 0, 2);
 }
 
@@ -622,6 +622,19 @@
 .loading-message {
     -fx-font-size: 14px;
     -fx-text-fill: -color-muted;
+}
+
+.chart-legend{
+    -fx-background-color: transparent;
+}
+
+.chart-legend-item{
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-muted;
+}
+
+.chart-legend-item-symbol{
+    -fx-background-radius:999;
 }
 
 

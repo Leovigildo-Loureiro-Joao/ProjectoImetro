@@ -71,7 +71,7 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [ ] Importacao por JSON/CSV (opcional, mas acelera muito o MVP).
 
 ### 4) Simulador (core)
-- [ ] Criar tela de configuracao do teste (disciplinas, n questoes, tempo, dificuldade).
+- [x] Criar tela de configuracao do teste (disciplinas, n questoes, tempo, dificuldade).
 - [ ] Execucao do teste:
   - [ ] mostrar pergunta
   - [ ] capturar resposta

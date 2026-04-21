@@ -104,19 +104,36 @@ public class DiagnosticoStatics implements Initializable {
         if (lblTotalAcertos != null) lblTotalAcertos.setText("18");
         if (lblTotalErros != null) lblTotalErros.setText("12");
         if (lblTotalQuestoes != null) lblTotalQuestoes.setText("30");
-
+        veloChart.setName("Velocidade");
+        resChart.setName("Resistencia");
+        logChart.setName("Logica");
+        conChart.setName("Consistencia");
+        preChart.setName("Precisao");
         if (barDisciplina != null) {
-           veloChart.getData().add(new XYChart.Data<>("Mat", 10));
-           resChart.getData().add(new XYChart.Data<>("Mat", 50));
-           logChart.getData().add(new XYChart.Data<>("Mat", 75));
-           conChart.getData().add(new XYChart.Data<>("Mat", 25));
-           preChart.getData().add(new XYChart.Data<>("Mat", 35));
+           veloChart.getData().add(new XYChart.Data<>("Matematica", 10));
+           resChart.getData().add(new XYChart.Data<>("Matematica", 50));
+           logChart.getData().add(new XYChart.Data<>("Matematica", 75));
+           conChart.getData().add(new XYChart.Data<>("Matematica", 25));
+           preChart.getData().add(new XYChart.Data<>("Matematica", 35));
 
-            veloChart.getData().add(new XYChart.Data<>("Ling P", 80));
-           resChart.getData().add(new XYChart.Data<>("Ling P", 40));
-           logChart.getData().add(new XYChart.Data<>("Ling P", 55));
-           conChart.getData().add(new XYChart.Data<>("Ling P", 95));
-           preChart.getData().add(new XYChart.Data<>("Ling P", 15));
+            veloChart.getData().add(new XYChart.Data<>("Ling. Portuguesa", 80));
+           resChart.getData().add(new XYChart.Data<>("Ling. Portuguesa", 40));
+           logChart.getData().add(new XYChart.Data<>("Ling. Portuguesa", 55));
+           conChart.getData().add(new XYChart.Data<>("Ling. Portuguesa", 95));
+           preChart.getData().add(new XYChart.Data<>("Ling. Portuguesa", 15));
+
+              veloChart.getData().add(new XYChart.Data<>("Quimica", 100));
+           resChart.getData().add(new XYChart.Data<>("Quimica", 80));
+           logChart.getData().add(new XYChart.Data<>("Quimica", 55));
+           conChart.getData().add(new XYChart.Data<>("Quimica", 5));
+           preChart.getData().add(new XYChart.Data<>("Quimica", 1));
+
+              veloChart.getData().add(new XYChart.Data<>("Fisica", 10));
+           resChart.getData().add(new XYChart.Data<>("Fisica", 40));
+           logChart.getData().add(new XYChart.Data<>("Fisica", 85));
+           conChart.getData().add(new XYChart.Data<>("Fisica", 15));
+           preChart.getData().add(new XYChart.Data<>("Fisica", 15));
+
         }
 
         barDisciplina.getData().clear();
