@@ -518,7 +518,7 @@ insert into perguntas (id, questao, respostas, resposta_correta, topico, dificul
 insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
   uuid_generate_v4(),
   'Se hoje é quarta-feira, que dia será daqui a 10 dias?',
-  '["A) Sábado", "B) Domingo", 'C) Segunda-feira", "D) Terça-feira", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
+  '["A) Sábado", "B) Domingo", "C) Segunda-feira", "D) Terça-feira", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
   'A) Sábado',
   'Raciocínio Temporal',
   'FACIL'
