@@ -1,5 +1,6 @@
 package com.imetro.util;
 
+import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.interfaces.User;
 import com.imetro.persistence.repository.UserRepository;
 
@@ -10,6 +11,15 @@ public class Authentication {
     private static UserRepository userRepository;
 
     public static boolean login(String email, String password) {
+        if (!RuntimeConfig.isDbEnabled()) {
+            if (email == null || email.isBlank()) {
+                return false;
+            }
+            currentUserEmail = email.trim();
+            currentUserRole = "CANDIDATO";
+            currentUserId = null;
+            return true;
+        }
         currentUserEmail = email;
         userRepository = new UserRepository();
         String storedHash = userRepository.getPasswordHashByEmail(email);

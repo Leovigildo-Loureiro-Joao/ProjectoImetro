@@ -1,5 +1,8 @@
 package com.imetro.persistence.connection;
 
+import com.imetro.config.Env;
+import com.imetro.config.RuntimeConfig;
+
 import java.util.Optional;
 
 public final class DbConfig {
@@ -17,13 +20,16 @@ public final class DbConfig {
     }
 
     public static Optional<DbConfig> fromEnv() {
-        boolean enabled = Boolean.parseBoolean(envOrDefault("DB_ENABLED", "true"));
+        boolean enabled = RuntimeConfig.isDbEnabled();
+        if (!enabled) {
+            return Optional.empty();
+        }
 
-        String url = envOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/simulatorbolsastudy");
-        String user = envOrDefault("DB_USER", "simulator");
-        String password = envOrDefault("DB_PASSWORD", "simulator");
+        String url = Env.get("DB_URL", "jdbc:postgresql://localhost:5432/simulatorbolsastudy");
+        String user = Env.get("DB_USER", "simulator");
+        String password = Env.get("DB_PASSWORD", "simulator");
 
-        if (!enabled || isBlank(url) || isBlank(user) || isBlank(password)) {
+        if (isBlank(url) || isBlank(user) || isBlank(password)) {
             return Optional.empty();
         }
 
@@ -46,17 +52,7 @@ public final class DbConfig {
         return password;
     }
 
-    private static String envOrNull(String key) {
-        return System.getenv(key);
-    }
-
-    private static String envOrDefault(String key, String defaultValue) {
-        String value = System.getenv(key);
-        return value == null ? defaultValue : value;
-    }
-
     private static boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
 }
-

@@ -23,7 +23,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.imetro.config.RuntimeConfig;
 import com.imetro.persistence.connection.Database;
+import com.imetro.persistence.migrations.FlywayMigrations;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 
 /**
@@ -44,7 +46,12 @@ public class App extends Application {
 
     @Override 
     public void start(Stage stage) throws IOException {
-        Database.tryWarmup();
+        if (RuntimeConfig.isDbEnabled()) {
+            FlywayMigrations.tryMigrateFromEnv();
+            Database.tryWarmup();
+        } else {
+            System.err.println("[imetro] Modo navegação: BD desligada (ative TESTE=true ou DB_ENABLED=true).");
+        }
         loadAppFonts();
 
         App.stage= stage;

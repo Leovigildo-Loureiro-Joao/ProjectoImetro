@@ -22,7 +22,7 @@
             <VBox prefHeight="84.0" prefWidth="413.0" spacing="10.0">
                <children>
                     <Label styleClass="h1" text="Configurações" />
-                    <Label minHeight="50.0" prefHeight="59.0" prefWidth="378.0" styleClass="muted" text="Configure seus testes e diagonosticos aqui de modo a melhorar sua produtividade" wrapText="true" />
+                    <Label minHeight="50.0" prefHeight="59.0" prefWidth="378.0" styleClass="muted" text="Configure seus testes e diagnósticos aqui de modo a melhorar sua produtividade" wrapText="true" />
                </children>
             </VBox>
             <HBox alignment="CENTER" spacing="20.0">
@@ -35,23 +35,23 @@
       </HBox>
       <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
          <children>
-            <JFXToggleButton fx:id="togDiagTest" disable="true" onAction="#alterarConfTestDiag" text="Alterar Configuração dos testes e diagnosticos" />
+            <JFXToggleButton fx:id="togDiagTest" disable="true" onAction="#alterarConfTestDiag" text="Alterar configuração dos testes e diagnósticos" />
             <VBox>
                <children>
                   <VBox spacing="5.0">
                      <children>
-                        <Label styleClass="h3-thin-big" text="Tempo de duracao dos testes" />
-                        <Label styleClass="h3-thin" text="Quanto tempo deve durar os testes adaptativos" />
+                        <Label styleClass="h3-thin-big" text="Tempo de duração dos testes" />
+                        <Label styleClass="h3-thin" text="Quanto tempo devem durar os testes adaptativos" />
                         <HBox>
                            <children>
                               <TextField fx:id="tempAdapt" disable="true" prefHeight="37.0" prefWidth="313.0" />
                               <JFXComboBox fx:id="varTempAdapt" disable="true" minHeight="37.0" prefHeight="37.0" prefWidth="99.0" promptText="Tempo " />
                            </children>
                         </HBox>
-                        <Label styleClass="h3-thin" text="Quantas tempo a resposta deve durar em testes speed" />
+                        <Label styleClass="h3-thin" text="Quanto tempo a resposta deve durar em testes speed" />
                         <HBox>
                            <children>
-                              <TextField fx:id="speedTemp" disable="true" prefHeight="37.0" prefWidth="313.0" promptText="Quanto tempo deve durar os testes adaptativos" />
+                              <TextField fx:id="speedTemp" disable="true" prefHeight="37.0" prefWidth="313.0" />
                               <JFXComboBox fx:id="varSpeedTemp" disable="true" minHeight="37.0" prefHeight="37.0" prefWidth="99.0" promptText="Tempo " />
                            </children>
                         </HBox>
@@ -59,7 +59,7 @@
                   </VBox>
                   <VBox spacing="5.0">
                      <children>
-                        <Label styleClass="h3-thin-big" text="Quantidade de questão " />
+                        <Label styleClass="h3-thin-big" text="Quantidade de questões" />
                         <VBox spacing="10.0">
                            <children>
                               <VBox spacing="5.0">
@@ -82,7 +82,7 @@
                               </VBox>
                               <VBox spacing="5.0">
                                  <children>
-                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes extra dificies" />
+                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes extra difíceis" />
                                     <TextField fx:id="extraTest" disable="true" maxWidth="313.0" promptText="Q" />
                                  </children>
                               </VBox>
@@ -105,7 +105,7 @@
       </VBox>
       <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
          <children>
-            <JFXToggleButton fx:id="togNivelDif" disable="true" onAction="#alterarNivelDif" text="Nivel de dificuldade" />
+            <JFXToggleButton fx:id="togNivelDif" disable="true" onAction="#alterarNivelDif" text="Nível de dificuldade" />
             <VBox>
                <children>
                   <VBox spacing="5.0">
@@ -123,14 +123,14 @@
                                              </toggleGroup></JFXRadioButton>
                                           <JFXRadioButton fx:id="radMed" disable="true" text="Médio" toggleGroup="$resposta" />
                                           <JFXRadioButton fx:id="radDesa" disable="true" text="Desafiante" toggleGroup="$resposta" />
-                                          <JFXRadioButton fx:id="radExtra" disable="true" text="Extra dificil" toggleGroup="$resposta" />
+                                          <JFXRadioButton fx:id="radExtra" disable="true" text="Extra difícil" toggleGroup="$resposta" />
                                        </children>
                                     </HBox>
                                     <VBox spacing="5.0">
                                        <children>
                                           <JFXToggleButton fx:id="nivDifTogNEsc" disable="true" text="Não permitir escolhas" />
-                                          <JFXToggleButton fx:id="nivDifTogAEsc" disable="true" text="Permitir escolhas ambiguas" />
-                                          <JFXToggleButton fx:id="nivDifTogDEsc" disable="true" text="Permitir escolhas diagnosticas" />
+                                          <JFXToggleButton fx:id="nivDifTogAEsc" disable="true" text="Permitir escolhas ambíguas" />
+                                          <JFXToggleButton fx:id="nivDifTogDEsc" disable="true" text="Permitir escolhas diagnósticas" />
                                        </children>
                                     </VBox>
                                  </children>
@@ -154,7 +154,7 @@
       </VBox>
       <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
          <children>
-            <JFXToggleButton fx:id="togVarDiag" disable="true" onAction="#alterarVarDiag" text="Variaveis de diagnostico" />
+            <JFXToggleButton fx:id="togVarDiag" disable="true" onAction="#alterarVarDiag" text="Variáveis de diagnóstico" />
             <VBox>
                <children>
                   <VBox spacing="5.0">

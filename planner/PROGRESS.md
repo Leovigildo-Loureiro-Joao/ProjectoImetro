@@ -37,6 +37,12 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
   - alimentar timeline/estatisticas com dados reais
   - usar o ultimo diagnostico como entrada do exame adaptativo
 
+### 2026-04-22
+- Adicionado modo "navegacao" (sem BD) por flags (`TESTE`/`DB_ENABLED`) + banner na UI para nao passar despercebido.
+- Flyway `migrate()` no arranque (com `baseline` em V6 para compatibilidade com o schema criado pelo Docker).
+- Criada a migration `V6__configuracoes.sql` e adicionada a tabela `configuracoes` no schema inicial do Docker.
+- Ajustes na tela de configuracoes (enable/disable menos fragil e textos corrigidos).
+
 ## Objetivo de "projeto terminado"
 
 Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
@@ -47,74 +53,74 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 
 ## Checklist de conclusao (passos recomendados)
 
-### 1) Persistencia real (Postgres)
-- [x] Definir se o MVP vai usar apenas SQL manual ou migrations (Flyway) quando o ambiente permitir dependencias.
-- [x] Criar camada `persistence` com Repositories/DAOs:
-  - [x] `CandidatoRepository`
-  - [x] `OrientadorRepository`
-  - [x] `PerguntaRepository`
-  - [x] `TesteRepository`
-  - [x] `RelatorioRepository`
-- [ ] Garantir operacoes minimas: criar, ler por id, listar por utilizador, atualizar.
-- [ ] Criar seeds minimos (algumas perguntas por disciplina) para testar o fluxo.
+### PROGRESS UI (telas/fluxos)
 
-### 2) Autenticacao e perfis (local)
-- [x] Definir modelo de login (MVP):
-  - [x] email + password (hash) local no Postgres, ou
-  - [x] login "simples" (sem password) so para navegar (apenas para demo)
-- [x] Implementar fluxo de registo e login no UI.
-- [x] Criar sessao do utilizador (quem esta logado + papel).
+#### Auth + sessao
+- [x] Telas Auth: Login/Registo + layouts (Auth/Candidato/Orientador).
+- [x] Reativar login real (validar credenciais via `Authentication.login`) e mensagens de erro no `LoginController`.
+- [x] Sessao do utilizador (estado de quem esta logado + role).
+- [x] Modo navegacao (sem BD): banner visivel e desativacao de registo/onboarding.
 
-### 3) Banco de questoes
-- [ ] Modelar pergunta: disciplina/topico/dificuldade/respostas/resposta correta/explicacao.
-- [ ] CRUD minimo de perguntas (mesmo que so via script/import).
-- [ ] Importacao por JSON/CSV (opcional, mas acelera muito o MVP).
+#### Onboarding
+- [x] Avatar do candidato (upload/skip na UI).
+- [x] Selecao de disciplinas (candidato) com cards.
+- [x] Selecao de disciplina (orientador).
+- [ ] Tratar UX quando BD falhar (mensagem clara + sugestao de ligar modo navegacao).
 
-### 4) Simulador (core)
-- [x] Criar tela de configuracao do teste (disciplinas, n questoes, tempo, dificuldade).
-- [ ] Execucao do teste:
-  - [ ] mostrar pergunta
-  - [ ] capturar resposta
-  - [ ] medir tempo por pergunta
-  - [ ] navegar proximo/anterior (se permitido)
-- [ ] Finalizacao:
-  - [ ] calculo de resultado
-  - [ ] revisao das perguntas (o que errou e porque)
-  - [ ] criar uma tela de "Revisao do Diagnostico" antes de voltar ao menu
+#### Candidato (core)
+- [x] Dashboard (placeholder) + CSS base.
+- [x] Diagnostico (experiencia de uso: lista/timeline/estatisticas + fluxo de perguntas).
+- [x] Exame/Teste adaptativo (experiencia de uso + loading overlay).
+- [x] Tela de configuracoes (editar/salvar + toggles por secao).
+- [ ] Tela "Revisao do Diagnostico" (nova) antes de voltar ao menu.
+- [ ] `views/pages/candidato/relatorios.fxml` (UI candidato: historico + detalhes).
+- [ ] `views/pages/candidato/bolsas.fxml` (UI candidato: recomendacoes).
 
-### 5) Analise e Relatorios
-- [ ] Fechar o ciclo do diagnostico como base do sistema:
-  - [ ] persistir cada diagnostico concluido
-  - [ ] guardar sinais por questao (resposta, tempo, topico, dificuldade e tipo de erro)
-  - [ ] gerar relatorio derivado do diagnostico
-  - [ ] alimentar lista/timeline/estatisticas com dados reais
-- [ ] Calcular as 5 metricas do MVP:
-  - [ ] tempo medio
-  - [ ] taxa de acerto por topico
-  - [ ] evolucao semanal
-  - [ ] erros recorrentes
-  - [ ] dificuldade atingida
-- [ ] Gerar `Relatorio` para cada teste e/ou por periodo.
-- [ ] UI do candidato: ver evolucao e historico.
-- [ ] UI do orientador: filtrar por candidato e comparar evolucao.
+#### Orientador
+- [x] Layout do orientador (dashboard/relatorios placeholder + navegar/sair).
+- [ ] UI orientador: filtrar por candidato e comparar evolucao.
 
-### 6) Recomendacoes (human-in-the-loop)
-- [ ] Gerar recomendacoes sugeridas (por topico/dificuldade/erros).
-- [ ] Orientador valida/rejeita recomendacoes (ficar guardado no relatorio).
-- [ ] Mostrar recomendacoes validadas ao candidato.
-- [ ] Ligar as recomendacoes e o relatorio ao exame adaptativo seguinte.
-
-### 7) Qualidade e entrega
-- [ ] Definir "dados minimos" para demo (ex.: 50 perguntas por disciplina).
-- [ ] Criar testes de unidade para a analise (servicos) e persistencia (onde fizer sentido).
-- [ ] Tratar erros e UX:
-  - [ ] mensagens de validacao no login/registo
-  - [ ] estado de carregamento durante o teste
-  - [ ] prevenir perda de progresso
+#### Qualidade/entrega
+- [x] Overlay de carregamento na navegacao (`swapContent`).
+- [ ] Prevenir perda de progresso (confirmar sair do teste + autosave quando fizer sentido).
 - [ ] Gerar build executavel (jpackage/installer) ou instrucoes claras de distribuicao.
 
-### 8) (Opcional) Supabase - sincronizacao / 2 PCs
-- [ ] Definir o que sincroniza (utilizadores, testes, relatorios, perguntas).
-- [ ] Criar projeto no Supabase e configurar acesso ao Postgres.
-- [ ] Rever seguranca (RLS no Supabase) para separar dados por utilizador/orientador.
-- [ ] Ajustar `DB_URL` para `sslmode=require` e validar conexao.
+### PROGRESS DB (Postgres/persistencia)
+
+#### Infra + migrations
+- [x] Postgres local via `docker-compose.yml` + schema inicial (`scripts/db/001_schema.sql`).
+- [x] Migrations Flyway versionadas (`V1...V6`).
+- [x] Flyway `migrate()` no arranque (com `baseline` em V6 para bases criadas via Docker).
+- [x] Chaves de runtime: `TESTE`/`DB_ENABLED` (ligar/desligar BD) e `DB_MIGRATE` (ligar/desligar migrations).
+- [ ] Seeds minimos para demo (disciplinas + perguntas por disciplina).
+
+#### Repositorios/CRUD
+- [x] Base JDBC (`JdbcBasicSqlRepository`) + `UserRepository`, `DisciplinaRepository` e relacoes (candidato/orientador).
+- [ ] Garantir operacoes minimas usadas no fluxo: criar, ler por id, listar por utilizador, atualizar.
+- [ ] Banco de questoes:
+  - [ ] Modelar pergunta: disciplina/topico/dificuldade/respostas/resposta correta/explicacao.
+  - [ ] CRUD/importacao minima (JSON/CSV ou script).
+- [ ] Persistencia do simulador:
+  - [ ] Guardar sinais por questao (resposta, tempo, topico, dificuldade e tipo de erro).
+  - [ ] Persistir testes concluidos (`testes` + `teste_perguntas`).
+
+#### Ciclo do diagnostico -> relatorios
+- [x] Tabela `diagnosticos` (V5) + indices.
+- [x] Tabela `configuracoes` (V6) + indices.
+- [ ] Persistir o resultado real do diagnostico (UI -> tabela `diagnosticos`).
+- [ ] Alimentar lista/timeline/estatisticas com dados reais (queries por candidato/periodo).
+- [ ] Gerar relatorio derivado do diagnostico e persistir (`relatorios`).
+- [ ] Usar o ultimo diagnostico como entrada do exame adaptativo.
+
+#### Configuracoes (BD)
+- [ ] Criar `ConfiguracaoRepository` (get/upsert por `user_id`).
+- [ ] "Salvar alteracoes" na UI gravar em `configuracoes`.
+- [ ] "Reiniciar para o padrao" (reset/override por defaults).
+
+#### Recomendacoes (human-in-the-loop)
+- [ ] Gerar recomendacoes sugeridas (por topico/dificuldade/erros) e persistir no relatorio.
+- [ ] Orientador valida/rejeita recomendacoes (persistir no relatorio).
+- [ ] Mostrar recomendacoes validadas ao candidato.
+
+#### Qualidade (BD)
+- [ ] Testes de unidade para analise (servicos) e persistencia (onde fizer sentido).

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import com.imetro.App;
+import com.imetro.config.RuntimeConfig;
 import com.imetro.persistence.repository.CandidatoDisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.persistence.repository.UserRepository;
@@ -32,8 +33,8 @@ public final class OnboardingRouter {
         if (contentHost == null) {
             return;
         }
-        if (true) {
-            CandidatoRoute(contentHost);    
+        if (!RuntimeConfig.isDbEnabled()) {
+            CandidatoRoute(contentHost);
             return;
         }
         

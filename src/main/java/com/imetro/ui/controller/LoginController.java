@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import com.imetro.App;
+import com.imetro.config.RuntimeConfig;
 import com.imetro.ui.OnboardingRouter;
 import com.imetro.util.Authentication;
 
@@ -64,11 +65,14 @@ public class LoginController implements Initializable {
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
         setupCarousel();
+        if (!RuntimeConfig.isDbEnabled() && statusLabel != null) {
+            statusLabel.setText("Modo navegação: BD desligada.");
+        }
     }
 
     @FXML
     private void onLogin() throws IOException {
-        /*String email = usernameField == null ? null : usernameField.getText();
+        String email = usernameField == null ? null : usernameField.getText();
         String password = passwordField == null ? null : passwordField.getText();
 
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
@@ -81,7 +85,7 @@ public class LoginController implements Initializable {
             statusLabel.setText("Credenciais inválidas.");
             return;
         }
-        */
+        
         StackPane contentHost = (StackPane) telaLogin.getParent();
         OnboardingRouter.routeAfterAuth(contentHost);
     }
@@ -287,6 +291,12 @@ public class LoginController implements Initializable {
 
     @FXML
     private void onRegister() throws IOException {
+        if (!RuntimeConfig.isDbEnabled()) {
+            if (statusLabel != null) {
+                statusLabel.setText("Registo desativado no modo navegação. Ative TESTE=true ou DB_ENABLED=true.");
+            }
+            return;
+        }
         StackPane contentHost =(StackPane) telaLogin.getParent();
         App.swapContent(contentHost, "views/pages/auth/register");
     }

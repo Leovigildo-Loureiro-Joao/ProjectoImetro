@@ -10,6 +10,7 @@ import java.util.ResourceBundle;
 import com.imetro.App;
 import com.imetro.app.CandidatoController;
 import com.imetro.app.OrientadorController;
+import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.ui.OnboardingRouter;
 import com.imetro.util.Authentication;
@@ -97,10 +98,22 @@ public class RegisterController implements Initializable {
         candidatoController=new CandidatoController();
         orientadorController = new OrientadorController();
         setupCarousel();
+
+        if (!RuntimeConfig.isDbEnabled()) {
+            statusLabel.setText("Modo navegação (sem BD): registo desativado. Ative TESTE=true ou DB_ENABLED=true.");
+            setFormDisabled(true);
+            if (loginButton != null) {
+                loginButton.setDisable(false);
+            }
+        }
     }
 
     @FXML
     private void onRegisterUser() {
+        if (!RuntimeConfig.isDbEnabled()) {
+            statusLabel.setText("Registo indisponível no modo navegação. Ative TESTE=true ou DB_ENABLED=true.");
+            return;
+        }
         if (registrationInProgress) {
             return;
         }

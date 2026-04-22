@@ -36,7 +36,36 @@ Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, c
 mvn clean javafx:run
 ```
 
-A app faz um `warmup` de base no arranque. Se fores correr sem Postgres configurado, define `DB_ENABLED=false` nas variaveis de ambiente.
+### Modo BD vs modo navegação
+
+A app pode rodar em 2 modos:
+
+- **BD ligada**: usa Postgres (onboarding completo, registo/login real, persistência).
+- **Modo navegação (sem BD)**: não tenta conectar na BD e serve para navegar/validar UI quando o ambiente (WSL/Docker/Postgres) estiver instável.
+
+#### Como ligar/desligar
+
+O projeto lê variáveis de ambiente e também `.env.local` / `.env` (ver `com.imetro.config.Env`).
+
+- `DB_ENABLED=true|false` (se existir, **tem prioridade**)
+- `TESTE=true|false` (alias simples: `true` liga BD; `false` entra em modo navegação)
+
+Exemplos:
+
+```env
+# Modo navegação (sem BD)
+TESTE=false
+```
+
+```env
+# BD ligada
+TESTE=true
+DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
+DB_USER=simulator
+DB_PASSWORD=simulator
+```
+
+Quando a BD estiver desligada, a UI mostra um banner “Modo navegação: BD desligada” e o registo fica desativado para evitar erros.
 
 ## Maven sem instalacao local
 
@@ -78,6 +107,8 @@ DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
 DB_USER=simulator
 DB_PASSWORD=simulator
 DB_ENABLED=true
+# Alternativa simples:
+#TESTE=true
 ```
 
 ### Migrations
@@ -85,8 +116,11 @@ DB_ENABLED=true
 - schema inicial do Docker: `scripts/db/001_schema.sql`
 - migrations versionadas: `src/main/resources/db/migration`
 - nova migration adicionada para diagnosticos: `V5__diagnosticos.sql`
+- nova migration adicionada para configuracoes: `V6__configuracoes.sql`
 
 Observacao importante: embora o projeto ja tenha as dependencias de `Flyway`, nao encontrei no codigo atual a execucao automatica de `migrate()` no arranque. Hoje, o Docker usa o schema inicial no primeiro boot, e migrations incrementais precisam ser aplicadas manualmente numa base ja existente.
+
+Atualizacao: a app agora chama `Flyway.migrate()` no arranque quando a BD estiver ligada. Para compatibilidade com o schema criado via Docker, o Flyway faz `baseline` em V6 quando encontra uma base nao vazia sem historico, e aplica apenas migrations futuras. Se quiser desligar isso, define `DB_MIGRATE=false`.
 
 ### Aplicar SQL manualmente
 

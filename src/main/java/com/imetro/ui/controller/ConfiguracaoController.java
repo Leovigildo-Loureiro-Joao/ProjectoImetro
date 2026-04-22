@@ -99,13 +99,13 @@ public class ConfiguracaoController implements Initializable{
 
     public void DisableAll(  ){
         boolean p = true;
-        DisableNode(p,togDiagTest.getText());
-        DisableNode(p,togNivelDif.getText());
-        DisableNode(p,togVarDiag.getText());
+        setSectionDisabled(togDiagTest, p);
+        setSectionDisabled(togNivelDif, p);
+        setSectionDisabled(togVarDiag, p);
     }
 
-     public void DisableNode(boolean p, String section){
-        if (section.equals(togDiagTest.getText())) {
+    private void setSectionDisabled(JFXToggleButton sectionToggle, boolean p) {
+        if (sectionToggle == togDiagTest) {
             tempAdapt.setDisable(p);
             varTempAdapt.setDisable(p);
             speedTemp.setDisable(p);
@@ -115,26 +115,16 @@ public class ConfiguracaoController implements Initializable{
             desafTest.setDisable(p);
             normTest.setDisable(p);
         }
-        if (section.equals(togNivelDif.getText())) {
+        if (sectionToggle == togNivelDif) {
             radDesa.setDisable(p);
             radExtra.setDisable(p);
             radFac.setDisable(p);
             radMed.setDisable(p);
-            resiliDiag.setDisable(p);
             nivDifTogAEsc.setDisable(p);
             nivDifTogDEsc.setDisable(p);
             nivDifTogNEsc.setDisable(p);
-        } 
-        if (section.equals(togNivelDif.getText())) {
-            radDesa.setDisable(p);
-            radExtra.setDisable(p);
-            radFac.setDisable(p);
-            radMed.setDisable(p);
-            resiliDiag.setDisable(p);
-            nivDifTogAEsc.setDisable(p);
-            nivDifTogDEsc.setDisable(p);
-            nivDifTogNEsc.setDisable(p);
-        }if (section.equals(togVarDiag.getText())) {
+        }
+        if (sectionToggle == togVarDiag) {
             velociDiag.setDisable(p);
             resiliDiag.setDisable(p);
             precisDiag.setDisable(p);
@@ -145,10 +135,10 @@ public class ConfiguracaoController implements Initializable{
     
     @FXML
     private void Alterar(ActionEvent event) {
-        JFXButton bt=(JFXButton)event.getTarget();
-        boolean p = !bt.getText().equals("Editar alterações");
-        bt.setText(p?"Editar alterações":"Salvar alterações");
-        DisableTog(p);
+        JFXButton bt = (JFXButton) event.getSource();
+        boolean entrarModoEdicao = bt.getText().equals("Editar alterações");
+        bt.setText(entrarModoEdicao ? "Salvar alterações" : "Editar alterações");
+        DisableTog(!entrarModoEdicao);
     }
 
     @FXML
@@ -158,19 +148,19 @@ public class ConfiguracaoController implements Initializable{
 
     @FXML
     private void alterarConfTestDiag(ActionEvent event) {
-        JFXToggleButton bt=(JFXToggleButton)event.getTarget();
-        DisableNode(!bt.isSelected(),bt.getText());
+        JFXToggleButton bt = (JFXToggleButton) event.getSource();
+        setSectionDisabled(bt, !bt.isSelected());
     }
 
     @FXML
     private void alterarNivelDif(ActionEvent event) {
-        JFXToggleButton bt=(JFXToggleButton)event.getTarget();
-       DisableNode(!bt.isSelected(),bt.getText());
+        JFXToggleButton bt = (JFXToggleButton) event.getSource();
+        setSectionDisabled(bt, !bt.isSelected());
     }
 
     @FXML
     private void alterarVarDiag(ActionEvent event) {
-        JFXToggleButton bt=(JFXToggleButton)event.getTarget();
-        DisableNode(!bt.isSelected(),bt.getText());
+        JFXToggleButton bt = (JFXToggleButton) event.getSource();
+        setSectionDisabled(bt, !bt.isSelected());
     }
 }

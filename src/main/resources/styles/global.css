@@ -104,6 +104,16 @@
     -fx-text-fill: -color-muted;
 }
 
+/* ==================== BANNERS ==================== */
+.mode-banner {
+    -fx-background-color: -color-warning-light;
+    -fx-text-fill: derive(-color-warning, -35%);
+    -fx-padding: 10 14 10 14;
+    -fx-border-color: derive(-color-warning, -10%);
+    -fx-border-width: 0 0 1 0;
+    -fx-font-weight: 600;
+}
+
 /* ==================== BOTÕES ==================== */
 .button, .btn-primary, .btn-primary-two, .btn-secondary {
     -fx-background-radius: 10;
@@ -636,7 +646,6 @@
 .chart-legend-item-symbol{
     -fx-background-radius:999;
 }
-
 
 
 

@@ -9,6 +9,7 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import org.kordamp.ikonli.remixicon.RemixiconAL;
 
 import com.imetro.App;
+import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.ui.components.Item_Cell;
 
@@ -19,6 +20,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
@@ -31,6 +33,9 @@ public class CandidatoLayoutController implements Initializable {
     @FXML
     private StackPane contentHost;
 
+    @FXML
+    private Label dbModeBanner;
+
     @FXML 
     private ListView<MenuEntry> menu;
     @FXML 
@@ -38,6 +43,12 @@ public class CandidatoLayoutController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        boolean dbEnabled = RuntimeConfig.isDbEnabled();
+        if (dbModeBanner != null) {
+            dbModeBanner.setVisible(!dbEnabled);
+            dbModeBanner.setManaged(!dbEnabled);
+        }
+
         menu.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(MenuEntry item, boolean empty) {
