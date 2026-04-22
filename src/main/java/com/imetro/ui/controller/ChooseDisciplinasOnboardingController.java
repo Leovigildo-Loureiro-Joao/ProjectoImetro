@@ -9,12 +9,14 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.imetro.App;
+import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.persistence.repository.CandidatoDisciplinaRepository;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
+import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.DisciplinaCard;
 import com.imetro.util.Authentication;
-import com.imetro.util.DisciplinaCatalog;
+
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 
@@ -31,15 +33,14 @@ import javafx.scene.layout.VBox;
 public class ChooseDisciplinasOnboardingController implements Initializable {
 
     @FXML
-    private StackPane telaChooseDisciplinas;
-
-    @FXML
     private VBox disciplinasBox;
 
     @FXML
     private Label statusLabel;
 
-    private final List<CheckBox> checkBoxes = new ArrayList<>();
+    @FXML
+    private StackPane telaChooseDisciplinas;
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -49,71 +50,19 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
         if (disciplinasBox == null) {
             return;
         }
-
-        List<DisciplinaCatalog.DisciplinaSeed> seeds = DisciplinaCatalog.defaultSeeds();
-        List<String> nomes = seeds.stream().map(DisciplinaCatalog.DisciplinaSeed::nome).toList();
-        DisciplinaRepository disciplinaRepository = new DisciplinaRepository();
-        for (DisciplinaCatalog.DisciplinaSeed seed : seeds) {
-            disciplinaRepository.ensureExists(seed.nome(), seed.peso(), seed.nivel());
-        }
-
-        Map<String, Integer> counts = new OrientadorDisciplinaRepository().countOrientadoresByDisciplinaNames(nomes);
         disciplinasBox.getChildren().clear();
-        checkBoxes.clear();
-
-        for (DisciplinaCatalog.DisciplinaSeed seed : seeds) {
-            disciplinasBox.getChildren().add(new DisciplinaCard(seed,counts));
+        DisciplinaService dService=new DisciplinaService();
+        for (DisciplinaDto seed : dService.discCategoria()) {
+            disciplinasBox.getChildren().add(new DisciplinaCard(seed));
         }
+
+        
     }
 
     @FXML
     private void onContinue(ActionEvent actionEvent) {
-        JFXButton source = actionEvent.getSource() instanceof JFXButton btn ? btn : null;
-        if (source != null) {
-            source.setDisable(true);
-        }
 
-        List<String> selected = new ArrayList<>();
-        for (CheckBox cb : checkBoxes) {
-            if (cb.isSelected()) {
-                selected.add(cb.getText());
-            }
-        }
-
-        if (selected.isEmpty()) {
-            if (statusLabel != null) {
-                statusLabel.setText("Seleciona pelo menos uma disciplina.");
-            }
-            if (source != null) {
-                source.setDisable(false);
-            }
-            return;
-        }
-
-        UUID candidatoId = parseUuid(Authentication.getCurrentUserId());
-        if (candidatoId != null) {
-            DisciplinaRepository disciplinaRepository = new DisciplinaRepository();
-            CandidatoDisciplinaRepository candidatoDisciplinaRepository = new CandidatoDisciplinaRepository();
-            for (String nome : selected) {
-                UUID disciplinaId = disciplinaRepository.ensureAndGetIdByName(nome);
-                if (disciplinaId != null) {
-                    candidatoDisciplinaRepository.add(candidatoId, disciplinaId);
-                }
-            }
-        }
-
-        try {
-            App.setRoot("views/layouts/CandidatoLayout");
-        } catch (IOException e) {
-            e.printStackTrace();
-            if (statusLabel != null) {
-                statusLabel.setText("Não foi possível abrir o sistema agora.");
-            }
-        } finally {
-            if (source != null) {
-                source.setDisable(false);
-            }
-        }
+        
     }
 
     private static UUID parseUuid(String value) {

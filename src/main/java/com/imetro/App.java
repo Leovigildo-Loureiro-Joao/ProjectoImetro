@@ -114,7 +114,7 @@ public class App extends Application {
         }
 
         Node previous = host.getChildren().isEmpty() ? null : host.getChildren().getFirst();
-
+        
         FadeTransition fadeOut = new FadeTransition(Duration.millis(140), host);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);

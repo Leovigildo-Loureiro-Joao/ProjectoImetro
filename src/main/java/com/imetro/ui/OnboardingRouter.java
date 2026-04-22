@@ -60,6 +60,7 @@ public final class OnboardingRouter {
                         App.swapContent(contentHost, FXML_ADD_IMAGE);
                         return;
                     }
+                    System.out.println("oi mano cheguei");
                     App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
                     return;
                 }
@@ -91,6 +92,7 @@ public final class OnboardingRouter {
         if (contentHost == null) {
             return;
         }
+         System.out.println("oi mano cheguei");
         App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
     }
 

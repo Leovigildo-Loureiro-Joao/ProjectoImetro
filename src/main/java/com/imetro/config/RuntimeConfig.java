@@ -17,7 +17,9 @@ package com.imetro.config;
  */
 public final class RuntimeConfig {
 
-    private static final boolean DB_ENABLED = computeDbEnabled();
+    private static final boolean DB_ENABLED = true;
+    
+    
 
     private RuntimeConfig() {
     }
@@ -29,6 +31,7 @@ public final class RuntimeConfig {
     private static boolean computeDbEnabled() {
         // Explicit config wins.
         String explicit = Env.get("DB_ENABLED", null);
+        System.out.println(explicit);
         if (explicit != null) {
             return Env.getBoolean("DB_ENABLED", false);
         }

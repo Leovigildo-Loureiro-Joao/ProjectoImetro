@@ -13,7 +13,7 @@ import java.util.ResourceBundle;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
-import com.imetro.util.DisciplinaCatalog;
+
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;

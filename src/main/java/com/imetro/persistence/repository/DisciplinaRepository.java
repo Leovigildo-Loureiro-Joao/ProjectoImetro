@@ -3,7 +3,13 @@ package com.imetro.persistence.repository;
 import java.sql.SQLException;
 import java.util.UUID;
 
-public final class DisciplinaRepository {
+public  class DisciplinaRepository extends JdbcBasicSqlRepository{
+
+    public DisciplinaRepository() {
+        super("disciplinas", "id");
+        //TODO Auto-generated constructor stub
+    }
+
 
     public UUID ensureAndGetIdByName(String nome) {
         if (nome == null || nome.isBlank()) {

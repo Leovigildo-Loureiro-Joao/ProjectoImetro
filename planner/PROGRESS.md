@@ -106,7 +106,7 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 
 #### Ciclo do diagnostico -> relatorios
 - [x] Tabela `diagnosticos` (V5) + indices.
-- [x] Tabela `configuracoes` (V6) + indices.
+- [ ] Tabela `configuracoes` (V6) + indices.
 - [ ] Persistir o resultado real do diagnostico (UI -> tabela `diagnosticos`).
 - [ ] Alimentar lista/timeline/estatisticas com dados reais (queries por candidato/periodo).
 - [ ] Gerar relatorio derivado do diagnostico e persistir (`relatorios`).
@@ -124,3 +124,5 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 
 #### Qualidade (BD)
 - [ ] Testes de unidade para analise (servicos) e persistencia (onde fizer sentido).
+
+

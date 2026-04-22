@@ -1,8 +1,11 @@
 package com.imetro.domain;
 
+import java.util.UUID;
+
 import com.imetro.domain.enums.NivelDisciplina;
 
 public class Disciplina {
+    private UUID id;
     private String nome;
     private float peso;
     private NivelDisciplina nivel;
@@ -12,6 +15,14 @@ public class Disciplina {
         this.nome = nome;
         this.peso = peso;
         this.nivel = nivel;
+    }
+
+    public Disciplina(UUID id, String nome, float peso, NivelDisciplina nivel, String objectivo) {
+        this.id = id;
+        this.nome = nome;
+        this.peso = peso;
+        this.nivel = nivel;
+        this.objectivo = objectivo;
     }
 
     public Disciplina(String nome, float peso, NivelDisciplina nivel, String objectivo) {
@@ -46,6 +57,14 @@ public class Disciplina {
 
     public void setObjectivo(String objectivo) {
         this.objectivo = objectivo;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
 }

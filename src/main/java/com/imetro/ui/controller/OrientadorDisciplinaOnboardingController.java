@@ -9,7 +9,6 @@ import com.imetro.App;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.util.Authentication;
-import com.imetro.util.DisciplinaCatalog;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.collections.FXCollections;
@@ -37,7 +36,7 @@ public class OrientadorDisciplinaOnboardingController implements Initializable {
             statusLabel.setText("");
         }
         if (disciplinaCombo != null) {
-            disciplinaCombo.setItems(FXCollections.observableArrayList(DisciplinaCatalog.defaultNomes()));
+            //disciplinaCombo.setItems(FXCollections.observableArrayList(DisciplinaCatalog.defaultNomes()));
         }
     }
 
