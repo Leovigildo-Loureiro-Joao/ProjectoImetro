@@ -87,7 +87,7 @@
     id uuid primary key default uuid_generate_v4(),
     nome text not null unique,
     peso double precision not null default 1.0,
-    nivel text not null default 'BASICO',
+    nivel text not null default 'INICIANTE',
     objectivo text null
   );
 
@@ -221,7 +221,7 @@ create table if not exists progresso_aluno_disciplina (
   id uuid primary key default uuid_generate_v4(),
   aluno_id uuid not null references users(id) on delete cascade,
   disciplina_id uuid not null references disciplinas(id) on delete cascade,
-  nivel_atual text not null default 'BASICO',
+  nivel_atual text not null default 'INICIANTE',
   nivel_anterior text,
   data_mudanca_nivel timestamptz,
   peso_atual double precision not null default 1.0,
@@ -241,7 +241,7 @@ create table if not exists progresso_aluno_disciplina (
   
   unique(aluno_id, disciplina_id),
   
-  constraint nivel_valido check (nivel_atual in ('BASICO', 'INTERMEDIARIO', 'AVANCADO', 'EXPERT')),
+  constraint nivel_valido check (nivel_atual in ('INICIANTE', 'INTERMEDIARIO', 'AVANCADO', 'EXPERT')),
   constraint peso_positivo check (peso_atual > 0)
 );
 
@@ -252,10 +252,10 @@ create index if not exists idx_progresso_aluno_disciplinas_disciplina_id on prog
 --- SEEDS PARA DISCIPLINAS 
 --- ====================================================
 insert into disciplinas (id, nome, peso, nivel, objectivo) values
-  (uuid_generate_v4(), 'Matemática', 1.5, 'BASICO', 'Desenvolver raciocínio lógico-matemático e capacidade de resolução de problemas'),
-  (uuid_generate_v4(), 'Português', 1.5, 'BASICO', 'Aprimorar compreensão textual, gramática e expressão escrita'),
-  (uuid_generate_v4(), 'Física', 1.2, 'BASICO', 'Desenvolver raciocínio científico e aplicação de conceitos físicos'),
-  (uuid_generate_v4(), 'Raciocínio Lógico', 1.3, 'BASICO', 'Aprimorar capacidade de análise, dedução e resolução de problemas lógicos');
+  (uuid_generate_v4(), 'Matemática', 1.5, 'INICIANTE', 'Desenvolver raciocínio lógico-matemático e capacidade de resolução de problemas'),
+  (uuid_generate_v4(), 'Português', 1.5, 'INICIANTE', 'Aprimorar compreensão textual, gramática e expressão escrita'),
+  (uuid_generate_v4(), 'Física', 1.2, 'INICIANTE', 'Desenvolver raciocínio científico e aplicação de conceitos físicos'),
+  (uuid_generate_v4(), 'Raciocínio Lógico', 1.3, 'INICIANTE', 'Aprimorar capacidade de análise, dedução e resolução de problemas lógicos');
 
 
 -- =====================================================

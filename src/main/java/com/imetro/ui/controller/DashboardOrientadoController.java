@@ -150,14 +150,14 @@ public class DashboardOrientadoController implements Initializable {
         }
 
         List<DisciplineStatus> demoStatuses = List.of(
-            new DisciplineStatus("Matemática", 0.85, 4.5f, NivelDisciplina.ALTO, 0.8, 0.75, 0.9),
-            new DisciplineStatus("Português", 0.72, 3.0f, NivelDisciplina.MEDIO, 0.7, 0.8, 0.85),
-            new DisciplineStatus("Física", 0.68, 4.0f, NivelDisciplina.ALTO, 0.6, 0.7, 0.75),
-            new DisciplineStatus("Química", 0.54, 3.5f, NivelDisciplina.MEDIO, 0.5, 0.65, 0.7),
-            new DisciplineStatus("Biologia", 0.91, 2.5f, NivelDisciplina.BAIXO, 0.9, 0.85, 0.95),
-            new DisciplineStatus("História", 0.76, 2.0f, NivelDisciplina.BAIXO, 0.75, 0.8, 0.8),
-            new DisciplineStatus("Geografia", 0.63, 2.5f, NivelDisciplina.BAIXO, 0.65, 0.7, 0.75),
-            new DisciplineStatus("Inglês", 0.79, 3.0f, NivelDisciplina.MEDIO, 0.8, 0.75, 0.85)
+            new DisciplineStatus("Matemática", 0.85, 4.5f, NivelDisciplina.AVANCADO, 0.8, 0.75, 0.9),
+            new DisciplineStatus("Português", 0.72, 3.0f, NivelDisciplina.INTERMEDIARIO, 0.7, 0.8, 0.85),
+            new DisciplineStatus("Física", 0.68, 4.0f, NivelDisciplina.AVANCADO, 0.6, 0.7, 0.75),
+            new DisciplineStatus("Química", 0.54, 3.5f, NivelDisciplina.INTERMEDIARIO, 0.5, 0.65, 0.7),
+            new DisciplineStatus("Biologia", 0.91, 2.5f, NivelDisciplina.INICIANTE, 0.9, 0.85, 0.95),
+            new DisciplineStatus("História", 0.76, 2.0f, NivelDisciplina.INICIANTE, 0.75, 0.8, 0.8),
+            new DisciplineStatus("Geografia", 0.63, 2.5f, NivelDisciplina.INICIANTE, 0.65, 0.7, 0.75),
+            new DisciplineStatus("Inglês", 0.79, 3.0f, NivelDisciplina.INTERMEDIARIO, 0.8, 0.75, 0.85)
         );
 
         status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
