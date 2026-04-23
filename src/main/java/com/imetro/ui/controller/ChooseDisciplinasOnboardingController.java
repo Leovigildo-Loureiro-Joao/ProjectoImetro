@@ -10,10 +10,12 @@ import java.util.UUID;
 
 import com.imetro.App;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
-import com.imetro.persistence.repository.CandidatoDisciplinaRepository;
+import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
+import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
+import com.imetro.ui.OnboardingRouter;
 import com.imetro.ui.components.DisciplinaCard;
 import com.imetro.util.Authentication;
 
@@ -26,6 +28,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -41,6 +44,8 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
     @FXML
     private StackPane telaChooseDisciplinas;
 
+    private CandidatoService candidatoService;
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -51,6 +56,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
             return;
         }
         disciplinasBox.getChildren().clear();
+        candidatoService = new CandidatoService();
         DisciplinaService dService=new DisciplinaService();
         for (DisciplinaDto seed : dService.discCategoria()) {
             disciplinasBox.getChildren().add(new DisciplinaCard(seed));
@@ -61,8 +67,19 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
 
     @FXML
     private void onContinue(ActionEvent actionEvent) {
+        for(var node : disciplinasBox.getChildren()) {
+            if (node instanceof DisciplinaCard card) {
+                var radio = card.getRadioSelecionado();
+                if (radio != null && radio.isSelected()) {
+                    var nivel = (String) radio.getUserData();
+                    var disciplinaId = card.getDisciplina().id();
+                    candidatoService.AddFirstProgressoDisciplina(Authentication.getCurrentUserId(), disciplinaId, NivelDisciplina.fromDescricao(nivel), card.getDisciplina().peso());
+                }
+            }
+        }
+        StackPane contentHost = (StackPane) telaChooseDisciplinas.getParent();
+        OnboardingRouter.CandidatoRoute(contentHost);
 
-        
     }
 
     private static UUID parseUuid(String value) {

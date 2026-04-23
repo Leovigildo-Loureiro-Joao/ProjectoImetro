@@ -25,7 +25,7 @@ public class DisciplinaService {
                     Float peso = ((Number) map.get("peso")).floatValue();
                     String nivelStr = (String) map.get("nivel");
                     String objectivo = (String) map.get("objectivo");
-                    NivelDisciplina nivelDisciplina=NivelDisciplina.valueOf(nivelStr);
+                    NivelDisciplina nivelDisciplina=NivelDisciplina.fromDescricao(nivelStr);
                     disc.add(new DisciplinaDto(id,nome,peso,nivelDisciplina,objectivo));
                 }
             }

@@ -1,5 +1,6 @@
 package com.imetro.domain.dto.disciplina;
 
+import java.util.Map;
 import java.util.UUID;
 import com.imetro.domain.enums.NivelDisciplina;
 
@@ -27,6 +28,11 @@ public record DisciplinaDto(
     // Construtor alternativo para casos onde não temos ID ainda
     public static DisciplinaDto semId(String nome, Float peso, NivelDisciplina nivel, String objectivo) {
         return new DisciplinaDto(null, nome, peso, nivel, objectivo);
+    }
+
+    public static Map<String,Object> Progresso(DisciplinaDto disciplinaDto,UUID alunoId){
+        
+        return null;
     }
 
         // Construtor alternativo para casos onde não temos ID ainda

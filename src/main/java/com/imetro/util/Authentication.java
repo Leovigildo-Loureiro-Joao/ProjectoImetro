@@ -1,11 +1,13 @@
 package com.imetro.util;
 
+import java.util.UUID;
+
 import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.interfaces.User;
 import com.imetro.persistence.repository.UserRepository;
 
 public class Authentication {
-    private static String currentUserId;
+    private static UUID currentUserId;
     private static String currentUserEmail;
     private static String currentUserRole;
     private static UserRepository userRepository;
@@ -27,7 +29,7 @@ public class Authentication {
         if (storedHash != null && storedHash.equals(providedHash)) {
             currentUserRole = userRepository.getRoleByEmail(email);
             var id = userRepository.getIdByEmail(email);
-            currentUserId = id == null ? null : id.toString();
+            currentUserId = id == null ? null : id;
             return true;
         } else {
             currentUserId = null;
@@ -51,7 +53,7 @@ public class Authentication {
         return currentUserEmail;
     }
 
-    public static String getCurrentUserId() {
+    public static UUID getCurrentUserId() {
         return currentUserId;
     }
 

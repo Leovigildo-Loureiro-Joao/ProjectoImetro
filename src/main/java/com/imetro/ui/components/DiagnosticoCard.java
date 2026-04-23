@@ -18,6 +18,7 @@ public class DiagnosticoCard extends VBox {
     private Label percentAcerto;
     private CircleProgress progressBar;
     private Label titleDesc;
+    
     private JFXButton diagnosticoButton;
 
     public DiagnosticoCard(String disciplina,String percent1,double percent,Runnable run){
@@ -70,4 +71,5 @@ public class DiagnosticoCard extends VBox {
         });
 
     }
+
 }

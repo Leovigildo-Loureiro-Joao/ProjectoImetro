@@ -5,8 +5,8 @@ import java.util.UUID;
 
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
-import com.imetro.persistence.repository.CandidatoDisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
+import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.UserRepository;
 import com.imetro.util.Authentication;
 
@@ -40,7 +40,7 @@ public final class OnboardingRouter {
         
         String role = Authentication.getCurrentUserRole();
         String email = Authentication.getCurrentUserEmail();
-        UUID userId = parseUuid(Authentication.getCurrentUserId());
+        UUID userId = Authentication.getCurrentUserId();
 
         try {
             if ("CANDIDATO".equalsIgnoreCase(role)) {
@@ -52,7 +52,7 @@ public final class OnboardingRouter {
                     hasAvatar = avatarUrl != null && !avatarUrl.isBlank();
                 }
                 if (userId != null) {
-                    hasDisciplinas = new CandidatoDisciplinaRepository().hasAny(userId);
+                    hasDisciplinas = new ProgressoALunoDisciplinaRepository().hasAny(userId);
                 }
 
                 if (!hasDisciplinas) {
@@ -92,7 +92,6 @@ public final class OnboardingRouter {
         if (contentHost == null) {
             return;
         }
-         System.out.println("oi mano cheguei");
         App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
     }
 

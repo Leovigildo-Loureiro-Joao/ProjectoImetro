@@ -58,7 +58,7 @@ public class OrientadorDisciplinaOnboardingController implements Initializable {
             return;
         }
 
-        UUID orientadorId = parseUuid(Authentication.getCurrentUserId());
+        UUID orientadorId = Authentication.getCurrentUserId();
         if (orientadorId != null) {
             UUID disciplinaId = new DisciplinaRepository().ensureAndGetIdByName(nome);
             if (disciplinaId != null) {
