@@ -17,7 +17,7 @@ package com.imetro.config;
  */
 public final class RuntimeConfig {
 
-    private static final boolean DB_ENABLED = true;
+    private static final boolean DB_ENABLED = false;
     
     
 

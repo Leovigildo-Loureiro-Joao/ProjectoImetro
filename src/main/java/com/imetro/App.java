@@ -177,11 +177,11 @@ public class App extends Application {
         return fxmlLoader.load();
     }
 
-    public static  Node loadFXMLModal(String fxml) throws IOException {
+    public static  FXMLLoader loadFXMLModal(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(
-                App.class.getResource("/com/imetro/modals/" + fxml + ".fxml")
+                App.class.getResource("/com/imetro/views/modals/" + fxml + ".fxml")
         );
-        return fxmlLoader.load();
+        return fxmlLoader;
     }
 
     public static void main(String[] args) {

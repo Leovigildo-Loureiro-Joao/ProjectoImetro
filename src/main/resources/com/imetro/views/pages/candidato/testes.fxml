@@ -40,7 +40,7 @@
             <children>
                
                <!-- TELA DE SELECAO (START) -->
-               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <Label styleClass="h3-thin" text="Selecione uma disciplina para iniciar o teste adaptativo" />
                      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="550.0" VBox.vgrow="ALWAYS">
@@ -56,7 +56,7 @@
                </VBox>
                
                <!-- TELA DO TESTE ADAPTATIVO -->
-               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <StackPane>
                         <children>

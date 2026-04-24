@@ -18,9 +18,9 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="735.0" prefWidth="1167.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.diagnosticos.DiagnosticoCandidatoController">
+<AnchorPane fx:id="diagnosticoField" prefHeight="735.0" prefWidth="1167.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.diagnosticos.DiagnosticoCandidatoController">
    <children>
-      <VBox alignment="TOP_LEFT" prefHeight="722.0" prefWidth="820.0" spacing="15.0" styleClass="placeholder-card" AnchorPane.leftAnchor="-2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="0.0">
+      <VBox alignment="TOP_LEFT" prefHeight="735.0" prefWidth="1167.0" spacing="15.0" styleClass="placeholder-card" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="0.0">
          <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
@@ -300,6 +300,11 @@
          </StackPane>
          
       </VBox>
-      <StackPane layoutX="-119.0" prefHeight="150.0" prefWidth="200.0" />
+      <StackPane fx:id="modalPai" layoutX="-119.0" opacity="0.0" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #14141413;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <styleClass>
+            <String fx:value="card-blur" />
+            <String fx:value="modal" />
+         </styleClass>
+      </StackPane>
    </children>
 </AnchorPane>

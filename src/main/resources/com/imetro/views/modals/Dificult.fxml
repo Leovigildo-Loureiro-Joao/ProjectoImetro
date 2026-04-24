@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXRadioButton?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="modal" maxHeight="410.0" maxWidth="400.0" prefHeight="395.0" prefWidth="378.0" spacing="10.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.DificultModalController">
+   <children>
+      <HBox>
+         <children>
+            <Label prefHeight="20.0" prefWidth="233.0" styleClass="h2-thin" text="Iniciando Diagnostico..." />
+            <Region prefHeight="35.0" prefWidth="129.0" />
+            <JFXButton buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" onAction="#Close" prefHeight="35.0" prefWidth="32.0">
+               <graphic>
+                  <ImageView fitHeight="17.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../assets/imgs/delete_50px.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </JFXButton>
+         </children>
+      </HBox>
+      <HBox prefHeight="127.0" prefWidth="269.0" spacing="10.0">
+         <children>
+            <VBox prefHeight="127.0" prefWidth="166.0" spacing="10.0">
+               <children>
+                  <Label styleClass="h3-thin" text="Deseja que teste seja?" />
+                  <VBox spacing="10.0">
+                     <children>
+                        <JFXRadioButton onAction="#SelectTesteDificult" text="Facíl">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="nivel" />
+                           </toggleGroup>
+                        </JFXRadioButton>
+                        <JFXRadioButton onAction="#SelectTesteDificult" selected="true" text="Normal" toggleGroup="$nivel" />
+                        <JFXRadioButton onAction="#SelectTesteDificult" text="Desafiante" toggleGroup="$nivel" />
+                        <JFXRadioButton onAction="#SelectTesteDificult" text="Extra dificil" toggleGroup="$nivel" />
+                     </children>
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </VBox>
+               </children>
+            </VBox>
+            <VBox spacing="10.0">
+               <children>
+                  <Label styleClass="h3-thin" text="Foco principal" />
+                  <VBox spacing="10.0">
+                     <children>
+                        <JFXRadioButton onAction="#SelectFocos" selected="true" text="Pontos fracos">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="foco" />
+                           </toggleGroup>
+                        </JFXRadioButton>
+                        <JFXRadioButton onAction="#SelectFocos" text="Erros comuns" toggleGroup="$foco" />
+                        <JFXRadioButton onAction="#SelectFocos" text="Pontos fortes" toggleGroup="$foco" />
+                        <JFXRadioButton onAction="#SelectFocos" text="Novas aplicações" toggleGroup="$foco" />
+                     </children>
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+      <HBox prefHeight="99.0" prefWidth="302.0">
+         <children>
+            <VBox prefHeight="99.0" prefWidth="168.0" spacing="10.0">
+               <children>
+                  <Label styleClass="h3-thin" text="Quanto a duração" />
+                  <VBox prefHeight="74.0" prefWidth="303.0" spacing="10.0">
+                     <children>
+                        <JFXRadioButton onAction="#SelectDuracao" text="Longo">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="duracao" />
+                           </toggleGroup>
+                        </JFXRadioButton>
+                        <JFXRadioButton onAction="#SelectDuracao" text="Médio" toggleGroup="$duracao" />
+                        <JFXRadioButton onAction="#SelectDuracao" selected="true" text="Curto" toggleGroup="$duracao" />
+                     </children>
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+      <JFXButton onAction="#InteligentDiagnostic" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary" text="Iniciar diagnostico inteligente">
+         <padding>
+            <Insets top="10.0" />
+         </padding>
+         <VBox.margin>
+            <Insets top="10.0" />
+         </VBox.margin>
+      </JFXButton>
+      <JFXButton minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary-two" text="Pular fazer apenas o padrão" />
+   </children>
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
+   <styleClass>
+      <String fx:value="card" />
+      <String fx:value="card-blur" />
+   </styleClass>
+</VBox>

@@ -1,7 +1,9 @@
 package com.imetro.ui.controller.diagnosticos;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 
@@ -21,6 +23,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
@@ -36,6 +39,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import com.imetro.ui.controller.lifecycle.DisposableController;
+import com.imetro.ui.modals.DificultModalController;
 
 public class DiagnosticoCandidatoController implements DisposableController, DiagnosticoCoordinator.DiagnosticoHost {
 
@@ -153,6 +157,12 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     @FXML
     private JFXToggleNode toggleG;
 
+     @FXML
+    public  StackPane modalPai;
+
+    @FXML
+    public AnchorPane diagnosticoField;
+
     private int h = 0, m = 0, s = 0, a = 0, e = 0;
 
     private JFXToggleNode selected;
@@ -166,11 +176,17 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private char respostaSelecionada;
     private List<Character> respostasUsuario = new ArrayList<>();
     private Timeline loadingTimeline;
+    private FXMLLoader diff;
+    private String duracao;
+    private String foco;
+    private String nivel;
+    private  DificultModalController cont;
 
     @FXML
-    public void initialize() {
+    public void initialize() throws IOException {
         DiagnosticoCoordinator.setHost(this);
-
+        diff=App.loadFXMLModal("Dificult");
+        modalPai.getChildren().add(diff.load());  
         sublist.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(MenuEntry item, boolean empty) {
@@ -491,4 +507,23 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         }
       
     }
+
+    @Override
+    public void ModalOpen() {
+        cont= (DificultModalController) diff.getController();
+        cont.init();
+    }
+
+    @Override
+    public void StartInteligente() {
+        Map<String,String> map=cont.InteligentDiagnostic(null);
+        duracao=map.get("duracao");
+        foco=map.get("foco");
+        nivel=map.get("nivel");
+
+        setDiagnosticMode(true);
+    }
+
+    
+
 }
