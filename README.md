@@ -102,6 +102,14 @@ Na primeira criacao do volume, o container executa automaticamente `scripts/db/0
 
 Usa `.env.example` como referencia:
 
+> OBS importante: o projeto nao le `.env.example` diretamente.  
+> Cada dev deve criar o proprio `.env` na raiz do projeto com base no exemplo:
+>
+> - Windows (PowerShell): `Copy-Item .env.example .env`
+> - Linux/macOS: `cp .env.example .env`
+>
+> Tambem evita forcar flags no codigo (ex.: `DB_ENABLED = false` em `RuntimeConfig`), para que o modo da app siga o `.env`.
+
 ```env
 DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
 DB_USER=simulator

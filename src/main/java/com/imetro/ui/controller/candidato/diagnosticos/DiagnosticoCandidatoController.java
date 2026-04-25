@@ -1,4 +1,4 @@
-package com.imetro.ui.controller.diagnosticos;
+package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +13,8 @@ import com.imetro.services.TesteMatematicaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.model.Questao;
+import com.imetro.util.QuestaoResultado;
+import com.imetro.util.ResultadoPayload;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXToggleNode;
 
@@ -24,6 +26,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
@@ -38,8 +41,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.modals.DificultModalController;
+import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.TopicModalController;
 
 public class DiagnosticoCandidatoController implements DisposableController, DiagnosticoCoordinator.DiagnosticoHost {
 
@@ -176,17 +182,19 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private char respostaSelecionada;
     private List<Character> respostasUsuario = new ArrayList<>();
     private Timeline loadingTimeline;
-    private FXMLLoader diff;
+    private FXMLLoader modFxml;
+    private Node mod;
+    private Node modTop;
     private String duracao;
     private String foco;
     private String nivel;
-    private  DificultModalController cont;
+    private  ModalController cont;
+
 
     @FXML
     public void initialize() throws IOException {
         DiagnosticoCoordinator.setHost(this);
-        diff=App.loadFXMLModal("Dificult");
-        modalPai.getChildren().add(diff.load());  
+
         sublist.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(MenuEntry item, boolean empty) {
@@ -412,40 +420,69 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         if (time != null) {
             time.stop();
         }
-        
+
         int acertos = 0;
-        for (int i = 0; i < questoes.size(); i++) {
+        int limiteCorrecao = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
+        for (int i = 0; i < limiteCorrecao; i++) {
             if (respostasUsuario.get(i) == questoes.get(i).getRespostaCorreta()) {
                 acertos++;
             }
         }
 
         double porcentagem = (acertos * 100.0) / totalQuestoes;
+        String nivelFinal = getNivelPorPorcentagem(porcentagem);
+        String recomendacao = getMensagemMotivacional(porcentagem);
+        List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
+
+        ResultadoAvaliacaoController.setResultado(
+            new ResultadoPayload(
+                "Diagnostico Academico",
+                nomeDisc.getText(),
+                acertos,
+                totalQuestoes - acertos,
+                totalQuestoes,
+                porcentagem,
+                tempo.getText(),
+                nivelFinal,
+                "Diagnostico",
+                recomendacao,
+                "views/pages/candidato/diagnostico",
+                questoesResultado
+            )
+        );
+
+        StackPane contentHost = diagnosticoField == null || diagnosticoField.getScene() == null
+            ? null
+            : (StackPane) diagnosticoField.getScene().lookup("#contentHost");
+        if (contentHost != null) {
+            App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
+            return;
+        }
 
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("Diagnóstico Concluído");
+        alert.setTitle("Diagnostico Concluido");
         alert.setHeaderText("Resultado Final");
         alert.setContentText(String.format(
-            "Você acertou %d de %d questões\n\nPorcentagem: %.1f%%\n\n🎓 Nível: %s\n\n%s",
-            acertos, totalQuestoes, porcentagem,
-            getNivelPorPorcentagem(porcentagem),
-            getMensagemMotivacional(porcentagem)
+            "Voce acertou %d de %d questoes\nPorcentagem: %.1f%%\nNivel: %s\n%s",
+            acertos, totalQuestoes, porcentagem, nivelFinal, recomendacao
         ));
         alert.showAndWait();
-
-        // Reset
-        respostasUsuario.clear();
-        questaoAtual = 0;
-        a = 0;
-        e = 0;
-        h = 0;
-        m = 0;
-        s = 0;
-        corretas.setText("0");
-        errada.setText("0");
-        tempo.setText("00:00:00");
-
         setDiagnosticMode(false);
+    }
+
+    private List<QuestaoResultado> construirQuestoesResultado() {
+        List<QuestaoResultado> itens = new ArrayList<>();
+        int limite = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
+        for (int i = 0; i < limite; i++) {
+            itens.add(
+                QuestaoResultado.fromQuestao(
+                    i + 1,
+                    questoes.get(i),
+                    respostasUsuario.get(i)
+                )
+            );
+        }
+        return itens;
     }
 
     private String getNivelPorPorcentagem(double pct) {
@@ -510,18 +547,35 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     @Override
     public void ModalOpen() {
-        cont= (DificultModalController) diff.getController();
-        cont.init();
+        try {
+            modFxml=App.loadFXMLModal("Dificult");
+            mod=modFxml.load();
+            modalPai.getChildren().add(mod);  
+            cont= (DificultModalController) modFxml.getController();
+            cont.init();
+        } catch (Exception e) {
+         
+            System.out.println(e.getMessage());
+        }
+    
     }
 
     @Override
     public void StartInteligente() {
-        Map<String,String> map=cont.InteligentDiagnostic(null);
-        duracao=map.get("duracao");
-        foco=map.get("foco");
-        nivel=map.get("nivel");
-
-        setDiagnosticMode(true);
+        try {
+            Map<String,String> map=((DificultModalController)cont).InteligentDiagnostic(null);
+            duracao=map.get("duracao");
+            foco=map.get("foco");
+            nivel=map.get("nivel");
+            modFxml=App.loadFXMLModal("Topicos");
+            modTop=modFxml.load();
+            modalPai.getChildren().add(modTop);
+            TopicModalController conts= (TopicModalController) modFxml.getController();
+            conts.init();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+      
     }
 
     

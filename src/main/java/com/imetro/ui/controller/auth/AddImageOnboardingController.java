@@ -1,4 +1,4 @@
-package com.imetro.ui.controller;
+package com.imetro.ui.controller.auth;
 
 import java.io.File;
 import java.net.URL;

@@ -15,7 +15,7 @@
 <?import javafx.scene.text.Text?>
 
 <StackPane fx:id="telaChooseDisciplinas" stylesheets="@../../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.imetro.ui.controller.ChooseDisciplinasOnboardingController">
+           fx:controller="com.imetro.ui.controller.auth.ChooseDisciplinasOnboardingController">
     <children>
         <HBox>
             <children>

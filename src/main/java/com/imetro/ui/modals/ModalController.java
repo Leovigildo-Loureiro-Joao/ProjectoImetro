@@ -3,9 +3,6 @@ package com.imetro.ui.modals;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import javax.swing.JOptionPane;
-
-import com.imetro.ui.controller.diagnosticos.DiagnosticoCandidatoController;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.animation.FadeTransition;
@@ -33,6 +30,7 @@ public class ModalController implements Initializable{
         
         StackPane pai=(StackPane)modal.getParent();
         pai.setVisible(true);
+        modal.setVisible(true);
         FadeTransition dTransition=new FadeTransition(Duration.seconds(0.3),pai);
         dTransition.setByValue(0);
         dTransition.setToValue(1);
@@ -41,13 +39,13 @@ public class ModalController implements Initializable{
     }
     @FXML
     public void Close(ActionEvent ev){
+        StackPane pai=(StackPane)modal.getParent();
         FadeTransition dTransition=new FadeTransition(Duration.seconds(0.3),modal.getParent());
         dTransition.setByValue(1);
         dTransition.setToValue(0);
         dTransition.play();
         dTransition.setOnFinished(event -> {
-            StackPane pai=(StackPane)modal.getParent();
-            pai.setVisible(false);
+            modal.setVisible(false);
         });
 
     }

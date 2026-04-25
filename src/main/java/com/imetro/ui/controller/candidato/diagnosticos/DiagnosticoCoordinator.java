@@ -1,4 +1,4 @@
-package com.imetro.ui.controller.diagnosticos;
+package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;

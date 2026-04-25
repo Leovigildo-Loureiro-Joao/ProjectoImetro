@@ -1,52 +1,68 @@
-package com.imetro.ui.controller;
+package com.imetro.ui.controller.auth;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
 import com.imetro.App;
+import com.imetro.app.CandidatoController;
+import com.imetro.app.OrientadorController;
 import com.imetro.config.RuntimeConfig;
+import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.ui.OnboardingRouter;
 import com.imetro.util.Authentication;
+import com.imetro.util.PasswordHasher;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.concurrent.Task;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-public class LoginController implements Initializable {
+public class RegisterController implements Initializable {
 
     private static final Duration CAROUSEL_INTERVAL = Duration.seconds(4);
     private static final Duration CAROUSEL_ANIMATION = Duration.millis(420);
 
     @FXML
-    private TextField usernameField;
+    private TextField nomeField;
+
+    @FXML
+    private TextField emailField;
 
     @FXML
     private PasswordField passwordField;
 
     @FXML
+    private ComboBox<String> roleCombo;
+
+    @FXML
     private Label statusLabel;
 
     @FXML
-    private StackPane telaLogin;
+    private StackPane telaRegister;
 
     @FXML
     private ScrollPane carouselScroll;
@@ -57,37 +73,130 @@ public class LoginController implements Initializable {
     @FXML
     private HBox carouselDots;
 
+    @FXML
+    private VBox formBox;
+
+    @FXML
+    private JFXButton registerButton;
+
+    @FXML
+    private JFXButton loginButton;
+
+    @FXML
     private Timeline carouselTimeline;
     private int carouselIndex = 0;
     private int realPageCount = 0;
     private int extendedPageCount = 0;
 
+    private CandidatoController candidatoController;
+    private OrientadorController orientadorController;
+    private volatile boolean registrationInProgress = false;
+
     @Override
-    public void initialize(URL arg0, ResourceBundle arg1) {
+    public void initialize(URL location, ResourceBundle resources) {
+        roleCombo.setItems(FXCollections.observableArrayList("CANDIDATO", "ORIENTADOR"));
+        candidatoController=new CandidatoController();
+        orientadorController = new OrientadorController();
         setupCarousel();
-        if (!RuntimeConfig.isDbEnabled() && statusLabel != null) {
-            statusLabel.setText("Modo navegação: BD desligada.");
+
+        if (!RuntimeConfig.isDbEnabled()) {
+            statusLabel.setText("Modo navegação (sem BD): registo desativado. Ative TESTE=true ou DB_ENABLED=true.");
+            setFormDisabled(true);
+            if (loginButton != null) {
+                loginButton.setDisable(false);
+            }
         }
     }
 
     @FXML
-    private void onLogin() throws IOException {
-        String email = usernameField == null ? null : usernameField.getText();
+    private void onRegisterUser() {
+        if (!RuntimeConfig.isDbEnabled()) {
+            statusLabel.setText("Registo indisponível no modo navegação. Ative TESTE=true ou DB_ENABLED=true.");
+            return;
+        }
+        if (registrationInProgress) {
+            return;
+        }
+
+        String nome = nomeField == null ? null : nomeField.getText();
+        String email = emailField == null ? null : emailField.getText();
         String password = passwordField == null ? null : passwordField.getText();
+        String role = roleCombo == null ? null : roleCombo.getValue();
 
-        if (email == null || email.isBlank() || password == null || password.isBlank()) {
-            statusLabel.setText("Preencha o email e a palavra-passe.");
+        if (role == null || role.isBlank()) {
+            statusLabel.setText("Selecione o perfil (Candidato/Orientador).");
             return;
         }
 
-        boolean ok = Authentication.login(email.trim(), password);
-        if (!ok) {
-            statusLabel.setText("Credenciais inválidas.");
+        if (nome == null || nome.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
+            statusLabel.setText("Preencha nome, email e palavra-passe.");
             return;
         }
-        
-        StackPane contentHost = (StackPane) telaLogin.getParent();
-        OnboardingRouter.routeAfterAuth(contentHost);
+
+        setFormDisabled(true);
+        registrationInProgress = true;
+        statusLabel.setText("A criar conta...");
+
+        String senhaHash = PasswordHasher.sha256Base64(password);
+        UserRegister register = new UserRegister(nome.trim(), email.trim(), senhaHash, role.trim().toUpperCase(), LocalDateTime.now());
+        if (!register.ValidateData()) {
+            statusLabel.setText("Dados inválidos. Verifique email, senha e perfil.");
+            setFormDisabled(false);
+            registrationInProgress = false;
+            return;
+        }
+
+        Task<Boolean> registerTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                boolean created;
+                if ("ORIENTADOR".equalsIgnoreCase(register.role())) {
+                    created = orientadorController.RegistrarOrientador(register);
+                } else {
+                    created = candidatoController.RegistrarCandidato(register);
+                }
+
+                if (!created) {
+                    return false;
+                }
+
+                return Authentication.login(register.email(), password);
+            }
+        };
+
+        registerTask.setOnSucceeded(e -> {
+            boolean ok = Boolean.TRUE.equals(registerTask.getValue());
+            if (!ok) {
+                statusLabel.setText("Não foi possível criar/entrar. Email pode já existir.");
+                setFormDisabled(false);
+                registrationInProgress = false;
+                return;
+            }
+
+            statusLabel.setText("Conta criada. A entrar...");
+
+            Timeline delay = new Timeline(new KeyFrame(Duration.millis(160), ev -> {
+                StackPane contentHost = (StackPane) telaRegister.getParent();
+                OnboardingRouter.routeAfterAuth(contentHost);
+            }));
+            delay.play();
+        });
+
+        registerTask.setOnFailed(e -> {
+            statusLabel.setText("Falha ao registar. Tente novamente.");
+            setFormDisabled(false);
+            registrationInProgress = false;
+        });
+
+        Thread thread = new Thread(registerTask);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onLogin() throws IOException {
+        StackPane contentHost = (StackPane) telaRegister.getParent();
+        App.swapContent(contentHost, "views/pages/auth/login");
     }
 
     private void setupCarousel() {
@@ -113,7 +222,7 @@ public class LoginController implements Initializable {
         carouselScroll.setOnMouseEntered(e -> stopCarousel());
         carouselScroll.setOnMouseExited(e -> startCarousel());
 
-        telaLogin.sceneProperty().addListener((obs, oldScene, newScene) -> {
+        telaRegister.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene == null) {
                 stopCarousel();
             } else {
@@ -121,6 +230,28 @@ public class LoginController implements Initializable {
             }
         });
     }
+
+    private void setFormDisabled(boolean disabled) {
+        if (nomeField != null) {
+            nomeField.setDisable(disabled);
+        }
+        if (emailField != null) {
+            emailField.setDisable(disabled);
+        }
+        if (passwordField != null) {
+            passwordField.setDisable(disabled);
+        }
+        if (roleCombo != null) {
+            roleCombo.setDisable(disabled);
+        }
+        if (registerButton != null) {
+            registerButton.setDisable(disabled);
+        }
+        if (loginButton != null) {
+            loginButton.setDisable(disabled);
+        }
+    }
+
 
     private void setupInfiniteCarouselPages() {
         List<Node> realPages = new ArrayList<>(carouselContent.getChildren());
@@ -242,8 +373,10 @@ public class LoginController implements Initializable {
         );
         slide.setOnFinished(e -> {
             if (carouselIndex == 0) {
+                // Landed on the "last" clone; jump (no animation) to real last.
                 setCarouselIndex(realPageCount, false);
             } else if (carouselIndex == extendedPageCount - 1) {
+                // Landed on the "first" clone; jump (no animation) to real first.
                 setCarouselIndex(1, false);
             }
         });
@@ -288,17 +421,4 @@ public class LoginController implements Initializable {
         stopCarousel();
         startCarousel();
     }
-
-    @FXML
-    private void onRegister() throws IOException {
-        if (!RuntimeConfig.isDbEnabled()) {
-            if (statusLabel != null) {
-                statusLabel.setText("Registo desativado no modo navegação. Ative TESTE=true ou DB_ENABLED=true.");
-            }
-            return;
-        }
-        StackPane contentHost =(StackPane) telaLogin.getParent();
-        App.swapContent(contentHost, "views/pages/auth/register");
-    }
-    
 }

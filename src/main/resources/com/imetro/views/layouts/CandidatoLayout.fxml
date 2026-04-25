@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.CandidatoLayoutController">
+<BorderPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.CandidatoLayoutController">
 
     <left>
         <VBox fx:id="sidebar" minWidth="69.0" prefHeight="1007.0" prefWidth="69.0" spacing="10" styleClass="sidebar">

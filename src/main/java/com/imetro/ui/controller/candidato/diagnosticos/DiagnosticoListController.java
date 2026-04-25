@@ -1,4 +1,4 @@
-package com.imetro.ui.controller.diagnosticos;
+package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.net.URL;
 import java.util.ResourceBundle;

@@ -1,4 +1,4 @@
-package com.imetro.ui.controller;
+package com.imetro.ui.controller.candidato;
 
 import java.net.URL;
 import java.util.ResourceBundle;

@@ -42,9 +42,8 @@ public class DiagnosticoCard extends VBox {
         this.setPadding(new Insets(14));
         this.setAlignment(Pos.CENTER);
         this.setSpacing(10);
-        this.setPadding(new Insets(0,0,40,0));
+        this.setPadding(new Insets(10,0,20,0));
         this.setMaxWidth(200);
-        
         this.setMinWidth(200);
          //-----------------------
         titleDesc.getStyleClass().add("card-title-secondary");

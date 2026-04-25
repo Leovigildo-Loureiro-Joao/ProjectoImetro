@@ -1,11 +1,13 @@
-package com.imetro.ui.controller;
+package com.imetro.ui.controller.candidato;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.imetro.App;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.model.Questao;
+import com.imetro.util.QuestaoResultado;
+import com.imetro.util.ResultadoPayload;
 import com.imetro.services.TesteAdaptativoService;
 
 import javafx.animation.FadeTransition;
@@ -473,6 +475,34 @@ public class TesteAdaptativoController {
         // Determinar perfil do usuario
         String perfil = determinarPerfil(porcentagemAcertos, mediaTempo);
         
+        String recomendacao = getRecomendacao(porcentagemAcertos, nivelAtualInt);
+        List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
+
+        ResultadoAvaliacaoController.setResultado(
+            new ResultadoPayload(
+                "Exame Adaptativo",
+                nomeDisc.getText(),
+                acertos,
+                erros,
+                totalQuestoes,
+                porcentagemAcertos,
+                tempo.getText(),
+                getNomeNivel(nivelAtualInt),
+                perfil,
+                recomendacao,
+                "views/pages/candidato/testes",
+                questoesResultado
+            )
+        );
+
+        StackPane contentHost = nomeDisc == null || nomeDisc.getScene() == null
+            ? null
+            : (StackPane) nomeDisc.getScene().lookup("#contentHost");
+        if (contentHost != null) {
+            App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
+            return;
+        }
+
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("Teste Adaptativo Concluido");
         alert.setHeaderText("Resultado Final Adaptativo");
@@ -487,15 +517,9 @@ public class TesteAdaptativoController {
             getNomeNivel(nivelAtualInt),
             mediaTempo / 1000,
             perfil,
-            getRecomendacao(porcentagemAcertos, nivelAtualInt)
+            recomendacao
         ));
         alert.showAndWait();
-        
-        // Voltar para tela de selecao
-        respostasUsuario.clear();
-        questaoAtual = 0;
-        testeContainer.setVisible(false);
-        start.setVisible(true);
     }
     
     private String determinarPerfil(double porcentagem, double tempoMedio) {
@@ -535,5 +559,20 @@ public class TesteAdaptativoController {
         alert.setHeaderText(null);
         alert.setContentText(mensagem);
         alert.showAndWait();
+    }
+
+    private List<QuestaoResultado> construirQuestoesResultado() {
+        List<QuestaoResultado> itens = new ArrayList<>();
+        int limite = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
+        for (int i = 0; i < limite; i++) {
+            itens.add(
+                QuestaoResultado.fromQuestao(
+                    i + 1,
+                    questoes.get(i),
+                    respostasUsuario.get(i)
+                )
+            );
+        }
+        return itens;
     }
 }

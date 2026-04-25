@@ -2,7 +2,7 @@ package com.imetro.ui.modals;
 
 import java.util.Map;
 
-import com.imetro.ui.controller.diagnosticos.DiagnosticoCoordinator;
+import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
