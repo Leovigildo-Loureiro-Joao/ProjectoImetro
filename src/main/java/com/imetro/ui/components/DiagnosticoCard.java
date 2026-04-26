@@ -2,6 +2,9 @@ package com.imetro.ui.components;
 
 
 
+import java.util.ArrayList;
+
+import com.imetro.domain.dto.Topico;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 
@@ -18,14 +21,18 @@ public class DiagnosticoCard extends VBox {
     private Label percentAcerto;
     private CircleProgress progressBar;
     private Label titleDesc;
-    
+    private ArrayList<Topico> topicos=new ArrayList<>();
     private JFXButton diagnosticoButton;
 
-    public DiagnosticoCard(String disciplina,String percent1,double percent,Runnable run){
+    public DiagnosticoCard(String disciplina,Topico[]topico,String percent1,double percent,Callback<ArrayList<Topico>,Void> run,Runnable massa){
+        for (Topico topico2 : topico) {
+            topicos.add(topico2);
+        }
         this.diciplina=new JFXCheckBox(disciplina);
         percentAcerto=new Label(percent1);
         progressBar=new CircleProgress(35, 35);
         titleDesc=new Label("Último diagnóstico");
+
         progressBar.setValue(percent);
         
         diagnosticoButton = new JFXButton("Fazer diagnóstico");
@@ -35,6 +42,11 @@ public class DiagnosticoCard extends VBox {
         this.getChildren().addAll(diciplina,titleDesc,percentAcerto,progressBar,diagnosticoButton);
         StyleConfig();
         Action(run);
+         // Enable button only when checkbox is selected
+        diciplina.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            diagnosticoButton.setDisable(!newVal);
+            massa.run();
+        });
     }
 
     private void StyleConfig(){
@@ -58,17 +70,69 @@ public class DiagnosticoCard extends VBox {
         diagnosticoButton.setMaxWidth(150);
         diagnosticoButton.setPrefHeight(35);
         
-        // Enable button only when checkbox is selected
-        diciplina.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            diagnosticoButton.setDisable(!newVal);
-        });
+       
     }
 
-    public void Action(Runnable action){
+    public void Action(Callback<ArrayList<Topico>,Void> action){
         diagnosticoButton.setOnAction(arg0 -> {
-            action.run();
+            action.call(topicos);
         });
 
     }
+
+    public JFXCheckBox getDiciplina() {
+        return diciplina;
+    }
+
+    public void setDiciplina(JFXCheckBox diciplina) {
+        this.diciplina = diciplina;
+    }
+
+    public Label getPercentAcerto() {
+        return percentAcerto;
+    }
+    
+    public void setPercentAcerto(Label percentAcerto) {
+        this.percentAcerto = percentAcerto;
+    }
+
+    public CircleProgress getProgressBar() {
+        return progressBar;
+    }
+
+    public void setProgressBar(CircleProgress progressBar) {
+        this.progressBar = progressBar;
+    }
+
+    public Label getTitleDesc() {
+        return titleDesc;
+    }
+
+    public void setTitleDesc(Label titleDesc) {
+        this.titleDesc = titleDesc;
+    }
+
+    public JFXButton getDiagnosticoButton() {
+        return diagnosticoButton;
+    }
+
+    public void setDiagnosticoButton(JFXButton diagnosticoButton) {
+        this.diagnosticoButton = diagnosticoButton;
+    }
+
+    public ArrayList<Topico> getTopicos() {
+        return topicos;
+    }
+
+    public void setTopicos(ArrayList<Topico> topicos) {
+        this.topicos = topicos;
+    }
+
+    public void setSelecionado(boolean selecionado) {
+        diciplina.setSelected(selecionado);
+        diagnosticoButton.setDisable(!selecionado);
+    }
+
+    
 
 }

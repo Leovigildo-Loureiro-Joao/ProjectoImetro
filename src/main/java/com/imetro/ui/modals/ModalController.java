@@ -19,7 +19,7 @@ public class ModalController implements Initializable{
     public JFXButton close;
 
     @FXML
-    private VBox modal;
+    protected VBox modal;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -27,7 +27,6 @@ public class ModalController implements Initializable{
     }
 
     public void init(){
-        
         StackPane pai=(StackPane)modal.getParent();
         pai.setVisible(true);
         modal.setVisible(true);
@@ -37,8 +36,8 @@ public class ModalController implements Initializable{
         dTransition.play();
 
     }
-    @FXML
-    public void Close(ActionEvent ev){
+
+    protected void closeModal(){
         StackPane pai=(StackPane)modal.getParent();
         FadeTransition dTransition=new FadeTransition(Duration.seconds(0.3),modal.getParent());
         dTransition.setByValue(1);
@@ -46,8 +45,13 @@ public class ModalController implements Initializable{
         dTransition.play();
         dTransition.setOnFinished(event -> {
             modal.setVisible(false);
+            pai.setVisible(false);
         });
+    }
 
+    @FXML
+    public void Close(ActionEvent ev){
+        closeModal();
     }
 
 }

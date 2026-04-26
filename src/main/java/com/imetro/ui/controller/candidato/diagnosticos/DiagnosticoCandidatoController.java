@@ -44,6 +44,7 @@ import javafx.util.Duration;
 import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.modals.DificultModalController;
+import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.TopicModalController;
 
@@ -548,6 +549,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     @Override
     public void ModalOpen() {
         try {
+             modalPai.getChildren().clear();
             modFxml=App.loadFXMLModal("Dificult");
             mod=modFxml.load();
             modalPai.getChildren().add(mod);  
@@ -567,6 +569,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             duracao=map.get("duracao");
             foco=map.get("foco");
             nivel=map.get("nivel");
+             modalPai.getChildren().clear();
             modFxml=App.loadFXMLModal("Topicos");
             modTop=modFxml.load();
             modalPai.getChildren().add(modTop);
@@ -578,6 +581,18 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
       
     }
 
-    
+    @Override
+    public void Alert() {
+        try {
+            modalPai.getChildren().clear();
+            modFxml=App.loadFXMLModal("Alert");
+            modalPai.getChildren().add(modFxml.load());  
+            cont= (ModalAlert) modFxml.getController();
+            cont.init();
+        } catch (Exception e) {
+            
+        }
+        
+    }
 
 }

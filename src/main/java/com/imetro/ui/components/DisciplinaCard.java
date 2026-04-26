@@ -22,6 +22,7 @@ public class DisciplinaCard extends HBox {
     private boolean isExpanded;
     
     public DisciplinaCard(DisciplinaDto disciplina) {
+        super();
         this.disciplina = disciplina;
         nomeLabel = new JFXCheckBox(disciplina.nome());
         nomeLabel.getStyleClass().add("muted");

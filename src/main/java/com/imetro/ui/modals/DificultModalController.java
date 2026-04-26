@@ -4,9 +4,10 @@ import java.util.Map;
 
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Labeled;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 
 public class DificultModalController extends ModalController{
@@ -19,18 +20,26 @@ public class DificultModalController extends ModalController{
 
     @FXML
     private ToggleGroup nivel;
-
-
     @FXML
     public Map<String,String> InteligentDiagnostic(ActionEvent event) {
-        System.out.println();
-        String durac=duracao.getSelectedToggle().toString().split("]")[1].replace("'", " ").trim();
-        String niv=nivel.getSelectedToggle().toString().split("]")[1].replace("'", " ").trim();
-        String foc=foco.getSelectedToggle().toString().split("]")[1].replace("'", " ").trim();
-        if(event!=null)
-            Platform.runLater(DiagnosticoCoordinator::requestStartInteligente);
-        Close(event);
+        String durac = getToggleText(duracao, "Curto");
+        String niv = getToggleText(nivel, "Normal");
+        String foc = getToggleText(foco, "Pontos fracos");
+
+        if (event != null) {
+            DiagnosticoCoordinator.requestStartInteligente(
+                Map.of("duracao", durac, "nivel", niv, "foco", foc)
+            );
+        }
         return Map.of("duracao", durac, "nivel",niv, "foco", foc);
+    }
+
+    private String getToggleText(ToggleGroup group, String fallback) {
+        Toggle selected = group == null ? null : group.getSelectedToggle();
+        if (selected instanceof Labeled labeled) {
+            return labeled.getText();
+        }
+        return fallback;
     }
 
     @FXML
@@ -50,6 +59,7 @@ public class DificultModalController extends ModalController{
 
     @FXML
     public void SoRun(ActionEvent event) {
+        DiagnosticoCoordinator.updateSubtopicosSelecionados(Map.of());
         DiagnosticoCoordinator.requestStartSoRun();
     }
 }
