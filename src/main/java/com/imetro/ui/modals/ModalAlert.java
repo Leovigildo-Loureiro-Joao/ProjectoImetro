@@ -28,7 +28,10 @@ public class ModalAlert extends  ModalController{
         super.init();
     }
 
-
+    @FXML
+    private void Cancelar(ActionEvent event) {
+        closeModal();
+    }
 
     @FXML
     private void Continuar(ActionEvent event) {

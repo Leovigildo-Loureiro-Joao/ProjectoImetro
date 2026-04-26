@@ -246,7 +246,14 @@ public class ResultadoAvaliacaoController {
         status.getStyleClass().add("h3-thin");
         status.setStyle("-fx-text-fill: " + (questao.isAcertou() ? "#10b981" : "#ef4444") + "; -fx-font-weight: 700;");
 
-        Label titulo = new Label("Questao " + questao.getOrdem() + " - " + questao.getDisciplina());
+        Label titulo = new Label(
+            "Questao " + questao.getOrdem() + " - "
+                + questao.getDisciplina()
+                + " / "
+                + questao.getTopico()
+                + " / "
+                + questao.getSubtopico()
+        );
         titulo.getStyleClass().add("h3-thin");
 
         Label enunciado = new Label(questao.getEnunciado());
@@ -260,13 +267,13 @@ public class ResultadoAvaliacaoController {
         bloco2.setManaged(!"-".equals(questao.getBloco2()));
 
         Label respostaUsuario = new Label(
-            "Sua resposta: " + questao.getRespostaUsuario() + " - " + questao.getRespostaUsuario()
+            "Sua resposta: " + questao.getRespostaUsuario() + " - " + questao.getTextoRespostaUsuario()
         );
         respostaUsuario.getStyleClass().add("h3-thin");
         respostaUsuario.setWrapText(true);
 
         Label respostaCorreta = new Label(
-            "Resposta correta: " + questao.getRespostaUsuario() + " - " + questao.getTextoRespostaCorreta()
+            "Resposta correta: " + questao.getRespostaCorreta() + " - " + questao.getTextoRespostaCorreta()
         );
         respostaCorreta.getStyleClass().add("h3-thin");
         respostaCorreta.setStyle("-fx-text-fill: #2563eb;");

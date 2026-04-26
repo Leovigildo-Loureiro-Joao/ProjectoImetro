@@ -59,6 +59,7 @@ public class DificultModalController extends ModalController{
 
     @FXML
     public void SoRun(ActionEvent event) {
+        closeModal();
         DiagnosticoCoordinator.updateSubtopicosSelecionados(Map.of());
         DiagnosticoCoordinator.requestStartSoRun();
     }

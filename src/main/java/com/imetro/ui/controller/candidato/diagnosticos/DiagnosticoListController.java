@@ -2,11 +2,10 @@ package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.services.CatalogoQuestoesService;
 import com.imetro.ui.components.DiagnosticoCard;
 import com.jfoenix.controls.JFXButton;
 
@@ -28,6 +27,7 @@ public class DiagnosticoListController implements Initializable {
     private JFXButton resetButton;
 
     private final ArrayList<Topico> topicosSelecionados = new ArrayList<>();
+    private final CatalogoQuestoesService catalogoQuestoesService = new CatalogoQuestoesService();
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
@@ -37,16 +37,20 @@ public class DiagnosticoListController implements Initializable {
 
         diagnosticosPane.getChildren().clear();
         diagnosticosPane.getChildren().addAll(
-            criarCard("Matematica", "-6%", 0.50, topicosMatematica()),
-            criarCard("Fisica", "+4%", 0.62, topicosFisica()),
-            criarCard("Quimica", "+1%", 0.58, topicosQuimica()),
-            criarCard("Biologia", "-2%", 0.46, topicosBiologia()),
-            criarCard("Portugues", "+7%", 0.71, topicosPortugues())
+            criarCard("Matematica", "-6%", 0.50),
+            criarCard("Fisica", "+4%", 0.62),
+            criarCard("Quimica", "+1%", 0.58),
+            criarCard("Biologia", "-2%", 0.46),
+            criarCard("Portugues", "+7%", 0.71)
         );
         atualizarEstadoBotoes();
     }
 
-    private DiagnosticoCard criarCard(String disciplina, String variacao, double progresso, Topico[] topicos) {
+    private DiagnosticoCard criarCard(String disciplina, String variacao, double progresso) {
+        Topico[] topicos = catalogoQuestoesService
+            .carregarTopicosPorDisciplina(disciplina)
+            .toArray(Topico[]::new);
+
         return new DiagnosticoCard(
             disciplina,
             topicos,
@@ -99,40 +103,5 @@ public class DiagnosticoListController implements Initializable {
         }
         topicosSelecionados.clear();
         atualizarEstadoBotoes();
-    }
-
-    private Topico[] topicosMatematica() {
-        return new Topico[] {
-            new Topico(UUID.randomUUID(), "Algebra", UUID.randomUUID(), new String[] {"Equacoes", "Potenciacao", "Fracoes"}),
-            new Topico(UUID.randomUUID(), "Geometria", UUID.randomUUID(), new String[] {"Areas", "Perimetros", "Circulos"})
-        };
-    }
-
-    private Topico[] topicosFisica() {
-        return new Topico[] {
-            new Topico(UUID.randomUUID(), "Mecanica", UUID.randomUUID(), new String[] {"MRU", "Forca", "Energia"}),
-            new Topico(UUID.randomUUID(), "Termologia", UUID.randomUUID(), new String[] {"Calor", "Temperatura"})
-        };
-    }
-
-    private Topico[] topicosQuimica() {
-        return new Topico[] {
-            new Topico(UUID.randomUUID(), "Quimica Geral", UUID.randomUUID(), new String[] {"Atomos", "Ligacoes", "Tabela periodica"}),
-            new Topico(UUID.randomUUID(), "Estequiometria", UUID.randomUUID(), new String[] {"Mol", "Balanceamento"})
-        };
-    }
-
-    private Topico[] topicosBiologia() {
-        return new Topico[] {
-            new Topico(UUID.randomUUID(), "Citologia", UUID.randomUUID(), new String[] {"Celula animal", "Celula vegetal"}),
-            new Topico(UUID.randomUUID(), "Genetica", UUID.randomUUID(), new String[] {"Hereditariedade", "DNA"})
-        };
-    }
-
-    private Topico[] topicosPortugues() {
-        return new Topico[] {
-            new Topico(UUID.randomUUID(), "Gramatica", UUID.randomUUID(), new String[] {"Concordancia", "Regencia", "Pontuacao"}),
-            new Topico(UUID.randomUUID(), "Interpretacao", UUID.randomUUID(), new String[] {"Texto", "Genero textual"})
-        };
     }
 }

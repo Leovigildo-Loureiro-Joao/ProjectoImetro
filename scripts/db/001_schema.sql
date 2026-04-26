@@ -41,17 +41,21 @@
   -- Banco de questões (MVP)
   create table if not exists perguntas (
     id uuid primary key default uuid_generate_v4(),
+    disciplina text null,
     questao text not null,
     -- alternativas/respostas possíveis
     respostas jsonb not null default '[]'::jsonb,
     -- opcional: resposta correta (quando aplicável)
     resposta_correta text null,
     topico text null,
+    subtopico text null,
     dificuldade text null,
     criado_em timestamptz not null default now()
   );
 
+  create index if not exists idx_perguntas_disciplina on perguntas (disciplina);
   create index if not exists idx_perguntas_topico on perguntas (topico);
+  create index if not exists idx_perguntas_subtopico on perguntas (subtopico);
 
   -- Sessões/testes/simulados
   create table if not exists testes (

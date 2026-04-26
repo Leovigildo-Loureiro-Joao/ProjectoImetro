@@ -5,6 +5,8 @@ import javafx.scene.image.Image;
 public class Questao {
     private String id;
     private String disciplina;
+    private String topico;
+    private String subtopico;
     private String enunciado;
     private String bloco2; // texto adicional
     private Image imagem; // imagem opcional
@@ -31,6 +33,18 @@ public class Questao {
     }
     public void setDisciplina(String disciplina) {
         this.disciplina = disciplina;
+    }
+    public String getTopico() {
+        return topico;
+    }
+    public void setTopico(String topico) {
+        this.topico = topico;
+    }
+    public String getSubtopico() {
+        return subtopico;
+    }
+    public void setSubtopico(String subtopico) {
+        this.subtopico = subtopico;
     }
     public String getEnunciado() {
         return enunciado;

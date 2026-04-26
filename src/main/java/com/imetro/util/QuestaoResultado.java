@@ -5,6 +5,8 @@ import com.imetro.ui.model.Questao;
 public  class QuestaoResultado {
     private final int ordem;
     private final String disciplina;
+    private final String topico;
+    private final String subtopico;
     private final String enunciado;
     private final String bloco2;
     private final char respostaUsuario;
@@ -16,6 +18,8 @@ public  class QuestaoResultado {
     public QuestaoResultado(
             int ordem,
             String disciplina,
+            String topico,
+            String subtopico,
             String enunciado,
             String bloco2,
             char respostaUsuario,
@@ -26,6 +30,8 @@ public  class QuestaoResultado {
     ) {
         this.ordem = ordem;
         this.disciplina = disciplina;
+        this.topico = topico;
+        this.subtopico = subtopico;
         this.enunciado = enunciado;
         this.bloco2 = bloco2;
         this.respostaUsuario = respostaUsuario;
@@ -41,6 +47,8 @@ public  class QuestaoResultado {
         return new QuestaoResultado(
             ordem,
             valueOrDash(questao.getDisciplina()),
+            valueOrDash(questao.getTopico()),
+            valueOrDash(questao.getSubtopico()),
             valueOrDash(questao.getEnunciado()),
             valueOrDash(questao.getBloco2()),
             usuario == '\0' ? '-' : usuario,
@@ -70,6 +78,14 @@ public  class QuestaoResultado {
 
     public String getDisciplina() {
         return disciplina;
+    }
+
+    public String getTopico() {
+        return topico;
+    }
+
+    public String getSubtopico() {
+        return subtopico;
     }
 
     public String getEnunciado() {

@@ -129,7 +129,7 @@ public final class DiagnosticoCoordinator {
 
         List<String> nomes = new ArrayList<>();
         for (Topico topico : topicos) {
-            nomes.add(topico.topicos());
+            nomes.add(topico.disciplina() + " / " + topico.topicos());
         }
         return String.join(", ", nomes);
     }

@@ -5,13 +5,10 @@ Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, c
 ## Estado atual
 
 - navegacao base entre autenticacao, area do candidato e area do orientador
-- onboarding com selecao de disciplinas e avatar
-- modulo de diagnostico academico no candidato com:
-  - lista de diagnosticos
-  - linha do tempo
-  - estatisticas
-  - fluxo de perguntas e resultado final
-- persistencia JDBC para utilizadores, disciplinas, perguntas, testes e relatorios
+- onboarding com avatar e selecao visual de disciplinas
+- modulo de diagnostico no candidato com lista, timeline, estatisticas, perguntas e resultado final
+- exame adaptativo com foco por disciplina, topico e subtopico
+- persistencia JDBC para `users`, `disciplinas`, `perguntas`, `testes` e `relatorios`
 - schema SQL versionado em `src/main/resources/db/migration`
 
 ## Stack
@@ -22,13 +19,27 @@ Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, c
 - JFoenix, ControlsFX, Ikonli e TilesFX
 - PostgreSQL
 - MyBatis
-- Flyway (dependencias adicionadas; execucao automatica ainda nao esta ligada no arranque da app)
+- Flyway
 
-## Requisitos
+## Cenario atual sem PostgreSQL local
 
-- JDK 21
-- Maven 3.9+ para executar localmente
-- Docker Desktop (opcional, para base local e para usar a imagem de Maven)
+Se neste PC ainda nao tens PostgreSQL disponivel, o caminho recomendado e trabalhar em `modo navegacao`.
+
+Nesse modo, a app:
+
+- nao tenta abrir ligacao JDBC
+- permite navegar e validar a UI
+- deixa o registo real desligado para evitar erros
+- continua util para evoluir controllers, FXML, CSS, payloads e regras em memoria
+
+Isto significa que, neste PC, o trabalho seguro e:
+
+- evoluir UI e UX
+- refinar diagnostico e exame adaptativo
+- manter migrations e documentacao alinhadas
+- preparar DTOs, repositorios e contratos de persistencia
+
+Sem um Postgres real, o que depende de JDBC ou Flyway fica apenas preparado e documentado, mas nao validado ponta a ponta.
 
 ## Como executar
 
@@ -36,40 +47,60 @@ Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, c
 mvn clean javafx:run
 ```
 
-### Modo BD vs modo navegação
+### Modo BD vs modo navegacao
 
 A app pode rodar em 2 modos:
 
-- **BD ligada**: usa Postgres (onboarding completo, registo/login real, persistência).
-- **Modo navegação (sem BD)**: não tenta conectar na BD e serve para navegar/validar UI quando o ambiente (WSL/Docker/Postgres) estiver instável.
+- **BD ligada**: usa Postgres para login, onboarding persistente, historico e dados reais.
+- **Modo navegacao**: nao tenta conectar na BD e serve para navegar e validar a interface.
 
-#### Como ligar/desligar
+### Como ligar ou desligar
 
-O projeto lê variáveis de ambiente e também `.env.local` / `.env` (ver `com.imetro.config.Env`).
+O projeto le variaveis de ambiente e tambem `.env.local` / `.env`.
 
-- `DB_ENABLED=true|false` (se existir, **tem prioridade**)
-- `TESTE=true|false` (alias simples: `true` liga BD; `false` entra em modo navegação)
+- `DB_ENABLED=true|false`: se existir, tem prioridade
+- `TESTE=true|false`: alias simples; `true` liga BD e `false` entra em modo navegacao
 
-Exemplos:
+Exemplo recomendado para este PC:
 
 ```env
-# Modo navegação (sem BD)
 TESTE=false
 ```
 
+Exemplo quando o Postgres estiver pronto:
+
 ```env
-# BD ligada
 TESTE=true
 DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
 DB_USER=simulator
 DB_PASSWORD=simulator
+DB_MIGRATE=true
 ```
 
-Quando a BD estiver desligada, a UI mostra um banner “Modo navegação: BD desligada” e o registo fica desativado para evitar erros.
+Observacao pratica:
+
+- no modo navegacao, usa credenciais nao vazias apenas para entrar na interface
+- o login nesse modo nao valida utilizador real na BD
+
+## `.env.example`
+
+O ficheiro `.env.example` foi ajustado para um arranque mais seguro em maquinas sem PostgreSQL local.
+
+Passos:
+
+```bash
+Copy-Item .env.example .env
+```
+
+Depois confirma que estas a usar:
+
+```env
+TESTE=false
+```
 
 ## Maven sem instalacao local
 
-Para PCs que ainda nao tem Maven instalado, o projeto agora inclui uma imagem Docker propria em `docker/maven/Dockerfile` e um servico `maven` no `docker-compose.yml`.
+Para PCs sem Maven instalado, o projeto inclui uma imagem propria em `docker/maven/Dockerfile` e um servico `maven` no `docker-compose.yml`.
 
 ### Construir a imagem
 
@@ -77,20 +108,18 @@ Para PCs que ainda nao tem Maven instalado, o projeto agora inclui uma imagem Do
 docker compose --profile tools build maven
 ```
 
-### Executar comandos Maven via Docker
+### Executar Maven via Docker
 
 ```bash
 docker compose --profile tools run --rm maven clean compile
 docker compose --profile tools run --rm maven clean package -DskipTests
 ```
 
-As dependencias baixadas pelo Maven ficam persistidas no volume `maven_cache`, o que evita downloads completos a cada execucao.
-
-Nota: esta imagem foi preparada para compilar, testar e empacotar o projeto. A execucao da interface JavaFX desktop a partir do container nao esta configurada neste momento.
+Nota: a execucao da interface JavaFX desktop a partir do container nao esta configurada neste momento.
 
 ## Base de dados
 
-### Subir Postgres local
+### Quando o Postgres estiver disponivel
 
 ```bash
 docker compose up -d
@@ -98,75 +127,66 @@ docker compose up -d
 
 Na primeira criacao do volume, o container executa automaticamente `scripts/db/001_schema.sql`.
 
-### Variaveis de ambiente
-
-Usa `.env.example` como referencia:
-
-> OBS importante: o projeto nao le `.env.example` diretamente.  
-> Cada dev deve criar o proprio `.env` na raiz do projeto com base no exemplo:
->
-> - Windows (PowerShell): `Copy-Item .env.example .env`
-> - Linux/macOS: `cp .env.example .env`
->
-> Tambem evita forcar flags no codigo (ex.: `DB_ENABLED = false` em `RuntimeConfig`), para que o modo da app siga o `.env`.
-
-```env
-DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
-DB_USER=simulator
-DB_PASSWORD=simulator
-DB_ENABLED=true
-# Alternativa simples:
-#TESTE=true
-```
-
 ### Migrations
 
 - schema inicial do Docker: `scripts/db/001_schema.sql`
 - migrations versionadas: `src/main/resources/db/migration`
-- nova migration adicionada para diagnosticos: `V5__diagnosticos.sql`
-- nova migration adicionada para configuracoes: `V6__configuracoes.sql`
+- estado atual das migrations: `V1` ate `V8`
 
-Observacao importante: embora o projeto ja tenha as dependencias de `Flyway`, nao encontrei no codigo atual a execucao automatica de `migrate()` no arranque. Hoje, o Docker usa o schema inicial no primeiro boot, e migrations incrementais precisam ser aplicadas manualmente numa base ja existente.
+Resumo das mais recentes:
 
-Atualizacao: a app agora chama `Flyway.migrate()` no arranque quando a BD estiver ligada. Para compatibilidade com o schema criado via Docker, o Flyway faz `baseline` em V6 quando encontra uma base nao vazia sem historico, e aplica apenas migrations futuras. Se quiser desligar isso, define `DB_MIGRATE=false`.
+- `V5__diagnosticos.sql`: tabela `diagnosticos`
+- `V6__configuracoes.sql`: tabela `configuracoes`
+- `V7__perguntas_topico_subtopico.sql`: normalizacao minima de `disciplina` e `subtopico` em `perguntas`
+- `V8__progresso_aluno_disciplina.sql`: historico de progresso do aluno por disciplina
 
-### Aplicar SQL manualmente
+### Observacao importante sobre ambiente
 
-Se a base ja existia antes desta alteracao, aplica a migration nova manualmente:
+Nesta maquina, em `2026-04-26`, as migrations foram alinhadas no repositorio, mas nao foram validadas contra um PostgreSQL real neste proprio PC.
 
-```bash
-psql -h localhost -p 5432 -U simulator -d simulatorbolsastudy -f src/main/resources/db/migration/V5__diagnosticos.sql
+Em outras palavras:
+
+- o historico SQL ficou mais consistente
+- a documentacao ficou preparada para desenvolvimento sem BD local
+- a validacao JDBC e Flyway real continua pendente ate haver Postgres disponivel
+
+### Flyway no arranque
+
+A app chama `Flyway.migrate()` no arranque quando a BD estiver ligada.
+
+Para compatibilidade com bases criadas a partir de `scripts/db/001_schema.sql`, o projeto usa `baseline` em `V6` e deixa as migrations incrementais acima disso correrem de forma idempotente.
+
+Se precisares desligar migrations automaticas:
+
+```env
+DB_MIGRATE=false
 ```
-
-Se preferires recriar uma base local do zero, remove o volume do Docker e sobe novamente para que `scripts/db/001_schema.sql` seja reexecutado.
-
-## Tabela de diagnosticos
-
-A tabela `diagnosticos` foi preparada para guardar o historico do modulo de diagnostico academico:
-
-- candidato e disciplina do diagnostico
-- horario de inicio e conclusao
-- duracao, total de questoes, acertos e erros
-- percentual de acerto e evolucao
-- nivel final
-- metricas de velocidade, precisao, consistencia, logica e resiliencia
-- respostas em `jsonb`
 
 ## Estrutura principal
 
 - `src/main/java/com/imetro/App.java`: arranque da aplicacao JavaFX
 - `src/main/java/com/imetro/persistence`: conexao e repositorios JDBC
-- `src/main/java/com/imetro/services`: regras de negocio e cargas de perguntas
+- `src/main/java/com/imetro/services`: regras de negocio
 - `src/main/java/com/imetro/ui/controller`: controllers JavaFX
 - `src/main/resources/com/imetro/views`: layouts, paginas e componentes FXML
 - `src/main/resources/db/migration`: migrations SQL versionadas
 - `scripts/db`: schema usado pelo container Postgres no primeiro boot
 
-## Proximos passos recomendados
+## O que faz sentido focar sem BD
 
-- ligar `Flyway.migrate()` no arranque para aplicar `V1...V5` automaticamente
-- persistir o resultado real do diagnostico da UI na tabela `diagnosticos`
-- criar repositorio/servico para alimentar a linha do tempo e estatisticas a partir da base
+- fechar telas e navegacao do candidato
+- criar a futura tela de revisao do diagnostico
+- melhorar o fluxo de resultado e recomendacoes
+- refinar regras do exame adaptativo
+- manter `001_schema.sql`, migrations e README sempre alinhados
+
+## O que fica para quando houver Postgres
+
+- validar `V7` e `V8` em base real
+- persistir o resultado real do diagnostico
+- alimentar timeline e estatisticas com queries reais
+- persistir o onboarding de disciplinas do candidato
+- ligar relatorios e recomendacoes ao orientador
 
 ## Licenca
 

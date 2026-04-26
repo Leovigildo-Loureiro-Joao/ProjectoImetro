@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="modal" maxHeight="259.0" maxWidth="378.0" minHeight="259.0" minWidth="378.0" prefHeight="259.0" prefWidth="378.0" spacing="10.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.ModalAlert">
+   <children>
+      <HBox alignment="CENTER_LEFT">
+         <children>
+            <ImageView fitHeight="42.0" fitWidth="54.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../assets/imgs/error_96px.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="tituloLabel" prefHeight="20.0" prefWidth="233.0" styleClass="h2-thin" text="AVISO" />
+            <Region prefHeight="35.0" prefWidth="129.0" />
+            <JFXButton buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" onAction="#Close" prefHeight="35.0" prefWidth="32.0" translateY="-10.0">
+               <graphic>
+                  <ImageView fitHeight="17.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../assets/imgs/delete_50px.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </JFXButton>
+         </children>
+      </HBox>
+      <VBox prefHeight="165.0" prefWidth="351.0" spacing="8.0">
+         <children>
+            <Label fx:id="mensagemLabel" styleClass="h3-thin-big" text="Deseja continuar com operacao?" />
+            <Label fx:id="descricaoLabel" styleClass="h3-thin" text="Nao sera possivel reverter qualquer acao feita">
+               <VBox.margin>
+                  <Insets bottom="10.0" />
+               </VBox.margin>
+            </Label>
+            <Label styleClass="muted" text="Confira antes de continuar." />
+            <HBox alignment="TOP_RIGHT" spacing="10.0" translateY="50.0">
+               <children>
+                  <JFXButton onAction="#Continuar" prefHeight="37.0" prefWidth="108.0" style="-fx-background-color: -color-danger; -fx-text-fill: white;" text="Continuar" />
+                  <JFXButton onAction="#Cancelar" prefHeight="37.0" prefWidth="101.0" styleClass="btn-secondary" text="Cancelar" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </HBox>
+         </children>
+         <padding>
+            <Insets left="10.0" right="10.0" />
+         </padding>
+      </VBox>
+   </children>
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
+   <styleClass>
+      <String fx:value="card" />
+      <String fx:value="card-blur" />
+   </styleClass>
+</VBox>

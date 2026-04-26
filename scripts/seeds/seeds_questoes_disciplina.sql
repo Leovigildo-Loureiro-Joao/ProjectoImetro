@@ -623,3 +623,46 @@ insert into perguntas (id, questao, respostas, resposta_correta, topico, dificul
   'Lógica Clássica',
   'EXTRA'
 );
+ 
+-- =====================================================
+-- MIGRACAO DOS METADADOS DE FOCO
+-- =====================================================
+
+alter table if exists perguntas add column if not exists disciplina text null;
+alter table if exists perguntas add column if not exists subtopico text null;
+
+update perguntas
+set subtopico = coalesce(nullif(subtopico, ''), topico)
+where subtopico is null or subtopico = '';
+
+update perguntas
+set disciplina = case
+  when topico in ('Porcentagem', 'OperaÃ§Ãµes AritmÃ©ticas', 'FraÃ§Ãµes', 'EstatÃ­stica BÃ¡sica', 'PotenciaÃ§Ã£o', 'EquaÃ§Ãµes', 'Regra de TrÃªs', 'Juros Simples', 'Geometria', 'RazÃ£o e ProporÃ§Ã£o', 'ProgressÃµes', 'FunÃ§Ã£o QuadrÃ¡tica', 'AnÃ¡lise CombinatÃ³ria', 'Logaritmos', 'Matrizes')
+    then 'MATEMATICA'
+  when topico in ('AcentuaÃ§Ã£o', 'Ortografia', 'SemÃ¢ntica', 'SeparaÃ§Ã£o SilÃ¡bica', 'Substantivos Coletivos', 'ConcordÃ¢ncia Verbal', 'RegÃªncia Verbal', 'ColocaÃ§Ã£o Pronominal', 'PerÃ­odo Composto', 'Vozes Verbais', 'Figuras de Linguagem', 'FunÃ§Ãµes da Linguagem', 'Morfossintaxe', 'Literatura Brasileira', 'EstilÃ­stica')
+    then 'PORTUGUES'
+  when topico in ('MecÃ¢nica', 'CinemÃ¡tica', 'Unidades de Medida', 'Termologia', 'Energia', 'Leis de Newton', 'Trabalho e Energia', 'HidrostÃ¡tica', 'Densidade', 'Movimento Uniformemente Variado', 'Calorimetria', 'EletrodinÃ¢mica', 'Ã“ptica', 'FÃ­sica Moderna')
+    then 'FISICA'
+  when topico in ('SequÃªncias', 'PadrÃµes NumÃ©ricos', 'SequÃªncias LÃ³gicas', 'Anagramas', 'RaciocÃ­nio Temporal', 'LÃ³gica de ArgumentaÃ§Ã£o', 'LÃ³gica Proposicional', 'RaciocÃ­nio Espacial', 'RaciocÃ­nio MatemÃ¡tico', 'Conjuntos', 'LÃ³gica Dedutiva', 'SequÃªncias AvanÃ§adas', 'CombinatÃ³ria', 'LÃ³gica ClÃ¡ssica')
+    then 'RACIOCINIO LOGICO'
+  else coalesce(disciplina, 'GERAL')
+end
+where disciplina is null or disciplina = '';
+
+update perguntas
+set topico = case
+  when disciplina = 'MATEMATICA' and subtopico in ('Geometria') then 'Geometria'
+  when disciplina = 'MATEMATICA' and subtopico in ('EstatÃ­stica BÃ¡sica') then 'Estatistica'
+  when disciplina = 'MATEMATICA' and subtopico in ('RazÃ£o e ProporÃ§Ã£o') then 'Raciocinio'
+  when disciplina = 'MATEMATICA' then 'Algebra'
+
+  when disciplina = 'PORTUGUES' and subtopico in ('ConcordÃ¢ncia Verbal', 'RegÃªncia Verbal', 'ColocaÃ§Ã£o Pronominal', 'Vozes Verbais') then 'Gramatica'
+  when disciplina = 'PORTUGUES' and subtopico in ('PerÃ­odo Composto', 'FunÃ§Ãµes da Linguagem', 'Figuras de Linguagem', 'Morfossintaxe', 'SemÃ¢ntica', 'EstilÃ­stica', 'Literatura Brasileira') then 'Interpretacao'
+  when disciplina = 'PORTUGUES' then 'Gramatica'
+
+  when disciplina = 'FISICA' and subtopico in ('Termologia', 'Calorimetria') then 'Termologia'
+  when disciplina = 'FISICA' then 'Mecanica'
+
+  when disciplina = 'RACIOCINIO LOGICO' then 'Raciocinio'
+  else topico
+end;
