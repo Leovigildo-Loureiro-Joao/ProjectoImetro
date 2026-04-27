@@ -125,6 +125,17 @@
     -fx-background-radius: 20;
 }
 
+.badge-test {
+    -fx-background-color: -color-primary-light;
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 20;
+    -fx-alignment:CENTER;
+    -fx-spacing:12;
+}
+
 /* Radio buttons estilizados */
 .radio-option {
     -fx-background-color: white;

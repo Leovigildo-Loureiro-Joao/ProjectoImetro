@@ -5,13 +5,17 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.test.Percent;
+import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.ui.components.CircleProgress;
+import com.imetro.ui.components.TesteCard;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
@@ -129,11 +133,13 @@ public class TesteAdaptativoController {
         botoesDisciplinasBox.getChildren().add(titulo);
 
         for (String disciplina : service.carregarDisciplinasDisponiveis()) {
-            JFXButton botao = new JFXButton(formatarDisciplina(disciplina));
-            botao.getStyleClass().add("btn-primary");
-            botao.setPrefWidth(260);
-            botao.setOnAction(event -> selecionarDisciplina(disciplina));
-            botoesDisciplinasBox.getChildren().add(botao);
+            
+            ArrayList<Percent> discs=new ArrayList<>();
+            for (Topico topico : service.carregarTopicosPorDisciplina(disciplina)) {
+                discs.add(new Percent(topico.topicos(), Math.round(new Random().nextFloat(0, 100))));
+            }
+            TesteCard teste =new TesteCard(new TesteDto(disciplina, new Random().nextFloat(0, 1), new Random().nextFloat(0, 1), new Random().nextFloat(0, 1), new Random().nextFloat(0, 1), discs,new ArrayList<>()),()->selecionarDisciplina(disciplina));
+            botoesDisciplinasBox.getChildren().add(teste);
         }
     }
 
