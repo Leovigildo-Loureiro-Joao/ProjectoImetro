@@ -71,7 +71,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
             if (node instanceof DisciplinaCard card) {
                 var radio = card.getRadioSelecionado();
                 if (radio != null && radio.isSelected()) {
-                    var nivel = (String) radio.getUserData();
+                    var nivel = (String) radio.getText();
                     var disciplinaId = card.getDisciplina().id();
                     candidatoService.AddFirstProgressoDisciplina(Authentication.getCurrentUserId(), disciplinaId, NivelDisciplina.fromDescricao(nivel), card.getDisciplina().peso());
                 }

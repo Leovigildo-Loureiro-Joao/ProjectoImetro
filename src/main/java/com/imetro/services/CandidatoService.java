@@ -82,7 +82,11 @@ public class CandidatoService implements User{
     }
 
     public void AddFirstProgressoDisciplina(UUID candidato,UUID disicplina,NivelDisciplina actual,double peso){
-        new ProgressoAlunoDisciplinaDto(UUID.randomUUID(), candidato, disicplina, actual, actual, LocalDate.now(), peso,0, 0, 0, 0.0, 0, 0, LocalDateTime.now(), 0, 0, LocalDateTime.now(), LocalDateTime.now());
+        try {
+            progresso.insert(new ProgressoAlunoDisciplinaDto(UUID.randomUUID(), candidato, disicplina, actual, actual, LocalDate.now(), peso,0, 0, 0, 0.0, null, null, LocalDateTime.now(), 0, 0, LocalDateTime.now(), LocalDateTime.now()).toMap());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 

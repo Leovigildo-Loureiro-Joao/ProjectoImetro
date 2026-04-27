@@ -10,7 +10,7 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
     }
 
     public boolean hasAny(UUID candidatoId) {
-        String sql = "SELECT 1 FROM progresso_aluno_disciplina WHERE candidato_id = ? LIMIT 1";
+        String sql = "SELECT 1 FROM progresso_aluno_disciplina WHERE aluno_id = ? LIMIT 1";
         try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, candidatoId);

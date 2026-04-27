@@ -233,8 +233,8 @@ create table if not exists progresso_aluno_disciplina (
   total_acertos integer not null default 0,
   total_erros integer not null default 0,
   taxa_acerto_geral double precision, 
-  ultimos_3_diagnosticos_acertos integer[] default '{}',
-  ultimos_3_diagnosticos_total integer[] default '{}',
+  ultimos_3_diagnosticos_acertos uuid[] default '{}',
+  ultimos_3_diagnosticos_total uuid[] default '{}',
 
   ultimo_estudo timestamptz,
   dias_sem_estudo integer,

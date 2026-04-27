@@ -20,8 +20,8 @@ public record ProgressoAlunoDisciplinaDto(
     Integer totalAcertos,
     Integer totalErros,
     Double taxaAcertoGeral,
-    Integer ultimos3DiagnosticosAcertos,
-    Integer ultimos3DiagnosticosTotal,
+    UUID[] ultimos3DiagnosticosAcertos,
+    UUID[] ultimos3DiagnosticosTotal,
     LocalDateTime ultimoEstudo,
     Integer diasSemEstudo,
     Integer streakDiasConsecutivos,
@@ -49,10 +49,10 @@ public record ProgressoAlunoDisciplinaDto(
             taxaAcertoGeral = 0.0;
         }
         if (ultimos3DiagnosticosAcertos == null) {
-            ultimos3DiagnosticosAcertos = 0;
+            ultimos3DiagnosticosTotal = new UUID[3];
         }
         if (ultimos3DiagnosticosTotal == null) {
-            ultimos3DiagnosticosTotal = 0;
+            ultimos3DiagnosticosTotal = new UUID[3];
         }
         if (diasSemEstudo == null) {
             diasSemEstudo = 0;

@@ -20,6 +20,7 @@ public class DisciplinaCard extends HBox {
     private VBox left;
     private VBox radiBox;
     private boolean isExpanded;
+    public final ToggleGroup toggleGroup = new ToggleGroup();
     
     public DisciplinaCard(DisciplinaDto disciplina) {
         super();
@@ -31,7 +32,7 @@ public class DisciplinaCard extends HBox {
         Label objetivoLabel = new Label(disciplina.objectivo());
         objetivoLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
         
-        ToggleGroup toggleGroup = new ToggleGroup();
+        
         radiBox=new VBox(5);
         for (NivelDisciplina nivel : NivelDisciplina.values()) {
             JFXRadioButton rb = new JFXRadioButton(nivel.getDescricao());
@@ -75,6 +76,14 @@ public class DisciplinaCard extends HBox {
     
     private void toggleExpand() {
         isExpanded = nomeLabel.isSelected();
+
+        for (var node : radiBox.getChildren()) {
+            if (node instanceof JFXRadioButton) {
+                ((JFXRadioButton) node).setToggleGroup(isExpanded?toggleGroup:null);
+                ((JFXRadioButton) node).setSelected(((JFXRadioButton) node).isSelected()?false:true);
+                break;
+            }
+        }
         // Expansão/colapso
         if (isExpanded) {
             radiBox.setVisible(true);
