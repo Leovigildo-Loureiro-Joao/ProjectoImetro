@@ -43,6 +43,7 @@ public class Authentication {
         currentUserId = null;
         currentUserEmail = null;
         currentUserRole = null;
+        ProfileSessionState.clearAll();
     }
 
     public static boolean isAuthenticated() {

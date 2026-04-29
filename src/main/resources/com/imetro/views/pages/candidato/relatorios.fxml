@@ -1,16 +1,195 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.AreaChart?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane prefHeight="524.0" prefWidth="822.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
-    <VBox alignment="TOP_LEFT" maxWidth="725.0" prefHeight="579.0" prefWidth="725.0" spacing="6.0" styleClass="placeholder-card">
-        <padding>
+<StackPane prefHeight="980.0" prefWidth="1120.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.RelatoriosController">
+   <children>
+      <VBox maxWidth="1120.0" prefWidth="1120.0" spacing="18.0">
+         <padding>
             <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
-        </padding>
-        <Label styleClass="h1" text="Relatórios / Analytics" />
-        <Label styleClass="muted" text="Histórico / evolução (em breve)." />
-    </VBox>
+         </padding>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="14.0">
+               <children>
+                  <VBox spacing="6.0">
+                     <children>
+                        <Label styleClass="big-h1" text="Relatorios &amp; Analytics" />
+                        <Label fx:id="periodLabel" styleClass="muted" text="Panorama semanal" wrapText="true" />
+                     </children>
+                  </VBox>
+                  <Region prefWidth="220.0" HBox.hgrow="ALWAYS" />
+                  <Label styleClass="pill-good" text="Radar ativo" />
+               </children>
+            </HBox>
+
+            <HBox spacing="18.0">
+               <children>
+                  <VBox prefHeight="228.0" prefWidth="560.0" spacing="14.0" styleClass="card-blur shadow hero-gradient-card">
+                     <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                     </padding>
+                     <children>
+                        <HBox spacing="18.0">
+                           <children>
+                              <VBox prefWidth="360.0" spacing="8.0">
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Leitura geral do momento" />
+                                    <Label fx:id="heroScoreLabel" styleClass="hero-score" text="81%" />
+                                    <Label fx:id="heroSummaryLabel" styleClass="hero-copy" text="Resumo do momento" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              <Region prefWidth="12.0" />
+                              <StackPane fx:id="confiancaRingHost" minHeight="124.0" minWidth="124.0" prefHeight="124.0" prefWidth="124.0" />
+                           </children>
+                        </HBox>
+                        <Separator />
+                        <HBox spacing="12.0">
+                           <children>
+                              <VBox prefWidth="120.0" spacing="4.0" styleClass="metric-tile">
+                                 <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Acerto medio" />
+                                    <Label fx:id="accuracyStatLabel" styleClass="stat-emphasis" text="84%" />
+                                 </children>
+                              </VBox>
+                              <VBox prefWidth="120.0" spacing="4.0" styleClass="metric-tile">
+                                 <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Tempo medio" />
+                                    <Label fx:id="paceStatLabel" styleClass="stat-emphasis" text="42 s" />
+                                 </children>
+                              </VBox>
+                              <VBox prefWidth="120.0" spacing="4.0" styleClass="metric-tile">
+                                 <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Consistencia" />
+                                    <Label fx:id="consistencyStatLabel" styleClass="stat-emphasis" text="Alta" />
+                                 </children>
+                              </VBox>
+                              <VBox prefWidth="120.0" spacing="4.0" styleClass="metric-tile">
+                                 <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Foco atual" />
+                                    <Label fx:id="focusStatLabel" styleClass="stat-emphasis" text="Algebra" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+
+                  <VBox prefHeight="228.0" prefWidth="506.0" spacing="14.0" styleClass="card-blur shadow">
+                     <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                     </padding>
+                     <children>
+                        <Label styleClass="h1-thin" text="Ultimo retrato do desempenho" />
+                        <Label styleClass="muted" text="Quando juntas diagnosticos e testes, o teu perfil mostra crescimento com menos oscilacao." wrapText="true" />
+                        <HBox spacing="12.0">
+                           <children>
+                              <VBox prefWidth="214.0" spacing="5.0" styleClass="report-note-card">
+                                 <padding>
+                                    <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Ultimo destaque" />
+                                    <Label styleClass="h3-thin-big" text="Matematica com subida firme em precisao." wrapText="true" />
+                                 </children>
+                              </VBox>
+                              <VBox prefWidth="214.0" spacing="5.0" styleClass="report-note-card">
+                                 <padding>
+                                    <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-thin" text="Ponto a lapidar" />
+                                    <Label styleClass="h3-thin-big" text="Fisica ainda perde ritmo em questoes de duas etapas." wrapText="true" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <Label styleClass="timeline-pill" text="Baseado nos ultimos 6 ciclos de pratica" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <HBox spacing="18.0">
+               <children>
+                  <VBox prefHeight="380.0" prefWidth="660.0" spacing="10.0" styleClass="card-blur shadow chart-shell">
+                     <padding>
+                        <Insets bottom="14.0" left="16.0" right="16.0" top="16.0" />
+                     </padding>
+                     <children>
+                        <Label styleClass="h1-thin" text="Evolucao recente" />
+                        <Label styleClass="muted" text="Como o rendimento foi subindo ao longo das ultimas semanas." />
+                        <AreaChart fx:id="evolucaoChart" animated="false" createSymbols="true" legendVisible="false" prefHeight="300.0" styleClass="area-demo report-chart">
+                           <xAxis>
+                              <CategoryAxis />
+                           </xAxis>
+                           <yAxis>
+                              <NumberAxis autoRanging="false" lowerBound="0.0" tickUnit="20.0" upperBound="100.0" />
+                           </yAxis>
+                        </AreaChart>
+                     </children>
+                  </VBox>
+                  <VBox prefHeight="380.0" prefWidth="410.0" spacing="10.0" styleClass="card-blur shadow chart-shell">
+                     <padding>
+                        <Insets bottom="14.0" left="16.0" right="16.0" top="16.0" />
+                     </padding>
+                     <children>
+                        <Label styleClass="h1-thin" text="Forca por disciplina" />
+                        <Label styleClass="muted" text="Leitura compacta das disciplinas que hoje sustentam mais confianca." wrapText="true" />
+                        <BarChart fx:id="disciplinasChart" animated="false" barGap="6.0" categoryGap="18.0" legendVisible="false" prefHeight="300.0" styleClass="report-chart">
+                           <xAxis>
+                              <CategoryAxis />
+                           </xAxis>
+                           <yAxis>
+                              <NumberAxis autoRanging="false" lowerBound="0.0" tickUnit="20.0" upperBound="100.0" />
+                           </yAxis>
+                        </BarChart>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <HBox spacing="18.0">
+               <children>
+                  <VBox fx:id="patternsBox" prefWidth="346.0" spacing="10.0" styleClass="card-blur shadow">
+                     <padding>
+                        <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="planoBox" prefWidth="346.0" spacing="10.0" styleClass="card-blur shadow">
+                     <padding>
+                        <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="reportsTimelineBox" prefWidth="346.0" spacing="10.0" styleClass="card-blur shadow">
+                     <padding>
+                        <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                     </padding>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
 </StackPane>

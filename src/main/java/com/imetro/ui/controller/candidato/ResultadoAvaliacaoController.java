@@ -2,6 +2,7 @@ package com.imetro.ui.controller.candidato;
 
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
+import com.imetro.ui.components.CardQuestao;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.QuestaoResultado;
@@ -209,7 +210,7 @@ public class ResultadoAvaliacaoController {
             questoesCarousel.getChildren().add(vazio);
         } else {
             for (QuestaoResultado questao : filtradas) {
-                questoesCarousel.getChildren().add(criarCardQuestao(questao));
+                questoesCarousel.getChildren().add(new CardQuestao(questao));
             }
         }
 
@@ -229,59 +230,7 @@ public class ResultadoAvaliacaoController {
         return questoesResultado;
     }
 
-    private VBox criarCardQuestao(QuestaoResultado questao) {
-        VBox card = new VBox(8);
-        card.setPrefWidth(360);
-        card.setMinWidth(320);
-        card.getStyleClass().add("sub-card");
-        card.setStyle(
-            "-fx-padding: 12;" +
-            "-fx-border-width: 1.5;" +
-            "-fx-border-radius: 12;" +
-            "-fx-background-radius: 12;" +
-            "-fx-border-color: " + (questao.isAcertou() ? "#10b981" : "#ef4444") + ";"
-        );
-
-        Label status = new Label(questao.isAcertou() ? "Acertou" : "Errou");
-        status.getStyleClass().add("h3-thin");
-        status.setStyle("-fx-text-fill: " + (questao.isAcertou() ? "#10b981" : "#ef4444") + "; -fx-font-weight: 700;");
-
-        Label titulo = new Label(
-            "Questao " + questao.getOrdem() + " - "
-                + questao.getDisciplina()
-                + " / "
-                + questao.getTopico()
-                + " / "
-                + questao.getSubtopico()
-        );
-        titulo.getStyleClass().add("h3-thin");
-
-        Label enunciado = new Label(questao.getEnunciado());
-        enunciado.getStyleClass().add("h3-thin-big");
-        enunciado.setWrapText(true);
-
-        Label bloco2 = new Label(questao.getBloco2());
-        bloco2.getStyleClass().add("muted");
-        bloco2.setWrapText(true);
-        bloco2.setVisible(!"-".equals(questao.getBloco2()));
-        bloco2.setManaged(!"-".equals(questao.getBloco2()));
-
-        Label respostaUsuario = new Label(
-            "Sua resposta: " + questao.getRespostaUsuario() + " - " + questao.getTextoRespostaUsuario()
-        );
-        respostaUsuario.getStyleClass().add("h3-thin");
-        respostaUsuario.setWrapText(true);
-
-        Label respostaCorreta = new Label(
-            "Resposta correta: " + questao.getRespostaCorreta() + " - " + questao.getTextoRespostaCorreta()
-        );
-        respostaCorreta.getStyleClass().add("h3-thin");
-        respostaCorreta.setStyle("-fx-text-fill: #2563eb;");
-        respostaCorreta.setWrapText(true);
-
-        card.getChildren().addAll(status, titulo, enunciado, bloco2, respostaUsuario, respostaCorreta);
-        return card;
-    }
+    
 
     private void ajustarScrollCarrossel(double delta) {
         if (questoesScroll == null) {

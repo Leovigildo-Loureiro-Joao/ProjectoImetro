@@ -647,6 +647,53 @@
     -fx-background-radius:999;
 }
 
+.avatar-preview-shell {
+    -fx-min-width: 132;
+    -fx-min-height: 132;
+    -fx-max-width: 132;
+    -fx-max-height: 132;
+    -fx-background-color: linear-gradient(to bottom right, rgba(59, 130, 246, 0.14), rgba(139, 92, 246, 0.18));
+    -fx-background-radius: 999;
+    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 999;
+}
+
+.avatar-initials {
+    -fx-text-fill: -color-primary-dark;
+    -fx-font-weight: 800;
+}
+
+.avatar-initials-large {
+    -fx-font-size: 34px;
+}
+
+.avatar-initials-medium {
+    -fx-font-size: 26px;
+}
+
+.avatar-option {
+    -fx-background-color: rgba(15, 23, 42, 0.04);
+    -fx-background-radius: 22;
+    -fx-border-color: rgba(15, 23, 42, 0.08);
+    -fx-border-width: 1.2;
+    -fx-border-radius: 22;
+    -fx-cursor: hand;
+    -fx-padding: 6;
+}
+
+.avatar-option:hover {
+    -fx-background-color: rgba(59, 130, 246, 0.12);
+    -fx-border-color: rgba(59, 130, 246, 0.22);
+}
+
+.avatar-option-selected {
+    -fx-background-color: rgba(59, 130, 246, 0.16);
+    -fx-border-color: -color-primary;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.20), 10, 0, 0, 2);
+}
+
 
 
 

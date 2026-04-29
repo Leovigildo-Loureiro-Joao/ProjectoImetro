@@ -1,105 +1,165 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane prefHeight="565.0" prefWidth="834.0" styleClass="page" stylesheets="@../../../../../../../../target/classes/styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<StackPane prefHeight="1180.0" prefWidth="1120.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.PerfilController">
    <children>
-      <VBox maxWidth="849.0" prefHeight="912.0" prefWidth="849.0" spacing="10.0">
+      <VBox maxWidth="1120.0" spacing="22.0">
          <padding>
-            <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+            <Insets bottom="22.0" left="18.0" right="18.0" top="18.0" />
          </padding>
          <children>
-            <VBox spacing="20.0">
+            <Label styleClass="h1" text="Perfil" />
+            <HBox spacing="20.0">
                <children>
-                  <Label styleClass="h1" text="Perfil" />
-               </children>
-            </VBox>
-            <HBox spacing="20.0" styleClass="card">
-               <children>
-                  <VBox>
+                  <HBox HBox.hgrow="ALWAYS" spacing="20.0">
+                     <styleClass>
+                        <String fx:value="card" />
+                        <String fx:value="hero-gradient-card" />
+                        <String fx:value="profile-hero-card" />
+                     </styleClass>
                      <children>
-                        <Label styleClass="h3-thin-big" text="Seus Dados">
-                           <VBox.margin>
-                              <Insets bottom="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <StackPane maxHeight="180.0" maxWidth="200.0" prefHeight="180.0" prefWidth="554.0" style="-fx-background-color: white; -fx-border-color: black; -fx-border-color: gray;" styleClass="card">
+                        <StackPane prefHeight="182.0" prefWidth="182.0" styleClass="profile-avatar-shell">
                            <children>
-                              <ImageView fitHeight="180.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../../../assets/imgs/picture_48px.png" />
-                                 </image>
-                              </ImageView>
+                              <ImageView fx:id="avatarImage" fitHeight="164.0" fitWidth="164.0" managed="false" pickOnBounds="true" preserveRatio="true" visible="false" />
+                              <Label fx:id="avatarInitialsLabel" text="AA">
+                                 <styleClass>
+                                    <String fx:value="avatar-initials" />
+                                    <String fx:value="avatar-initials-large" />
+                                 </styleClass>
+                              </Label>
                            </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
                         </StackPane>
+                        <VBox alignment="CENTER_LEFT" spacing="8.0">
+                           <children>
+                              <Label styleClass="timeline-pill" text="Mural de recordes" />
+                              <Label fx:id="heroNameLabel" styleClass="hero-score" text="Nome do candidato" />
+                              <Label fx:id="heroEmailLabel" styleClass="h3-thin-big" text="email@imetro.com" />
+                              <Label fx:id="heroHintLabel" styleClass="hero-copy" text="Perfil de candidato com mural de recordes, avatar editavel e medalhas por sucessao de habilidades." wrapText="true" />
+                           </children>
+                        </VBox>
                      </children>
-                  </VBox>
-                  <VBox spacing="10.0">
+                     <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                     </padding>
+                  </HBox>
+                  <VBox prefWidth="330.0" spacing="12.0">
+                     <styleClass>
+                        <String fx:value="card" />
+                        <String fx:value="report-note-card" />
+                        <String fx:value="profile-summary-card" />
+                     </styleClass>
                      <children>
-                        <Label text="Nome" />
-                        <TextField disable="true" prefHeight="37.0" prefWidth="361.0" promptText="Inisira o seu nome" />
-                        <Label styleClass="h3-thin" text="Email" />
-                        <TextField disable="true" promptText="Insira o seu email" />
-                        <Label styleClass="h3-thin" text="Senha" />
-                        <TextField disable="true" promptText="Insira a sua senha" />
+                        <Label styleClass="h1-thin" text="Painel de medalhas" />
+                        <Label fx:id="unlockedCountLabel" styleClass="stat-emphasis" text="0/20 medalhas desbloqueadas" />
+                        <Label fx:id="nextUnlockLabel" styleClass="hero-copy" text="Proxima mira: Velocidade Bronze com 5 testes velozes." wrapText="true" />
+                        <Label fx:id="thresholdsLabel" styleClass="muted" text="Escada base atual por habilidade: 5, 15, 30 e 50 sucessos." wrapText="true" />
+                     </children>
+                     <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                     </padding>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox spacing="20.0">
+               <children>
+                  <VBox HBox.hgrow="ALWAYS" spacing="14.0">
+                     <styleClass>
+                        <String fx:value="card" />
+                        <String fx:value="profile-form-card" />
+                     </styleClass>
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <Label styleClass="h1-thin" text="Editar perfil" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <JFXButton fx:id="editProfileButton" onAction="#onToggleEdit" prefHeight="38.0" prefWidth="150.0" styleClass="btn-primary-two" text="Editar perfil" />
+                           </children>
+                        </HBox>
+                        <Label styleClass="muted" text="O avatar agora pode ser trocado por modal. Nesta versao seguimos apenas com os 4 avatares prontos e as iniciais como fallback." wrapText="true" />
+                        <VBox spacing="8.0">
+                           <children>
+                              <Label styleClass="h3-thin" text="Nome" />
+                              <TextField fx:id="nomeField" prefHeight="40.0" promptText="Insira o teu nome" />
+                           </children>
+                        </VBox>
+                        <VBox spacing="8.0">
+                           <children>
+                              <Label styleClass="h3-thin" text="Email" />
+                              <TextField fx:id="emailField" editable="false" prefHeight="40.0" promptText="Insira o teu email" />
+                           </children>
+                        </VBox>
+                        <VBox spacing="8.0">
+                           <children>
+                              <Label styleClass="h3-thin" text="Senha" />
+                              <PasswordField fx:id="senhaField" prefHeight="40.0" promptText="Nova senha opcional" />
+                           </children>
+                        </VBox>
                         <HBox spacing="10.0">
                            <children>
-                              <JFXButton prefHeight="35.0" prefWidth="205.0" styleClass="btn-primary" text="Alterar dados do perfil" />
-                              <JFXButton prefHeight="42.0" prefWidth="205.0" styleClass="btn-primary-two" text="Salvar" />
+                              <JFXButton fx:id="changeAvatarButton" disable="true" onAction="#onChangeAvatar" prefHeight="38.0" prefWidth="165.0" styleClass="btn-secondary" text="Trocar avatar" />
+                              <JFXButton fx:id="saveButton" disable="true" onAction="#onSaveProfile" prefHeight="38.0" prefWidth="135.0" styleClass="btn-primary" text="Salvar" />
                            </children>
-                           <VBox.margin>
-                              <Insets top="5.0" />
-                           </VBox.margin>
                         </HBox>
+                        <Label fx:id="feedbackLabel" text="Modo navegacao ativo. Avatar e nome podem ser ajustados nesta sessao; medalhas usam um preview demonstrativo." wrapText="true">
+                           <styleClass>
+                              <String fx:value="profile-feedback" />
+                              <String fx:value="profile-feedback-info" />
+                           </styleClass>
+                        </Label>
                      </children>
-                     <HBox.margin>
-                        <Insets top="10.0" />
-                     </HBox.margin>
+                     <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                     </padding>
+                  </VBox>
+                  <VBox prefWidth="330.0" spacing="12.0">
+                     <styleClass>
+                        <String fx:value="card" />
+                        <String fx:value="report-note-card" />
+                        <String fx:value="profile-summary-card" />
+                     </styleClass>
+                     <children>
+                        <Label styleClass="h1-thin" text="Regras base das medalhas" />
+                        <Label styleClass="hero-copy" text="Cada habilidade sobe por sucessao: Bronze, Prata, Ouro e Platina. Nesta primeira versao ja deixamos o catalogo completo de 20 medalhas pronto para evoluir depois a automacao de conquista." wrapText="true" />
+                        <Label styleClass="profile-metric-chip" text="Velocidade: 5 testes velozes = Bronze" />
+                        <Label styleClass="profile-metric-chip" text="Pontaria: 5 testes precisos = Bronze" />
+                        <Label styleClass="profile-metric-chip" text="Logica: 5 desafios logicos = Bronze" />
+                        <Label styleClass="profile-metric-chip" text="Resiliencia: 5 retomas fortes = Bronze" />
+                        <Label styleClass="profile-metric-chip" text="Consistencia: 5 series consistentes = Bronze" />
+                     </children>
+                     <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                     </padding>
                   </VBox>
                </children>
-               <padding>
-                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-               </padding>
             </HBox>
-            <VBox styleClass="card">
-               <VBox.margin>
-                  <Insets top="10.0" />
-               </VBox.margin>
+            <VBox spacing="16.0" styleClass="card">
                <children>
-                  <Label styleClass="h3-thin-big" text="Medalhas">
-                     <padding>
-                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                     </padding>
-                  </Label>
-                  <FlowPane alignment="CENTER_LEFT" hgap="20.0" prefHeight="200.0" prefWidth="200.0" vgap="20.0">
-                     <padding>
-                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                     </padding>
-                     <children>
-                        <VBox prefHeight="200.0" prefWidth="170.0" styleClass="card-blur" />
-                        <VBox prefHeight="200.0" prefWidth="170.0" styleClass="card-blur" />
-                        <VBox prefHeight="200.0" prefWidth="170.0" styleClass="card-blur" />
-                        <VBox prefHeight="200.0" prefWidth="170.0" styleClass="card-blur" />
-                     </children>
-                  </FlowPane>
+                  <Label styleClass="h1-thin" text="Medalhas do sistema" />
+                  <Label styleClass="muted" text="As 20 medalhas ja estao mapeadas por habilidade do produto: velocidade, pontaria, logica, resiliencia e consistencia." wrapText="true" />
+                  <FlowPane fx:id="medalhasFlow" hgap="16.0" prefWrapLength="1010.0" vgap="16.0" />
                </children>
                <padding>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                  <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
                </padding>
             </VBox>
          </children>
       </VBox>
+      <StackPane fx:id="modalPai" opacity="0.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #14141413;" visible="false">
+         <padding>
+            <Insets />
+         </padding>
+      </StackPane>
    </children>
 </StackPane>

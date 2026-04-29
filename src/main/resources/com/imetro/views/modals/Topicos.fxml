@@ -15,7 +15,7 @@
    <children>
       <HBox>
          <children>
-            <Label prefHeight="20.0" prefWidth="233.0" styleClass="h2-thin" text="Escolher subtopicos" />
+            <Label fx:id="tituloLabel" prefHeight="20.0" prefWidth="233.0" styleClass="h2-thin" text="Escolher subtopicos" />
             <Region prefHeight="35.0" prefWidth="218.0" />
             <JFXButton buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" onAction="#Close" prefHeight="35.0" prefWidth="32.0" translateX="10.0" translateY="-10.0">
                <graphic>
@@ -47,7 +47,7 @@
             <Insets top="10.0" />
          </VBox.margin>
       </JFXButton>
-      <JFXButton minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="339.0" styleClass="btn-primary-two" text="Usar todos os subtopicos" />
+      <JFXButton fx:id="usarTodosButton" minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="339.0" styleClass="btn-primary-two" text="Usar todos os subtopicos" />
    </children>
    <padding>
       <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

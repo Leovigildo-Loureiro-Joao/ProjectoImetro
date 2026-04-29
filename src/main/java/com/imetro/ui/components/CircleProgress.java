@@ -82,13 +82,14 @@ public class CircleProgress extends Group {
         
         // Label do subtítulo (opcional)
         subtitleLabel = new Label("");
-        subtitleLabel.setFont(Font.font("Segoe UI", FontWeight.MEDIUM, size * 0.08));
+        subtitleLabel.setFont(Font.font("Roboto", FontWeight.MEDIUM, size * 0.08));
         subtitleLabel.setTextFill(Color.web("#6b7280"));
         subtitleLabel.setAlignment(Pos.CENTER);
         subtitleLabel.getStyleClass().add("subtitle-label");
-        subtitleLabel.setLayoutX(radius);
-        subtitleLabel.setLayoutY(radius + size * 0.15);
         
+        subtitleLabel.setLayoutY(((size)/2)*-1);
+        subtitleLabel.setLayoutX(((size)/2));
+        //subtitleLabel.setLayoutY(radius + size * 0.1);
         getChildren().addAll(backgroundArc, progressArc, percentLabel, subtitleLabel);
         percentLabel.setPrefSize(size*2, size*2);
         // Configurar gradientes

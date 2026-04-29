@@ -65,6 +65,24 @@ public final class UserRepository extends JdbcBasicSqlRepository {
         return null;
     }
 
+    public String getNomeByEmail(String email) {
+        String sql = "SELECT nome FROM users WHERE email = ?";
+        try (var conn = openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, email);
+            try (var rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("nome");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public String getAvatarUrlByEmail(String email) {
         String sql = "SELECT avatar_url FROM users WHERE email = ?";
         try (var conn = openRequiredConnection();
@@ -88,6 +106,36 @@ public final class UserRepository extends JdbcBasicSqlRepository {
         try (var conn = openRequiredConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, avatarUrl);
+            stmt.setString(2, email);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateNomeByEmail(String email, String nome) {
+        String sql = "UPDATE users SET nome = ? WHERE email = ?";
+        try (var conn = openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, nome);
+            stmt.setString(2, email);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updatePasswordHashByEmail(String email, String passwordHash) {
+        String sql = "UPDATE users SET senha_hash = ? WHERE email = ?";
+        try (var conn = openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, passwordHash);
             stmt.setString(2, email);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

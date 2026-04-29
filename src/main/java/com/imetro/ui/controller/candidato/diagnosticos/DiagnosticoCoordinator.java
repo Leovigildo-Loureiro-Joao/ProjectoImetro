@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.ui.modals.FluxoModalContext;
 
 /**
  * Canal simples de comunicacao entre os componentes do diagnostico
@@ -49,6 +50,7 @@ public final class DiagnosticoCoordinator {
     }
 
     public static void requestStart(ArrayList<Topico> topicos) {
+        FluxoModalContext.setOrigem(FluxoModalContext.Origem.DIAGNOSTICO);
         TOPICOS_SELECIONADOS.set(new ArrayList<>(topicos));
         SUBTOPICOS_SELECIONADOS.set(new LinkedHashMap<>());
         CONFIG_ATUAL.set(null);
@@ -60,6 +62,7 @@ public final class DiagnosticoCoordinator {
     }
 
     public static void requestAlert(String titulo, String mensagem, Runnable onConfirm) {
+        FluxoModalContext.setOrigem(FluxoModalContext.Origem.DIAGNOSTICO);
         ALERTA_ATUAL.set(new AlertRequest(titulo, mensagem, onConfirm));
 
         DiagnosticoHost host = HOST.get();
@@ -69,6 +72,7 @@ public final class DiagnosticoCoordinator {
     }
 
     public static void requestStartInteligente(Map<String, String> configuracao) {
+        FluxoModalContext.setOrigem(FluxoModalContext.Origem.DIAGNOSTICO);
         CONFIG_ATUAL.set(
             new DiagnosticoConfig(
                 configuracao.getOrDefault("duracao", "Curto"),

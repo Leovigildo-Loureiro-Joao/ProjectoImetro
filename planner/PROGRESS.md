@@ -38,6 +38,15 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
 - Adicionada `V8__progresso_aluno_disciplina.sql` para colocar no historico Flyway uma estrutura que ja existia no `scripts/db/001_schema.sql`.
 - O objetivo imediato passou a ser: manter schema e docs consistentes agora, e validar persistencia real assim que o ambiente de BD estiver disponivel.
 
+### 2026-04-29
+- O onboarding de imagem foi trocado por escolha de avatar predefinido, com fallback automatico para iniciais quando o candidato ignora a etapa.
+- O perfil do candidato passou a refletir avatar salvo ou iniciais dinamicas do nome.
+- O exame adaptativo voltou a um fluxo orientado por modais, mais proximo da experiencia de diagnostico, com configuracao de foco, dificuldade, duracao e subtopicos.
+- Os indicadores do card de teste deixaram de ser aleatorios, mas a dependencia forte de diagnosticos persistidos ainda continua pendente.
+- As telas `bolsas` e `relatorios` deixaram de ser placeholder e ganharam uma primeira estrutura visual utilizavel com dados mockados consistentes.
+- O perfil ganhou modo de edicao, troca de avatar por modal e um mural visual das 20 medalhas do sistema.
+- Foi criada a base SQL de medalhas com catalogo seedado e tabela de conquistas por utilizador (`V9__medalhas.sql`).
+
 ## Objetivo de "projeto terminado"
 
 Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
@@ -57,7 +66,7 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [x] Modo navegacao visivel e seguro para trabalhar sem BD.
 
 #### Onboarding
-- [x] Avatar do candidato (upload/skip na UI).
+- [x] Avatar do candidato com escolha predefinida e fallback por iniciais.
 - [x] Selecao visual de disciplinas do candidato.
 - [x] Selecao visual de disciplina do orientador.
 - [ ] Persistencia real do onboarding com BD disponivel.
@@ -67,10 +76,14 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [x] Dashboard placeholder + CSS base.
 - [x] Diagnostico com experiencia de uso completa em UI.
 - [x] Exame/Teste adaptativo com loading overlay.
+- [x] Exame/Teste adaptativo com configuracao por modal alinhada ao diagnostico.
 - [x] Tela de configuracoes com modo editar/salvar visual.
+- [x] Perfil do candidato com avatar dinamico, modal de troca e mural inicial de medalhas.
 - [ ] Tela "Revisao do Diagnostico".
-- [ ] `views/pages/candidato/relatorios.fxml`.
-- [ ] `views/pages/candidato/bolsas.fxml`.
+- [x] `views/pages/candidato/relatorios.fxml` em versao inicial visual.
+- [x] `views/pages/candidato/bolsas.fxml` em versao inicial visual.
+- [ ] Ligar relatorios a dados reais de diagnostico e teste.
+- [ ] Ligar bolsas a regras reais de elegibilidade, match e recomendacao.
 
 #### Orientador
 - [x] Layout do orientador com navegacao base.
@@ -86,11 +99,11 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 
 #### Infra + migrations
 - [x] Postgres local via `docker-compose.yml` + schema inicial `scripts/db/001_schema.sql`.
-- [x] Migrations Flyway versionadas (`V1...V8`).
+- [x] Migrations Flyway versionadas (`V1...V9`).
 - [x] Flyway `migrate()` no arranque com `baseline` em `V6`.
 - [x] Chaves de runtime: `TESTE`, `DB_ENABLED` e `DB_MIGRATE`.
 - [x] Documentacao para trabalhar sem BD local.
-- [ ] Validar `V7` e `V8` em Postgres real neste fluxo atual.
+- [ ] Validar `V7`, `V8` e `V9` em Postgres real neste fluxo atual.
 
 #### Repositorios/CRUD
 - [x] Base JDBC generica e repositorios baseados em tabela.
@@ -103,10 +116,12 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [x] Tabela `diagnosticos` (`V5`).
 - [x] Tabela `configuracoes` (`V6`).
 - [x] Tabela `progresso_aluno_disciplina` entrou no historico de migrations (`V8`).
+- [x] Catalogo de medalhas e conquistas por utilizador entraram no historico de migrations (`V9`).
 - [ ] Persistir resultado real do diagnostico.
 - [ ] Alimentar lista, timeline e estatisticas com dados reais.
 - [ ] Gerar relatorio derivado do diagnostico.
 - [ ] Usar o ultimo diagnostico como entrada do exame adaptativo.
+- [ ] Automatizar atribuicao das medalhas a partir dos recordes reais do candidato.
 
 #### Configuracoes (BD)
 - [ ] Criar `ConfiguracaoRepository`.
@@ -124,7 +139,8 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 ## Foco recomendado enquanto nao houver BD neste PC
 
 - manter `TESTE=false`
-- continuar a evoluir diagnostico, exame adaptativo e resultado em memoria
+- continuar a evoluir diagnostico, exame adaptativo, relatorios e bolsas em memoria
+- consolidar a regra de dependencia entre diagnostico e exame adaptativo antes da persistencia final
 - fechar lacunas de documentacao e schema
 - evitar avancar queries JDBC novas sem um Postgres real para validar
 
@@ -133,4 +149,5 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - validar onboarding persistente
 - validar `V7` e `V8`
 - gravar diagnosticos reais
-- trocar mocks da timeline e estatisticas por queries reais
+- trocar mocks da timeline, estatisticas, relatorios e bolsas por queries reais
+- usar dados persistidos do diagnostico para conduzir o exame adaptativo

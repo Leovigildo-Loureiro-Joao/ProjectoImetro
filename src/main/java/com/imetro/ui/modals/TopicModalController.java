@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.ui.controller.candidato.TesteAdaptativoCoordinator;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
@@ -21,6 +22,9 @@ import javafx.scene.layout.VBox;
 public class TopicModalController extends ModalController {
 
     @FXML
+    private Label tituloLabel;
+
+    @FXML
     private VBox topicosContainer;
 
     @FXML
@@ -32,10 +36,18 @@ public class TopicModalController extends ModalController {
     @FXML
     private JFXButton iniciarButton;
 
+    @FXML
+    private JFXButton usarTodosButton;
+
     private final Map<String, List<JFXCheckBox>> checkboxesPorTopico = new LinkedHashMap<>();
 
     @Override
     public void init() {
+        if (FluxoModalContext.isTesteAdaptativo()) {
+            tituloLabel.setText("Escolher subtopicos do teste");
+            iniciarButton.setText("Iniciar teste com os selecionados");
+            usarTodosButton.setText("Usar todos os subtopicos do teste");
+        }
         montarTopicos();
         atualizarResumo();
         super.init();
@@ -49,15 +61,32 @@ public class TopicModalController extends ModalController {
             return;
         }
 
-        DiagnosticoCoordinator.updateSubtopicosSelecionados(selecionados);
+        if (FluxoModalContext.isTesteAdaptativo()) {
+            TesteAdaptativoCoordinator.updateSubtopicosSelecionados(selecionados);
+        } else {
+            DiagnosticoCoordinator.updateSubtopicosSelecionados(selecionados);
+        }
         closeModal();
-        DiagnosticoCoordinator.requestStartSoRun();
+        requestStartSoRun();
     }
 
     @FXML
     private void SoRun(ActionEvent event) {
-        DiagnosticoCoordinator.updateSubtopicosSelecionados(coletarSubtopicosSelecionados(true));
+        Map<String, List<String>> selecionados = coletarSubtopicosSelecionados(true);
+        if (FluxoModalContext.isTesteAdaptativo()) {
+            TesteAdaptativoCoordinator.updateSubtopicosSelecionados(selecionados);
+        } else {
+            DiagnosticoCoordinator.updateSubtopicosSelecionados(selecionados);
+        }
         closeModal();
+        requestStartSoRun();
+    }
+
+    private void requestStartSoRun() {
+        if (FluxoModalContext.isTesteAdaptativo()) {
+            TesteAdaptativoCoordinator.requestStartSoRun();
+            return;
+        }
         DiagnosticoCoordinator.requestStartSoRun();
     }
 
@@ -65,7 +94,11 @@ public class TopicModalController extends ModalController {
         topicosContainer.getChildren().clear();
         checkboxesPorTopico.clear();
 
-        for (Topico topico : DiagnosticoCoordinator.getTopicosSelecionados()) {
+        List<Topico> topicos = FluxoModalContext.isTesteAdaptativo()
+            ? TesteAdaptativoCoordinator.getTopicosSelecionados()
+            : DiagnosticoCoordinator.getTopicosSelecionados();
+
+        for (Topico topico : topicos) {
             VBox grupo = new VBox(10);
             Label titulo = new Label(topico.topicos());
             titulo.getStyleClass().add("h3-thin");
@@ -106,7 +139,11 @@ public class TopicModalController extends ModalController {
             }
         }
 
-        resumoLabel.setText("Topicos: " + DiagnosticoCoordinator.buildResumoSelecao());
+        String resumo = FluxoModalContext.isTesteAdaptativo()
+            ? TesteAdaptativoCoordinator.buildResumoSelecao()
+            : DiagnosticoCoordinator.buildResumoSelecao();
+
+        resumoLabel.setText("Topicos: " + resumo);
         contadorLabel.setText(totalSelecionado + " de " + totalDisponivel + " subtopicos selecionados");
         iniciarButton.setDisable(totalSelecionado == 0);
     }
@@ -134,4 +171,3 @@ public class TopicModalController extends ModalController {
         return (45 + hash) / 100.0;
     }
 }
-  

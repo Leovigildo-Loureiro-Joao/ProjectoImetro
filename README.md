@@ -1,13 +1,16 @@
 # Projecto Imetro
 
-Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, com onboarding por perfil, diagnosticos por disciplina, estatisticas de desempenho e persistencia em PostgreSQL.
+Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, com onboarding por perfil, diagnosticos por disciplina, exame adaptativo guiado por foco, relatorios visuais de desempenho e persistencia em PostgreSQL.
 
 ## Estado atual
 
 - navegacao base entre autenticacao, area do candidato e area do orientador
-- onboarding com avatar e selecao visual de disciplinas
+- onboarding com escolha de avatar predefinido, fallback por iniciais e selecao visual de disciplinas
 - modulo de diagnostico no candidato com lista, timeline, estatisticas, perguntas e resultado final
-- exame adaptativo com foco por disciplina, topico e subtopico
+- exame adaptativo com configuracao por modal, foco por disciplina/topico/subtopico e arranque alinhado ao fluxo de diagnostico
+- tela de relatorios do candidato com resumo, graficos e insights iniciais
+- tela de bolsas do candidato com prontidao, match visual e proximos passos
+- perfil do candidato com troca de avatar por modal e mural inicial de 20 medalhas do sistema
 - persistencia JDBC para `users`, `disciplinas`, `perguntas`, `testes` e `relatorios`
 - schema SQL versionado em `src/main/resources/db/migration`
 
@@ -131,7 +134,7 @@ Na primeira criacao do volume, o container executa automaticamente `scripts/db/0
 
 - schema inicial do Docker: `scripts/db/001_schema.sql`
 - migrations versionadas: `src/main/resources/db/migration`
-- estado atual das migrations: `V1` ate `V8`
+- estado atual das migrations: `V1` ate `V9`
 
 Resumo das mais recentes:
 
@@ -139,6 +142,7 @@ Resumo das mais recentes:
 - `V6__configuracoes.sql`: tabela `configuracoes`
 - `V7__perguntas_topico_subtopico.sql`: normalizacao minima de `disciplina` e `subtopico` em `perguntas`
 - `V8__progresso_aluno_disciplina.sql`: historico de progresso do aluno por disciplina
+- `V9__medalhas.sql`: catalogo de medalhas e conquistas por utilizador
 
 ### Observacao importante sobre ambiente
 
@@ -176,16 +180,17 @@ DB_MIGRATE=false
 
 - fechar telas e navegacao do candidato
 - criar a futura tela de revisao do diagnostico
-- melhorar o fluxo de resultado e recomendacoes
-- refinar regras do exame adaptativo
+- ligar relatorios e bolsas a dados em memoria mais proximos do comportamento real
+- reforcar a regra de negocio entre diagnostico, exame adaptativo e recomendacoes
 - manter `001_schema.sql`, migrations e README sempre alinhados
 
 ## O que fica para quando houver Postgres
 
 - validar `V7` e `V8` em base real
 - persistir o resultado real do diagnostico
-- alimentar timeline e estatisticas com queries reais
-- persistir o onboarding de disciplinas do candidato
+- alimentar timeline, estatisticas, relatorios e bolsas com queries reais
+- validar a persistencia real do onboarding de avatar e disciplinas do candidato
+- usar o ultimo diagnostico persistido como entrada forte do exame adaptativo
 - ligar relatorios e recomendacoes ao orientador
 
 ## Licenca

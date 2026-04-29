@@ -1,11 +1,10 @@
 package com.imetro.ui.controller.candidato;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,11 +15,14 @@ import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.TesteCard;
+import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
+import com.imetro.ui.modals.ModalAlert;
+import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXToggleNode;
 
 import javafx.animation.FadeTransition;
@@ -28,20 +30,23 @@ import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-public class TesteAdaptativoController {
+public class TesteAdaptativoController implements DisposableController, TesteAdaptativoCoordinator.TesteHost {
 
+    @FXML private AnchorPane testeField;
+    @FXML private StackPane modalPai;
     @FXML private StackPane circleProgressContainer;
     @FXML private Label nomeDisc;
     @FXML private Label nPergunta;
@@ -82,8 +87,6 @@ public class TesteAdaptativoController {
     @FXML private Label feedbackMessage;
 
     private final VBox botoesDisciplinasBox = new VBox(12);
-    private final VBox focoTopicosBox = new VBox(12);
-    private final Map<String, List<JFXCheckBox>> checkboxesPorTopico = new LinkedHashMap<>();
     private final List<Character> respostasUsuario = new ArrayList<>();
     private final List<Long> temposResposta = new ArrayList<>();
     private final List<String> topicosSelecionados = new ArrayList<>();
@@ -102,118 +105,175 @@ public class TesteAdaptativoController {
     private int sequenciaErros = 0;
     private long tempoInicioQuestao;
     private Timeline cronometro;
+    private Timeline loadingTimeline;
     private int segundos = 0;
     private int minutos = 0;
     private TesteAdaptativoService service;
     private String disciplinaSelecionada;
+    private FXMLLoader modFxml;
+    private ModalController cont;
 
     @FXML
     public void initialize() {
+        TesteAdaptativoCoordinator.setHost(this);
+
         circleProgress = new CircleProgress(35, 35, 35, 0);
         circleProgressContainer.getChildren().add(circleProgress);
 
         service = new TesteAdaptativoService();
-
-        disciplinasContainer.getChildren().clear();
-        focoTopicosBox.setPadding(new Insets(12, 0, 0, 0));
-        disciplinasContainer.getChildren().addAll(botoesDisciplinasBox, focoTopicosBox);
+        disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
 
         carregarDisciplinas();
 
         feedbackContainer.setVisible(false);
         testeContainer.setVisible(false);
         start.setVisible(true);
+        atualizarIndicadoresNivel();
     }
 
     private void carregarDisciplinas() {
         botoesDisciplinasBox.getChildren().clear();
 
-        Label titulo = new Label("Disciplinas com questoes organizadas por topico e subtopico");
+        Label titulo = new Label("Escolha uma disciplina e configure o foco do teste pelos modais.");
         titulo.getStyleClass().add("h3-thin");
         botoesDisciplinasBox.getChildren().add(titulo);
 
         for (String disciplina : service.carregarDisciplinasDisponiveis()) {
-            
-            ArrayList<Percent> discs=new ArrayList<>();
-            for (Topico topico : service.carregarTopicosPorDisciplina(disciplina)) {
-                discs.add(new Percent(topico.topicos(), Math.round(new Random().nextFloat(0, 100))));
-            }
-            TesteCard teste =new TesteCard(new TesteDto(disciplina, new Random().nextFloat(0, 1), new Random().nextFloat(0, 1), new Random().nextFloat(0, 1), new Random().nextFloat(0, 1), discs,new ArrayList<>()),()->selecionarDisciplina(disciplina));
+            List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
+            TesteCard teste = new TesteCard(
+                construirResumoDisciplina(disciplina, topicos),
+                () -> iniciarTestePadrao(disciplina, topicos),
+                () -> abrirConfiguracaoInteligente(disciplina, topicos)
+            );
             botoesDisciplinasBox.getChildren().add(teste);
         }
     }
 
-    private void selecionarDisciplina(String disciplina) {
-        disciplinaSelecionada = disciplina;
-        renderizarFocoTopicos(service.carregarTopicosPorDisciplina(disciplina));
+    private TesteDto construirResumoDisciplina(String disciplina, List<Topico> topicos) {
+        List<Questao> questoesDisciplina = service.carregarQuestoesDisponiveis(disciplina, List.of(), List.of());
+        int totalQuestoes = questoesDisciplina.size();
+        int totalSubtopicos = topicos.stream()
+            .mapToInt(topico -> topico.subTopicos() == null ? 0 : topico.subTopicos().length)
+            .sum();
+
+        float baseAtual = totalQuestoes == 0 ? 0f : (float) questoesDisciplina.stream()
+            .filter(questao -> questao.getNivelDificuldade() <= 1)
+            .count() / totalQuestoes;
+        float desafio = totalQuestoes == 0 ? 0f : (float) questoesDisciplina.stream()
+            .filter(questao -> questao.getNivelDificuldade() >= 3)
+            .count() / totalQuestoes;
+        float cobertura = Math.min(1f, totalSubtopicos / 10f);
+        float variedade = Math.min(1f, Math.max(topicos.size(), 1) / 4f);
+
+        List<Percent> percentuaisTopicos = topicos.stream()
+            .map(topico -> new Percent(topico.topicos(), calcularIndicadorTopico(disciplina, topico)))
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        List<String> passos = construirPassosCard(topicos);
+
+        return new TesteDto(
+            formatarDisciplina(disciplina),
+            baseAtual,
+            desafio,
+            cobertura,
+            variedade,
+            percentuaisTopicos,
+            passos
+        );
     }
 
-    private void renderizarFocoTopicos(List<Topico> topicos) {
-        focoTopicosBox.getChildren().clear();
-        checkboxesPorTopico.clear();
+    private float calcularIndicadorTopico(String disciplina, Topico topico) {
+        List<Questao> questoesTopico = service.carregarQuestoesDisponiveis(
+            disciplina,
+            List.of(topico.topicos()),
+            List.of()
+        );
+        int totalSubtopicos = topico.subTopicos() == null ? 0 : topico.subTopicos().length;
+        return Math.min(100f, 30f + (questoesTopico.size() * 12f) + (totalSubtopicos * 10f));
+    }
 
-        Label disciplinaLabel = new Label("Foco atual: " + formatarDisciplina(disciplinaSelecionada));
-        disciplinaLabel.getStyleClass().add("h3-thin-big");
+    private List<String> construirPassosCard(List<Topico> topicos) {
+        List<String> passos = new ArrayList<>();
+        passos.add("Use o modo inteligente para escolher o foco do teste.");
 
-        Label resumoLabel = new Label("Escolha os subtopicos que devem guiar o exame.");
-        resumoLabel.getStyleClass().add("muted");
-        resumoLabel.setWrapText(true);
-
-        focoTopicosBox.getChildren().addAll(disciplinaLabel, resumoLabel);
-
-        for (Topico topico : topicos) {
-            VBox grupo = new VBox(10);
-            Label tituloTopico = new Label(topico.topicos());
-            tituloTopico.getStyleClass().add("h3-thin");
-            grupo.getChildren().add(tituloTopico);
-
-            List<JFXCheckBox> checkboxes = new ArrayList<>();
-            for (String subtopico : topico.subTopicos()) {
-                JFXCheckBox checkBox = new JFXCheckBox(subtopico);
-                checkBox.setWrapText(true);
-                grupo.getChildren().add(checkBox);
-                checkboxes.add(checkBox);
-            }
-
-            checkboxesPorTopico.put(topico.topicos(), checkboxes);
-            focoTopicosBox.getChildren().add(grupo);
+        if (!topicos.isEmpty()) {
+            passos.add("Comece por " + topicos.getFirst().topicos() + ".");
+        }
+        if (topicos.size() > 1) {
+            passos.add("Depois avance para " + topicos.get(1).topicos() + ".");
         }
 
-        HBox acoes = new HBox(12);
-
-        JFXButton iniciarSelecionados = new JFXButton("Iniciar com selecionados");
-        iniciarSelecionados.getStyleClass().add("btn-primary");
-        iniciarSelecionados.setOnAction(event -> iniciarTesteAdaptativo(false));
-
-        JFXButton iniciarTodos = new JFXButton("Usar todos os subtopicos");
-        iniciarTodos.getStyleClass().add("btn-primary-two");
-        iniciarTodos.setOnAction(event -> iniciarTesteAdaptativo(true));
-
-        acoes.getChildren().addAll(iniciarSelecionados, iniciarTodos);
-        focoTopicosBox.getChildren().add(acoes);
+        return passos;
     }
 
-    private void iniciarTesteAdaptativo(boolean usarTodosSubtopicos) {
+    private void iniciarTestePadrao(String disciplina, List<Topico> topicos) {
+        disciplinaSelecionada = disciplina;
+        aplicarFocoSelecionado(topicos, Map.of());
+        iniciarTesteComConfiguracao(null);
+    }
+
+    private void abrirConfiguracaoInteligente(String disciplina, List<Topico> topicos) {
+        if (topicos == null || topicos.isEmpty()) {
+            mostrarAlerta("Atencao", "Nao encontramos topicos para iniciar o teste dessa disciplina.");
+            return;
+        }
+
+        TesteAdaptativoCoordinator.requestStart(disciplina, new ArrayList<>(topicos));
+    }
+
+    @Override
+    public void startTesteAdaptativo() {
+        disciplinaSelecionada = TesteAdaptativoCoordinator.getDisciplinaSelecionada();
+        List<Topico> topicos = TesteAdaptativoCoordinator.getTopicosSelecionados();
+
         if (disciplinaSelecionada == null || disciplinaSelecionada.isBlank()) {
             mostrarAlerta("Atencao", "Selecione uma disciplina para continuar.");
             return;
         }
-
-        atualizarFocoSelecionado(usarTodosSubtopicos);
-        if (!usarTodosSubtopicos && subtopicosSelecionados.isEmpty()) {
-            mostrarAlerta("Atencao", "Selecione ao menos um subtopico antes de iniciar.");
+        if (topicos.isEmpty()) {
+            mostrarAlerta("Atencao", "Nao encontramos topicos para essa disciplina.");
             return;
         }
 
+        aplicarFocoSelecionado(topicos, TesteAdaptativoCoordinator.getSubtopicosSelecionados());
+        iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.getConfiguracaoAtual());
+    }
+
+    private void aplicarFocoSelecionado(List<Topico> topicosDisponiveis, Map<String, List<String>> subtopicosPorTopico) {
+        topicosSelecionados.clear();
+        subtopicosSelecionados.clear();
+
+        if (subtopicosPorTopico == null || subtopicosPorTopico.isEmpty()) {
+            for (Topico topico : topicosDisponiveis) {
+                topicosSelecionados.add(topico.topicos());
+                if (topico.subTopicos() != null) {
+                    subtopicosSelecionados.addAll(List.of(topico.subTopicos()));
+                }
+            }
+            return;
+        }
+
+        for (Topico topico : topicosDisponiveis) {
+            List<String> selecionados = subtopicosPorTopico.get(topico.topicos());
+            if (selecionados == null || selecionados.isEmpty()) {
+                continue;
+            }
+
+            topicosSelecionados.add(topico.topicos());
+            subtopicosSelecionados.addAll(selecionados);
+        }
+    }
+
+    private void iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.TesteConfig config) {
         focoQuestoes = service.carregarQuestoesDisponiveis(disciplinaSelecionada, topicosSelecionados, subtopicosSelecionados);
         if (focoQuestoes.isEmpty()) {
             mostrarAlerta("Atencao", "Nao encontramos questoes para esse foco. Tente outro recorte.");
             return;
         }
 
-        nivelAtualInt = 2;
+        nivelAtualInt = resolverNivelInicial(config);
         questoes.clear();
-        totalQuestoes = Math.min(10, focoQuestoes.size());
+        totalQuestoes = Math.min(resolverLimiteQuestoes(config, focoQuestoes.size()), focoQuestoes.size());
         resetarMetricas();
 
         Questao primeiraQuestao = obterProximaQuestao();
@@ -227,42 +287,57 @@ public class TesteAdaptativoController {
 
         start.setVisible(false);
         testeContainer.setVisible(true);
-        iniciarLoading();
+        iniciarLoading(config);
     }
 
-    private void atualizarFocoSelecionado(boolean usarTodosSubtopicos) {
-        topicosSelecionados.clear();
-        subtopicosSelecionados.clear();
-
-        for (Map.Entry<String, List<JFXCheckBox>> entry : checkboxesPorTopico.entrySet()) {
-            List<String> escolhidos = new ArrayList<>();
-            for (JFXCheckBox checkBox : entry.getValue()) {
-                if (usarTodosSubtopicos || checkBox.isSelected()) {
-                    escolhidos.add(checkBox.getText());
-                }
-            }
-
-            if (!escolhidos.isEmpty()) {
-                topicosSelecionados.add(entry.getKey());
-                subtopicosSelecionados.addAll(escolhidos);
-            }
+    private int resolverNivelInicial(TesteAdaptativoCoordinator.TesteConfig config) {
+        if (config == null || config.nivel() == null) {
+            return 2;
         }
+
+        return switch (normalizar(config.nivel())) {
+            case "facil" -> 1;
+            case "desafiante" -> 3;
+            case "extra dificil" -> 4;
+            default -> 2;
+        };
     }
 
-    private void iniciarLoading() {
+    private int resolverLimiteQuestoes(TesteAdaptativoCoordinator.TesteConfig config, int totalDisponivel) {
+        if (config == null || config.duracao() == null) {
+            return Math.min(7, totalDisponivel);
+        }
+
+        return switch (normalizar(config.duracao())) {
+            case "curto" -> 5;
+            case "medio" -> 7;
+            default -> Math.min(10, totalDisponivel);
+        };
+    }
+
+    private void iniciarLoading(TesteAdaptativoCoordinator.TesteConfig config) {
+        if (loadingTimeline != null) {
+            loadingTimeline.stop();
+        }
+
         tela.setVisible(false);
         loadingOverlay.setVisible(true);
         loadingOverlay.setOpacity(1);
         loadingProgress.setProgress(0);
 
+        String configuracao = config == null
+            ? "Aplicando o fluxo padrao do teste."
+            : "Nivel " + config.nivel() + ", foco em " + config.foco() + " e duracao " + config.duracao() + ".";
+
         String[] mensagens = {
-            "Organizando foco em " + String.join(", ", topicosSelecionados),
+            "Organizando o foco em " + String.join(", ", topicosSelecionados),
             "Separando questoes para " + buildResumoSubtopicos(),
-            "Ajustando nivel inicial adaptativo...",
-            "Exame adaptativo pronto!"
+            configuracao,
+            "Teste adaptativo pronto!"
         };
 
-        Timeline loadingTimeline = new Timeline();
+        loadingMessage.setText(mensagens[0]);
+        loadingTimeline = new Timeline();
         for (int i = 0; i <= 100; i++) {
             final int progresso = i;
             KeyFrame kf = new KeyFrame(Duration.millis(i * 25), e -> {
@@ -305,6 +380,10 @@ public class TesteAdaptativoController {
     }
 
     private void iniciarCronometro() {
+        if (cronometro != null) {
+            cronometro.stop();
+        }
+
         segundos = 0;
         minutos = 0;
         cronometro = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
@@ -453,7 +532,6 @@ public class TesteAdaptativoController {
     }
 
     private void ajustarNivelAdaptativo(boolean acertou, long tempoResposta) {
-        int nivelAnterior = nivelAtualInt;
         boolean foiRapido = tempoResposta < 30000;
 
         if (acertou && foiRapido) {
@@ -475,9 +553,6 @@ public class TesteAdaptativoController {
         }
 
         nivelAtualInt = Math.max(1, Math.min(nivelAtualInt, 4));
-        if (nivelAtualInt != nivelAnterior) {
-            System.out.println("Nivel alterado: " + nivelAnterior + " -> " + nivelAtualInt);
-        }
     }
 
     private void atualizarIndicadoresNivel() {
@@ -569,11 +644,14 @@ public class TesteAdaptativoController {
         if (cronometro != null) {
             cronometro.stop();
         }
+        if (loadingTimeline != null) {
+            loadingTimeline.stop();
+        }
 
         double mediaTempo = temposResposta.stream().mapToLong(Long::longValue).average().orElse(0);
         double porcentagemAcertos = totalQuestoes == 0 ? 0 : (acertos * 100.0) / totalQuestoes;
         String perfil = determinarPerfil(porcentagemAcertos, mediaTempo);
-        String recomendacao = getRecomendacao(porcentagemAcertos, nivelAtualInt);
+        String recomendacao = getRecomendacao(porcentagemAcertos);
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
 
         ResultadoAvaliacaoController.setResultado(
@@ -593,9 +671,9 @@ public class TesteAdaptativoController {
             )
         );
 
-        StackPane contentHost = nomeDisc == null || nomeDisc.getScene() == null
+        StackPane contentHost = testeField == null || testeField.getScene() == null
             ? null
-            : (StackPane) nomeDisc.getScene().lookup("#contentHost");
+            : (StackPane) testeField.getScene().lookup("#contentHost");
         if (contentHost != null) {
             App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
             return;
@@ -636,7 +714,7 @@ public class TesteAdaptativoController {
         };
     }
 
-    private String getRecomendacao(double porcentagem, int nivel) {
+    private String getRecomendacao(double porcentagem) {
         String foco = subtopicosSelecionados.isEmpty()
             ? "os subtopicos escolhidos"
             : subtopicosSelecionados.stream().limit(3).collect(Collectors.joining(", "));
@@ -653,11 +731,7 @@ public class TesteAdaptativoController {
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {
-        Alert alert = new Alert(AlertType.WARNING);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
+        TesteAdaptativoCoordinator.requestAlert(titulo, mensagem, null);
     }
 
     private List<QuestaoResultado> construirQuestoesResultado() {
@@ -707,5 +781,64 @@ public class TesteAdaptativoController {
             case "PORTUGUES" -> "Portugues";
             default -> disciplina;
         };
+    }
+
+    private String normalizar(String valor) {
+        return valor == null ? "" : valor.trim().toLowerCase();
+    }
+
+    @Override
+    public void ModalOpen() {
+        try {
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("Dificult");
+            Node modal = modFxml.load();
+            modalPai.getChildren().add(modal);
+            cont = modFxml.getController();
+            cont.init();
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    @Override
+    public void StartInteligente() {
+        try {
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("Topicos");
+            Node modal = modFxml.load();
+            modalPai.getChildren().add(modal);
+            TopicModalController controller = modFxml.getController();
+            controller.init();
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    @Override
+    public void Alert() {
+        try {
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("Alert");
+            Node alertNode = modFxml.load();
+            modalPai.getChildren().add(alertNode);
+            cont = modFxml.getController();
+            ((ModalAlert) cont).init();
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    @Override
+    public void dispose() {
+        TesteAdaptativoCoordinator.clearHost(this);
+        if (cronometro != null) {
+            cronometro.stop();
+            cronometro = null;
+        }
+        if (loadingTimeline != null) {
+            loadingTimeline.stop();
+            loadingTimeline = null;
+        }
     }
 }

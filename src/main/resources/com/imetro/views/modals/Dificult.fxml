@@ -16,7 +16,7 @@
    <children>
       <HBox>
          <children>
-            <Label prefHeight="20.0" prefWidth="233.0" styleClass="h2-thin" text="Iniciando Diagnostico..." />
+            <Label fx:id="tituloLabel" prefHeight="20.0" prefWidth="233.0" styleClass="h2-thin" text="Iniciando Diagnostico..." />
             <Region prefHeight="35.0" prefWidth="129.0" />
             <JFXButton buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" onAction="#Close" prefHeight="35.0" prefWidth="32.0">
                <graphic>
@@ -36,7 +36,7 @@
                   <Label styleClass="h3-thin" text="Deseja que teste seja?" />
                   <VBox spacing="10.0">
                      <children>
-                        <JFXRadioButton onAction="#SelectTesteDificult" text="Facíl">
+                        <JFXRadioButton onAction="#SelectTesteDificult" text="Facil">
                            <toggleGroup>
                               <ToggleGroup fx:id="nivel" />
                            </toggleGroup>
@@ -63,7 +63,7 @@
                         </JFXRadioButton>
                         <JFXRadioButton onAction="#SelectFocos" text="Erros comuns" toggleGroup="$foco" />
                         <JFXRadioButton onAction="#SelectFocos" text="Pontos fortes" toggleGroup="$foco" />
-                        <JFXRadioButton onAction="#SelectFocos" text="Novas aplicações" toggleGroup="$foco" />
+                        <JFXRadioButton onAction="#SelectFocos" text="Novas aplicacoes" toggleGroup="$foco" />
                      </children>
                      <VBox.margin>
                         <Insets left="10.0" />
@@ -77,7 +77,7 @@
          <children>
             <VBox prefHeight="99.0" prefWidth="168.0" spacing="10.0">
                <children>
-                  <Label styleClass="h3-thin" text="Quanto a duração" />
+                  <Label styleClass="h3-thin" text="Quanto a duracao" />
                   <VBox prefHeight="74.0" prefWidth="303.0" spacing="10.0">
                      <children>
                         <JFXRadioButton onAction="#SelectDuracao" text="Longo">
@@ -85,7 +85,7 @@
                               <ToggleGroup fx:id="duracao" />
                            </toggleGroup>
                         </JFXRadioButton>
-                        <JFXRadioButton onAction="#SelectDuracao" text="Médio" toggleGroup="$duracao" />
+                        <JFXRadioButton onAction="#SelectDuracao" text="Medio" toggleGroup="$duracao" />
                         <JFXRadioButton onAction="#SelectDuracao" selected="true" text="Curto" toggleGroup="$duracao" />
                      </children>
                      <VBox.margin>
@@ -96,7 +96,7 @@
             </VBox>
          </children>
       </HBox>
-      <JFXButton onAction="#InteligentDiagnostic" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary" text="Iniciar diagnostico inteligente">
+      <JFXButton fx:id="iniciarButton" onAction="#InteligentDiagnostic" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary" text="Iniciar diagnostico inteligente">
          <padding>
             <Insets top="10.0" />
          </padding>
@@ -104,7 +104,7 @@
             <Insets top="10.0" />
          </VBox.margin>
       </JFXButton>
-      <JFXButton minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary-two" text="Pular fazer apenas o padrão" />
+      <JFXButton fx:id="padraoButton" minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="386.0" styleClass="btn-primary-two" text="Pular e fazer apenas o padrao" />
    </children>
    <padding>
       <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
