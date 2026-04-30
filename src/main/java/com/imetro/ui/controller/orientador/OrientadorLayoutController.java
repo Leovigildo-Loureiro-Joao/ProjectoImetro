@@ -60,7 +60,7 @@ public class OrientadorLayoutController implements Initializable {
             new MenuEntry("dashboard", "Dashboard", RemixiconAL.LAYOUT_GRID_FILL),
             new MenuEntry("candidatos", "Candidatos", FontAwesomeSolid.SCHOOL),
             new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
-            new MenuEntry("bolsas", "Partlhar", FontAwesomeSolid.HAND_HOLDING_USD),
+            new MenuEntry("partilhar", "Partlhar", FontAwesomeSolid.SHARE),
             new MenuEntry("perfil", "Perfil", FontAwesomeSolid.USER),
             new MenuEntry("configuracao", "Configurações", RemixiconAL.FILE_SETTINGS_FILL),
             new MenuEntry("logout", "Logout", FontAwesomeSolid.SIGN_OUT_ALT)
@@ -117,7 +117,7 @@ public class OrientadorLayoutController implements Initializable {
                 case "candidatos" -> App.swapContent(contentHost, "views/pages/orientador/candidatos");
                 case "exame_adaptativo" -> openTestes();
                 case "relatorios" -> App.swapContent(contentHost, "views/pages/orientador/relatorios");
-                case "bolsas" -> App.swapContent(contentHost, "views/pages/orientador/bolsas");
+                case "partilhar" -> App.swapContent(contentHost, "views/pages/orientador/partilhar");
                 case "perfil" -> App.swapContent(contentHost, "views/pages/orientador/perfil");
                 case "configuracao" -> App.swapContent(contentHost, "views/pages/orientador/configuracao");
                 case "logout" -> logout();
