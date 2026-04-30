@@ -6,7 +6,7 @@ import java.util.ResourceBundle;
 
 import com.imetro.domain.dto.Topico;
 import com.imetro.services.CatalogoQuestoesService;
-import com.imetro.ui.components.DiagnosticoCard;
+import com.imetro.ui.components.diagnostico.DiagnosticoCard;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.event.ActionEvent;
@@ -19,6 +19,7 @@ public class DiagnosticoListController implements Initializable {
 
     @FXML
     private FlowPane diagnosticosPane;
+
 
     @FXML
     private JFXButton massButton;
@@ -37,16 +38,16 @@ public class DiagnosticoListController implements Initializable {
 
         diagnosticosPane.getChildren().clear();
         diagnosticosPane.getChildren().addAll(
-            criarCard("Matematica", "-6%", 0.50),
-            criarCard("Fisica", "+4%", 0.62),
-            criarCard("Quimica", "+1%", 0.58),
-            criarCard("Biologia", "-2%", 0.46),
-            criarCard("Portugues", "+7%", 0.71)
+            criarCard("Matematica", "-26%","-6%","-56%","-16%", 0.50),
+            criarCard("Fisica", "+24%", "+4%", "+14%", "+40%", 0.62),
+            criarCard("Quimica", "+8%","+1%","+4%","+5%", 0.58),
+            criarCard("Biologia", "5%","-2%","-8%","2%", 0.46),
+            criarCard("Portugues", "+12%","+9%","+14%","+17%", 0.71)
         );
         atualizarEstadoBotoes();
     }
 
-    private DiagnosticoCard criarCard(String disciplina, String variacao, double progresso) {
+    private DiagnosticoCard criarCard(String disciplina, String variacao,String variacaoTime, String variacaoAcer, String variacaoErr,double progresso) {
         Topico[] topicos = catalogoQuestoesService
             .carregarTopicosPorDisciplina(disciplina)
             .toArray(Topico[]::new);
@@ -54,6 +55,9 @@ public class DiagnosticoListController implements Initializable {
         return new DiagnosticoCard(
             disciplina,
             topicos,
+            variacaoAcer,
+            variacaoErr,
+            variacaoTime,
             variacao,
             progresso,
             param -> {

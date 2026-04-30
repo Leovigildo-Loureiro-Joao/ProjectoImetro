@@ -10,10 +10,10 @@ import java.util.ResourceBundle;
 import com.imetro.config.RuntimeConfig;
 import com.imetro.persistence.repository.UserRepository;
 import com.imetro.ui.components.CircleProgress;
-import com.imetro.ui.components.InsightCard;
-import com.imetro.ui.components.ReportCard;
-import com.imetro.ui.components.SectionTitle;
-import com.imetro.ui.components.TimelineStep;
+import com.imetro.ui.components.relatorio.InsightCard;
+import com.imetro.ui.components.relatorio.ReportCard;
+import com.imetro.ui.components.relatorio.SectionTitle;
+import com.imetro.ui.components.relatorio.TimelineStep;
 import com.imetro.util.Authentication;
 import com.imetro.util.ProfileSessionState;
 

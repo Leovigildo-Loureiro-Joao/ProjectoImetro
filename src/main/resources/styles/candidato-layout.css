@@ -2,108 +2,6 @@
 
 /* Estilos específicos do candidato que não estão no global */
 
-.sidebar-title {
-  -fx-text-fill: rgba(255, 255, 255, 0.92);
-  -fx-font-weight: 800;
-  -fx-font-size: 14px;
-  -fx-padding: 4 6 0 6;
-  -fx-letter-spacing: 0.6px;
-}
-
-.sidebar {
-  -fx-background-color: linear-gradient(
-      to bottom,
-      derive(-color-primary, -22%),
-      derive(-color-primary, 8%)
-    );
-}
-
-.nav-bar {
-  -fx-background-radius: 14;
-  -fx-padding: 8;
-  -fx-spacing: 12;
-  -fx-border-radius: 14;
-  -fx-border-width: 1;
-}
-
-.nav-bar.sub {
-  -fx-background-radius: 0;
-  -fx-padding: 4;
-}
-
-.nav-bar-pai {
-  -fx-background-color: #ffffff1a;
-  -fx-background-insets: 0;
-}
-
-.nav-bar .list-cell {
-  -fx-background-color: transparent;
-  -fx-padding: 10 12 10 12;
-  -fx-background-radius: 12;
-}
-
-.nav-bar.sub .list-cell{
-  -fx-padding: 0 12 0 12;
-  -fx-background-radius: 0;
-}
-
-
-.nav-bar .list-cell:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.10);
-}
-
-.nav-bar .list-cell:selected,
-.nav-bar .list-cell:selected:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.16);
-}
-
-.nav-bar .list-cell:filled:selected {
-  -fx-border-color: rgba(255, 255, 255, 0.22);
-  -fx-border-width: 1;
-  -fx-border-radius: 12;
-}
-
-.nav-bar.sub .list-cell:filled:selected {
-  -fx-border-color: rgba(255, 255, 255, 0.22);
-  -fx-border-width: 1;
-  -fx-border-radius: 0;
-}
-
-.item-cell {
-  -fx-padding: 2;
-  -fx-spacing: 12;
-  -fx-max-width: 150;
-}
-
-.sub .item-cell {
-  -fx-padding: 2;
-  -fx-spacing: 12;
-  -fx-max-width:300;
-  -fx-alignment: CENTER;
-}
-
-.nav-bar .list-cell:selected .item-cell Label {
-  -fx-text-fill: #ffffff;
-  -fx-font-weight: 800;
-}
-
-.nav-bar.sub .list-cell:selected .item-cell Label {
-  -fx-text-fill: -color-primary-dark;
-  -fx-font-weight: 800;
-}
-
-.nav-bar .list-cell:selected .item-cell .glyph-icon,
-.nav-bar .list-cell:selected .item-cell .ikonli-font-icon {
-  -fx-fill: -color-primary-contrast;
-  -fx-font-size: 10;
-}
-
-
-.nav-bar.sub .list-cell:selected .item-cell .glyph-icon,
-.nav-bar.sub .list-cell:selected .item-cell .ikonli-font-icon {
-  -fx-fill: -color-primary;
-  -fx-font-size: 10;
-}
 
 /* Placeholder pages */
 .placeholder-card {
@@ -366,7 +264,7 @@
     -fx-border-radius: 999;
     -fx-text-fill: -color-primary-dark;
     -fx-font-weight: 800;
-    -fx-padding: 6 0 0 0;
+    -fx-padding: 0 0 0 0;
 }
 
 .insight-row {
@@ -374,6 +272,10 @@
     -fx-background-radius: 14;
     -fx-border-color: rgba(226, 232, 240, 0.9);
     -fx-border-radius: 14;
+}
+
+.insight-row *{
+    -fx-wrap-text:true;
 }
 
 .timeline-pill {

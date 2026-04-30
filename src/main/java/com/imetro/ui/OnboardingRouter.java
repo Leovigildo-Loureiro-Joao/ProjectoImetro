@@ -29,12 +29,19 @@ public final class OnboardingRouter {
         }
     }
 
+        public static void OrientadorRoute(StackPane contentHost) {
+        try {
+           App.setRoot("views/layouts/OrientadorLayout");
+        } catch (Exception e) {
+        }
+    }
+
     public static void routeAfterAuth(StackPane contentHost) {
         if (contentHost == null) {
             return;
         }
         if (!RuntimeConfig.isDbEnabled()) {
-            CandidatoRoute(contentHost);
+            OrientadorRoute(contentHost);
             return;
         }
         

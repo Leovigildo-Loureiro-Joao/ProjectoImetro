@@ -1,5 +1,21 @@
 @import "global.css";
 
+@import "candidato-layout.css";
+
 .topbar-title {
   -fx-text-fill: -color-text;
+}
+
+
+.profile-avatar-shell.min{
+  -fx-pref-width:50;
+  -fx-max-width:50;
+  -fx-min-width:50;
+   -fx-pref-height:50;
+  -fx-max-height:50;
+  -fx-min-height:50;
+}
+
+.avatar-initials.avatar-initials-large.min{
+  -fx-font-size:18;
 }

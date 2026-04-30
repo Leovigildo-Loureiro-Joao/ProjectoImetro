@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.ResourceBundle;
 
+import com.imetro.App;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
@@ -102,6 +103,8 @@ public class DashboardOrientadoController implements Initializable {
 
     @FXML
     private StackPane sucesso;
+    @FXML
+    private VBox tela;
 
 
     private XYChart.Series<String,Integer> dificuldadesSeries;
@@ -120,12 +123,14 @@ public class DashboardOrientadoController implements Initializable {
 
     @FXML
     public void StartDiagnostic(javafx.event.ActionEvent event) {
-
+         StackPane contentHost=(StackPane)tela.getParent();
+        App.swapContent(contentHost, "views/pages/candidato/diagnostico");
     }
 
     @FXML
     public void StartExam(javafx.event.ActionEvent event) {
-
+        StackPane contentHost=(StackPane)tela.getParent();
+        App.swapContent(contentHost, "views/pages/candidato/testes");
     }
 
 

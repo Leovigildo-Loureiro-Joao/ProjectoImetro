@@ -70,7 +70,7 @@
                </children>
             </HBox>
 
-            <HBox spacing="14.0">
+            <HBox maxHeight="121.0" minHeight="86.0" prefHeight="103.0" prefWidth="1084.0" spacing="14.0">
                <children>
                   <VBox prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
                      <padding>
@@ -82,7 +82,7 @@
                         <Label fx:id="prontidaoText" styleClass="muted" text="Prontidao" wrapText="true" />
                      </children>
                   </VBox>
-                  <VBox prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
+                  <VBox prefHeight="102.0" prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
                      <padding>
                         <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                      </padding>

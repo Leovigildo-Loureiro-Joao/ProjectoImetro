@@ -40,7 +40,7 @@
             <children>
                <VBox fx:id="start" spacing="10.0">
                   <children>
-                     <ListView fx:id="sublist" orientation="HORIZONTAL" prefHeight="83.0" prefWidth="1125.0">
+                     <ListView fx:id="sublist" orientation="HORIZONTAL" prefHeight="112.0" prefWidth="1125.0">
                         <styleClass>
                            <String fx:value="nav-bar" />
                            <String fx:value="sub" />

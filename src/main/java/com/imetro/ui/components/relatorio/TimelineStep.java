@@ -1,4 +1,4 @@
-package com.imetro.ui.components;
+package com.imetro.ui.components.relatorio;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -14,7 +14,9 @@ public class TimelineStep extends HBox {
         Label actionLabel = new Label(action);
         actionLabel.getStyleClass().add("h3-thin-big");
         actionLabel.setWrapText(true);
-        
+        actionLabel.setPadding(new Insets(0, 0, 0, 5));
+        actionLabel.setMaxHeight(100);
+        actionLabel.setMinHeight(50);
         VBox content = new VBox(4, whenLabel, actionLabel);
         HBox.setHgrow(content, Priority.ALWAYS);
         

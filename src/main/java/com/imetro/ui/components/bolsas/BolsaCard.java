@@ -1,4 +1,4 @@
-package com.imetro.ui.components;
+package com.imetro.ui.components.bolsas;
 
 import com.imetro.domain.dto.BolsaMock;
 

@@ -1,4 +1,4 @@
-package com.imetro.ui.components;
+package com.imetro.ui.components.relatorio;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -17,6 +17,9 @@ public class ReportCard extends HBox{
         Label resumoLabel = new Label(resumo);
         resumoLabel.getStyleClass().add("muted");
         resumoLabel.setWrapText(true);
+        resumoLabel.setMaxWidth(200);
+        resumoLabel.setMinWidth(200);
+        
 
         VBox textBox = new VBox(4, tipoLabel, disciplinaLabel, resumoLabel);
         HBox.setHgrow(textBox, Priority.ALWAYS);

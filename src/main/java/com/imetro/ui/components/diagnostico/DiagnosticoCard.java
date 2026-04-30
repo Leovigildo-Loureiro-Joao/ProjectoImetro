@@ -1,17 +1,22 @@
-package com.imetro.ui.components;
+package com.imetro.ui.components.diagnostico;
 
 
 
 import java.util.ArrayList;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.ui.components.CircleProgress;
+import com.imetro.util.ImagePath;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
@@ -19,27 +24,63 @@ public class DiagnosticoCard extends VBox {
 
     private JFXCheckBox diciplina;
     private Label percentAcerto;
+    private Label variacaoErro;
+    private Label percentTempo;
+    private Label percentEvolucion;
     private CircleProgress progressBar;
     private Label titleDesc;
     private ArrayList<Topico> topicos=new ArrayList<>();
     private JFXButton diagnosticoButton;
+    private static final String bolt = "/com/imetro/assets/imgs/perc1.png";
+    private static final String time = "/com/imetro/assets/imgs/perc2.png";
+    private static final String evolution = "/com/imetro/assets/imgs/perc3.png";
+    private static final String erro = "/com/imetro/assets/imgs/perc4.png";
 
-    public DiagnosticoCard(String disciplina,Topico[]topico,String percent1,double percent,Callback<ArrayList<Topico>,Void> run,Runnable massa){
+    public DiagnosticoCard(String disciplina,Topico[]topico,String variacaoAcer,String variacaoErr,String variacaoTime,String variacao,double percent,Callback<ArrayList<Topico>,Void> run,Runnable massa){
         for (Topico topico2 : topico) {
             topicos.add(topico2);
         }
         this.diciplina=new JFXCheckBox(disciplina);
-        percentAcerto=new Label(percent1);
+        percentAcerto=new Label(variacaoAcer);
+        percentAcerto.getStyleClass().add("badge-new");
         progressBar=new CircleProgress(35, 35);
-        titleDesc=new Label("Último diagnóstico");
-
-        progressBar.setValue(percent);
         
+        titleDesc=new Label("Último diagnóstico");
+        diciplina.getStyleClass().add("h3-thin-big");
+        progressBar.setValue(percent);
+        progressBar.setTranslateY(-5);
         diagnosticoButton = new JFXButton("Fazer diagnóstico");
         diagnosticoButton.getStyleClass().add("btn-primary");
         diagnosticoButton.setDisable(true);
         
-        this.getChildren().addAll(diciplina,titleDesc,percentAcerto,progressBar,diagnosticoButton);
+        variacaoErro=new Label(variacaoErr);
+        variacaoErro.getStyleClass().add("badge-new");
+
+        percentEvolucion=new Label(variacao);
+        percentEvolucion.getStyleClass().add("badge-new");
+
+        percentTempo=new Label(variacaoTime);
+        percentTempo.getStyleClass().add("badge-new");
+        ImageView ptime=new ImageView(ImagePath.load(time));
+        ptime.setFitWidth(16);
+        ptime.setFitHeight(16);
+        ImageView perro=new ImageView(ImagePath.load(erro));
+        perro.setFitWidth(16);
+        perro.setFitHeight(16);
+        ImageView pevolution=new ImageView(ImagePath.load(evolution));
+        pevolution.setFitWidth(16);
+        pevolution.setFitHeight(16);
+        ImageView pbolt=new ImageView(ImagePath.load(bolt));
+        pbolt.setFitWidth(16);
+        pbolt.setFitHeight(16);
+
+        HBox p = new HBox(10,new VBox(5,percentTempo,ptime),new VBox(5,variacaoErro,perro),new VBox(5,percentAcerto,pbolt),new VBox(5,percentEvolucion,pevolution));
+        p.setAlignment(Pos.CENTER);
+        for (Object vb : p.getChildren().toArray()) {
+            VBox node=(VBox)vb;
+            node.setAlignment(Pos.CENTER); 
+        }
+        this.getChildren().addAll(diciplina,titleDesc,p,progressBar,diagnosticoButton);
         StyleConfig();
         Action(run);
          // Enable button only when checkbox is selected
@@ -58,13 +99,11 @@ public class DiagnosticoCard extends VBox {
         this.setMaxWidth(200);
         this.setMinWidth(200);
          //-----------------------
-        titleDesc.getStyleClass().add("card-title-secondary");
-        
+        titleDesc.getStyleClass().addAll("card-title-secondary","h3-thin-big");
         
         //------------------------
         diciplina.setMinWidth(150);
         diciplina.setPadding(new Insets(10, 10, 10, 10));
-        diciplina.setAlignment(Pos.CENTER);
         
         // Configure button
         diagnosticoButton.setMaxWidth(150);
