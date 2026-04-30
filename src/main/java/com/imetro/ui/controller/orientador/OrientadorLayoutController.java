@@ -28,15 +28,16 @@ import javafx.util.Duration;
 
 public class OrientadorLayoutController implements Initializable {
 
-   @FXML
+    @FXML
     private StackPane contentHost;
 
     @FXML
     private Label dbModeBanner;
 
-    @FXML 
+    @FXML
     private ListView<MenuEntry> menu;
-    @FXML 
+
+    @FXML
     private VBox sidebar;
 
     @Override
@@ -59,10 +60,10 @@ public class OrientadorLayoutController implements Initializable {
         menu.getItems().setAll(
             new MenuEntry("dashboard", "Dashboard", RemixiconAL.LAYOUT_GRID_FILL),
             new MenuEntry("candidatos", "Candidatos", FontAwesomeSolid.SCHOOL),
-            new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
-            new MenuEntry("partilhar", "Partlhar", FontAwesomeSolid.SHARE),
+            new MenuEntry("relatorios", "Relatorios", FontAwesomeSolid.CHART_LINE),
+            new MenuEntry("partilhar", "Partilhar", FontAwesomeSolid.SHARE),
             new MenuEntry("perfil", "Perfil", FontAwesomeSolid.USER),
-            new MenuEntry("configuracao", "Configurações", RemixiconAL.FILE_SETTINGS_FILL),
+            new MenuEntry("configuracao", "Configuracoes", RemixiconAL.FILE_SETTINGS_FILL),
             new MenuEntry("logout", "Logout", FontAwesomeSolid.SIGN_OUT_ALT)
         );
 
@@ -91,21 +92,30 @@ public class OrientadorLayoutController implements Initializable {
     }
 
     @FXML
-    private void PopPup(ActionEvent a){
-        Platform.runLater(() ->   {
+    private void PopPup(ActionEvent a) {
+        Platform.runLater(() -> {
             if (menu.getStyleClass().contains("min")) {
                 menu.getStyleClass().remove("min");
-            
+
                 Timeline p = new Timeline(
-                    new KeyFrame(Duration.seconds(.3), new KeyValue(sidebar.prefWidthProperty(),69),new KeyValue(sidebar.prefWidthProperty(),240)));
-                    p.play();
-            
-            }else{
+                    new KeyFrame(
+                        Duration.seconds(.3),
+                        new KeyValue(sidebar.prefWidthProperty(), 69),
+                        new KeyValue(sidebar.prefWidthProperty(), 240)
+                    )
+                );
+                p.play();
+
+            } else {
                 menu.getStyleClass().add("min");
                 Timeline p = new Timeline(
-                    new KeyFrame(Duration.seconds(.3), new KeyValue(sidebar.prefWidthProperty(),240),new KeyValue(sidebar.prefWidthProperty(),69)));
-                    p.play();
-                
+                    new KeyFrame(
+                        Duration.seconds(.3),
+                        new KeyValue(sidebar.prefWidthProperty(), 240),
+                        new KeyValue(sidebar.prefWidthProperty(), 69)
+                    )
+                );
+                p.play();
             }
         });
     }

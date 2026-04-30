@@ -9,309 +9,371 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox prefHeight="869.0" prefWidth="989.0" spacing="10" styleClass="page" stylesheets="@../../../../../styles/orientador-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<VBox prefWidth="1120.0" spacing="18.0" styleClass="page" stylesheets="@../../../../../styles/orientador-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
     <padding>
-        <Insets bottom="18" left="18" right="18" top="18" />
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
-    <Label styleClass="big-h1" text="Novamente juntos, " />
-    <Label styleClass="muted" text="Visão geral dos candidatos e progresso, com indicadores principais e alertas (MVP: placeholder)." wrapText="true" />
-   <HBox prefHeight="134.0" prefWidth="1102.0" spacing="20.0">
-      <children>
-         <VBox maxHeight="200.0" maxWidth="270.0" minWidth="0.0" prefHeight="118.0" prefWidth="249.0" HBox.hgrow="ALWAYS">
-            <padding>
-               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-            </padding>
-            <styleClass>
-               <String fx:value="stat-card" />
-               <String fx:value="card" />
-            </styleClass>
+    <children>
+        <HBox spacing="18.0">
             <children>
-               <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="20.0">
-                  <children>
-                     <Label prefHeight="17.0" prefWidth="177.0" styleClass="stat-label" text="CANDIDATOS" />
-                     <Region prefHeight="38.0" prefWidth="12.0" />
-                     <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../../../assets/imgs/graduate_60px.png" />
-                        </image>
-                     </ImageView>
-                  </children>
-               </HBox>
-               <Label fx:id="lblMediaGeral" styleClass="stat-value" text="0" />
-               <Label styleClass="stat-sub" text="das ultimas semanas" />
+                <VBox HBox.hgrow="ALWAYS" spacing="18.0" styleClass="mentor-hero-card">
+                    <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                    </padding>
+                    <children>
+                        <HBox spacing="10.0">
+                            <children>
+                                <Label styleClass="mentor-badge" text="Painel central" />
+                                <Label text="6 alertas para rever">
+                                    <styleClass>
+                                        <String fx:value="mentor-badge" />
+                                        <String fx:value="mentor-badge-warn" />
+                                    </styleClass>
+                                </Label>
+                            </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="18.0">
+                            <children>
+                                <VBox prefWidth="520.0" spacing="8.0">
+                                    <children>
+                                        <Label styleClass="big-h1" text="Central do orientador" />
+                                        <Label styleClass="mentor-copy" text="Leitura rapida da turma, prioridades do dia e sinais de acompanhamento para manter o ritmo dos candidatos." wrapText="true" />
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS" />
+                                <VBox alignment="CENTER_RIGHT" spacing="6.0">
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Indice de acompanhamento" />
+                                        <Label styleClass="mentor-hero-score" text="92%" />
+                                        <Label styleClass="muted" text="turma em ritmo saudavel" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <HBox spacing="14.0">
+                            <children>
+                                <VBox prefWidth="180.0" spacing="4.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Candidatos activos" />
+                                        <Label styleClass="mentor-inline-value" text="48" />
+                                        <Label styleClass="muted" text="37 com progresso acima da meta" wrapText="true" />
+                                    </children>
+                                </VBox>
+                                <VBox prefWidth="180.0" spacing="4.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Relatorios pendentes" />
+                                        <Label styleClass="mentor-inline-value" text="12" />
+                                        <Label styleClass="muted" text="4 precisam de resposta ate amanha" wrapText="true" />
+                                    </children>
+                                </VBox>
+                                <VBox prefWidth="180.0" spacing="4.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Partilhas da semana" />
+                                        <Label styleClass="mentor-inline-value" text="29" />
+                                        <Label styleClass="muted" text="resumos enviados para candidatos e encarregados" wrapText="true" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox prefWidth="310.0" spacing="12.0" styleClass="mentor-panel-card">
+                    <padding>
+                        <Insets bottom="22.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-section-title" text="Prioridades do dia" />
+                        <Label styleClass="mentor-copy" text="Tarefas com mais impacto imediato na turma." wrapText="true" />
+                        <VBox spacing="10.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Feedback rapido" />
+                                <Label styleClass="h1-thin" text="Responder relatorio de Matematica A" />
+                                <Label styleClass="muted" text="Aluno Joao Mario esta com quebra de precisao nas questoes longas." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Contacto recomendado" />
+                                <Label styleClass="h1-thin" text="Partilhar resumo semanal da turma B" />
+                                <Label styleClass="muted" text="Ha 3 candidatos com melhoria forte que merecem reforco positivo." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Cobertura" />
+                                <Label styleClass="h1-thin" text="Reforcar Fisica no grupo 3" />
+                                <Label styleClass="muted" text="O bloco de dinamica continua com pouca adesao e precisa de nova orientacao." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <JFXButton prefHeight="40.0" prefWidth="260.0" styleClass="btn-primary" text="Abrir fila de acompanhamento" />
+                    </children>
+                </VBox>
             </children>
-         </VBox>
-         <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="134.0" prefWidth="203.0" HBox.hgrow="ALWAYS">
-            <padding>
-               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-            </padding>
-            <styleClass>
-               <String fx:value="stat-card" />
-               <String fx:value="card" />
-            </styleClass>
+        </HBox>
+
+        <HBox spacing="18.0">
             <children>
-               <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="20.0">
-                  <children>
-                     <Label prefHeight="17.0" prefWidth="171.0" styleClass="stat-label" text="TOTAL DE RELATORIOS" />
-                     <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../../../assets/imgs/repository_30px.png" />
-                        </image>
-                     </ImageView>
-                  </children>
-               </HBox>
-               <Label fx:id="lblTotalTestes" styleClass="stat-value" text="0" />
-               <Label styleClass="stat-sub" text="diagnósticos realizados" />
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Media da turma" />
+                        <Label styleClass="mentor-stat-value" text="81%" />
+                        <Label styleClass="mentor-stat-sub" text="Subida de 7 pontos nas ultimas duas semanas" wrapText="true" />
+                    </children>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Intervencoes activas" />
+                        <Label styleClass="mentor-stat-value" text="14" />
+                        <Label styleClass="mentor-stat-sub" text="Planos curtos em execucao com candidatos de risco moderado" wrapText="true" />
+                    </children>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Disciplinas cobertas" />
+                        <Label styleClass="mentor-stat-value" text="9/11" />
+                        <Label styleClass="mentor-stat-sub" text="Quimica e Biologia ainda precisam de reforco de orientacao" wrapText="true" />
+                    </children>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Tempo medio de resposta" />
+                        <Label styleClass="mentor-stat-value" text="18h" />
+                        <Label styleClass="mentor-stat-sub" text="Abaixo da meta interna de 24 horas por relatorio" wrapText="true" />
+                    </children>
+                </VBox>
             </children>
-         </VBox>
-         <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="134.0" prefWidth="213.0" HBox.hgrow="ALWAYS">
-            <padding>
-               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-            </padding>
-            <styleClass>
-               <String fx:value="stat-card" />
-               <String fx:value="card-blur" />
-            </styleClass>
+        </HBox>
+
+        <HBox spacing="18.0">
             <children>
-               <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="12.0">
-                  <children>
-                     <Label prefHeight="17.0" prefWidth="187.0" styleClass="stat-label" text="PROGRESSO ESTUDANTIL" />
-                     <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../../../assets/imgs/brain_24px.png" />
-                        </image>
-                     </ImageView>
-                  </children>
-               </HBox>
-               <Label fx:id="lblMelhorPontuacao" styleClass="stat-value" text="0%" />
-               <Label fx:id="lblMelhorDisciplina" styleClass="stat-sub" text="-" />
+                <VBox HBox.hgrow="ALWAYS" spacing="14.0" styleClass="mentor-panel-card">
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <children>
+                                <Label styleClass="mentor-section-title" text="Candidatos em destaque" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="mentor-badge" text="3 perfis para seguir de perto" />
+                            </children>
+                        </HBox>
+                        <HBox spacing="12.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <StackPane styleClass="profile-avatar-shell min">
+                                    <children>
+                                        <Label text="LM">
+                                            <styleClass>
+                                                <String fx:value="avatar-initials" />
+                                                <String fx:value="avatar-initials-large" />
+                                                <String fx:value="min" />
+                                            </styleClass>
+                                        </Label>
+                                    </children>
+                                </StackPane>
+                                <VBox HBox.hgrow="ALWAYS" spacing="8.0">
+                                    <children>
+                                        <Label styleClass="h1-thin" text="Leovigildo Macedo" />
+                                        <Label styleClass="muted" text="Matematica, Fisica e Logica aplicada" wrapText="true" />
+                                        <ProgressBar progress="0.86">
+                                            <styleClass>
+                                                <String fx:value="mentor-progress" />
+                                                <String fx:value="mentor-progress-good" />
+                                            </styleClass>
+                                        </ProgressBar>
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <Label styleClass="mentor-chip" text="Progresso alto" />
+                                                <Label text="Relatorio enviado">
+                                                    <styleClass>
+                                                        <String fx:value="mentor-chip" />
+                                                        <String fx:value="mentor-chip-muted" />
+                                                    </styleClass>
+                                                </Label>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <HBox spacing="12.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <StackPane styleClass="profile-avatar-shell min">
+                                    <children>
+                                        <Label text="AP">
+                                            <styleClass>
+                                                <String fx:value="avatar-initials" />
+                                                <String fx:value="avatar-initials-large" />
+                                                <String fx:value="min" />
+                                            </styleClass>
+                                        </Label>
+                                    </children>
+                                </StackPane>
+                                <VBox HBox.hgrow="ALWAYS" spacing="8.0">
+                                    <children>
+                                        <Label styleClass="h1-thin" text="Ana Paula Costa" />
+                                        <Label styleClass="muted" text="Quimica e Biologia com recuperacao continua" wrapText="true" />
+                                        <ProgressBar progress="0.63" styleClass="mentor-progress mentor-progress-warn" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <Label text="Rever ritmo">
+                                                    <styleClass>
+                                                        <String fx:value="mentor-chip" />
+                                                        <String fx:value="mentor-badge-warn" />
+                                                    </styleClass>
+                                                </Label>
+                                                <Label text="Precisa de contacto">
+                                                    <styleClass>
+                                                        <String fx:value="mentor-chip" />
+                                                        <String fx:value="mentor-chip-muted" />
+                                                    </styleClass>
+                                                </Label>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <HBox spacing="12.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <StackPane styleClass="profile-avatar-shell min">
+                                    <children>
+                                        <Label text="JS">
+                                            <styleClass>
+                                                <String fx:value="avatar-initials" />
+                                                <String fx:value="avatar-initials-large" />
+                                                <String fx:value="min" />
+                                            </styleClass>
+                                        </Label>
+                                    </children>
+                                </StackPane>
+                                <VBox HBox.hgrow="ALWAYS" spacing="8.0">
+                                    <children>
+                                        <Label styleClass="h1-thin" text="Joao Sebastiao" />
+                                        <Label styleClass="muted" text="Recuperou consistencia, mas ainda hesita em testes com tempo curto" wrapText="true" />
+                                        <ProgressBar progress="0.74" styleClass="mentor-progress" />
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <Label styleClass="mentor-chip" text="Acompanhamento medio" />
+                                                <Label text="Partilha preparada">
+                                                    <styleClass>
+                                                        <String fx:value="mentor-chip" />
+                                                        <String fx:value="mentor-chip-muted" />
+                                                    </styleClass>
+                                                </Label>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox prefWidth="360.0" spacing="18.0">
+                    <children>
+                        <VBox spacing="14.0" styleClass="mentor-panel-card">
+                            <padding>
+                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-section-title" text="Cobertura de disciplinas" />
+                                <Label styleClass="mentor-copy" text="Leitura simples das frentes mais acompanhadas neste ciclo." wrapText="true" />
+                                <VBox spacing="12.0" styleClass="mentor-surface">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="h3-thin-big" text="Matematica" />
+                                        <ProgressBar progress="0.91" styleClass="mentor-progress mentor-progress-good" />
+                                        <Label styleClass="muted" text="Boa presenca e retorno rapido dos candidatos." wrapText="true" />
+                                    </children>
+                                </VBox>
+                                <VBox spacing="12.0" styleClass="mentor-surface">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="h3-thin-big" text="Fisica" />
+                                        <ProgressBar progress="0.68" styleClass="mentor-progress mentor-progress-warn" />
+                                        <Label styleClass="muted" text="Turma precisa de mais checkpoints de revisao." wrapText="true" />
+                                    </children>
+                                </VBox>
+                                <VBox spacing="12.0" styleClass="mentor-surface">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="h3-thin-big" text="Biologia" />
+                                        <ProgressBar progress="0.47" styleClass="mentor-progress mentor-progress-danger" />
+                                        <Label styleClass="muted" text="Necessita de novo bloco de orientacao e redistribuicao." wrapText="true" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                        <VBox spacing="14.0" styleClass="mentor-panel-card">
+                            <padding>
+                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-section-title" text="Actividade recente" />
+                                <Label styleClass="mentor-copy" text="Volume de interaccoes, relatorios e respostas ao longo da semana." wrapText="true" />
+                                <AreaChart animated="false" createSymbols="false" legendVisible="false" prefHeight="260.0" styleClass="mentor-chart">
+                                    <xAxis>
+                                        <CategoryAxis />
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis autoRanging="false" lowerBound="0.0" tickUnit="20.0" upperBound="100.0" />
+                                    </yAxis>
+                                </AreaChart>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
             </children>
-         </VBox>
-         <VBox maxHeight="200.0" maxWidth="250.0" minWidth="0.0" prefHeight="266.0" prefWidth="207.0" HBox.hgrow="ALWAYS">
-            <padding>
-               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-            </padding>
-            <styleClass>
-               <String fx:value="stat-card" />
-               <String fx:value="card-blur" />
-            </styleClass>
-            <children>
-               <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="203.0" spacing="10.0">
-                  <children>
-                     <Label prefHeight="30.0" prefWidth="150.0" styleClass="stat-label" text="RELATORIOS NAO LIDAS" wrapText="true" />
-                     <Region prefHeight="38.0" prefWidth="12.0" />
-                     <ImageView fitHeight="38.0" fitWidth="81.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../../../assets/imgs/layers_30px.png" />
-                        </image>
-                     </ImageView>
-                  </children>
-               </HBox>
-               <Label fx:id="lblPiorPontuacao" styleClass="stat-value" text="0%" />
-               <Label fx:id="lblPiorDisciplina" styleClass="stat-sub" text="-" />
-            </children>
-         </VBox>
-      </children>
-   </HBox>
-   <HBox prefHeight="646.0" prefWidth="953.0" spacing="20.0">
-      <children>
-         <VBox prefHeight="619.0" prefWidth="441.0" spacing="10.0" styleClass="card">
-            <children>
-               <Label prefHeight="31.0" prefWidth="357.0" styleClass="h3-thin-big" text="LISTA DOS MELHORES ALUNOS" />
-               <Separator prefWidth="200.0">
-                  <VBox.margin>
-                     <Insets bottom="10.0" />
-                  </VBox.margin>
-               </Separator>
-               <HBox prefHeight="182.0" prefWidth="419.0" spacing="10.0" styleClass="insight-row">
-                  <children>
-                     <StackPane minHeight="143.0" minWidth="127.0" prefHeight="143.0" prefWidth="127.0">
-                        <children>
-                           <ImageView fx:id="avatarImage" fitHeight="101.0" fitWidth="104.0" managed="false" pickOnBounds="true" preserveRatio="true" visible="false" />
-                           <Label fx:id="avatarInitialsLabel" text="AA">
-                              <styleClass>
-                                 <String fx:value="avatar-initials" />
-                                 <String fx:value="avatar-initials-large" />
-                                 <String fx:value="min" />
-                              </styleClass>
-                           </Label>
-                        </children>
-                        <styleClass>
-                           <String fx:value="profile-avatar-shell" />
-                           <String fx:value="min" />
-                        </styleClass>
-                     </StackPane>
-                     <VBox prefHeight="170.0" prefWidth="317.0" spacing="10.0">
-                        <children>
-                           <Label styleClass="h3-thin" text="Nome: Leovigilfo joao" />
-                           <Label styleClass="h3-thin" text="Disciplinas" />
-                           <FlowPane hgap="10.0" prefHeight="45.0" prefWidth="317.0" vgap="10.0">
-                              <children>
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                              </children>
-                           </FlowPane>
-                           <Label styleClass="h3-thin" text="Desempenho" />
-                           <ProgressBar prefHeight="27.0" prefWidth="307.0" progress="0.72" />
-                        </children>
-                     </VBox>
-                  </children>
-                  <padding>
-                     <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-                  </padding>
-               </HBox>
-               <HBox spacing="10.0" styleClass="insight-row">
-                  <children>
-                     <StackPane minHeight="143.0" minWidth="127.0" prefHeight="143.0" prefWidth="127.0">
-                        <children>
-                           <ImageView fx:id="avatarImage1" fitHeight="101.0" fitWidth="104.0" managed="false" pickOnBounds="true" preserveRatio="true" visible="false" />
-                           <Label fx:id="avatarInitialsLabel1" text="AA">
-                              <styleClass>
-                                 <String fx:value="avatar-initials" />
-                                 <String fx:value="avatar-initials-large" />
-                                 <String fx:value="min" />
-                              </styleClass>
-                           </Label>
-                        </children>
-                        <styleClass>
-                           <String fx:value="profile-avatar-shell" />
-                           <String fx:value="min" />
-                        </styleClass>
-                     </StackPane>
-                     <VBox prefHeight="170.0" prefWidth="317.0" spacing="10.0">
-                        <children>
-                           <Label styleClass="h3-thin" text="Nome: Leovigilfo joao" />
-                           <Label styleClass="h3-thin" text="Disciplinas" />
-                           <FlowPane hgap="10.0" vgap="10.0">
-                              <children>
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                              </children>
-                           </FlowPane>
-                           <Label styleClass="h3-thin" text="Desempenho" />
-                           <ProgressBar prefHeight="12.0" prefWidth="307.0" progress="0.52" />
-                        </children>
-                     </VBox>
-                  </children>
-                  <padding>
-                     <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-                  </padding>
-               </HBox>
-               <HBox spacing="10.0" styleClass="insight-row">
-                  <children>
-                     <StackPane minHeight="143.0" minWidth="127.0" prefHeight="143.0" prefWidth="127.0">
-                        <children>
-                           <ImageView fx:id="avatarImage2" fitHeight="101.0" fitWidth="104.0" managed="false" pickOnBounds="true" preserveRatio="true" visible="false" />
-                           <Label fx:id="avatarInitialsLabel2" text="AA">
-                              <styleClass>
-                                 <String fx:value="avatar-initials" />
-                                 <String fx:value="avatar-initials-large" />
-                                 <String fx:value="min" />
-                              </styleClass>
-                           </Label>
-                        </children>
-                        <styleClass>
-                           <String fx:value="profile-avatar-shell" />
-                           <String fx:value="min" />
-                        </styleClass>
-                     </StackPane>
-                     <VBox prefHeight="170.0" prefWidth="317.0" spacing="10.0">
-                        <children>
-                           <Label styleClass="h3-thin" text="Nome: Leovigilfo joao" />
-                           <Label styleClass="h3-thin" text="Disciplinas" />
-                           <FlowPane hgap="10.0" vgap="10.0">
-                              <children>
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                                 <Label styleClass="badge-test" text="Disciplinas" />
-                              </children>
-                           </FlowPane>
-                           <Label styleClass="h3-thin" text="Desempenho" />
-                           <ProgressBar prefHeight="12.0" prefWidth="307.0" progress="0.31" />
-                        </children>
-                     </VBox>
-                  </children>
-                  <padding>
-                     <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-                  </padding>
-               </HBox>
-            </children>
-            <padding>
-               <Insets bottom="10.0" left="10.0" right="10.0" top="20.0" />
-            </padding>
-         </VBox>
-         <VBox prefHeight="633.0" prefWidth="515.0" spacing="20.0">
-            <children>
-               <HBox prefHeight="251.0" prefWidth="504.0" styleClass="card">
-                  <children>
-                     <VBox spacing="10.0">
-                        <children>
-                           <Label prefHeight="19.0" prefWidth="357.0" styleClass="h3-thin-big" text="ORIENTE MAS UMA DISCIPLINA" />
-                           <Separator prefHeight="0.0" prefWidth="482.0" />
-                           <HBox prefHeight="151.0" prefWidth="482.0" spacing="10.0">
-                              <children>
-                                 <TableView prefHeight="123.0" prefWidth="463.0">
-                                   <columns>
-                                     <TableColumn prefWidth="181.0" text="ORIENTADAS" />
-                                     <TableColumn prefWidth="187.0" text="SEM ORIENTADOR" />
-                                   </columns>
-                                 </TableView>
-                              </children>
-                           </HBox>
-                           <HBox alignment="CENTER">
-                              <children>
-                                 <JFXButton prefHeight="35.0" prefWidth="342.0" style="-fx-background-radius: 999;" styleClass="btn-primary-two" text="SELECIONAR NOVA DISCIPLINA PARA ORIENTAR" />
-                              </children>
-                           </HBox>
-                        </children>
-                        <padding>
-                           <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                        </padding>
-                     </VBox>
-                  </children>
-               </HBox>
-               <HBox prefHeight="316.0" prefWidth="504.0" styleClass="card">
-                  <children>
-                     <VBox spacing="10.0">
-                        <children>
-                           <Label style="-fx-text-fill: -color-muted;" styleClass="h1-thin" text="Actividades Recente" />
-                           <Separator prefHeight="5.0" prefWidth="455.0" />
-                           <AreaChart fx:id="areaActivityChart" prefHeight="345.0" prefWidth="502.0" styleClass="area-demo">
-                              <xAxis>
-                                 <CategoryAxis side="BOTTOM" />
-                              </xAxis>
-                              <yAxis>
-                                 <NumberAxis side="LEFT" />
-                              </yAxis>
-                           </AreaChart>
-                        </children>
-                        <padding>
-                           <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                        </padding>
-                     </VBox>
-                  </children>
-               </HBox>
-            </children>
-         </VBox>
-      </children>
-      <VBox.margin>
-         <Insets bottom="10.0" top="10.0" />
-      </VBox.margin>
-   </HBox>
+        </HBox>
+    </children>
 </VBox>

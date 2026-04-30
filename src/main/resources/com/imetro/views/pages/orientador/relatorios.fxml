@@ -1,15 +1,307 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1"
-      spacing="10" styleClass="page" stylesheets="@../../../../../styles/orientador-layout.css">
+<VBox prefWidth="1120.0" spacing="18.0" styleClass="page" stylesheets="@../../../../../styles/orientador-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
     <padding>
-        <Insets top="18" right="18" bottom="18" left="18" />
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
-    <Label text="Relatórios (Orientador)" styleClass="h1" />
-    <Label text="Relatórios minuciosos com erros mais notáveis, evolução e recomendações sugeridas pelo sistema para validação do orientador (MVP: placeholder)."
-           wrapText="true" styleClass="muted" />
+    <children>
+        <HBox alignment="CENTER_LEFT" spacing="14.0">
+            <children>
+                <VBox spacing="6.0">
+                    <children>
+                        <Label styleClass="big-h1" text="Relatorios" />
+                        <Label styleClass="mentor-copy" text="Leitura orientada dos sinais da turma, com destaques, riscos e proximas accoes sugeridas para validacao." wrapText="true" />
+                    </children>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Label styleClass="mentor-badge" text="Panorama semanal" />
+            </children>
+        </HBox>
+
+        <HBox spacing="18.0">
+            <children>
+                <VBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="mentor-hero-card">
+                    <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Leitura global do ciclo" />
+                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                            <children>
+                                <VBox spacing="8.0">
+                                    <children>
+                                        <Label styleClass="mentor-hero-score" text="84%" />
+                                        <Label styleClass="mentor-copy" text="A turma mostra progresso firme em precisao e consistencia, com maior necessidade de apoio em fisica e biologia." wrapText="true" />
+                                    </children>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS" />
+                                <VBox spacing="10.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Confianca media" />
+                                        <Label styleClass="mentor-inline-value" text="Alta" />
+                                        <Label styleClass="muted" text="baseada nos ultimos 6 ciclos de pratica" wrapText="true" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <HBox spacing="12.0">
+                            <children>
+                                <VBox prefWidth="170.0" spacing="4.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Acerto medio" />
+                                        <Label styleClass="mentor-inline-value" text="84%" />
+                                    </children>
+                                </VBox>
+                                <VBox prefWidth="170.0" spacing="4.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Tempo medio" />
+                                        <Label styleClass="mentor-inline-value" text="42s" />
+                                    </children>
+                                </VBox>
+                                <VBox prefWidth="170.0" spacing="4.0" styleClass="mentor-inline-metric">
+                                    <padding>
+                                        <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="mentor-stat-label" text="Foco actual" />
+                                        <Label styleClass="mentor-inline-value" text="Algebra" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox prefWidth="310.0" spacing="12.0" styleClass="mentor-panel-card">
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-section-title" text="Pontos a validar" />
+                        <VBox spacing="10.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Fisica" />
+                                <Label styleClass="h1-thin" text="Queda no rendimento de questoes com duas etapas" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Biologia" />
+                                <Label styleClass="h1-thin" text="Baixa participacao nos blocos de revisao" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-surface">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Turma B" />
+                                <Label styleClass="h1-thin" text="Pedidos repetidos de exemplos guiados antes do teste" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <HBox spacing="18.0">
+            <children>
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Relatorios gerados" />
+                        <Label styleClass="mentor-stat-value" text="36" />
+                        <Label styleClass="mentor-stat-sub" text="8 ainda aguardam resposta final do orientador." wrapText="true" />
+                    </children>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Melhor frente" />
+                        <Label styleClass="mentor-stat-value" text="Matematica" />
+                        <Label styleClass="mentor-stat-sub" text="Subida sustentada em precisao e resolucao com autonomia." wrapText="true" />
+                    </children>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="mentor-stat-card">
+                    <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-stat-label" text="Maior risco actual" />
+                        <Label styleClass="mentor-stat-value" text="Biologia" />
+                        <Label styleClass="mentor-stat-sub" text="Baixo ritmo, pouca adesao e necessidade de nova estrategia de acompanhamento." wrapText="true" />
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <HBox spacing="18.0">
+            <children>
+                <VBox HBox.hgrow="ALWAYS" spacing="14.0" styleClass="mentor-panel-card">
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-section-title" text="Relatorios da semana" />
+                        <VBox spacing="12.0" styleClass="mentor-report-card">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <Label styleClass="h1-thin" text="Relatorio de turma - Matematica A" />
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Label styleClass="mentor-badge" text="Concluido" />
+                                    </children>
+                                </HBox>
+                                <Label styleClass="muted" text="Resumo com melhoria de precisao, mais seguranca em funcoes e queda nas questoes de texto." wrapText="true" />
+                                <ProgressBar progress="0.89" styleClass="mentor-progress mentor-progress-good" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="12.0" styleClass="mentor-report-card">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <Label styleClass="h1-thin" text="Relatorio individual - Ana Carolina" />
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Label text="Rever hoje">
+                                            <styleClass>
+                                                <String fx:value="mentor-badge" />
+                                                <String fx:value="mentor-badge-warn" />
+                                            </styleClass>
+                                        </Label>
+                                    </children>
+                                </HBox>
+                                <Label styleClass="muted" text="Sinais de baixa constancia em Quimica e atraso no retorno das tarefas." wrapText="true" />
+                                <ProgressBar progress="0.58" styleClass="mentor-progress mentor-progress-warn" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="12.0" styleClass="mentor-report-card">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <Label styleClass="h1-thin" text="Resumo geral - Turma B" />
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Label text="Risco">
+                                            <styleClass>
+                                                <String fx:value="mentor-badge" />
+                                                <String fx:value="mentor-badge-danger" />
+                                            </styleClass>
+                                        </Label>
+                                    </children>
+                                </HBox>
+                                <Label styleClass="muted" text="A turma responde bem a exercicios curtos, mas continua a quebrar em blocos longos com tempo." wrapText="true" />
+                                <ProgressBar progress="0.42" styleClass="mentor-progress mentor-progress-danger" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <VBox prefWidth="320.0" spacing="14.0" styleClass="mentor-panel-card">
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-section-title" text="Sinais mais repetidos" />
+                        <VBox spacing="10.0" styleClass="mentor-note-card">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Padrao 01" />
+                                <Label styleClass="h1-thin" text="Boa precisao em treino guiado, baixa transferencia para prova cronometrada." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-note-card">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Padrao 02" />
+                                <Label styleClass="h1-thin" text="Picos de rendimento apos feedback rapido e queda quando o contacto demora." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-note-card">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="Padrao 03" />
+                                <Label styleClass="h1-thin" text="Turmas com checkpoints curtos mantem consistencia mais alta na semana." wrapText="true" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <VBox prefWidth="320.0" spacing="14.0" styleClass="mentor-panel-card">
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <Label styleClass="mentor-section-title" text="Accoes sugeridas" />
+                        <VBox spacing="10.0" styleClass="mentor-share-step">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="01" />
+                                <Label styleClass="h1-thin" text="Enviar resumo curto da turma B com foco em reforco positivo." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-share-step">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="02" />
+                                <Label styleClass="h1-thin" text="Marcar revisao guiada de Fisica com questoes de duas etapas." wrapText="true" />
+                            </children>
+                        </VBox>
+                        <VBox spacing="10.0" styleClass="mentor-share-step">
+                            <padding>
+                                <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="mentor-stat-label" text="03" />
+                                <Label styleClass="h1-thin" text="Redistribuir Biologia para garantir contacto mais frequente durante a semana." wrapText="true" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+    </children>
 </VBox>
