@@ -12,6 +12,8 @@ public record ProgressoAlunoDisciplinaDto(
     UUID id,
     UUID alunoId,
     UUID disciplinaId,
+    String disciplina,
+    float progresso,
     NivelDisciplina nivelAtual,
     NivelDisciplina nivelAnterior,
     LocalDate dataMudancaNivel,
@@ -20,8 +22,8 @@ public record ProgressoAlunoDisciplinaDto(
     Integer totalAcertos,
     Integer totalErros,
     Double taxaAcertoGeral,
-    UUID[] ultimos3DiagnosticosAcertos,
-    UUID[] ultimos3DiagnosticosTotal,
+    Integer[] ultimos3DiagnosticosAcertos,
+    Integer[] ultimos3DiagnosticosTotal,
     LocalDateTime ultimoEstudo,
     Integer diasSemEstudo,
     Integer streakDiasConsecutivos,
@@ -47,12 +49,6 @@ public record ProgressoAlunoDisciplinaDto(
         }
         if (taxaAcertoGeral == null) {
             taxaAcertoGeral = 0.0;
-        }
-        if (ultimos3DiagnosticosAcertos == null) {
-            ultimos3DiagnosticosTotal = new UUID[3];
-        }
-        if (ultimos3DiagnosticosTotal == null) {
-            ultimos3DiagnosticosTotal = new UUID[3];
         }
         if (diasSemEstudo == null) {
             diasSemEstudo = 0;
@@ -98,13 +94,18 @@ public record ProgressoAlunoDisciplinaDto(
         map.put("total_acertos", this.totalAcertos);
         map.put("total_erros", this.totalErros);
         map.put("taxa_acerto_geral", this.taxaAcertoGeral);
-        map.put("ultimos_3_diagnosticos_acertos", this.ultimos3DiagnosticosAcertos);
-        map.put("ultimos_3_diagnosticos_total", this.ultimos3DiagnosticosTotal);
         map.put("ultimo_estudo", this.ultimoEstudo);
         map.put("dias_sem_estudo", this.diasSemEstudo);
         map.put("streak_dias_consecutivos", this.streakDiasConsecutivos);
         map.put("criado_em", this.criadoEm);
         map.put("atualizado_em", this.atualizadoEm);
+
+        if (this.ultimos3DiagnosticosAcertos != null) {
+            map.put("ultimos_3_diagnosticos_acertos", this.ultimos3DiagnosticosAcertos);
+        }
+        if (this.ultimos3DiagnosticosTotal != null) {
+            map.put("ultimos_3_diagnosticos_total", this.ultimos3DiagnosticosTotal);
+        }
         
         return map;
     }

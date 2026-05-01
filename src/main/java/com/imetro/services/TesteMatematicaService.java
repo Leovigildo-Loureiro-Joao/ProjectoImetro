@@ -3,12 +3,13 @@ package com.imetro.services;
 import java.util.List;
 
 import com.imetro.ui.model.Questao;
+import com.imetro.util.Authentication;
 
 public class TesteMatematicaService {
 
-    private final CatalogoQuestoesService catalogoQuestoesService = new CatalogoQuestoesService();
+    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
 
     public List<Questao> carregarQuestoes() {
-        return catalogoQuestoesService.carregarQuestoes();
+        return diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId());
     }
 }

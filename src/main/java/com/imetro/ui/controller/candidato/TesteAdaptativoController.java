@@ -12,6 +12,7 @@ import com.imetro.App;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.TesteCard;
@@ -20,6 +21,7 @@ import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.TopicModalController;
+import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
 import com.jfoenix.controls.JFXButton;
@@ -39,8 +41,13 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 import javafx.util.Duration;
 
 public class TesteAdaptativoController implements DisposableController, TesteAdaptativoCoordinator.TesteHost {
@@ -109,6 +116,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private int segundos = 0;
     private int minutos = 0;
     private TesteAdaptativoService service;
+    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private String disciplinaSelecionada;
     private FXMLLoader modFxml;
     private ModalController cont;
@@ -123,12 +131,61 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         service = new TesteAdaptativoService();
         disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
 
-        carregarDisciplinas();
+        if (diagnosticoService.temHistoricoDiagnostico(Authentication.getCurrentUserId())) {
+            carregarDisciplinas();
+        } else {
+            carregarBloqueioPrimeiroDiagnostico();
+        }
 
         feedbackContainer.setVisible(false);
         testeContainer.setVisible(false);
         start.setVisible(true);
         atualizarIndicadoresNivel();
+    }
+
+    private void carregarBloqueioPrimeiroDiagnostico() {
+        botoesDisciplinasBox.getChildren().clear();
+
+        Label badge = new Label("Fluxo inicial");
+        badge.getStyleClass().add("diagnostico-first-badge");
+
+        Label titulo = new Label("Fazer primeiro diagnostico");
+        titulo.getStyleClass().add("diagnostico-first-title");
+
+        Label descricao = new Label(
+            "O exame adaptativo abre depois do primeiro diagnostico real. Assim o sistema aprende o teu ponto de partida antes de subir a dificuldade."
+        );
+        descricao.getStyleClass().add("diagnostico-card-summary");
+        descricao.setWrapText(true);
+
+        Label apoio = new Label(
+            "Vai ao diagnostico, escolhe os topicos e conclui a primeira rodada. Depois desta etapa, os testes ficam liberados aqui."
+        );
+        apoio.getStyleClass().add("diagnostico-card-note");
+        apoio.setWrapText(true);
+
+        JFXButton iniciar = new JFXButton("Ir para o primeiro diagnostico");
+        iniciar.getStyleClass().addAll("btn-primary", "diagnostico-first-action");
+        iniciar.setOnAction(event -> {
+            StackPane contentHost = testeField == null || testeField.getScene() == null
+                ? null
+                : (StackPane) testeField.getScene().lookup("#contentHost");
+            if (contentHost != null) {
+                App.swapContent(contentHost, "views/pages/candidato/diagnostico");
+            }
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox topo = new HBox(12, titulo, spacer, badge);
+        topo.setAlignment(Pos.CENTER_LEFT);
+
+        VBox card = new VBox(16, topo, descricao, apoio, iniciar);
+        card.getStyleClass().addAll("placeholder-card", "diagnostico-first-card");
+        card.setPadding(new Insets(22));
+        card.setAlignment(Pos.CENTER_LEFT);
+
+        botoesDisciplinasBox.getChildren().add(card);
     }
 
     private void carregarDisciplinas() {

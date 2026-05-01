@@ -500,3 +500,204 @@
     -fx-border-color: rgba(14, 165, 233, 0.24);
     -fx-text-fill: #0369a1;
 }
+
+.diagnostico-card {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.99),
+        rgba(248, 250, 252, 0.97)
+    );
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(226, 232, 240, 0.96);
+    -fx-border-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 18, 0.14, 0, 6);
+}
+
+.diagnostico-card-active {
+    -fx-border-color: rgba(59, 130, 246, 0.45);
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.16), 22, 0.20, 0, 8);
+}
+
+.diagnostico-card-check {
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+}
+
+.diagnostico-card-badge {
+    -fx-background-color: rgba(59, 130, 246, 0.12);
+    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: -color-primary-dark;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-padding: 5 10 5 10;
+}
+
+.diagnostico-card-progress-label {
+    -fx-text-fill: -color-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.diagnostico-card-highlight {
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+    -fx-text-fill: -color-text;
+}
+
+.diagnostico-card-summary {
+    -fx-text-fill: -color-text-secondary;
+    -fx-font-size: 12px;
+    -fx-line-spacing: 2px;
+}
+
+.diagnostico-card-note {
+    -fx-background-color: rgba(248, 250, 252, 0.92);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(226, 232, 240, 0.9);
+    -fx-border-radius: 14;
+    -fx-padding: 10 12 10 12;
+    -fx-text-fill: -color-muted;
+    -fx-font-size: 11px;
+    -fx-line-spacing: 2px;
+}
+
+.diagnostico-card-chip {
+    -fx-background-color: rgba(15, 23, 42, 0.04);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(226, 232, 240, 0.9);
+    -fx-border-radius: 14;
+    -fx-padding: 10 12 10 12;
+}
+
+.diagnostico-card-chip-value {
+    -fx-text-fill: -color-text;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+}
+
+.diagnostico-card-chip-title {
+    -fx-text-fill: -color-muted;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.diagnostico-card-button {
+    -fx-padding: 10 14 10 14;
+}
+
+.diagnostico-empty-state {
+    -fx-padding: 18;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+}
+
+.diagnostico-first-card {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(239, 246, 255, 0.98),
+        rgba(248, 250, 252, 0.98)
+    );
+    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-radius: 24;
+    -fx-background-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.10), 24, 0.18, 0, 8);
+}
+
+.diagnostico-first-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+    -fx-text-fill: -color-text;
+}
+
+.diagnostico-first-badge {
+    -fx-background-color: rgba(14, 165, 233, 0.12);
+    -fx-text-fill: #0369a1;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-border-color: rgba(14, 165, 233, 0.18);
+}
+
+.diagnostico-first-action {
+    -fx-padding: 11 18 11 18;
+}
+
+.bootstrap-banner {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(239, 246, 255, 0.98),
+        rgba(248, 250, 252, 0.98)
+    );
+    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-width: 0 0 1 0;
+}
+
+.bootstrap-banner-running {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(239, 246, 255, 0.98),
+        rgba(240, 249, 255, 0.98)
+    );
+}
+
+.bootstrap-banner-success {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(236, 253, 245, 0.98),
+        rgba(240, 253, 250, 0.98)
+    );
+    -fx-border-color: rgba(16, 185, 129, 0.20);
+}
+
+.bootstrap-banner-warning {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(255, 251, 235, 0.98),
+        rgba(255, 247, 237, 0.98)
+    );
+    -fx-border-color: rgba(245, 158, 11, 0.22);
+}
+
+.bootstrap-banner-error {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(254, 242, 242, 0.98),
+        rgba(255, 241, 242, 0.98)
+    );
+    -fx-border-color: rgba(239, 68, 68, 0.22);
+}
+
+.bootstrap-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-text;
+}
+
+.bootstrap-detail {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-text-secondary;
+}
+
+.bootstrap-percent {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-primary-dark;
+}
+
+.bootstrap-progress-bar {
+    -fx-pref-height: 8px;
+}
+
+.bootstrap-progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, -color-primary, #14b8a6);
+    -fx-background-radius: 999;
+}
+
+.bootstrap-progress-bar .track {
+    -fx-background-color: rgba(226, 232, 240, 0.92);
+    -fx-background-radius: 999;
+}

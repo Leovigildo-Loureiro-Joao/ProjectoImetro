@@ -2,10 +2,10 @@
 --- SEEDS PARA DISCIPLINAS 
 --- ====================================================
 insert into disciplinas (id, nome, peso, nivel, objectivo) values
-  (uuid_generate_v4(), 'Matemática', 1.5, 'BASICO', 'Desenvolver raciocínio lógico-matemático e capacidade de resolução de problemas'),
-  (uuid_generate_v4(), 'Português', 1.5, 'BASICO', 'Aprimorar compreensão textual, gramática e expressão escrita'),
-  (uuid_generate_v4(), 'Física', 1.2, 'BASICO', 'Desenvolver raciocínio científico e aplicação de conceitos físicos'),
-  (uuid_generate_v4(), 'Raciocínio Lógico', 1.3, 'BASICO', 'Aprimorar capacidade de análise, dedução e resolução de problemas lógicos');
+  (uuid_generate_v4(), 'Matemática', 1.5, 'INICIANTE', 'Desenvolver raciocínio lógico-matemático e capacidade de resolução de problemas'),
+  (uuid_generate_v4(), 'Português', 1.5, 'INICIANTE', 'Aprimorar compreensão textual, gramática e expressão escrita'),
+  (uuid_generate_v4(), 'Física', 1.2, 'INICIANTE', 'Desenvolver raciocínio científico e aplicação de conceitos físicos'),
+  (uuid_generate_v4(), 'Raciocínio Lógico', 1.3, 'INICIANTE', 'Aprimorar capacidade de análise, dedução e resolução de problemas lógicos');
 
 
 -- =====================================================

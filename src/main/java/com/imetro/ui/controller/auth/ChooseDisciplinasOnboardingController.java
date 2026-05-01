@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
@@ -15,6 +16,8 @@ import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
+import com.imetro.services.DisciplinaUploadBootstrapService;
+import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.OnboardingRouter;
 import com.imetro.ui.components.DisciplinaCard;
 import com.imetro.util.Authentication;
@@ -45,6 +48,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
     private StackPane telaChooseDisciplinas;
 
     private CandidatoService candidatoService;
+    private DisciplinaService disciplinaService;
 
 
     @Override
@@ -57,29 +61,55 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
         }
         disciplinasBox.getChildren().clear();
         candidatoService = new CandidatoService();
-        DisciplinaService dService=new DisciplinaService();
-        for (DisciplinaDto seed : dService.discCategoria()) {
+        disciplinaService = new DisciplinaService();
+        for (DisciplinaDto seed : disciplinaService.discCategoria()) {
             disciplinasBox.getChildren().add(new DisciplinaCard(seed));
         }
 
-        
+        prepararPastasLivros();
     }
 
     @FXML
     private void onContinue(ActionEvent actionEvent) {
+        UUID candidatoId = Authentication.getCurrentUserId();
         for(var node : disciplinasBox.getChildren()) {
             if (node instanceof DisciplinaCard card) {
                 var radio = card.getRadioSelecionado();
                 if (radio != null && radio.isSelected()) {
                     var nivel = (String) radio.getText();
                     var disciplinaId = card.getDisciplina().id();
-                    candidatoService.AddFirstProgressoDisciplina(Authentication.getCurrentUserId(), disciplinaId, NivelDisciplina.fromDescricao(nivel), card.getDisciplina().peso());
+                    candidatoService.AddFirstProgressoDisciplina(candidatoId, disciplinaId, NivelDisciplina.fromDescricao(nivel), card.getDisciplina().peso());
                 }
             }
         }
+
         StackPane contentHost = (StackPane) telaChooseDisciplinas.getParent();
+        if (candidatoId != null) {
+            PerguntasBootstrapAsyncService.getInstance().start(candidatoId);
+        }
         OnboardingRouter.CandidatoRoute(contentHost);
 
+    }
+
+    private void prepararPastasLivros() {
+        try {
+            DisciplinaUploadBootstrapService bootstrapService = new DisciplinaUploadBootstrapService();
+            int totalPastas = bootstrapService.prepararPastasUploads().size();
+            if (statusLabel != null) {
+                statusLabel.setText(
+                    "Disciplinas prontas. Pastas dos livros em uploads/disciplinas (" + totalPastas + "). "
+                        + "Depois de selecionar as tuas disciplinas, as que nao tiverem orientacao comecam a gerar topicos e perguntas automaticamente em segundo plano. "
+                        + "Podes entrar no sistema e continuar a navegar enquanto a barra de progresso acompanha a leitura dos livros. "
+                        + "As que ja tiverem orientador ficam em espera."
+                );
+            }
+        } catch (Exception e) {
+            if (statusLabel != null) {
+                statusLabel.setText(
+                    "Disciplinas carregadas. Nao foi possivel preparar as pastas dos livros ou ligar o processamento automatico agora."
+                );
+            }
+        }
     }
 
     private static UUID parseUuid(String value) {

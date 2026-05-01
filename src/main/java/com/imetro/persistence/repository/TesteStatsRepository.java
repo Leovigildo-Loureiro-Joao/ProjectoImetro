@@ -8,42 +8,48 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-public class TesteRepository extends JdbcBasicSqlRepository {
+public class TesteStatsRepository extends JdbcBasicSqlRepository {
 
-    public TesteRepository() {
-        super("testes", "id");
+    public TesteStatsRepository() {
+        super("stats", "id");
     }
 
-    public List<Map<String, Object>> findByDisciplinaId(UUID disciplinaId) throws SQLException {
+    public Optional<Map<String, Object>> findByTesteId(UUID testeId) throws SQLException {
         String sql = """
             select *
-            from testes
-            where disciplina_id = ?
-            order by coalesce(data_teste, criado_em) desc, criado_em desc
+            from stats
+            where teste_id = ?
+            limit 1
             """;
-        return executeQueryList(sql, disciplinaId);
+
+        List<Map<String, Object>> rows = executeQueryList(sql, testeId);
+        if (rows.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(rows.getFirst());
     }
 
     public List<Map<String, Object>> findByCandidatoId(UUID candidatoId) throws SQLException {
         String sql = """
             select *
-            from testes
+            from stats
             where candidato_id = ?
-            order by coalesce(data_teste, criado_em) desc, criado_em desc
+            order by criado_em desc
             """;
         return executeQueryList(sql, candidatoId);
     }
 
-    public List<Map<String, Object>> findByDiagnosticoId(UUID diagnosticoId) throws SQLException {
+    public List<Map<String, Object>> findByDisciplinaId(UUID disciplinaId) throws SQLException {
         String sql = """
             select *
-            from testes
-            where diagnostico_id = ?
-            order by coalesce(data_teste, criado_em) desc, criado_em desc
+            from stats
+            where disciplina_id = ?
+            order by criado_em desc
             """;
-        return executeQueryList(sql, diagnosticoId);
+        return executeQueryList(sql, disciplinaId);
     }
 
     private List<Map<String, Object>> executeQueryList(String sql, Object value) throws SQLException {

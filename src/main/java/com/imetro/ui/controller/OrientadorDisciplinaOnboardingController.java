@@ -2,12 +2,17 @@ package com.imetro.ui.controller;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Comparator;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.imetro.App;
+import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
+import com.imetro.services.DisciplinaService;
+import com.imetro.services.DisciplinaUploadBootstrapService;
 import com.imetro.util.Authentication;
 import com.jfoenix.controls.JFXButton;
 
@@ -30,14 +35,21 @@ public class OrientadorDisciplinaOnboardingController implements Initializable {
     @FXML
     private Label statusLabel;
 
+    private final DisciplinaService disciplinaService = new DisciplinaService();
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         if (statusLabel != null) {
             statusLabel.setText("");
         }
         if (disciplinaCombo != null) {
-            //disciplinaCombo.setItems(FXCollections.observableArrayList(DisciplinaCatalog.defaultNomes()));
+            List<String> nomes = disciplinaService.discCategoria().stream()
+                .map(DisciplinaDto::nome)
+                .sorted(Comparator.naturalOrder())
+                .toList();
+            disciplinaCombo.setItems(FXCollections.observableArrayList(nomes));
         }
+        prepararPastasLivros();
     }
 
     @FXML
@@ -88,6 +100,24 @@ public class OrientadorDisciplinaOnboardingController implements Initializable {
             return UUID.fromString(value);
         } catch (IllegalArgumentException e) {
             return null;
+        }
+    }
+
+    private void prepararPastasLivros() {
+        try {
+            DisciplinaUploadBootstrapService bootstrapService = new DisciplinaUploadBootstrapService();
+            int totalPastas = bootstrapService.prepararPastasUploads().size();
+            if (statusLabel != null) {
+                statusLabel.setText(
+                    "Pastas dos livros preparadas em uploads/disciplinas (" + totalPastas + "). As disciplinas com orientacao ficam em espera pelo fluxo do orientador."
+                );
+            }
+        } catch (Exception e) {
+            if (statusLabel != null) {
+                statusLabel.setText(
+                    "Nao foi possivel preparar as pastas dos livros agora."
+                );
+            }
         }
     }
 }

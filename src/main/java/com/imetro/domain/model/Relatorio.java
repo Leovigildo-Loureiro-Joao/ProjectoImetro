@@ -1,4 +1,4 @@
-package com.imetro.domain;
+package com.imetro.domain.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

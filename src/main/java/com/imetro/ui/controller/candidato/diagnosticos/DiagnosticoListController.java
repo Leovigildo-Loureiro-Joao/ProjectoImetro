@@ -2,20 +2,34 @@ package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
 import com.imetro.domain.dto.Topico;
-import com.imetro.services.CatalogoQuestoesService;
+import com.imetro.services.DiagnosticoService;
+import com.imetro.services.PerguntasBootstrapAsyncService;
+import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.components.diagnostico.DiagnosticoCard;
+import com.imetro.util.Authentication;
 import com.jfoenix.controls.JFXButton;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 
-public class DiagnosticoListController implements Initializable {
+public class DiagnosticoListController implements Initializable, DisposableController {
 
     @FXML
     private FlowPane diagnosticosPane;
@@ -27,39 +41,152 @@ public class DiagnosticoListController implements Initializable {
     @FXML
     private JFXButton resetButton;
 
+    @FXML
+    private Label pageTitleLabel;
+
+    @FXML
+    private Label pageSubtitleLabel;
+
     private final ArrayList<Topico> topicosSelecionados = new ArrayList<>();
-    private final CatalogoQuestoesService catalogoQuestoesService = new CatalogoQuestoesService();
+    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
+    private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
+        PerguntasBootstrapAsyncService.getInstance();
+    private final ChangeListener<PerguntasBootstrapAsyncService.BootstrapUiState> bootstrapStateListener =
+        (obs, oldState, newState) -> {
+            if (oldState == PerguntasBootstrapAsyncService.BootstrapUiState.RUNNING
+                && newState != PerguntasBootstrapAsyncService.BootstrapUiState.RUNNING) {
+                Platform.runLater(this::carregarConteudo);
+            }
+        };
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
+        perguntasBootstrapAsyncService.stateProperty().addListener(bootstrapStateListener);
+        carregarConteudo();
+    }
+
+    private void carregarConteudo() {
         if (diagnosticosPane == null) {
             return;
         }
 
         diagnosticosPane.getChildren().clear();
-        diagnosticosPane.getChildren().addAll(
-            criarCard("Matematica", "-26%","-6%","-56%","-16%", 0.50),
-            criarCard("Fisica", "+24%", "+4%", "+14%", "+40%", 0.62),
-            criarCard("Quimica", "+8%","+1%","+4%","+5%", 0.58),
-            criarCard("Biologia", "5%","-2%","-8%","2%", 0.46),
-            criarCard("Portugues", "+12%","+9%","+14%","+17%", 0.71)
-        );
+        UUID candidatoId = Authentication.getCurrentUserId();
+        boolean processamentoLivros = perguntasBootstrapAsyncService.isRunningFor(candidatoId);
+        boolean temHistorico = diagnosticoService.temHistoricoDiagnostico(candidatoId);
+
+        if (!temHistorico) {
+            DiagnosticoService.PrimeiroDiagnosticoResumo primeiro = diagnosticoService
+                .carregarPrimeiroDiagnosticoResumo(candidatoId);
+            diagnosticosPane.getChildren().add(criarPrimeiroDiagnosticoCard(primeiro));
+            configurarCabecalhoPrimeiraVez(processamentoLivros);
+            configurarAcoesLote(false);
+        } else {
+            List<DiagnosticoService.DiagnosticoDisciplinaResumo> resumos = diagnosticoService
+                .carregarDiagnosticosDisponiveis(candidatoId);
+            if (resumos.isEmpty()) {
+                diagnosticosPane.getChildren().add(criarEstadoVazio(processamentoLivros));
+            } else {
+                for (DiagnosticoService.DiagnosticoDisciplinaResumo resumo : resumos) {
+                    diagnosticosPane.getChildren().add(criarCard(resumo));
+                }
+            }
+            configurarCabecalhoHistorico();
+            configurarAcoesLote(true);
+        }
         atualizarEstadoBotoes();
     }
 
-    private DiagnosticoCard criarCard(String disciplina, String variacao,String variacaoTime, String variacaoAcer, String variacaoErr,double progresso) {
-        Topico[] topicos = catalogoQuestoesService
-            .carregarTopicosPorDisciplina(disciplina)
-            .toArray(Topico[]::new);
+    @Override
+    public void dispose() {
+        perguntasBootstrapAsyncService.stateProperty().removeListener(bootstrapStateListener);
+    }
 
+    private void configurarCabecalhoPrimeiraVez(boolean processamentoLivros) {
+        if (pageTitleLabel != null) {
+            pageTitleLabel.setText("FAZER O PRIMEIRO DIAGNOSTICO");
+        }
+        if (pageSubtitleLabel != null) {
+            pageSubtitleLabel.setText(
+                processamentoLivros
+                    ? "Os livros estao a ser lidos em segundo plano. O diagnostico libera quando a base ficar pronta."
+                    : "Escolha os topicos iniciais e crie o primeiro historico real."
+            );
+        }
+    }
+
+    private void configurarCabecalhoHistorico() {
+        if (pageTitleLabel != null) {
+            pageTitleLabel.setText("FACA AGORA SEU DIAGNOSTICO");
+        }
+        if (pageSubtitleLabel != null) {
+            pageSubtitleLabel.setText("Seus diagnosticos");
+        }
+    }
+
+    private void configurarAcoesLote(boolean visivel) {
+        if (massButton != null) {
+            massButton.setVisible(visivel);
+            massButton.setManaged(visivel);
+        }
+        if (resetButton != null) {
+            resetButton.setVisible(visivel);
+            resetButton.setManaged(visivel);
+        }
+    }
+
+    private VBox criarPrimeiroDiagnosticoCard(DiagnosticoService.PrimeiroDiagnosticoResumo resumo) {
+        Label badge = new Label(
+            resumo.totalDisciplinas() + " disciplinas | "
+                + resumo.totalTopicos() + " topicos | "
+                + resumo.totalQuestoes() + " questoes"
+        );
+        badge.getStyleClass().add("diagnostico-first-badge");
+
+        Label titulo = new Label("Primeiro diagnostico");
+        titulo.getStyleClass().add("diagnostico-first-title");
+
+        Label descricao = new Label(resumo.detalhe());
+        descricao.getStyleClass().add("diagnostico-card-summary");
+        descricao.setWrapText(true);
+
+        Label apoio = new Label(
+            resumo.disciplinasSemBase().isEmpty()
+                ? "Os topicos vao abrir no modal para voce escolher por onde quer comecar."
+                : "Ainda sem base real para: " + String.join(", ", resumo.disciplinasSemBase()) + "."
+        );
+        apoio.getStyleClass().add("diagnostico-card-note");
+        apoio.setWrapText(true);
+
+        JFXButton iniciarButton = new JFXButton("Escolher topicos e comecar");
+        iniciarButton.getStyleClass().addAll("btn-primary", "diagnostico-first-action");
+        iniciarButton.setDisable(!resumo.pronto());
+        iniciarButton.setOnAction(event -> {
+            if (resumo.pronto()) {
+                DiagnosticoCoordinator.requestStart(new ArrayList<>(resumo.topicos()));
+            }
+        });
+
+        HBox topo = new HBox(12, titulo, criarSpacer(), badge);
+        topo.setAlignment(Pos.CENTER_LEFT);
+
+        VBox box = new VBox(16, topo, descricao, apoio, iniciarButton);
+        box.getStyleClass().addAll("placeholder-card", "diagnostico-first-card");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPadding(new Insets(22));
+        box.setMaxWidth(760);
+        return box;
+    }
+
+    private Region criarSpacer() {
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return spacer;
+    }
+
+    private DiagnosticoCard criarCard(DiagnosticoService.DiagnosticoDisciplinaResumo resumo) {
         return new DiagnosticoCard(
-            disciplina,
-            topicos,
-            variacaoAcer,
-            variacaoErr,
-            variacaoTime,
-            variacao,
-            progresso,
+            resumo,
             param -> {
                 DiagnosticoCoordinator.requestStart(new ArrayList<>(param));
                 return null;
@@ -73,15 +200,21 @@ public class DiagnosticoListController implements Initializable {
         topicosSelecionados.clear();
 
         for (Node node : diagnosticosPane.getChildren()) {
-            DiagnosticoCard card = (DiagnosticoCard) node;
+            if (!(node instanceof DiagnosticoCard card)) {
+                continue;
+            }
             if (card.getDiciplina().isSelected()) {
                 selecionados++;
                 topicosSelecionados.addAll(card.getTopicos());
             }
         }
 
-        massButton.setDisable(selecionados <= 1);
-        resetButton.setDisable(selecionados == 0);
+        if (massButton != null && massButton.isManaged()) {
+            massButton.setDisable(selecionados <= 1);
+        }
+        if (resetButton != null && resetButton.isManaged()) {
+            resetButton.setDisable(selecionados == 0);
+        }
     }
 
     @FXML
@@ -102,10 +235,30 @@ public class DiagnosticoListController implements Initializable {
 
     private void limparSelecaoAtual() {
         for (Node node : diagnosticosPane.getChildren()) {
-            DiagnosticoCard card = (DiagnosticoCard) node;
-            card.setSelecionado(false);
+            if (node instanceof DiagnosticoCard card) {
+                card.setSelecionado(false);
+            }
         }
         topicosSelecionados.clear();
         atualizarEstadoBotoes();
+    }
+
+    private VBox criarEstadoVazio(boolean processamentoLivros) {
+        Label titulo = new Label("Nenhuma disciplina com questoes reais disponivel.");
+        titulo.getStyleClass().add("h1-thin");
+
+        Label descricao = new Label(
+            processamentoLivros
+                ? "Os livros continuam a ser processados em segundo plano. Podes navegar noutras abas e acompanhar a barra de progresso no topo enquanto a tabela `perguntas` e preenchida."
+                : "Ainda nao surgiram perguntas reais na tabela `perguntas`. Confirma os PDFs em `uploads/disciplinas/<uuid>`, a chave do Gemini e se a disciplina esta sem orientacao para o processamento automatico."
+        );
+        descricao.getStyleClass().add("muted");
+        descricao.setWrapText(true);
+
+        VBox box = new VBox(10, titulo, descricao);
+        box.getStyleClass().addAll("placeholder-card", "diagnostico-empty-state");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setMaxWidth(540);
+        return box;
     }
 }

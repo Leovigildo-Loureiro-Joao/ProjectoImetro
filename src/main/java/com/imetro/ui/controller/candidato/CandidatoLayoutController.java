@@ -11,24 +11,30 @@ import org.kordamp.ikonli.remixicon.RemixiconAL;
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.dto.MenuEntry;
+import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.components.Item_Cell;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 public class CandidatoLayoutController implements Initializable {
-   
+    private static final String BANNER_RUNNING_CLASS = "bootstrap-banner-running";
+    private static final String BANNER_SUCCESS_CLASS = "bootstrap-banner-success";
+    private static final String BANNER_WARNING_CLASS = "bootstrap-banner-warning";
+    private static final String BANNER_ERROR_CLASS = "bootstrap-banner-error";
 
     @FXML
     private StackPane contentHost;
@@ -36,10 +42,28 @@ public class CandidatoLayoutController implements Initializable {
     @FXML
     private Label dbModeBanner;
 
+    @FXML
+    private VBox bootstrapBanner;
+
+    @FXML
+    private Label bootstrapTitleLabel;
+
+    @FXML
+    private Label bootstrapDetailLabel;
+
+    @FXML
+    private Label bootstrapPercentLabel;
+
+    @FXML
+    private ProgressBar bootstrapProgressBar;
+
     @FXML 
     private ListView<MenuEntry> menu;
     @FXML 
     private VBox sidebar;
+
+    private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
+        PerguntasBootstrapAsyncService.getInstance();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -48,6 +72,8 @@ public class CandidatoLayoutController implements Initializable {
             dbModeBanner.setVisible(!dbEnabled);
             dbModeBanner.setManaged(!dbEnabled);
         }
+
+        configureBootstrapBanner();
 
         menu.setCellFactory(list -> new ListCell<>() {
             @Override
@@ -76,6 +102,65 @@ public class CandidatoLayoutController implements Initializable {
         });
 
         menu.getSelectionModel().selectFirst();
+    }
+
+    private void configureBootstrapBanner() {
+        if (bootstrapBanner == null) {
+            return;
+        }
+
+        bootstrapBanner.managedProperty().bind(bootstrapBanner.visibleProperty());
+        bootstrapBanner.visibleProperty().bind(perguntasBootstrapAsyncService.showBannerProperty());
+
+        if (bootstrapTitleLabel != null) {
+            bootstrapTitleLabel.textProperty().bind(perguntasBootstrapAsyncService.titleProperty());
+        }
+        if (bootstrapDetailLabel != null) {
+            bootstrapDetailLabel.textProperty().bind(perguntasBootstrapAsyncService.detailProperty());
+        }
+        if (bootstrapProgressBar != null) {
+            bootstrapProgressBar.progressProperty().bind(perguntasBootstrapAsyncService.progressProperty());
+        }
+        if (bootstrapPercentLabel != null) {
+            bootstrapPercentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                double value = perguntasBootstrapAsyncService.progressProperty().get();
+                if (value < 0) {
+                    return "Em curso";
+                }
+                return Math.round(value * 100.0) + "%";
+            }, perguntasBootstrapAsyncService.progressProperty()));
+        }
+
+        updateBootstrapBannerStyle(perguntasBootstrapAsyncService.getState());
+        perguntasBootstrapAsyncService.stateProperty().addListener((obs, oldState, newState) ->
+            updateBootstrapBannerStyle(newState)
+        );
+    }
+
+    private void updateBootstrapBannerStyle(PerguntasBootstrapAsyncService.BootstrapUiState state) {
+        if (bootstrapBanner == null) {
+            return;
+        }
+
+        bootstrapBanner.getStyleClass().removeAll(
+            BANNER_RUNNING_CLASS,
+            BANNER_SUCCESS_CLASS,
+            BANNER_WARNING_CLASS,
+            BANNER_ERROR_CLASS
+        );
+
+        if (state == null) {
+            return;
+        }
+
+        switch (state) {
+            case RUNNING -> bootstrapBanner.getStyleClass().add(BANNER_RUNNING_CLASS);
+            case SUCCESS -> bootstrapBanner.getStyleClass().add(BANNER_SUCCESS_CLASS);
+            case WARNING -> bootstrapBanner.getStyleClass().add(BANNER_WARNING_CLASS);
+            case ERROR -> bootstrapBanner.getStyleClass().add(BANNER_ERROR_CLASS);
+            case IDLE -> {
+            }
+        }
     }
 
     @FXML

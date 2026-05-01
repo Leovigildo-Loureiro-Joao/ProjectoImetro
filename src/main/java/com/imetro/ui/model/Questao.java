@@ -20,6 +20,11 @@ public class Questao {
     private char respostaCorreta; // A, B, C, D
     private int nivelDificuldade; // 1-5
     private double tempoSugerido; // segundos
+    private double rigor;
+    private String referenciaLivro;
+    private Integer paginaInicio;
+    private Integer paginaFim;
+    private String topicoPrincipal;
 
     
     public String getId() {
@@ -123,6 +128,36 @@ public class Questao {
     }
     public void setTempoSugerido(double tempoSugerido) {
         this.tempoSugerido = tempoSugerido;
+    }
+    public double getRigor() {
+        return rigor;
+    }
+    public void setRigor(double rigor) {
+        this.rigor = rigor;
+    }
+    public String getReferenciaLivro() {
+        return referenciaLivro;
+    }
+    public void setReferenciaLivro(String referenciaLivro) {
+        this.referenciaLivro = referenciaLivro;
+    }
+    public Integer getPaginaInicio() {
+        return paginaInicio;
+    }
+    public void setPaginaInicio(Integer paginaInicio) {
+        this.paginaInicio = paginaInicio;
+    }
+    public Integer getPaginaFim() {
+        return paginaFim;
+    }
+    public void setPaginaFim(Integer paginaFim) {
+        this.paginaFim = paginaFim;
+    }
+    public String getTopicoPrincipal() {
+        return topicoPrincipal;
+    }
+    public void setTopicoPrincipal(String topicoPrincipal) {
+        this.topicoPrincipal = topicoPrincipal;
     }
     
     // Construtores, getters e setters...

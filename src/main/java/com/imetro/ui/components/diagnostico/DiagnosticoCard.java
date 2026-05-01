@@ -1,177 +1,159 @@
 package com.imetro.ui.components.diagnostico;
 
-
-
-import java.util.ArrayList;
-
 import com.imetro.domain.dto.Topico;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
-import com.imetro.util.ImagePath;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
+import java.util.ArrayList;
+
 public class DiagnosticoCard extends VBox {
 
-    private JFXCheckBox diciplina;
-    private Label percentAcerto;
-    private Label variacaoErro;
-    private Label percentTempo;
-    private Label percentEvolucion;
-    private CircleProgress progressBar;
-    private Label titleDesc;
-    private ArrayList<Topico> topicos=new ArrayList<>();
-    private JFXButton diagnosticoButton;
-    private static final String bolt = "/com/imetro/assets/imgs/perc1.png";
-    private static final String time = "/com/imetro/assets/imgs/perc2.png";
-    private static final String evolution = "/com/imetro/assets/imgs/perc3.png";
-    private static final String erro = "/com/imetro/assets/imgs/perc4.png";
+    private final JFXCheckBox diciplina;
+    private final CircleProgress progressBar;
+    private final ArrayList<Topico> topicos = new ArrayList<>();
+    private final JFXButton diagnosticoButton;
 
-    public DiagnosticoCard(String disciplina,Topico[]topico,String variacaoAcer,String variacaoErr,String variacaoTime,String variacao,double percent,Callback<ArrayList<Topico>,Void> run,Runnable massa){
-        for (Topico topico2 : topico) {
-            topicos.add(topico2);
-        }
-        this.diciplina=new JFXCheckBox(disciplina);
-        percentAcerto=new Label(variacaoAcer);
-        percentAcerto.getStyleClass().add("badge-new");
-        progressBar=new CircleProgress(35, 35);
-        
-        titleDesc=new Label("Último diagnóstico");
-        diciplina.getStyleClass().add("h3-thin-big");
-        progressBar.setValue(percent);
-        progressBar.setTranslateY(-5);
-        diagnosticoButton = new JFXButton("Fazer diagnóstico");
-        diagnosticoButton.getStyleClass().add("btn-primary");
+    public DiagnosticoCard(
+        DiagnosticoService.DiagnosticoDisciplinaResumo resumo,
+        Callback<ArrayList<Topico>, Void> run,
+        Runnable massa
+    ) {
+        this.topicos.addAll(resumo.topicos());
+
+        this.diciplina = new JFXCheckBox(resumo.nomeDisciplina());
+        this.diciplina.getStyleClass().add("diagnostico-card-check");
+
+        Label badge = new Label(resumo.totalQuestoes() + " questoes");
+        badge.getStyleClass().add("diagnostico-card-badge");
+
+        Label destaque = new Label(resumo.destaque());
+        destaque.getStyleClass().add("diagnostico-card-highlight");
+
+        Label resumoLabel = new Label(resumo.resumo());
+        resumoLabel.getStyleClass().add("diagnostico-card-summary");
+        resumoLabel.setWrapText(true);
+
+        Label observacaoLabel = new Label(resumo.observacao());
+        observacaoLabel.getStyleClass().add("diagnostico-card-note");
+        observacaoLabel.setWrapText(true);
+
+        Label progressoLabel = new Label(resumo.legendaIndicador());
+        progressoLabel.getStyleClass().add("diagnostico-card-progress-label");
+
+        progressBar = new CircleProgress(38, 38);
+        progressBar.setValue(resumo.indicador());
+
+        Label tendenciaValor = new Label(resumo.tendencia());
+        tendenciaValor.getStyleClass().add("diagnostico-card-chip-value");
+        Label tendenciaTitulo = new Label("Tendencia");
+        tendenciaTitulo.getStyleClass().add("diagnostico-card-chip-title");
+
+        Label nivelValor = new Label(resumo.nivel());
+        nivelValor.getStyleClass().add("diagnostico-card-chip-value");
+        Label nivelTitulo = new Label("Nivel");
+        nivelTitulo.getStyleClass().add("diagnostico-card-chip-title");
+
+        HBox header = new HBox(10, diciplina, criarSpacer(), badge);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        VBox progressoInfo = new VBox(4, progressoLabel, destaque);
+        progressoInfo.setAlignment(Pos.CENTER_LEFT);
+        HBox progressoRow = new HBox(14, progressBar, progressoInfo);
+        progressoRow.setAlignment(Pos.CENTER_LEFT);
+
+        HBox metricas = new HBox(
+            10,
+            criarMetrica("Topicos", String.valueOf(resumo.totalTopicos())),
+            criarMetrica("Subtopicos", String.valueOf(resumo.totalSubtopicos())),
+            criarMetrica("Tendencia", resumo.tendencia()),
+            criarMetrica("Nivel", resumo.nivel())
+        );
+        metricas.setAlignment(Pos.CENTER_LEFT);
+
+        diagnosticoButton = new JFXButton("Iniciar diagnostico");
+        diagnosticoButton.getStyleClass().addAll("btn-primary", "diagnostico-card-button");
         diagnosticoButton.setDisable(true);
-        
-        variacaoErro=new Label(variacaoErr);
-        variacaoErro.getStyleClass().add("badge-new");
+        diagnosticoButton.setMaxWidth(Double.MAX_VALUE);
 
-        percentEvolucion=new Label(variacao);
-        percentEvolucion.getStyleClass().add("badge-new");
+        getChildren().addAll(header, progressoRow, resumoLabel, metricas, observacaoLabel, diagnosticoButton);
+        configurarEstilo();
+        configurarAcoes(run, massa);
+    }
 
-        percentTempo=new Label(variacaoTime);
-        percentTempo.getStyleClass().add("badge-new");
-        ImageView ptime=new ImageView(ImagePath.load(time));
-        ptime.setFitWidth(16);
-        ptime.setFitHeight(16);
-        ImageView perro=new ImageView(ImagePath.load(erro));
-        perro.setFitWidth(16);
-        perro.setFitHeight(16);
-        ImageView pevolution=new ImageView(ImagePath.load(evolution));
-        pevolution.setFitWidth(16);
-        pevolution.setFitHeight(16);
-        ImageView pbolt=new ImageView(ImagePath.load(bolt));
-        pbolt.setFitWidth(16);
-        pbolt.setFitHeight(16);
+    private VBox criarMetrica(String titulo, String valor) {
+        Label valorLabel = new Label(valor);
+        valorLabel.getStyleClass().add("diagnostico-card-chip-value");
 
-        HBox p = new HBox(10,new VBox(5,percentTempo,ptime),new VBox(5,variacaoErro,perro),new VBox(5,percentAcerto,pbolt),new VBox(5,percentEvolucion,pevolution));
-        p.setAlignment(Pos.CENTER);
-        for (Object vb : p.getChildren().toArray()) {
-            VBox node=(VBox)vb;
-            node.setAlignment(Pos.CENTER); 
-        }
-        this.getChildren().addAll(diciplina,titleDesc,p,progressBar,diagnosticoButton);
-        StyleConfig();
-        Action(run);
-         // Enable button only when checkbox is selected
-        diciplina.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            diagnosticoButton.setDisable(!newVal);
+        Label tituloLabel = new Label(titulo);
+        tituloLabel.getStyleClass().add("diagnostico-card-chip-title");
+
+        VBox box = new VBox(4, valorLabel, tituloLabel);
+        box.getStyleClass().add("diagnostico-card-chip");
+        box.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(box, Priority.ALWAYS);
+        box.setMaxWidth(Double.MAX_VALUE);
+        return box;
+    }
+
+    private Region criarSpacer() {
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return spacer;
+    }
+
+    private void configurarEstilo() {
+        getStyleClass().addAll("card", "diagnostico-card");
+        setPadding(new Insets(18));
+        setSpacing(14);
+        setAlignment(Pos.TOP_LEFT);
+        setPrefWidth(320);
+        setMinWidth(300);
+        setMaxWidth(340);
+    }
+
+    private void configurarAcoes(Callback<ArrayList<Topico>, Void> action, Runnable massa) {
+        diagnosticoButton.setOnAction(event -> action.call(new ArrayList<>(topicos)));
+        diciplina.selectedProperty().addListener((obs, oldValue, newValue) -> {
+            diagnosticoButton.setDisable(!newValue);
+            if (newValue) {
+                if (!getStyleClass().contains("diagnostico-card-active")) {
+                    getStyleClass().add("diagnostico-card-active");
+                }
+            } else {
+                getStyleClass().remove("diagnostico-card-active");
+            }
             massa.run();
         });
-    }
-
-    private void StyleConfig(){
-        this.getStyleClass().add("card");
-        this.setPadding(new Insets(14));
-        this.setAlignment(Pos.CENTER);
-        this.setSpacing(10);
-        this.setPadding(new Insets(10,0,20,0));
-        this.setMaxWidth(200);
-        this.setMinWidth(200);
-         //-----------------------
-        titleDesc.getStyleClass().addAll("card-title-secondary","h3-thin-big");
-        
-        //------------------------
-        diciplina.setMinWidth(150);
-        diciplina.setPadding(new Insets(10, 10, 10, 10));
-        
-        // Configure button
-        diagnosticoButton.setMaxWidth(150);
-        diagnosticoButton.setPrefHeight(35);
-        
-       
-    }
-
-    public void Action(Callback<ArrayList<Topico>,Void> action){
-        diagnosticoButton.setOnAction(arg0 -> {
-            action.call(topicos);
-        });
-
     }
 
     public JFXCheckBox getDiciplina() {
         return diciplina;
     }
 
-    public void setDiciplina(JFXCheckBox diciplina) {
-        this.diciplina = diciplina;
-    }
-
-    public Label getPercentAcerto() {
-        return percentAcerto;
-    }
-    
-    public void setPercentAcerto(Label percentAcerto) {
-        this.percentAcerto = percentAcerto;
-    }
-
-    public CircleProgress getProgressBar() {
-        return progressBar;
-    }
-
-    public void setProgressBar(CircleProgress progressBar) {
-        this.progressBar = progressBar;
-    }
-
-    public Label getTitleDesc() {
-        return titleDesc;
-    }
-
-    public void setTitleDesc(Label titleDesc) {
-        this.titleDesc = titleDesc;
-    }
-
-    public JFXButton getDiagnosticoButton() {
-        return diagnosticoButton;
-    }
-
-    public void setDiagnosticoButton(JFXButton diagnosticoButton) {
-        this.diagnosticoButton = diagnosticoButton;
-    }
-
     public ArrayList<Topico> getTopicos() {
         return topicos;
-    }
-
-    public void setTopicos(ArrayList<Topico> topicos) {
-        this.topicos = topicos;
     }
 
     public void setSelecionado(boolean selecionado) {
         diciplina.setSelected(selecionado);
         diagnosticoButton.setDisable(!selecionado);
+        if (selecionado) {
+            if (!getStyleClass().contains("diagnostico-card-active")) {
+                getStyleClass().add("diagnostico-card-active");
+            }
+        } else {
+            getStyleClass().remove("diagnostico-card-active");
+        }
     }
-
-    
-
 }

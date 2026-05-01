@@ -44,3 +44,4 @@ create table if not exists orientador_disciplinas (
 
 create index if not exists idx_candidato_disciplinas_candidato_id on candidato_disciplinas (candidato_id);
 create index if not exists idx_orientador_disciplinas_orientador_id on orientador_disciplinas (orientador_id);
+

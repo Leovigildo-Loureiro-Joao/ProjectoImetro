@@ -1,7 +1,12 @@
 package com.imetro.persistence.repository;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
+import com.imetro.domain.enums.NivelDisciplina;
 
 public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
 
@@ -25,6 +30,89 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
         return false;
     }
 
+    public void associarDisciplinaCandidato(UUID candidatoId, UUID disciplinaId) throws SQLException {
+        String sql = "INSERT INTO progresso_aluno_disciplina (aluno_id, disciplina_id) VALUES (?, ?)";
+        try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setObject(2, disciplinaId);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void atualizarProgresso(UUID candidatoId, UUID disciplinaId, float progresso) throws SQLException {
+        String sql = "UPDATE progresso_aluno_disciplina SET progresso = ? WHERE aluno_id = ? AND disciplina_id = ?";
+        try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setFloat(1, progresso);
+            stmt.setObject(2, candidatoId);
+            stmt.setObject(3, disciplinaId);
+            stmt.executeUpdate();
+        }
+    }
+
+    public  ProgressoAlunoDisciplinaDto getDto(UUID candidatoId, UUID disciplinaId) throws SQLException {
+        String sql = """
+            select p.*, d.nome as disciplina_nome
+            from progresso_aluno_disciplina p
+            left join disciplinas d on d.id = p.disciplina_id
+            where p.aluno_id = ? and p.disciplina_id = ?
+            """;
+        try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setObject(2, disciplinaId);
+            try (var rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    UUID id = (UUID) rs.getObject("id");
+                    String disciplina = rs.getString("disciplina_nome");
+                    NivelDisciplina nivelAtual=NivelDisciplina.fromDescricao(rs.getString("nivel_atual"));
+                    NivelDisciplina nivelAnterior=NivelDisciplina.fromDescricao(rs.getString("nivel_anterior"));
+                    LocalDate dataMudancaNivel = rs.getDate("data_mudanca_nivel") != null ? rs.getDate("data_mudanca_nivel").toLocalDate() : null;
+                    Double pesoAtual = rs.getDouble("peso_atual");
+                    Integer totalQuestoesResolvidas = rs.getInt("total_questoes_resolvidas");
+                    Integer totalAcertos = rs.getInt("total_acertos");
+                    Integer totalErros = rs.getInt("total_erros");
+                    Double taxaAcertoGeral = rs.getDouble("taxa_acerto_geral");
+                    float progresso = taxaAcertoGeral == null ? 0f : taxaAcertoGeral.floatValue();
+                    Integer[] ultimos3DiagnosticosAcertos = rs.getArray("ultimos_3_diagnosticos_acertos") == null
+                        ? null
+                        : (Integer[]) rs.getArray("ultimos_3_diagnosticos_acertos").getArray();
+                    Integer[] ultimos3DiagnosticosTotal = rs.getArray("ultimos_3_diagnosticos_total") == null
+                        ? null
+                        : (Integer[]) rs.getArray("ultimos_3_diagnosticos_total").getArray();
+                    LocalDateTime ultimoEstudo = rs.getTimestamp("ultimo_estudo") != null ? rs.getTimestamp("ultimo_estudo").toLocalDateTime() : null;
+                    Integer diasSemEstudo = rs.getInt("dias_sem_estudo");
+                    Integer streakDiasConsecutivos = rs.getInt("streak_dias_consecutivos");
+                    LocalDateTime criadoEm = rs.getTimestamp("criado_em") != null ? rs.getTimestamp("criado_em").toLocalDateTime() : null;
+                    LocalDateTime atualizadoEm = rs.getTimestamp("atualizado_em") != null ? rs.getTimestamp("atualizado_em").toLocalDateTime() : null;
+                    return new ProgressoAlunoDisciplinaDto(
+                        id,
+                        candidatoId,
+                        disciplinaId,
+                        disciplina,
+                        progresso,
+                        nivelAtual,
+                        nivelAnterior,
+                        dataMudancaNivel,
+                        pesoAtual,
+                        totalQuestoesResolvidas,
+                        totalAcertos,
+                        totalErros,
+                        taxaAcertoGeral,
+                        ultimos3DiagnosticosAcertos,
+                        ultimos3DiagnosticosTotal,
+                        ultimoEstudo,
+                        diasSemEstudo,
+                        streakDiasConsecutivos,
+                        criadoEm,
+                        atualizadoEm
+                    );
+                }
+            }
+        }
+        return null;
+    }
    
 }
 

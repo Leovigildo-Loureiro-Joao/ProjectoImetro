@@ -4,6 +4,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -11,9 +12,15 @@ import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.imetro.App;
+import com.imetro.domain.Cache;
+import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.enums.NivelDisciplina;
+import com.imetro.domain.model.Candidato;
+import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
+import com.imetro.util.Authentication;
 
 
 import javafx.animation.FadeTransition;
@@ -103,10 +110,10 @@ public class DashboardOrientadoController implements Initializable {
 
     @FXML
     private StackPane sucesso;
+    private Candidato candidato;
     @FXML
     private VBox tela;
-
-
+// Supondo que exista um serviço para obter dados reais
     private XYChart.Series<String,Integer> dificuldadesSeries;
     private XYChart.Series<String,Integer> evolucoesSeries;
 
@@ -136,10 +143,19 @@ public class DashboardOrientadoController implements Initializable {
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        setupDemo();
+        Object currentUser = Cache.get("currentUser");
+        if (currentUser instanceof Candidato cachedCandidato) {
+            candidato = cachedCandidato;
+        } else {
+            candidato = new Candidato();
+            String email = Authentication.getCurrentUserEmail();
+            candidato.setNome("Candidato");
+            candidato.setEmail(email == null ? "" : email);
+        }
+        setup();
     }
 
-    private void setupDemo() {
+    private void setup() {
         updateHeader();
         setupAreaChart();
         setupRadar();
@@ -154,16 +170,15 @@ public class DashboardOrientadoController implements Initializable {
             return;
         }
 
-        List<DisciplineStatus> demoStatuses = List.of(
-            new DisciplineStatus("Matemática", 0.85, 4.5f, NivelDisciplina.AVANCADO, 0.8, 0.75, 0.9),
-            new DisciplineStatus("Português", 0.72, 3.0f, NivelDisciplina.INTERMEDIARIO, 0.7, 0.8, 0.85),
-            new DisciplineStatus("Física", 0.68, 4.0f, NivelDisciplina.AVANCADO, 0.6, 0.7, 0.75),
-            new DisciplineStatus("Química", 0.54, 3.5f, NivelDisciplina.INTERMEDIARIO, 0.5, 0.65, 0.7),
-            new DisciplineStatus("Biologia", 0.91, 2.5f, NivelDisciplina.INICIANTE, 0.9, 0.85, 0.95),
-            new DisciplineStatus("História", 0.76, 2.0f, NivelDisciplina.INICIANTE, 0.75, 0.8, 0.8),
-            new DisciplineStatus("Geografia", 0.63, 2.5f, NivelDisciplina.INICIANTE, 0.65, 0.7, 0.75),
-            new DisciplineStatus("Inglês", 0.79, 3.0f, NivelDisciplina.INTERMEDIARIO, 0.8, 0.75, 0.85)
-        );
+        List<DisciplineStatus> demoStatuses = DisciplinaService.getProgressoDisciplinasCandidatoSafe().stream().map(d -> new DisciplineStatus(
+            d.disciplina(),
+            d.progresso(), // progresso aleatório entre 10% e 90%
+            d.pesoAtual() == null ? 1f : d.pesoAtual().floatValue(),
+            d.nivelAtual(),
+            Math.random(), // velocidade
+            Math.random(), // consistencia
+            Math.random()  // precisão
+        )).toList();
 
         status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
         status_disciplina.setItems(FXCollections.observableArrayList(demoStatuses));
@@ -229,7 +244,7 @@ public class DashboardOrientadoController implements Initializable {
 
     private void updateHeader() {
         if (welcome != null) {
-            welcome.setText("Bem-vindo novamente, Candidato");
+            welcome.setText("Bem-vindo novamente, "+candidato.getNome() + "!");
         }
         if (localDate != null) {
             Locale locale = Locale.forLanguageTag("pt-PT");

@@ -1,4 +1,4 @@
-package com.imetro.domain;
+package com.imetro.domain.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +24,19 @@ public class Candidato {
         idCandidato=UUID.randomUUID();
         criado_em = LocalDateTime.now();
     }
+
+    
+
+
+    public Candidato(UUID idCandidato, String nome, String email, String senha, LocalDateTime criado_em) {
+        this.idCandidato = idCandidato;
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+        this.criado_em = criado_em;
+    }
+
+
 
 
     public UUID getIdCandidato() {

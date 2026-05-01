@@ -143,6 +143,11 @@ public class CatalogoQuestoesService {
         questoes.add(criarQuestao("POR004", "PORTUGUES", "Interpretacao", "Genero textual", "Uma noticia tem como objetivo principal:", "Narrar uma fantasia", "Informar fatos de interesse publico", "Ensinar uma receita", "Fazer propaganda", "Nao sei", "Confundo os generos", "Pular", 'B', 1, 35, null));
         questoes.add(criarQuestao("POR005", "PORTUGUES", "Gramatica", "Pontuacao", "Em qual alternativa a virgula foi empregada corretamente?", "Os alunos chegaram cansados e, sentaram.", "Quando a aula terminou, todos sairam.", "Vamos estudar, matematica hoje.", "Maria comprou cadernos canetas lapis.", "Nao sei", "Esqueci a regra", "Pular", 'B', 3, 60, null));
 
+        questoes.add(criarQuestao("LOG001", "RACIOCINIO LOGICO", "Sequencias", "Padroes numericos", "Qual numero completa a sequencia 2, 4, 8, 16, ?", "18", "24", "32", "34", "Nao sei", "Perco o padrao", "Pular", 'C', 1, 40, null));
+        questoes.add(criarQuestao("LOG002", "RACIOCINIO LOGICO", "Logica", "Proposicoes", "Se toda bolsa exige prova e Joana fez a prova, qual afirmacao e necessariamente verdadeira?", "Joana ganhou a bolsa", "Joana estudou", "Joana atendeu a uma exigencia da bolsa", "Toda prova da bolsa foi facil", "Nao sei", "Confundo condicao com conclusao", "Pular", 'C', 2, 50, null));
+        questoes.add(criarQuestao("LOG003", "RACIOCINIO LOGICO", "Raciocinio", "Analogia", "Livro esta para leitura assim como mapa esta para:", "Viagem", "Orientacao", "Cidade", "Distancia", "Nao sei", "Fico em duvida entre duas", "Pular", 'B', 2, 45, null));
+        questoes.add(criarQuestao("LOG004", "RACIOCINIO LOGICO", "Sequencias", "Figuras", "Numa sequencia em que um triangulo ganha um lado a cada passo, qual figura vem depois do pentagono?", "Hexagono", "Quadrado", "Heptagono", "Circulo", "Nao sei", "Nao visualizei a regra", "Pular", 'A', 2, 55, null));
+
         return questoes;
     }
 

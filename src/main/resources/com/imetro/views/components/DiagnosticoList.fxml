@@ -16,8 +16,8 @@
                <children>
                   <VBox prefHeight="113.0" prefWidth="658.0" spacing="10.0">
                      <children>
-                        <Label styleClass="h3-thin-big" text="FACA AGORA SEU DIAGNOSTICO" />
-                        <Label styleClass="h3-thin" text="Seus diagnosticos" />
+                        <Label fx:id="pageTitleLabel" styleClass="h3-thin-big" text="FACA AGORA SEU DIAGNOSTICO" />
+                        <Label fx:id="pageSubtitleLabel" styleClass="h3-thin" text="Seus diagnosticos" />
                      </children>
                      <padding>
                         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

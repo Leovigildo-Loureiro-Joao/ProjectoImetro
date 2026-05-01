@@ -1,6 +1,5 @@
 package com.imetro.domain.dto.test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public record TesteDto(
@@ -9,8 +8,21 @@ public record TesteDto(
     float errosComuns,
     float melhoria,
     float percent,
+    float nivelDificuldade,
+    float velocidade,
+    float consistencia,
     List<Percent> topicos,
     List<String> Passos
 ) {
-    
+    public TesteDto(
+        String disciplina,
+        float ritmoEvolutivo,
+        float errosComuns,
+        float melhoria,
+        float percent,
+        List<Percent> topicos,
+        List<String> Passos
+    ) {
+        this(disciplina, ritmoEvolutivo, errosComuns, melhoria, percent, 0f, 0f, 0f, topicos, Passos);
+    }
 }

@@ -8,6 +8,7 @@
 *.env
 
 **/target/
+logs/
 
 # OS / Editor
 .DS_Store
@@ -16,3 +17,9 @@ Thumbs.db
 .vscode/
 .codex
 planner/.obsidian
+
+uploads/*
+!uploads/README.md
+!uploads/disciplinas/
+uploads/disciplinas/*
+!uploads/disciplinas/.gitkeep

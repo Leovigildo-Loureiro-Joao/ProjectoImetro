@@ -1,7 +1,11 @@
 package com.imetro.persistence.repository;
 
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.UUID;
+
+import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.enums.NivelDisciplina;
 
 public  class DisciplinaRepository extends JdbcBasicSqlRepository{
 
@@ -20,7 +24,7 @@ public  class DisciplinaRepository extends JdbcBasicSqlRepository{
     }
 
     public void ensureExists(String nome) {
-        ensureExists(nome, 1.0, "BASICO");
+        ensureExists(nome, 1.0, "INICIANTE");
     }
 
     public void ensureExists(String nome, double peso, String nivel) {
@@ -42,6 +46,17 @@ public  class DisciplinaRepository extends JdbcBasicSqlRepository{
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
+    }
+
+    public DisciplinaDto getDto(UUID id) throws SQLException{
+        Object p=findById(id);
+        LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) p;
+        String nome = (String) map.get("nome");
+        Float peso = ((Number) map.get("peso")).floatValue();
+        String nivelStr = (String) map.get("nivel");
+        String objectivo = (String) map.get("objectivo");
+        NivelDisciplina nivelDisciplina=NivelDisciplina.fromDescricao(nivelStr);
+        return new DisciplinaDto(id,nome,peso,nivelDisciplina,objectivo);
     }
 
     public UUID getIdByName(String nome) {

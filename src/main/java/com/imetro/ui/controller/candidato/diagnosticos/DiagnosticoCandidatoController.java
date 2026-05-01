@@ -12,7 +12,7 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.Topico;
-import com.imetro.services.TesteMatematicaService;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
@@ -21,6 +21,7 @@ import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.TopicModalController;
+import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
 import com.jfoenix.controls.JFXButton;
@@ -192,6 +193,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private Node mod;
     private Node modTop;
     private ModalController cont;
+    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
 
     @FXML
     public void initialize() throws IOException {
@@ -224,8 +226,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             circleProgress = new CircleProgress(35, 35, 35, 0);
             circleProgressContainer.getChildren().add(circleProgress);
 
-            TesteMatematicaService service = new TesteMatematicaService();
-            bancoQuestoes = service.carregarQuestoes();
+            bancoQuestoes = diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId());
             questoes = new ArrayList<>(bancoQuestoes);
             totalQuestoes = questoes.size();
 
@@ -481,6 +482,13 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         String recomendacao = getMensagemMotivacional(porcentagem);
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
 
+        diagnosticoService.registrarDiagnosticoConcluido(
+            Authentication.getCurrentUserId(),
+            questoes,
+            respostasUsuario,
+            tempo.getText()
+        );
+
         ResultadoAvaliacaoController.setResultado(
             new ResultadoPayload(
                 "Diagnostico Academico",
@@ -580,12 +588,19 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     @Override
     public void startDiagnostico() {
         prepararDiagnostico();
+        if (questoes == null || questoes.isEmpty()) {
+            mostrarAlerta(
+                "Atencao",
+                "Nao encontramos questoes reais no banco para iniciar este diagnostico."
+            );
+            return;
+        }
         setDiagnosticMode(true);
     }
 
     private void prepararDiagnostico() {
         if (bancoQuestoes.isEmpty()) {
-            bancoQuestoes = new TesteMatematicaService().carregarQuestoes();
+            bancoQuestoes = diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId());
         }
 
         questoes = aplicarConfiguracaoAoBanco(bancoQuestoes);

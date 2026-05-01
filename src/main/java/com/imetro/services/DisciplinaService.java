@@ -3,17 +3,26 @@ package com.imetro.services;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.UUID;
 
-import com.imetro.domain.Disciplina;
+import com.imetro.domain.Cache;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
+import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.enums.NivelDisciplina;
+import com.imetro.domain.model.Candidato;
+import com.imetro.domain.model.Disciplina;
 import com.imetro.persistence.repository.DisciplinaRepository;
+import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
+import com.imetro.services.DiagnosticoService.DiagnosticoDisciplinaResumo;
+import com.imetro.util.Authentication;
 
 public class DisciplinaService {
-    private final DisciplinaRepository disciplinaRepository=new DisciplinaRepository();
+    private static final DisciplinaRepository disciplinaRepository=new DisciplinaRepository();
+    private static final ProgressoALunoDisciplinaRepository progressoRepository=new ProgressoALunoDisciplinaRepository();
 
-    public ArrayList<DisciplinaDto> discCategoria(){
+    public static ArrayList<DisciplinaDto> discCategoria(){
         ArrayList<DisciplinaDto> disc=new ArrayList<>();
         try {
             for (Object elObject : disciplinaRepository.findAll()) {
@@ -33,6 +42,69 @@ public class DisciplinaService {
              System.err.println("Erro ao buscar disciplinas: " + e.getMessage());
         };
         return disc;
+    }
+
+    public static void associarDisciplinaCandidato(UUID disciplinaId) throws SQLException {
+        UUID candidatoId = Authentication.getCurrentUserId();
+        progressoRepository.associarDisciplinaCandidato(candidatoId, disciplinaId);
+    }
+
+    public static List<ProgressoAlunoDisciplinaDto> getProgressoDisciplinasCandidato() throws SQLException {
+        UUID candidatoId = Authentication.getCurrentUserId();
+        List<DisciplinaDto> disciplinas = discCategoria();
+        List<ProgressoAlunoDisciplinaDto> progressoList = new ArrayList<>();
+
+        for (DisciplinaDto disciplina : disciplinas) {
+            ProgressoAlunoDisciplinaDto progresso = progressoRepository.getDto(candidatoId, disciplina.id());
+            if (progresso != null) {
+                progressoList.add(progresso);
+            }
+        }
+        return progressoList;
+    }
+
+    public static List<ProgressoAlunoDisciplinaDto> getProgressoDisciplinasCandidatoSafe() {
+        try {
+            return getProgressoDisciplinasCandidato();
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar progresso das disciplinas: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    public static List<ProgressoDisciplinaTeste> getDisciplinaTestes(List<DiagnosticoDisciplinaResumo>list) throws SQLException{
+        ArrayList<ProgressoDisciplinaTeste> pdtest = new ArrayList<>();
+        List<DiagnosticoDisciplinaResumo> resumos = list == null ? List.of() : list;
+
+        for (ProgressoAlunoDisciplinaDto pDto : getProgressoDisciplinasCandidatoSafe()) {
+            DiagnosticoDisciplinaResumo resumo = resumos.stream()
+                .filter(item -> item.disciplinaId() != null && item.disciplinaId().equals(pDto.disciplinaId()))
+                .findFirst()
+                .orElse(null);
+
+            String nomeDisciplina = resumo != null
+                ? resumo.nomeDisciplina()
+                : (pDto.disciplina() == null || pDto.disciplina().isBlank() ? "Disciplina" : pDto.disciplina());
+            double progresso = resumo != null ? resumo.indicador() : pDto.calcularTaxaAcerto();
+            double pesoAtual = pDto.pesoAtual() == null ? 1.0d : pDto.pesoAtual();
+            int tempo = pDto.totalQuestoesResolvidas() == null ? 0 : pDto.totalQuestoesResolvidas();
+
+            pdtest.add(new ProgressoDisciplinaTeste(
+                nomeDisciplina,
+                progresso,
+                pesoAtual,
+                pDto.nivelAtual(),
+                0f,
+                0f,
+                tempo
+            ));
+        }
+        return pdtest;
+    }
+
+    public static ProgressoAlunoDisciplinaDto getDisciplinaCandidato(UUID disciplinaId) throws SQLException {
+        UUID candidatoId = Authentication.getCurrentUserId();
+        return progressoRepository.getDto(candidatoId, disciplinaId);
     }
 
 }
