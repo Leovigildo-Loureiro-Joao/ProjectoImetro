@@ -4,17 +4,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-
-import com.imetro.domain.Cache;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
+import com.imetro.domain.dto.test.TestDtoAll;
 import com.imetro.domain.enums.NivelDisciplina;
-import com.imetro.domain.model.Candidato;
-import com.imetro.domain.model.Disciplina;
+import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
+import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.services.DiagnosticoService.DiagnosticoDisciplinaResumo;
 import com.imetro.util.Authentication;
 
@@ -72,10 +72,11 @@ public class DisciplinaService {
         }
     }
 
-    public static List<ProgressoDisciplinaTeste> getDisciplinaTestes(List<DiagnosticoDisciplinaResumo>list) throws SQLException{
+    public static List<ProgressoDisciplinaTeste> getDisciplinaTestes() throws SQLException{
+        DiagnosticoService diagnosticoService=new DiagnosticoService();
         ArrayList<ProgressoDisciplinaTeste> pdtest = new ArrayList<>();
-        List<DiagnosticoDisciplinaResumo> resumos = list == null ? List.of() : list;
-
+        List<DiagnosticoDisciplinaResumo> resumos = diagnosticoService.carregarDiagnosticosDisponiveis(Authentication.getCurrentUserId());
+        TesteRepository test = new TesteRepository();
         for (ProgressoAlunoDisciplinaDto pDto : getProgressoDisciplinasCandidatoSafe()) {
             DiagnosticoDisciplinaResumo resumo = resumos.stream()
                 .filter(item -> item.disciplinaId() != null && item.disciplinaId().equals(pDto.disciplinaId()))
@@ -88,14 +89,21 @@ public class DisciplinaService {
             double progresso = resumo != null ? resumo.indicador() : pDto.calcularTaxaAcerto();
             double pesoAtual = pDto.pesoAtual() == null ? 1.0d : pDto.pesoAtual();
             int tempo = pDto.totalQuestoesResolvidas() == null ? 0 : pDto.totalQuestoesResolvidas();
-
+            float velocidade=0,consistencia=0;
+            List<Map<String,Object>> listTest=test.findByCandidatoIdDisciplina(Authentication.getCurrentUserId(),pDto.disciplinaId());
+            for (Map<String,Object> tes : listTest) {
+                TestDtoAll dto=TestDtoAll.ParseMapDto(tes);
+                velocidade+=dto.velocidade();    
+                consistencia+=dto.consistencia();    
+            }
+            
             pdtest.add(new ProgressoDisciplinaTeste(
                 nomeDisciplina,
                 progresso,
                 pesoAtual,
                 pDto.nivelAtual(),
-                0f,
-                0f,
+                (velocidade/listTest.size())/100,
+                (consistencia/listTest.size())/100,
                 tempo
             ));
         }

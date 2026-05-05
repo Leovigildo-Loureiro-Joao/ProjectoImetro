@@ -1,10 +1,10 @@
 package com.imetro.ui.controller.candidato;
 
 import java.net.URL;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -13,10 +13,10 @@ import java.util.ResourceBundle;
 
 import com.imetro.App;
 import com.imetro.domain.CacheService;
-import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.domain.model.Candidato;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
@@ -93,7 +93,7 @@ public class DashboardOrientadoController implements Initializable {
     private ProgressBar resiliencia;
 
     @FXML
-    private ListView<DisciplineStatus> status_disciplina;
+    private ListView<ProgressoDisciplinaTeste> status_disciplina;
 
     @FXML
     private ProgressBar velocidade;
@@ -118,15 +118,14 @@ public class DashboardOrientadoController implements Initializable {
     private XYChart.Series<String,Integer> evolucoesSeries;
 
     private Timeline startupTimeline;
+    private DiagnosticoService diagnosticoService;
 
-    private static final int[] DIFICULDADES_TARGET = {32, 40, 70, 55, 60};
-    private static final int[] EVOLUCOES_TARGET = {25, 45, 80, 60, 75};
-    private static final double VELOCIDADE_TARGET = 0.75;
-    private static final double LOGICA_TARGET = 0.68;
-    private static final double PRECISAO_TARGET = 0.55;
-    private static final double RESILIENCIA_TARGET = 0.82;
-    private static final double CONSISTENCIA_TARGET = 0.78;
-    private static final double PROGRESSO_TARGET = 0.68;
+    private  double VELOCIDADE_TARGET = 0;
+    private  double LOGICA_TARGET = 0;
+    private  double PRECISAO_TARGET = 0;
+    private  double RESILIENCIA_TARGET = 0;
+    private  double CONSISTENCIA_TARGET = 0;
+    private  double PROGRESSO_TARGET = 0;
 
     @FXML
     public void StartDiagnostic(javafx.event.ActionEvent event) {
@@ -161,6 +160,7 @@ public class DashboardOrientadoController implements Initializable {
         setupRadar();
         setupDisciplineStatus();
         setupImprovementData();
+        setupTargetData();
         setupLastResults();
         animateStartup();
     }
@@ -170,18 +170,28 @@ public class DashboardOrientadoController implements Initializable {
             return;
         }
 
-        List<DisciplineStatus> demoStatuses = DisciplinaService.getProgressoDisciplinasCandidatoSafe().stream().map(d -> new DisciplineStatus(
-            d.disciplina(),
-            d.progresso(), // progresso aleatório entre 10% e 90%
-            d.pesoAtual() == null ? 1f : d.pesoAtual().floatValue(),
-            d.nivelAtual(),
-            Math.random(), // velocidade
-            Math.random(), // consistencia
-            Math.random()  // precisão
-        )).toList();
+        List<ProgressoDisciplinaTeste> demoStatuses;
+        try {
+            demoStatuses = DisciplinaService.getDisciplinaTestes().stream().map(d -> new ProgressoDisciplinaTeste(
+                d.disciplina(),
+                d.progresso(), // progresso aleatório entre 10% e 90%
+                d.pesoAtual(),
+                d.nivel(),
+                d.velocudade(), // velocidade
+                d.consistencia(), // consistencia
+                d.precisao()  // precisão
+            )).toList();
+        } catch (SQLException e) {
+            demoStatuses=List.of();
+            e.printStackTrace();
+        }
 
         status_disciplina.setCellFactory(list -> new DisciplineStatusCell());
         status_disciplina.setItems(FXCollections.observableArrayList(demoStatuses));
+    }
+
+    private void setupTargetData() {
+        
     }
 
     private void setupImprovementData() {
@@ -195,14 +205,13 @@ public class DashboardOrientadoController implements Initializable {
     };
     
     // Escolhe um aleatório
-    Random rand = new Random();
-    int idx = rand.nextInt(5) * 2;
+   
     
-    percentMelhoria.setText(melhorias[idx]);
-    descMelhoRia.setText(melhorias[idx + 1]);
+    percentMelhoria.setText(null);
+    descMelhoRia.setText(null);
     
     // Cor dinâmica baseada na porcentagem
-    String percentText = melhorias[idx].replace("%", "");
+    String percentText = "0".replace("%", "");
     int percentValue = Integer.parseInt(percentText);
     
     if (percentValue >= 80) {
@@ -220,11 +229,10 @@ public class DashboardOrientadoController implements Initializable {
     circleProgress.setValue(percentValue / 100.0);
 
     // Mesmo para sucesso
-    int idxSucesso = rand.nextInt(5) * 2;
-    percentSucesso.setText(melhorias[idxSucesso]);
-    descSucesso.setText(melhorias[idxSucesso + 1]);
+    percentSucesso.setText(null);
+    descSucesso.setText(null);
     
-    String percentTextSucesso = melhorias[idxSucesso].replace("%", "");
+    String percentTextSucesso = "0".replace("%", "");
     int percentValueSucesso = Integer.parseInt(percentTextSucesso);
     
     if (percentValueSucesso >= 80) {
@@ -397,8 +405,8 @@ public class DashboardOrientadoController implements Initializable {
                 new KeyValue(precisao.progressProperty(), PRECISAO_TARGET, Interpolator.EASE_BOTH),
                 new KeyValue(resiliencia.progressProperty(), RESILIENCIA_TARGET, Interpolator.EASE_BOTH),
                 new KeyValue(consistencia.progressProperty(), CONSISTENCIA_TARGET, Interpolator.EASE_BOTH),
-                new KeyValue(progresso.progressProperty(), PROGRESSO_TARGET, Interpolator.EASE_BOTH),
-                new KeyValue(dificuldadesSeries.getData().get(0).YValueProperty(), DIFICULDADES_TARGET[0], Interpolator.EASE_BOTH),
+                new KeyValue(progresso.progressProperty(), PROGRESSO_TARGET, Interpolator.EASE_BOTH)
+                /*new KeyValue(dificuldadesSeries.getData().get(0).YValueProperty(), DIFICULDADES_TARGET[0], Interpolator.EASE_BOTH),
                 new KeyValue(dificuldadesSeries.getData().get(1).YValueProperty(), DIFICULDADES_TARGET[1], Interpolator.EASE_BOTH),
                 new KeyValue(dificuldadesSeries.getData().get(2).YValueProperty(), DIFICULDADES_TARGET[2], Interpolator.EASE_BOTH),
                 new KeyValue(dificuldadesSeries.getData().get(3).YValueProperty(), DIFICULDADES_TARGET[3], Interpolator.EASE_BOTH),
@@ -407,7 +415,7 @@ public class DashboardOrientadoController implements Initializable {
                 new KeyValue(evolucoesSeries.getData().get(1).YValueProperty(), EVOLUCOES_TARGET[1], Interpolator.EASE_BOTH),
                 new KeyValue(evolucoesSeries.getData().get(2).YValueProperty(), EVOLUCOES_TARGET[2], Interpolator.EASE_BOTH),
                 new KeyValue(evolucoesSeries.getData().get(3).YValueProperty(), EVOLUCOES_TARGET[3], Interpolator.EASE_BOTH),
-                new KeyValue(evolucoesSeries.getData().get(4).YValueProperty(), EVOLUCOES_TARGET[4], Interpolator.EASE_BOTH)
+                new KeyValue(evolucoesSeries.getData().get(4).YValueProperty(), EVOLUCOES_TARGET[4], Interpolator.EASE_BOTH)*/
         ));
 
         startupTimeline.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
@@ -468,9 +476,8 @@ public class DashboardOrientadoController implements Initializable {
         }
     }
 
-    private record DisciplineStatus(String name, double progress, float peso, NivelDisciplina nivel, double velocidade, double consistencia, double precisao) {}
 
-    private static final class DisciplineStatusCell extends ListCell<DisciplineStatus> {
+    private static final class DisciplineStatusCell extends ListCell<ProgressoDisciplinaTeste> {
         private final Label name = new Label();
         private final CircleProgress progress = new CircleProgress(30,30);
         private final ProgressBar velocidade = new ProgressBar(0);
@@ -499,7 +506,7 @@ public class DashboardOrientadoController implements Initializable {
         }
 
         @Override
-        public void updateItem(DisciplineStatus item, boolean empty) {
+        public void updateItem(ProgressoDisciplinaTeste item, boolean empty) {
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
@@ -507,12 +514,12 @@ public class DashboardOrientadoController implements Initializable {
                 return;
             }
 
-            name.setText(item.name());
-            progress.setValue(item.progress());
-            percent.setText((int) Math.round(item.progress() * 100) + "%");
-            peso.setText("Peso: " + item.peso());
+            name.setText(item.disciplina());
+            progress.setValue(item.progresso());
+            percent.setText((int) Math.round(item.progresso() * 100) + "%");
+            peso.setText("Peso: " + item.pesoAtual());
             nivel.setText("Nível: " + item.nivel().getDescricao());
-            velocidade.setProgress(item.velocidade());
+            velocidade.setProgress(item.velocudade());
             consistencia.setProgress(item.consistencia());
             precisao.setProgress(item.precisao());
             setText(null);

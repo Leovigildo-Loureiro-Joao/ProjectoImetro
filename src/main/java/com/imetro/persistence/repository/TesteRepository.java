@@ -36,6 +36,16 @@ public class TesteRepository extends JdbcBasicSqlRepository {
         return executeQueryList(sql, candidatoId);
     }
 
+     public List<Map<String, Object>> findByCandidatoIdDisciplina(UUID candidatoId,UUID disciplinaId) throws SQLException {
+        String sql = """
+            select *
+            from testes
+            where candidato_id = ? and disciplina_id = ?
+            order by coalesce(data_teste, criado_em) desc, criado_em desc
+            """;
+        return executeQueryList(sql, candidatoId,disciplinaId);
+    }
+
     public List<Map<String, Object>> findByDiagnosticoId(UUID diagnosticoId) throws SQLException {
         String sql = """
             select *
@@ -46,10 +56,13 @@ public class TesteRepository extends JdbcBasicSqlRepository {
         return executeQueryList(sql, diagnosticoId);
     }
 
-    private List<Map<String, Object>> executeQueryList(String sql, Object value) throws SQLException {
+    private List<Map<String, Object>> executeQueryList(String sql, Object ...value) throws SQLException {
         try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, value);
+                for (int i = 0; i < value.length; i++) {
+                    stmt.setObject(i+1, value[i]);        
+                }
+            
             try (ResultSet rs = stmt.executeQuery()) {
                 return readRows(rs);
             }
