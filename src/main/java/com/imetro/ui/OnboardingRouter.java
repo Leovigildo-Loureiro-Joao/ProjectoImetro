@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
-import com.imetro.domain.Cache;
+import com.imetro.domain.CacheService;
 import com.imetro.domain.model.Candidato;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
@@ -44,7 +44,7 @@ public final class OnboardingRouter {
                     LocalDateTime.now()
                 );
             }
-            Cache.put("currentUser", candidato);
+            CacheService.put("currentUser", candidato);
             App.setRoot("views/layouts/CandidatoLayout");
         } catch (Exception e) {
         }

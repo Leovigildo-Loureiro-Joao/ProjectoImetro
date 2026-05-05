@@ -12,7 +12,7 @@ import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.imetro.App;
-import com.imetro.domain.Cache;
+import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.enums.NivelDisciplina;
@@ -143,7 +143,7 @@ public class DashboardOrientadoController implements Initializable {
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        Object currentUser = Cache.get("currentUser");
+        Object currentUser = CacheService.get("currentUser");
         if (currentUser instanceof Candidato cachedCandidato) {
             candidato = cachedCandidato;
         } else {

@@ -10,7 +10,9 @@ import org.kordamp.ikonli.remixicon.RemixiconAL;
 
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
+import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.MenuEntry;
+import com.imetro.domain.model.Candidato;
 import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.components.Item_Cell;
 
@@ -102,6 +104,12 @@ public class CandidatoLayoutController implements Initializable {
         });
 
         menu.getSelectionModel().selectFirst();
+        FirstDiagnostic();
+    }
+
+    private void FirstDiagnostic(){
+        Candidato candidato =(Candidato) CacheService.get("currentUser");
+        
     }
 
     private void configureBootstrapBanner() {

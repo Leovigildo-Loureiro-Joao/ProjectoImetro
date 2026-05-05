@@ -134,7 +134,7 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
         return idColumn;
     }
 
-    private static List<Map<String, Object>> readAllRows(ResultSet rs) throws SQLException {
+    public static List<Map<String, Object>> readAllRows(ResultSet rs) throws SQLException {
         ResultSetMetaData meta = rs.getMetaData();
         int columnCount = meta.getColumnCount();
 
