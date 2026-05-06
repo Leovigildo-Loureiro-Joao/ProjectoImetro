@@ -11,6 +11,7 @@ import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.components.diagnostico.DiagnosticoCard;
+import com.imetro.ui.components.diagnostico.FirsCardDiagnostico;
 import com.imetro.util.Authentication;
 import com.jfoenix.controls.JFXButton;
 
@@ -51,6 +52,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
         PerguntasBootstrapAsyncService.getInstance();
+        
     private final ChangeListener<PerguntasBootstrapAsyncService.BootstrapUiState> bootstrapStateListener =
         (obs, oldState, newState) -> {
             if (oldState == PerguntasBootstrapAsyncService.BootstrapUiState.RUNNING
@@ -78,7 +80,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
         if (!temHistorico) {
             DiagnosticoService.PrimeiroDiagnosticoResumo primeiro = diagnosticoService
                 .carregarPrimeiroDiagnosticoResumo(candidatoId);
-            diagnosticosPane.getChildren().add(criarPrimeiroDiagnosticoCard(primeiro));
+            diagnosticosPane.getChildren().add(new FirsCardDiagnostico(primeiro));
             configurarCabecalhoPrimeiraVez(processamentoLivros);
             configurarAcoesLote(false);
         } else {
@@ -135,54 +137,6 @@ public class DiagnosticoListController implements Initializable, DisposableContr
         }
     }
 
-    private VBox criarPrimeiroDiagnosticoCard(DiagnosticoService.PrimeiroDiagnosticoResumo resumo) {
-        Label badge = new Label(
-            resumo.totalDisciplinas() + " disciplinas | "
-                + resumo.totalTopicos() + " topicos | "
-                + resumo.totalQuestoes() + " questoes"
-        );
-        badge.getStyleClass().add("diagnostico-first-badge");
-
-        Label titulo = new Label("Primeiro diagnostico");
-        titulo.getStyleClass().add("diagnostico-first-title");
-
-        Label descricao = new Label(resumo.detalhe());
-        descricao.getStyleClass().add("diagnostico-card-summary");
-        descricao.setWrapText(true);
-
-        Label apoio = new Label(
-            resumo.disciplinasSemBase().isEmpty()
-                ? "Os topicos vao abrir no modal para voce escolher por onde quer comecar."
-                : "Ainda sem base real para: " + String.join(", ", resumo.disciplinasSemBase()) + "."
-        );
-        apoio.getStyleClass().add("diagnostico-card-note");
-        apoio.setWrapText(true);
-
-        JFXButton iniciarButton = new JFXButton("Escolher topicos e comecar");
-        iniciarButton.getStyleClass().addAll("btn-primary", "diagnostico-first-action");
-        iniciarButton.setDisable(!resumo.pronto());
-        iniciarButton.setOnAction(event -> {
-            if (resumo.pronto()) {
-                DiagnosticoCoordinator.requestStart(new ArrayList<>(resumo.topicos()));
-            }
-        });
-
-        HBox topo = new HBox(12, titulo, criarSpacer(), badge);
-        topo.setAlignment(Pos.CENTER_LEFT);
-
-        VBox box = new VBox(16, topo, descricao, apoio, iniciarButton);
-        box.getStyleClass().addAll("placeholder-card", "diagnostico-first-card");
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.setPadding(new Insets(22));
-        box.setMaxWidth(760);
-        return box;
-    }
-
-    private Region criarSpacer() {
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        return spacer;
-    }
 
     private DiagnosticoCard criarCard(DiagnosticoService.DiagnosticoDisciplinaResumo resumo) {
         return new DiagnosticoCard(

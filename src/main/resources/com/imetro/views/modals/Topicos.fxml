@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="modal" alignment="TOP_CENTER" maxHeight="538.0" maxWidth="363.0" minWidth="363.0" prefHeight="538.0" prefWidth="363.0" spacing="10.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.TopicModalController">
+<VBox fx:id="modal" alignment="TOP_CENTER" maxHeight="538.0" maxWidth="450.0" minWidth="450.0" prefHeight="538.0" prefWidth="450.0" spacing="10.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.TopicModalController">
    <children>
       <HBox>
          <children>
@@ -29,7 +29,7 @@
          </children>
       </HBox>
       <Label fx:id="resumoLabel" maxWidth="320.0" styleClass="muted" text="Topicos selecionados" wrapText="true" />
-      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="343.0" prefWidth="321.0">
+      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="343.0" prefWidth="450.0">
          <content>
             <VBox fx:id="topicosContainer" spacing="15.0">
                <padding>
@@ -39,7 +39,7 @@
          </content>
       </ScrollPane>
       <Label fx:id="contadorLabel" styleClass="h3-thin" text="0 de 0 subtopicos selecionados" />
-      <JFXButton fx:id="iniciarButton" disable="true" onAction="#InteligentDiagnostic" prefHeight="39.0" prefWidth="340.0" styleClass="btn-primary" text="Iniciar com os selecionados">
+      <JFXButton fx:id="iniciarButton" disable="true" onAction="#InteligentDiagnostic" prefHeight="39.0" prefWidth="450.0" styleClass="btn-primary" text="Iniciar com os selecionados">
          <padding>
             <Insets top="10.0" />
          </padding>
@@ -47,7 +47,7 @@
             <Insets top="10.0" />
          </VBox.margin>
       </JFXButton>
-      <JFXButton fx:id="usarTodosButton" minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="339.0" styleClass="btn-primary-two" text="Usar todos os subtopicos" />
+      <JFXButton fx:id="usarTodosButton" minHeight="39.0" onAction="#SoRun" prefHeight="39.0" prefWidth="450.0" styleClass="btn-primary-two" text="Usar todos os subtopicos" />
    </children>
    <padding>
       <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

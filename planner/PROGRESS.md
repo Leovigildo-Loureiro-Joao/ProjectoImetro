@@ -47,6 +47,18 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
 - O perfil ganhou modo de edicao, troca de avatar por modal e um mural visual das 20 medalhas do sistema.
 - Foi criada a base SQL de medalhas com catalogo seedado e tabela de conquistas por utilizador (`V9__medalhas.sql`).
 
+### 2026-05-05
+> *Horas: 15:49*
+- Configurar lista para selecionar de acordo ao key
+- Fazer primeiro diagnostico ser requirido ao entrar em uma conta sem diagnostico
+- Alteracao da bd para levarem em conta mais os subtopicos adicionando os subtopico da pergunta
+
+### 2026-05-06
+> *Horas: 04:35*
+- Foi realizada a pesquiza de como funciona as formulas das metricas velocidade, precisao, resiliecia, logica e resiliencia
+- Foi adicionada o progresso por subtopico relacionando o progresso_rigor com a recomendacao_rigor assim obterndo um progresso do estado do diagnotico do candidato
+- Foi marcado como proximo passo terminar metricas e timeline dos diagnosticos
+
 ## Objetivo de "projeto terminado"
 
 Para considerar o projeto "terminado" (MVP), o sistema deve permitir:

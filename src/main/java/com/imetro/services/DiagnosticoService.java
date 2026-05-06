@@ -3,6 +3,7 @@ package com.imetro.services;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.enums.NivelDisciplina;
+import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
 import com.imetro.ui.model.Questao;
@@ -38,6 +39,7 @@ public class DiagnosticoService {
 
     private final PerguntasRepository perguntasRepository;
     private final DisciplinaService disciplinaService;
+    private final DiagnosticoRepository diagnosticoRepository = new DiagnosticoRepository();
     private final PerguntasBootstrapService perguntasBootstrapService;
 
     public DiagnosticoService() {
@@ -78,6 +80,128 @@ public class DiagnosticoService {
         String nomeDisciplina = questoesDisciplina.getFirst().getDisciplina();
         UUID disciplinaId = resolverDisciplinaId(nomeDisciplina);
         return construirTopicos(disciplinaId, nomeDisciplina, questoesDisciplina);
+    }
+
+    public Map<String, Double> carregarProgressoSubtopicos(UUID candidatoId, Collection<Topico> topicos) {
+        if (candidatoId == null || topicos == null || topicos.isEmpty()) {
+            return Map.of();
+        }
+
+        LinkedHashSet<String> chavesSelecionadas = new LinkedHashSet<>();
+        for (Topico topico : topicos) {
+            if (topico == null || topico.subTopicos() == null) {
+                continue;
+            }
+            for (String subtopico : topico.subTopicos()) {
+                chavesSelecionadas.add(chaveSubtopico(topico.disciplina(), subtopico));
+            }
+        }
+
+        if (chavesSelecionadas.isEmpty()) {
+            return Map.of();
+        }
+
+        LinkedHashMap<String, Double> progressoPorRigor = new LinkedHashMap<>();
+        LinkedHashMap<String, Double> progressoPorDiagnostico = new LinkedHashMap<>();
+        LinkedHashMap<String, Boolean> precisaRevisaoPorChave = new LinkedHashMap<>();
+        LinkedHashMap<String, Boolean> precisaNovoDiagnosticoPorChave = new LinkedHashMap<>();
+
+        String sqlRigor = """
+            select coalesce(d.nome, '') as disciplina_nome,
+              pr.subtopico,
+              pr.rigor_atual,
+              pr.rigor_alvo,
+              pr.precisa_revisao
+            from progressao_rigor pr
+            left join disciplinas d on d.id = pr.disciplina_id
+            where pr.aluno_id = ?
+            """;
+
+        String sqlDiagnostico = """
+            select distinct on (
+              lower(coalesce(dg.disciplina_nome, '')),
+              lower(coalesce(rr.subtopico, ''))
+            )
+              dg.disciplina_nome,
+              rr.subtopico,
+              rr.progresso_atingido,
+              rr.precisa_novo_diagnostico
+            from recomendacoes_rigor rr
+            join diagnosticos dg on dg.id = rr.diagnostico_id
+            where dg.candidato_id = ?
+            order by lower(coalesce(dg.disciplina_nome, '')),
+              lower(coalesce(rr.subtopico, '')),
+              coalesce(dg.concluido_em, dg.iniciado_em) desc,
+              rr.criado_em desc
+            """;
+
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(sqlRigor)) {
+                stmt.setObject(1, candidatoId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String chave = chaveSubtopico(
+                            rs.getString("disciplina_nome"),
+                            rs.getString("subtopico")
+                        );
+                        if (!chavesSelecionadas.contains(chave)) {
+                            continue;
+                        }
+
+                        double rigorAtual = rs.getObject("rigor_atual") instanceof Number number
+                            ? number.doubleValue()
+                            : 0d;
+                        double rigorAlvo = rs.getObject("rigor_alvo") instanceof Number number
+                            ? number.doubleValue()
+                            : 0d;
+                        progressoPorRigor.put(chave, calcularProgressoPorRigor(rigorAtual, rigorAlvo));
+                        precisaRevisaoPorChave.put(chave, rs.getBoolean("precisa_revisao"));
+                    }
+                }
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDiagnostico)) {
+                stmt.setObject(1, candidatoId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String chave = chaveSubtopico(
+                            rs.getString("disciplina_nome"),
+                            rs.getString("subtopico")
+                        );
+                        if (!chavesSelecionadas.contains(chave)) {
+                            continue;
+                        }
+
+                        Object progressoRaw = rs.getObject("progresso_atingido");
+                        if (progressoRaw instanceof Number number) {
+                            progressoPorDiagnostico.put(chave, limitarPercentualUnitario(number.doubleValue()));
+                        }
+                        precisaNovoDiagnosticoPorChave.put(chave, rs.getBoolean("precisa_novo_diagnostico"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao carregar progresso por subtopico: " + e.getMessage());
+            return Map.of();
+        }
+
+        LinkedHashMap<String, Double> progressoFinal = new LinkedHashMap<>();
+        for (String chave : chavesSelecionadas) {
+            Double progressoRigor = progressoPorRigor.get(chave);
+            Double progressoDiagnostico = progressoPorDiagnostico.get(chave);
+            boolean precisaRevisao = Boolean.TRUE.equals(precisaRevisaoPorChave.get(chave));
+            boolean precisaNovoDiagnostico = Boolean.TRUE.equals(precisaNovoDiagnosticoPorChave.get(chave));
+
+            double progresso = resolverProgressoSubtopico(
+                progressoRigor,
+                progressoDiagnostico,
+                precisaRevisao,
+                precisaNovoDiagnostico
+            );
+            progressoFinal.put(chave, progresso);
+        }
+
+        return Map.copyOf(progressoFinal);
     }
 
     public boolean temHistoricoDiagnostico(UUID candidatoId) {
@@ -716,18 +840,18 @@ public class DiagnosticoService {
                 safeText(questao.getTopico(), safeText(questao.getSubtopico(), "Geral"))
             );
             boolean acertou = respostasUsuario.get(indice) == questao.getRespostaCorreta();
-            porTopico.computeIfAbsent(topicoBase, ignored -> new ArrayList<>())
+            porTopico.computeIfAbsent(questao.getSubtopico(), ignored -> new ArrayList<>())
                 .add(new QuestaoRigorResultado(questao, acertou));
         }
 
         for (Map.Entry<String, ArrayList<QuestaoRigorResultado>> entry : porTopico.entrySet()) {
-            String topico = entry.getKey();
+            String subtopico = entry.getKey();
             ArrayList<QuestaoRigorResultado> resultados = entry.getValue();
             if (resultados.isEmpty()) {
                 continue;
             }
 
-            ProgressaoRigorAtual atual = carregarProgressaoRigorAtual(conn, candidatoId, disciplinaId, topico);
+            ProgressaoRigorAtual atual = carregarProgressaoRigorAtual(conn, candidatoId, disciplinaId, subtopico);
 
             int total = resultados.size();
             int acertos = (int) resultados.stream().filter(QuestaoRigorResultado::acertou).count();
@@ -767,7 +891,7 @@ public class DiagnosticoService {
                 atual.id(),
                 candidatoId,
                 disciplinaId,
-                topico,
+                subtopico,
                 rigorAtualNovo,
                 atual.rigorAlvo(),
                 ultimoAcertoEmRigor,
@@ -783,7 +907,7 @@ public class DiagnosticoService {
             inserirRecomendacaoRigor(
                 conn,
                 diagnosticoId,
-                topico,
+                subtopico,
                 rigorRecomendado,
                 rigorAtualNovo,
                 taxaAcerto,
@@ -799,7 +923,7 @@ public class DiagnosticoService {
         Connection conn,
         UUID candidatoId,
         UUID disciplinaId,
-        String topico
+        String subtopico
     ) throws SQLException {
         String sql = """
             select id,
@@ -809,14 +933,14 @@ public class DiagnosticoService {
               acertos_consecutivos,
               erros_consecutivos
             from progressao_rigor
-            where aluno_id = ? and disciplina_id = ? and lower(coalesce(topico, '')) = lower(coalesce(?, ''))
+            where aluno_id = ? and disciplina_id = ? and lower(coalesce(subtopico, '')) = lower(coalesce(?, ''))
             limit 1
             """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, candidatoId);
             stmt.setObject(2, disciplinaId);
-            stmt.setString(3, topico);
+            stmt.setString(3, subtopico);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return new ProgressaoRigorAtual(
@@ -839,7 +963,7 @@ public class DiagnosticoService {
         UUID idAtual,
         UUID candidatoId,
         UUID disciplinaId,
-        String topico,
+        String subtopico,
         double rigorAtual,
         double rigorAlvo,
         Double ultimoAcertoEmRigor,
@@ -856,7 +980,7 @@ public class DiagnosticoService {
               id,
               aluno_id,
               disciplina_id,
-              topico,
+              subtopico,
               rigor_atual,
               rigor_alvo,
               ultimo_acerto_em_rigor,
@@ -871,7 +995,7 @@ public class DiagnosticoService {
             ) values (
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now()
             )
-            on conflict (aluno_id, disciplina_id, topico) do update
+            on conflict (aluno_id, disciplina_id, subtopico) do update
             set rigor_atual = excluded.rigor_atual,
                 rigor_alvo = excluded.rigor_alvo,
                 ultimo_acerto_em_rigor = excluded.ultimo_acerto_em_rigor,
@@ -889,7 +1013,7 @@ public class DiagnosticoService {
             stmt.setObject(1, idAtual == null ? UUID.randomUUID() : idAtual);
             stmt.setObject(2, candidatoId);
             stmt.setObject(3, disciplinaId);
-            stmt.setString(4, topico);
+            stmt.setString(4, subtopico);
             stmt.setDouble(5, limitarRigor(rigorAtual));
             stmt.setDouble(6, limitarRigor(rigorAlvo));
             stmt.setObject(7, ultimoAcertoEmRigor == null ? null : limitarRigor(ultimoAcertoEmRigor));
@@ -907,7 +1031,7 @@ public class DiagnosticoService {
     private void inserirRecomendacaoRigor(
         Connection conn,
         UUID diagnosticoId,
-        String topico,
+        String subtopico,
         double rigorRecomendado,
         double nivelAtual,
         Double progressoAtingido,
@@ -920,7 +1044,7 @@ public class DiagnosticoService {
             insert into recomendacoes_rigor (
               id,
               diagnostico_id,
-              topico,
+              subtopico,
               rigor_recomendado,
               nivel_atual,
               progresso_atingido,
@@ -937,7 +1061,7 @@ public class DiagnosticoService {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, UUID.randomUUID());
             stmt.setObject(2, diagnosticoId);
-            stmt.setString(3, topico);
+            stmt.setString(3, subtopico);
             stmt.setDouble(4, limitarRigor(rigorRecomendado));
             stmt.setDouble(5, limitarRigor(nivelAtual));
             stmt.setObject(6, progressoAtingido == null ? null : Math.max(0d, Math.min(1d, progressoAtingido)));
@@ -1106,6 +1230,39 @@ public class DiagnosticoService {
         return Math.max(0d, Math.min(1d, normalizado));
     }
 
+    private double calcularProgressoPorRigor(double rigorAtual, double rigorAlvo) {
+        if (rigorAlvo <= 0d) {
+            return 0d;
+        }
+        return limitarPercentualUnitario(rigorAtual / rigorAlvo);
+    }
+
+    private double resolverProgressoSubtopico(
+        Double progressoRigor,
+        Double progressoDiagnostico,
+        boolean precisaRevisao,
+        boolean precisaNovoDiagnostico
+    ) {
+        double progresso = 0d;
+        boolean temRigor = progressoRigor != null;
+        boolean temDiagnostico = progressoDiagnostico != null;
+
+        if (temRigor && temDiagnostico) {
+            // O rigor atual mostra o estado mais recente; o diagnostico ancora o ponto de partida.
+            progresso = (progressoRigor * 0.65d) + (progressoDiagnostico * 0.35d);
+        } else if (temRigor) {
+            progresso = progressoRigor;
+        } else if (temDiagnostico) {
+            progresso = progressoDiagnostico;
+        }
+
+        if (precisaRevisao || precisaNovoDiagnostico) {
+            progresso = Math.min(progresso, 0.58d);
+        }
+
+        return limitarPercentualUnitario(progresso);
+    }
+
     private String construirJsonRespostas(
         List<Integer> indices,
         List<Questao> questoes,
@@ -1263,6 +1420,7 @@ public class DiagnosticoService {
 
         return progressos;
     }
+
 
     private Map<UUID, HistoricoDiagnosticoResumo> carregarHistoricosPorDisciplinaId(UUID candidatoId) {
         if (candidatoId == null) {
@@ -1510,6 +1668,10 @@ public class DiagnosticoService {
         return texto.toString();
     }
 
+    private String chaveSubtopico(String disciplina, String subtopico) {
+        return normalizar(disciplina) + "::" + normalizar(safeText(subtopico, "Geral"));
+    }
+
     private UUID resolverDisciplinaId(String disciplina) {
         String disciplinaNormalizada = normalizar(disciplina);
         for (DisciplinaDto disciplinaDto : disciplinaService.discCategoria()) {
@@ -1562,6 +1724,10 @@ public class DiagnosticoService {
 
     private double limitarPercentual(double percentual) {
         return Math.max(0d, Math.min(1d, percentual / 100d));
+    }
+
+    private double limitarPercentualUnitario(double valor) {
+        return Math.max(0d, Math.min(1d, valor));
     }
 
     private String safeText(Object value, String defaultValue) {

@@ -117,9 +117,9 @@ public class DiagnosticoCard extends VBox {
         setPadding(new Insets(18));
         setSpacing(14);
         setAlignment(Pos.TOP_LEFT);
-        setPrefWidth(320);
-        setMinWidth(300);
-        setMaxWidth(340);
+        setPrefWidth(360);
+        setMinWidth(400);
+        setMaxWidth(420);
     }
 
     private void configurarAcoes(Callback<ArrayList<Topico>, Void> action, Runnable massa) {

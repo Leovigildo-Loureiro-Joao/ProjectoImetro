@@ -573,7 +573,7 @@
 
 .diagnostico-card-chip-value {
     -fx-text-fill: -color-text;
-    -fx-font-size: 14px;
+    -fx-font-size: 12px;
     -fx-font-weight: 800;
 }
 

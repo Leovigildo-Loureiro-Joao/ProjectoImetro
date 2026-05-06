@@ -3,11 +3,15 @@ package com.imetro.ui.modals;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.text.Normalizer;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.controller.candidato.TesteAdaptativoCoordinator;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
+import com.imetro.util.Authentication;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 
@@ -40,6 +44,8 @@ public class TopicModalController extends ModalController {
     private JFXButton usarTodosButton;
 
     private final Map<String, List<JFXCheckBox>> checkboxesPorTopico = new LinkedHashMap<>();
+    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
+    private Map<String, Double> progressoPorSubtopico = Map.of();
 
     @Override
     public void init() {
@@ -97,6 +103,10 @@ public class TopicModalController extends ModalController {
         List<Topico> topicos = FluxoModalContext.isTesteAdaptativo()
             ? TesteAdaptativoCoordinator.getTopicosSelecionados()
             : DiagnosticoCoordinator.getTopicosSelecionados();
+        progressoPorSubtopico = diagnosticoService.carregarProgressoSubtopicos(
+            Authentication.getCurrentUserId(),
+            topicos
+        );
 
         for (Topico topico : topicos) {
             VBox grupo = new VBox(10);
@@ -113,7 +123,7 @@ public class TopicModalController extends ModalController {
                 JFXCheckBox checkBox = new JFXCheckBox(subtopico);
                 checkBox.selectedProperty().addListener((obs, oldValue, newValue) -> atualizarResumo());
 
-                ProgressBar progresso = new ProgressBar(calcularProgresso(subtopico));
+                ProgressBar progresso = new ProgressBar(calcularProgresso(topico, subtopico));
                 progresso.setPrefWidth(212);
 
                 linha.getChildren().addAll(checkBox, progresso);
@@ -166,8 +176,20 @@ public class TopicModalController extends ModalController {
         return selecionados;
     }
 
-    private double calcularProgresso(String texto) {
-        int hash = Math.abs(texto.hashCode() % 45);
-        return (45 + hash) / 100.0;
+    private double calcularProgresso(Topico topico, String subtopico) {
+        if (topico == null) {
+            return 0d;
+        }
+        String chave = normalizar(topico.disciplina()) + "::" + normalizar(subtopico);
+        return progressoPorSubtopico.getOrDefault(chave, 0d);
+    }
+
+    private String normalizar(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        String semAcento = Normalizer.normalize(valor, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}+", "");
+        return semAcento.trim().toLowerCase(Locale.ROOT);
     }
 }

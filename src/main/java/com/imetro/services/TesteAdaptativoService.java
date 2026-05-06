@@ -94,24 +94,24 @@ public class TesteAdaptativoService {
 
     private List<Questao> ordenarPorRigorAdaptativo(String disciplina, List<Questao> questoes, Integer nivelDificuldade) {
         UUID candidatoId = Authentication.getCurrentUserId();
-        Map<String, Double> rigorAtualPorTopico = carregarRigorAtualPorTopico(candidatoId, disciplina);
+        Map<String, Double> rigorAtualPorSubtopico = carregarRigorAtualPorSubtopico(candidatoId, disciplina);
         double rigorBase = resolverRigorBase(nivelDificuldade);
 
         return questoes.stream()
             .sorted(Comparator
-                .comparingDouble((Questao questao) -> distanciaDeRigor(questao, rigorAtualPorTopico, rigorBase))
+                .comparingDouble((Questao questao) -> distanciaDeRigor(questao, rigorAtualPorSubtopico, rigorBase))
                 .thenComparingDouble(Questao::getRigor)
                 .thenComparing(Questao::getTopico, String.CASE_INSENSITIVE_ORDER))
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Map<String, Double> carregarRigorAtualPorTopico(UUID candidatoId, String disciplina) {
+    private Map<String, Double> carregarRigorAtualPorSubtopico(UUID candidatoId, String disciplina) {
         if (candidatoId == null || disciplina == null || disciplina.isBlank()) {
             return Map.of();
         }
 
         String sql = """
-            select pr.topico, pr.rigor_atual
+            select pr.subtopico, pr.rigor_atual
             from progressao_rigor pr
             join disciplinas d on d.id = pr.disciplina_id
             where pr.aluno_id = ?
@@ -125,12 +125,12 @@ public class TesteAdaptativoService {
             stmt.setString(2, disciplina);
             try (var rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    String topico = normalizar(rs.getString("topico"));
+                    String subtopico = normalizar(rs.getString("subtopico"));
                     double rigorAtual = rs.getObject("rigor_atual") instanceof Number number
                         ? Math.max(0d, Math.min(1d, number.doubleValue()))
                         : 0.12d;
-                    if (!topico.isBlank()) {
-                        rigores.put(topico, rigorAtual);
+                    if (!subtopico.isBlank()) {
+                        rigores.put(subtopico, rigorAtual);
                     }
                 }
             }
@@ -139,13 +139,17 @@ public class TesteAdaptativoService {
         return Map.copyOf(rigores);
     }
 
-    private double distanciaDeRigor(Questao questao, Map<String, Double> rigorAtualPorTopico, double rigorBase) {
-        String chaveTopico = normalizar(
-            questao.getTopicoPrincipal() == null || questao.getTopicoPrincipal().isBlank()
-                ? questao.getTopico()
-                : questao.getTopicoPrincipal()
+    private double distanciaDeRigor(Questao questao, Map<String, Double> rigorAtualPorSubtopico, double rigorBase) {
+        String chaveSubtopico = normalizar(
+            questao.getSubtopico() == null || questao.getSubtopico().isBlank()
+                ? (
+                    questao.getTopicoPrincipal() == null || questao.getTopicoPrincipal().isBlank()
+                        ? questao.getTopico()
+                        : questao.getTopicoPrincipal()
+                )
+                : questao.getSubtopico()
         );
-        double alvo = rigorAtualPorTopico.getOrDefault(chaveTopico, rigorBase);
+        double alvo = rigorAtualPorSubtopico.getOrDefault(chaveSubtopico, rigorBase);
         return Math.abs(questao.getRigor() - alvo);
     }
 

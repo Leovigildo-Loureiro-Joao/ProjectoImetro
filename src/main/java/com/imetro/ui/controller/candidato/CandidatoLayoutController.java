@@ -2,6 +2,8 @@ package com.imetro.ui.controller.candidato;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import org.kordamp.ikonli.Ikon;
@@ -13,6 +15,8 @@ import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.model.Candidato;
+import com.imetro.persistence.repository.DiagnosticoRepository;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.components.Item_Cell;
 
@@ -37,6 +41,7 @@ public class CandidatoLayoutController implements Initializable {
     private static final String BANNER_SUCCESS_CLASS = "bootstrap-banner-success";
     private static final String BANNER_WARNING_CLASS = "bootstrap-banner-warning";
     private static final String BANNER_ERROR_CLASS = "bootstrap-banner-error";
+    private final DiagnosticoService diagnosticoService=new DiagnosticoService();
 
     @FXML
     private StackPane contentHost;
@@ -109,7 +114,9 @@ public class CandidatoLayoutController implements Initializable {
 
     private void FirstDiagnostic(){
         Candidato candidato =(Candidato) CacheService.get("currentUser");
-        
+        if (!diagnosticoService.temHistoricoDiagnostico(candidato.getIdCandidato())) {
+            navigate("diagnostico");
+        }
     }
 
     private void configureBootstrapBanner() {
@@ -207,6 +214,8 @@ public class CandidatoLayoutController implements Initializable {
     }
 
     private void navigate(String key) {
+        List<String> keys= List.of("dashboard","diagnostico","exame_adaptativo","relatorios","bolsas","perfil","configuracao","logout");
+        menu.getSelectionModel().select(keys.indexOf(key));
         try {
             switch (key) {
                 case "dashboard" -> openDashboard();
