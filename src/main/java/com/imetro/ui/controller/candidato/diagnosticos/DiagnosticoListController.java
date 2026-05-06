@@ -7,6 +7,8 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
+import com.imetro.domain.dto.diagnostico.PrimeiroDiagnosticoResumo;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.controller.lifecycle.DisposableController;
@@ -23,12 +25,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.geometry.Pos;
-import javafx.geometry.Insets;
+
 
 public class DiagnosticoListController implements Initializable, DisposableController {
 
@@ -52,7 +51,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
         PerguntasBootstrapAsyncService.getInstance();
-        
+
     private final ChangeListener<PerguntasBootstrapAsyncService.BootstrapUiState> bootstrapStateListener =
         (obs, oldState, newState) -> {
             if (oldState == PerguntasBootstrapAsyncService.BootstrapUiState.RUNNING
@@ -78,18 +77,18 @@ public class DiagnosticoListController implements Initializable, DisposableContr
         boolean temHistorico = diagnosticoService.temHistoricoDiagnostico(candidatoId);
 
         if (!temHistorico) {
-            DiagnosticoService.PrimeiroDiagnosticoResumo primeiro = diagnosticoService
+            PrimeiroDiagnosticoResumo primeiro = diagnosticoService
                 .carregarPrimeiroDiagnosticoResumo(candidatoId);
             diagnosticosPane.getChildren().add(new FirsCardDiagnostico(primeiro));
             configurarCabecalhoPrimeiraVez(processamentoLivros);
             configurarAcoesLote(false);
         } else {
-            List<DiagnosticoService.DiagnosticoDisciplinaResumo> resumos = diagnosticoService
+            List<DiagnosticoDisciplinaResumo> resumos = diagnosticoService
                 .carregarDiagnosticosDisponiveis(candidatoId);
             if (resumos.isEmpty()) {
                 diagnosticosPane.getChildren().add(criarEstadoVazio(processamentoLivros));
             } else {
-                for (DiagnosticoService.DiagnosticoDisciplinaResumo resumo : resumos) {
+                for (DiagnosticoDisciplinaResumo resumo : resumos) {
                     diagnosticosPane.getChildren().add(criarCard(resumo));
                 }
             }
@@ -138,7 +137,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
     }
 
 
-    private DiagnosticoCard criarCard(DiagnosticoService.DiagnosticoDisciplinaResumo resumo) {
+    private DiagnosticoCard criarCard(DiagnosticoDisciplinaResumo resumo) {
         return new DiagnosticoCard(
             resumo,
             param -> {

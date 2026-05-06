@@ -1,6 +1,7 @@
 package com.imetro.ui.components.diagnostico;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
 import com.jfoenix.controls.JFXButton;
@@ -25,7 +26,7 @@ public class DiagnosticoCard extends VBox {
     private final JFXButton diagnosticoButton;
 
     public DiagnosticoCard(
-        DiagnosticoService.DiagnosticoDisciplinaResumo resumo,
+        DiagnosticoDisciplinaResumo resumo,
         Callback<ArrayList<Topico>, Void> run,
         Runnable massa
     ) {

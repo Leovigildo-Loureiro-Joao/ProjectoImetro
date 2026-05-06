@@ -11,7 +11,6 @@ public  class DisciplinaRepository extends JdbcBasicSqlRepository{
 
     public DisciplinaRepository() {
         super("disciplinas", "id");
-        //TODO Auto-generated constructor stub
     }
 
 

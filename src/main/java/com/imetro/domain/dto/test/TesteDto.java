@@ -11,6 +11,8 @@ public record TesteDto(
     float nivelDificuldade,
     float velocidade,
     float consistencia,
+    int totalQuestoes,
+    int totalSubtopicos,
     List<Percent> topicos,
     List<String> Passos
 ) {
@@ -20,9 +22,24 @@ public record TesteDto(
         float errosComuns,
         float melhoria,
         float percent,
+        int totalQuestoes,
+        int totalSubtopicos,
         List<Percent> topicos,
         List<String> Passos
     ) {
-        this(disciplina, ritmoEvolutivo, errosComuns, melhoria, percent, 0f, 0f, 0f, topicos, Passos);
+        this(
+            disciplina,
+            ritmoEvolutivo,
+            errosComuns,
+            melhoria,
+            percent,
+            0f,
+            0f,
+            0f,
+            totalQuestoes,
+            totalSubtopicos,
+            topicos,
+            Passos
+        );
     }
 }

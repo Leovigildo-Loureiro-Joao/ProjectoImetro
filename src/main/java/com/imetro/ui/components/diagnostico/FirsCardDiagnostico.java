@@ -2,6 +2,7 @@ package com.imetro.ui.components.diagnostico;
 
 import java.util.ArrayList;
 
+import com.imetro.domain.dto.diagnostico.PrimeiroDiagnosticoResumo;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 import com.jfoenix.controls.JFXButton;
@@ -15,7 +16,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class FirsCardDiagnostico extends VBox{
-    public  FirsCardDiagnostico(DiagnosticoService.PrimeiroDiagnosticoResumo resumo) {
+    public  FirsCardDiagnostico(PrimeiroDiagnosticoResumo resumo) {
         Label badge = new Label(
             resumo.totalDisciplinas() + " disciplinas | "
                 + resumo.totalTopicos() + " topicos | "

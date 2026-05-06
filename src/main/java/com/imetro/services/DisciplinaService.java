@@ -6,16 +6,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.dto.test.TestDtoAll;
 import com.imetro.domain.enums.NivelDisciplina;
-import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.TesteRepository;
-import com.imetro.services.DiagnosticoService.DiagnosticoDisciplinaResumo;
 import com.imetro.util.Authentication;
 
 public class DisciplinaService {
@@ -24,6 +24,7 @@ public class DisciplinaService {
 
     public static ArrayList<DisciplinaDto> discCategoria(){
         ArrayList<DisciplinaDto> disc=new ArrayList<>();
+        
         try {
             for (Object elObject : disciplinaRepository.findAll()) {
                 if (elObject instanceof LinkedHashMap) {
@@ -93,10 +94,10 @@ public class DisciplinaService {
             List<Map<String,Object>> listTest=test.findByCandidatoIdDisciplina(Authentication.getCurrentUserId(),pDto.disciplinaId());
             for (Map<String,Object> tes : listTest) {
                 TestDtoAll dto=TestDtoAll.ParseMapDto(tes);
-                velocidade+=dto.velocidade();    
-                consistencia+=dto.consistencia();    
+                velocidade+=dto.velocidade();
+                consistencia+=dto.consistencia();
             }
-            
+
             pdtest.add(new ProgressoDisciplinaTeste(
                 nomeDisciplina,
                 progresso,

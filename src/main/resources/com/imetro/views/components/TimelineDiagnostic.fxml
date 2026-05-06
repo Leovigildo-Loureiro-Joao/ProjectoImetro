@@ -3,6 +3,7 @@
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXComboBox?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
@@ -10,9 +11,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
-<?import jfxtras.scene.control.LocalDateTimeTextField?>
 
-<VBox fx:id="timelinePane" minWidth="1122.0" prefHeight="581.0" prefWidth="1122.0" spacing="20.0" stylesheets="@../../../../styles/candidato-layout.css" visible="true" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoTimeline">
+<VBox fx:id="timelinePane" minWidth="1122.0" prefHeight="581.0" prefWidth="1122.0" spacing="20.0" stylesheets="@../../../../styles/candidato-layout.css" visible="true" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoTimeline">
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
    </padding>
@@ -21,9 +21,16 @@
       <Label styleClass="muted" text="Histórico completo dos seus diagnósticos" />
       <HBox prefHeight="36.0" prefWidth="1102.0" spacing="20.0">
          <children>
-            <LocalDateTimeTextField pickerShowing="true" prefHeight="40.0" prefWidth="371.0" promptText="Procura aqui a data" />
-            <JFXComboBox maxHeight="40.0" minHeight="40.0" prefHeight="20.0" prefWidth="251.0" promptText="Seleciona uma disciplina" />
-            <JFXButton prefHeight="38.0" prefWidth="151.0" styleClass="btn-primary" text="Procurar" />
+            <HBox spacing="10.0">
+               <children>
+                  <DatePicker fx:id="data" prefHeight="44.0" prefWidth="179.0" promptText="Data" />
+                  <JFXComboBox fx:id="horas" labelFloat="true" maxHeight="40.0" minHeight="18.0" prefHeight="39.0" prefWidth="67.0" promptText="Hora" visibleRowCount="5" />
+                  <JFXComboBox fx:id="minutos" labelFloat="true" maxHeight="40.0" minHeight="18.0" prefHeight="39.0" prefWidth="80.0" promptText="Minuto" visibleRowCount="5" />
+               </children>
+            </HBox>
+            <JFXComboBox fx:id="disciplina" labelFloat="true" maxHeight="40.0" minHeight="18.0" prefHeight="29.0" prefWidth="251.0" promptText="Seleciona uma disciplina" visibleRowCount="5" />
+            <JFXButton onAction="#Procurar" prefHeight="39.0" prefWidth="100.0" styleClass="btn-primary" text="Procurar" />
+            <JFXButton onAction="#Limpar" prefHeight="39.0" prefWidth="128.0" styleClass="btn-secondary" text="Limpar Filtros" />
          </children>
       </HBox>
       <Separator />

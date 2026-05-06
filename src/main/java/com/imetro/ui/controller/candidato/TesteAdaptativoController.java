@@ -191,7 +191,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private void carregarDisciplinas() {
         botoesDisciplinasBox.getChildren().clear();
 
-        Label titulo = new Label("Escolha uma disciplina e configure o foco do teste pelos modais.");
+        Label titulo = new Label("Escolha uma disciplina e decida se quer entrar com o banco inteiro ou configurar o foco antes do teste.");
         titulo.getStyleClass().add("h3-thin");
         botoesDisciplinasBox.getChildren().add(titulo);
 
@@ -234,6 +234,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             desafio,
             cobertura,
             variedade,
+            totalQuestoes,
+            totalSubtopicos,
             percentuaisTopicos,
             passos
         );
@@ -251,13 +253,14 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private List<String> construirPassosCard(List<Topico> topicos) {
         List<String> passos = new ArrayList<>();
-        passos.add("Use o modo inteligente para escolher o foco do teste.");
+        passos.add("Modo padrao usa toda a disciplina com o banco real ja disponivel.");
+        passos.add("Modo inteligente abre a selecao de topicos e subtopicos antes de comecar.");
 
         if (!topicos.isEmpty()) {
-            passos.add("Comece por " + topicos.getFirst().topicos() + ".");
+            passos.add("Se quiser um arranque guiado, comece por " + topicos.getFirst().topicos() + ".");
         }
         if (topicos.size() > 1) {
-            passos.add("Depois avance para " + topicos.get(1).topicos() + ".");
+            passos.add("Depois avance para " + topicos.get(1).topicos() + " para ampliar o treino.");
         }
 
         return passos;

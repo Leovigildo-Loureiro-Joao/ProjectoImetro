@@ -59,6 +59,11 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
 - Foi adicionada o progresso por subtopico relacionando o progresso_rigor com a recomendacao_rigor assim obterndo um progresso do estado do diagnotico do candidato
 - Foi marcado como proximo passo terminar metricas e timeline dos diagnosticos
 
+### 2026-05-06
+> *Horas: 15:45*
+- Timeline actualizado de diagnotico ligado com a base de dados
+- Update desgn do testes
+
 ## Objetivo de "projeto terminado"
 
 Para considerar o projeto "terminado" (MVP), o sistema deve permitir:

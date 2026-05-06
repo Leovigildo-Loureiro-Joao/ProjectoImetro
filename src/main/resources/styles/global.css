@@ -1,7 +1,7 @@
 /* ==================== VARIÁVEIS GLOBAIS ==================== */
 .root {
     -fx-font-family: "Roboto", "Segoe UI", system-font;
-    
+
     /* Cores principais - Light Theme */
     -color-bg: #f8fafc;
     -color-surface: #ffffff;
@@ -9,25 +9,25 @@
     -color-text-secondary: #475569;
     -color-muted: #64748b;
     -color-border: #e2e8f0;
-    
+
     /* Cores de ação */
     -color-primary: #3b82f6;
     -color-primary-light: #eff6ff;
     -color-primary-dark: #2563eb;
     -color-primary-contrast: #ffffff;
-    
+
     -color-secondary: #8b5cf6;
     -color-secondary-light: #f5f3ff;
-    
+
     -color-success: #10b981;
     -color-success-light: #ecfdf5;
-    
+
     -color-warning: #f59e0b;
     -color-warning-light: #fffbeb;
-    
+
     -color-danger: #ef4444;
     -color-danger-light: #fef2f2;
-    
+
     /* Cores neutras */
     -color-none: #94a3b8;
 }
@@ -202,7 +202,7 @@
 }
 
 /* ==================== TEXTFIELD ==================== */
-.text-field, .password-field, .combo-box {
+.text-field, .password-field {
     -fx-background-color: -color-surface;
     -fx-background-radius: 10;
     -fx-border-color: -color-border;
@@ -212,7 +212,7 @@
     -fx-padding: 10 12 10 12;
 }
 
-.text-field:focused, .password-field:focused, .combo-box:focused {
+.text-field:focused, .password-field:focused {
     -fx-border-color: -color-primary;
 }
 
@@ -555,14 +555,14 @@
 }
 
     .toggle-letter.sucess  {
-        -fx-background-color: #10b981; 
-        -fx-border-color: #10b981; 
+        -fx-background-color: #10b981;
+        -fx-border-color: #10b981;
         -fx-text-fill: white;
     }
 
     .toggle-letter.error  {
-       -fx-background-color: #ef4444; 
-       -fx-border-color: #ef4444; 
+       -fx-background-color: #ef4444;
+       -fx-border-color: #ef4444;
        -fx-text-fill: white;
     }
 
@@ -799,4 +799,16 @@
 .nav-bar.sub .list-cell:selected .item-cell .ikonli-font-icon {
   -fx-fill: -color-primary;
   -fx-font-size: 10;
+}
+
+
+.combo-box .list-cell,.combo-box .item-cell{
+    -fx-background-color: white;
+    -fx-padding:10;
+}
+
+.combo-box .list-cell:hover,.combo-box .item-cell:hover{
+    -fx-fill:black;
+    -fx-text-fill:-color-primary;
+
 }
