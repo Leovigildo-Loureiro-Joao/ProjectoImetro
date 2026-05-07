@@ -1,5 +1,7 @@
 package com.imetro.services;
 
+import com.imetro.domain.CacheService;
+import com.imetro.domain.dto.Stats;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
@@ -8,6 +10,10 @@ import com.imetro.domain.dto.diagnostico.PrimeiroDiagnosticoResumo;
 import com.imetro.domain.dto.diagnostico.ProgressaoRigorAtual;
 import com.imetro.domain.dto.diagnostico.ProgressoResumo;
 import com.imetro.domain.dto.diagnostico.QuestaoRigorResultado;
+import com.imetro.domain.dto.diagnostico.StatsDiagnotico;
+import com.imetro.domain.dto.diagnostico.StatsQuestaoQtd;
+import com.imetro.domain.dto.diagnostico.TempoStatsDiagnostico;
+import com.imetro.domain.dto.diagnostico.Value;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.persistence.repository.DiagnosticoRepository;
@@ -15,6 +21,8 @@ import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.AppLogger;
+import com.imetro.util.Authentication;
+import com.imetro.util.ConverterSegundoMinutos;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -24,10 +32,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -528,6 +538,7 @@ public class DiagnosticoService {
         List<DiagnosticoDto> list= new ArrayList<>();
         try {
             for (Map<String, Object> map : diagnosticoRepository.findAll()) {
+
                 list.add(DiagnosticoDto.ParseMapDto(map));
             }
         } catch (SQLException e) {
@@ -898,6 +909,94 @@ public class DiagnosticoService {
         return "INICIANTE";
     }
 
+    public StatsDiagnotico statsDiagnotico(){
+        double media=0;
+        int total=0;
+        double totalAcerto=0;
+        Value melhoria=new Value("Sem disciplinas",0);
+        Value atencao=new Value("Sem disciplinas",0);
+        String nome="";
+        List<DiagnosticoDto> list = listDiagnotico();
+        for (DiagnosticoDto typed : list) {
+            if(typed.candidato_id().equals(Authentication.getCurrentUserId())){
+                total++;
+                media+=typed.evolucao_percentual();
+                totalAcerto+=typed.percentual_acerto()/100;
+                if(!nome.contains(typed.disciplina_nome())){
+                    nome+="-"+typed.disciplina_nome();
+                    if (typed.evolucao_percentual()>melhoria.percemt())
+                        melhoria=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+                    if (typed.evolucao_percentual()<atencao.percemt())
+                        atencao=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+
+                }else{
+                    if (typed.evolucao_percentual()>melhoria.percemt()) {
+                        melhoria=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+                    }
+                    if (typed.evolucao_percentual()<atencao.percemt())
+                        atencao=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+
+                }
+            }
+
+
+        }
+        return new StatsDiagnotico(media/total,totalAcerto/total,total,melhoria,atencao);
+    }
+
+    public List<Map<String,?>> statsDisciplina(){
+        List<Map<String,?>> list2 = new ArrayList<>();
+        final List<DiagnosticoDto> list = listDiagnotico();
+        for (DiagnosticoDto typed : list) {
+            if(typed.candidato_id().equals(Authentication.getCurrentUserId())){
+                list2.add(Map.of("key",typed.disciplina_nome(),"value",new Stats(typed.velocidade() , typed.precisao(), typed.consistencia(), typed.logica(), typed.resiliencia())));
+            }
+        }
+        return list2;
+    }
+
+    public TempoStatsDiagnostico statsTempoDiagnotic(){
+
+        final List<DiagnosticoDto> list = listDiagnotico();
+        String tempoMedio, tempoMaisRapido,tempoMaisLento;
+        String discRapida="";String discLenta="";
+        int tot=0;
+        int med=0;
+        int maior=0;
+        int menor=50000;
+        for (DiagnosticoDto typed : list) {
+            if(typed.candidato_id().equals(Authentication.getCurrentUserId())){
+                tot++;
+                med+=typed.duracao_segundos();
+                discRapida=maior<typed.duracao_segundos()?typed.disciplina_nome():discRapida;
+                maior=maior<typed.duracao_segundos()?typed.duracao_segundos():maior;
+                discLenta=menor>typed.duracao_segundos()?typed.disciplina_nome():discLenta;
+                menor=menor>typed.duracao_segundos()?typed.duracao_segundos():menor;
+            }
+        }
+        tempoMedio=ConverterSegundoMinutos.formatarDuracao(Math.round(med/tot));
+        tempoMaisRapido=ConverterSegundoMinutos.formatarDuracao(maior);
+        tempoMaisLento=ConverterSegundoMinutos.formatarDuracao(menor);
+
+        return new TempoStatsDiagnostico(tempoMedio,tempoMaisRapido,discRapida,tempoMaisLento,discLenta);
+    }
+
+    public StatsQuestaoQtd statsQuestaoQtd(){
+        final List<DiagnosticoDto> list = listDiagnotico();
+        int tot=0;
+        int totErro=0;
+        int totAcerto=0;
+        for (DiagnosticoDto typed : list) {
+            if(typed.candidato_id().equals(Authentication.getCurrentUserId())){
+
+                tot+=typed.total_questoes();
+                totErro+=typed.total_erros();
+                totAcerto+=typed.total_acertos();
+            }
+        }
+        return new StatsQuestaoQtd(totErro,totAcerto,tot);
+    }
+
     private double calcularVelocidade(int duracaoSegundos, int totalQuestoes) {
         if (duracaoSegundos <= 0 || totalQuestoes <= 0) {
             return 0.5d;
@@ -1033,8 +1132,14 @@ public class DiagnosticoService {
         questao.setEnunciado(safeText(row.get("questao"), ""));
         questao.setBloco2(null);
 
-        List<String> respostas = parseJsonStringArray(row.get("respostas"));
-        List<String> respostasNormalizadas = completarRespostas(respostas);
+        List<String> respostasOriginais = parseJsonStringArray(row.get("respostas"));
+        List<String> respostasCompletasOriginais = completarRespostas(respostasOriginais);
+        String textoRespostaCorreta = resolverTextoRespostaCorreta(
+            safeText(row.get("resposta_correta"), ""),
+            respostasCompletasOriginais
+        );
+        List<String> respostasEmbaralhadas = completarRespostas(embaralharAlternativas(respostasOriginais));
+        List<String> respostasNormalizadas = respostasEmbaralhadas;
         questao.setOpcaoA(respostasNormalizadas.get(0));
         questao.setOpcaoB(respostasNormalizadas.get(1));
         questao.setOpcaoC(respostasNormalizadas.get(2));
@@ -1043,10 +1148,7 @@ public class DiagnosticoService {
         questao.setOpcaoF(respostasNormalizadas.get(5));
         questao.setOpcaoG(respostasNormalizadas.get(6));
 
-        questao.setRespostaCorreta(resolverRespostaCorreta(
-            safeText(row.get("resposta_correta"), ""),
-            respostasNormalizadas
-        ));
+        questao.setRespostaCorreta(resolverRespostaCorreta(textoRespostaCorreta, respostasNormalizadas));
         questao.setNivelDificuldade(mapearNivel(safeText(row.get("dificuldade"), "")));
         questao.setRigor(mapearRigor(row.get("rigor")));
         questao.setReferenciaLivro(safeText(row.get("referencia_livro"), null));
@@ -1054,6 +1156,35 @@ public class DiagnosticoService {
         questao.setPaginaFim(mapearInteiro(row.get("pagina_fim")));
         questao.setTempoSugerido(mapearTempoSugerido(questao.getNivelDificuldade()));
         return questao;
+    }
+
+    private List<String> embaralharAlternativas(List<String> alternativas) {
+        if (alternativas == null || alternativas.isEmpty()) {
+            return List.of();
+        }
+
+        ArrayList<String> embaralhadas = new ArrayList<>(alternativas);
+        if (embaralhadas.size() > 1) {
+            Collections.shuffle(embaralhadas);
+        }
+        return embaralhadas;
+    }
+
+    private String resolverTextoRespostaCorreta(String respostaCorreta, List<String> respostas) {
+        if (respostas == null || respostas.isEmpty()) {
+            return "";
+        }
+
+        char letraCorreta = resolverRespostaCorreta(respostaCorreta, respostas);
+        return resolverTextoOpcao(respostas, letraCorreta);
+    }
+
+    private String resolverTextoOpcao(List<String> respostas, char letra) {
+        int indice = Character.toUpperCase(letra) - 'A';
+        if (indice < 0 || indice >= respostas.size()) {
+            return respostas.getFirst();
+        }
+        return respostas.get(indice);
     }
 
     private Map<UUID, ProgressoResumo> carregarProgressos(UUID candidatoId) {
@@ -1097,7 +1228,6 @@ public class DiagnosticoService {
 
         return progressos;
     }
-
 
     private Map<UUID, HistoricoDiagnosticoResumo> carregarHistoricosPorDisciplinaId(UUID candidatoId) {
         if (candidatoId == null) {
@@ -1459,5 +1589,6 @@ public class DiagnosticoService {
         }
         return out.toString();
     }
+
 
 }

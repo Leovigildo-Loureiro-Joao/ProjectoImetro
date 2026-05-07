@@ -467,6 +467,8 @@ public class GeminiService {
         prompt.append("Regras obrigatorias:\n");
         prompt.append("- Usa somente conteudo suportado pelos documentos.\n");
         prompt.append("- Cria alternativas plausiveis e apenas uma resposta correta.\n");
+        prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
+        prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Mantem a dificuldade coerente com o material.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera base suficiente para testes curtos, medios e longos.\n");
@@ -497,6 +499,8 @@ public class GeminiService {
         prompt.append("Regras obrigatorias:\n");
         prompt.append("- Usa somente os topicos e subtopicos presentes no JSON informado.\n");
         prompt.append("- Cria alternativas plausiveis e apenas uma resposta correta.\n");
+        prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
+        prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Equilibra a distribuicao das questoes pelos topicos principais.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera uma base ampla o suficiente para testes curtos, medios e longos.\n");

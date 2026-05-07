@@ -418,7 +418,7 @@ public class PerguntasBootstrapService {
                 when jsonb_typeof(q->'alternativas') = 'array' then q->'alternativas'
                 else '[]'::jsonb
               end,
-              upper(coalesce(nullif(q->>'respostaCorreta', ''), 'A')),
+              coalesce(nullif(q->>'respostaCorreta', ''), 'A'),
               upper(coalesce(nullif(q->>'dificuldade', ''), 'MEDIO')),
               least(1.0, greatest(0.0, coalesce(nullif(q->>'rigor', '')::double precision, 0.5))),
               nullif(q->>'referenciaLivro', ''),

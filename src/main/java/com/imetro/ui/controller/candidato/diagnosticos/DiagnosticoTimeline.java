@@ -21,6 +21,7 @@ import com.imetro.domain.dto.diagnostico.TimelineDTO;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.TimelineCard;
 import com.imetro.util.Authentication;
+import com.imetro.util.ConverterSegundoMinutos;
 import com.jfoenix.controls.JFXComboBox;
 
 import javafx.event.ActionEvent;
@@ -177,7 +178,7 @@ public class DiagnosticoTimeline implements Initializable {
 
             horarios.add(momento.toLocalTime());
             disciplinas.add(textoSeguro(diagnostico.disciplina_nome(), "Sem disciplina"));
-            duracoes.add(formatarDuracao(diagnostico.duracao_segundos()));
+            duracoes.add(ConverterSegundoMinutos.formatarDuracao(diagnostico.duracao_segundos()));
             acertos.add((float) diagnostico.total_acertos());
             erros.add((float) diagnostico.total_erros());
             evolucoes.add((float) diagnostico.evolucao_percentual());
@@ -271,20 +272,7 @@ public class DiagnosticoTimeline implements Initializable {
         return Math.max(0f, Math.min(1f, valor));
     }
 
-    private String formatarDuracao(int duracaoSegundos) {
-        int totalSegundos = Math.max(0, duracaoSegundos);
-        int horas = totalSegundos / 3600;
-        int minutos = (totalSegundos % 3600) / 60;
-        int segundos = totalSegundos % 60;
 
-        if (horas > 0) {
-            return String.format("%dh %02dm", horas, minutos);
-        }
-        if (minutos > 0) {
-            return String.format("%dmin %02ds", minutos, segundos);
-        }
-        return segundos + "s";
-    }
 
     private VBox criarEstadoVazio(String tituloTexto, String descricaoTexto) {
         Label titulo = new Label(tituloTexto);

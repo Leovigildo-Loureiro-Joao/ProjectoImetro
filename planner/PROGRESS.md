@@ -62,7 +62,19 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
 ### 2026-05-06
 > *Horas: 15:45*
 - Timeline actualizado de diagnotico ligado com a base de dados
-- Update desgn do testes
+- Update design do testes card
+
+### 2026-05-07
+> *Horas: 10:51*
+- Update prompt of generated ask and answer
+- Change use letter on selected corret answer by value of answer
+
+### 2026-05-07
+> *Horas: 14:42*
+- All pages of diagnostico join on database
+- Create dto for all parts of diagnotico
+
+
 
 ## Objetivo de "projeto terminado"
 
