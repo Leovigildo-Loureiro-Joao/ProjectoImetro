@@ -178,6 +178,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private int a = 0;
     private int e = 0;
 
+
+
     private JFXToggleNode selected;
     private char corretaLetra;
     private Timeline time;
@@ -192,6 +194,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private FXMLLoader modFxml;
     private Node mod;
     private Node modTop;
+    private int logica=0;
+    private int logicaCont=0;
     private ModalController cont;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
 
@@ -405,8 +409,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         Questao q = questoes.get(questaoAtual);
         boolean acertou = respostaSelecionada == q.getRespostaCorreta();
-
         if (acertou) {
+            logica+=q.getRigor()>=0.75?1:0;
             a++;
             selected.getStyleClass().add("sucess");
         } else {
@@ -486,6 +490,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             Authentication.getCurrentUserId(),
             questoes,
             respostasUsuario,
+            logica/questoes.stream().filter(t -> t.getRigor()>=0.75).count(),
             tempo.getText()
         );
 

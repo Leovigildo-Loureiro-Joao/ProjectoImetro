@@ -128,7 +128,9 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
         String nivel,
         double velocidade,
         double precisao,
+        double logica,
         double consistencia,
+        double resiliencia,
         String respostasJson,
         String observacoes
     ) throws SQLException {
@@ -150,13 +152,15 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
               nivel,
               velocidade,
               precisao,
+              logica,
               consistencia,
+              resiliencia,
               respostas,
               observacoes,
               criado_em,
               atualizado_em
             ) values (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), ?, now(), now()
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), ?, now(), now()
             )
             """;
 
@@ -176,9 +180,11 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
             stmt.setString(13, nivel);
             stmt.setFloat(14, (float) velocidade);
             stmt.setFloat(15, (float) precisao);
-            stmt.setFloat(16, (float) consistencia);
-            stmt.setString(17, respostasJson);
-            stmt.setString(18, observacoes);
+            stmt.setFloat(16, (float) logica);
+            stmt.setFloat(17, (float) consistencia);
+            stmt.setFloat(18, (float) resiliencia);
+            stmt.setString(19, respostasJson);
+            stmt.setString(20, observacoes);
             stmt.executeUpdate();
         }
         return diagnosticoId;

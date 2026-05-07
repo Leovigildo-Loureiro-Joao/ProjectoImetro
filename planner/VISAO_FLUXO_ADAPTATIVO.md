@@ -106,7 +106,7 @@ Regra:
 
 ### Consistencia
 
-Ganhos sucessivos:
+~ Ganhos sucessivos:
 
 `Delta_P_n = P_(n+1) - P_n`
 

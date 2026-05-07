@@ -20,9 +20,9 @@ import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
 import com.imetro.ui.model.Questao;
-import com.imetro.util.AppLogger;
 import com.imetro.util.Authentication;
-import com.imetro.util.ConverterSegundoMinutos;
+import com.imetro.util.CalculoStats;
+import com.imetro.util.ConversorTempo;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -421,6 +421,7 @@ public class DiagnosticoService {
         UUID candidatoId,
         List<Questao> questoes,
         List<Character> respostasUsuario,
+        double logica,
         String tempoFormatado
     ) {
         if (candidatoId == null || questoes == null || questoes.isEmpty() || respostasUsuario == null || respostasUsuario.isEmpty()) {
@@ -433,6 +434,7 @@ public class DiagnosticoService {
         }
 
         Map<String, ArrayList<Integer>> indicesPorDisciplina = new LinkedHashMap<>();
+
         for (int i = 0; i < limite; i++) {
             Questao questao = questoes.get(i);
             if (questao == null || questao.getDisciplina() == null || questao.getDisciplina().isBlank()) {
@@ -447,7 +449,7 @@ public class DiagnosticoService {
             return;
         }
 
-        int duracaoSegundos = parseTempoEmSegundos(tempoFormatado);
+        int duracaoSegundos = ConversorTempo.parseTempoEmSegundos(tempoFormatado);
         LocalDateTime concluidoEm = LocalDateTime.now();
 
         try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
@@ -470,11 +472,13 @@ public class DiagnosticoService {
                     int totalErros = Math.max(0, totalQuestoes - totalAcertos);
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
                     Double ultimoPercentual = diagnosticoRepository.buscarUltimoPercentualDiagnostico(conn, candidatoId, disciplinaId, nomeDisciplina);
+
                     Double evolucao = ultimoPercentual == null ? null : percentualAcerto - ultimoPercentual;
                     String nivel = resolverNivelDiagnostico(percentualAcerto);
-                    double precisao = Math.max(0d, Math.min(1d, percentualAcerto / 100d));
-                    double consistencia = precisao;
-                    double velocidade = calcularVelocidade(duracaoSegundos, totalQuestoes);
+                    double precisao = CalculoStats.calcularVelocidade(totalAcertos, totalQuestoes);
+                    double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual,percentualAcerto);
+                    double resiliencia = CalculoStats.calcularResiliencia(lis);
+                    double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
 
                     UUID diagnosticoId = diagnosticoRepository.inserir(
                         conn,
@@ -492,7 +496,9 @@ public class DiagnosticoService {
                         nivel,
                         velocidade,
                         precisao,
+                        logica,
                         consistencia,
+                        resiliencia,
                         construirJsonRespostas(indices, questoes, respostasUsuario),
                         ultimoPercentual == null
                             ? "Primeiro diagnostico concluido com dados reais."
@@ -974,9 +980,9 @@ public class DiagnosticoService {
                 menor=menor>typed.duracao_segundos()?typed.duracao_segundos():menor;
             }
         }
-        tempoMedio=ConverterSegundoMinutos.formatarDuracao(Math.round(med/tot));
-        tempoMaisRapido=ConverterSegundoMinutos.formatarDuracao(maior);
-        tempoMaisLento=ConverterSegundoMinutos.formatarDuracao(menor);
+        tempoMedio=ConversorTempo.formatarDuracao(Math.round(med/tot));
+        tempoMaisRapido=ConversorTempo.formatarDuracao(maior);
+        tempoMaisLento=ConversorTempo.formatarDuracao(menor);
 
         return new TempoStatsDiagnostico(tempoMedio,tempoMaisLento,discLenta,tempoMaisRapido,discRapida);
     }
@@ -995,15 +1001,6 @@ public class DiagnosticoService {
             }
         }
         return new StatsQuestaoQtd(totErro,totAcerto,tot);
-    }
-
-    private double calcularVelocidade(int duracaoSegundos, int totalQuestoes) {
-        if (duracaoSegundos <= 0 || totalQuestoes <= 0) {
-            return 0.5d;
-        }
-        double mediaPorQuestao = duracaoSegundos / (double) totalQuestoes;
-        double normalizado = 1d - (mediaPorQuestao / 120d);
-        return Math.max(0d, Math.min(1d, normalizado));
     }
 
     private double calcularProgressoPorRigor(double rigorAtual, double rigorAlvo) {
@@ -1068,24 +1065,7 @@ public class DiagnosticoService {
         return json.toString();
     }
 
-    private int parseTempoEmSegundos(String tempoFormatado) {
-        if (tempoFormatado == null || tempoFormatado.isBlank()) {
-            return 0;
-        }
 
-        String[] partes = tempoFormatado.split(":");
-        try {
-            return switch (partes.length) {
-                case 3 -> (Integer.parseInt(partes[0]) * 3600)
-                    + (Integer.parseInt(partes[1]) * 60)
-                    + Integer.parseInt(partes[2]);
-                case 2 -> (Integer.parseInt(partes[0]) * 60) + Integer.parseInt(partes[1]);
-                default -> Integer.parseInt(tempoFormatado.trim());
-            };
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
 
     private String escapeJson(String valor) {
         return valor

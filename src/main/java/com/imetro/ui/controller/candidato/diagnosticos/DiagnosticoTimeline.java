@@ -21,7 +21,7 @@ import com.imetro.domain.dto.diagnostico.TimelineDTO;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.TimelineCard;
 import com.imetro.util.Authentication;
-import com.imetro.util.ConverterSegundoMinutos;
+import com.imetro.util.ConversorTempo;
 import com.jfoenix.controls.JFXComboBox;
 
 import javafx.event.ActionEvent;
@@ -178,7 +178,7 @@ public class DiagnosticoTimeline implements Initializable {
 
             horarios.add(momento.toLocalTime());
             disciplinas.add(textoSeguro(diagnostico.disciplina_nome(), "Sem disciplina"));
-            duracoes.add(ConverterSegundoMinutos.formatarDuracao(diagnostico.duracao_segundos()));
+            duracoes.add(ConversorTempo.formatarDuracao(diagnostico.duracao_segundos()));
             acertos.add((float) diagnostico.total_acertos());
             erros.add((float) diagnostico.total_erros());
             evolucoes.add((float) diagnostico.evolucao_percentual());
