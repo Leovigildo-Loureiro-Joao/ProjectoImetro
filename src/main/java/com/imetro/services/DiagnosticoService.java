@@ -978,7 +978,7 @@ public class DiagnosticoService {
         tempoMaisRapido=ConverterSegundoMinutos.formatarDuracao(maior);
         tempoMaisLento=ConverterSegundoMinutos.formatarDuracao(menor);
 
-        return new TempoStatsDiagnostico(tempoMedio,tempoMaisRapido,discRapida,tempoMaisLento,discLenta);
+        return new TempoStatsDiagnostico(tempoMedio,tempoMaisLento,discLenta,tempoMaisRapido,discRapida);
     }
 
     public StatsQuestaoQtd statsQuestaoQtd(){
