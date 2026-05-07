@@ -477,7 +477,7 @@ public class DiagnosticoService {
                     String nivel = resolverNivelDiagnostico(percentualAcerto);
                     double precisao = CalculoStats.calcularVelocidade(totalAcertos, totalQuestoes);
                     double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual,percentualAcerto);
-                    double resiliencia = CalculoStats.calcularResiliencia(lis);
+                    double resiliencia = CalculoStats.calcularResiliencia(null);
                     double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
 
                     UUID diagnosticoId = diagnosticoRepository.inserir(
