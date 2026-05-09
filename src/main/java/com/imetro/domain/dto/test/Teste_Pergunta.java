@@ -22,7 +22,7 @@ public record Teste_Pergunta(
     String resposta_correta,
     String resposta_dada_texto,
     String resposta_correta_texto,
-    Integer tempo_segundos,
+    Long tempo_segundos,
     Double tempo_sugerido_segundos,
     Integer nivel_dificuldade,
     Double rigor,
@@ -38,22 +38,17 @@ public record Teste_Pergunta(
 ) {
 
     public static Teste_Pergunta fromQuestao(
-        Questao questao,
-        Integer ordem,
-        char respostaDada,
-        int tempoSegundos,
-        Double consistencia,
-        Double resiliencia,
-        LocalDateTime respondidoEm
+       ReacaoTeste reacao
     ) {
-        char respostaUsuario = Character.toUpperCase(respostaDada);
-        char respostaCorreta = Character.toUpperCase(questao.getRespostaCorreta());
+        Questao questao= reacao.questao();
+        char respostaUsuario = Character.toUpperCase(reacao.respostaDada());
+        char respostaCorreta = Character.toUpperCase(reacao.questao().getRespostaCorreta());
         boolean acertou = respostaUsuario == respostaCorreta;
 
         return new Teste_Pergunta(
-            null,
             parseUuid(questao.getId()),
-            ordem,
+            parseUuid(questao.getId()),
+            Integer.valueOf( reacao.ordem()),
             QuestaoUtil.formatarDisciplina(QuestaoUtil.safeText(questao.getDisciplina(), "")),
             QuestaoUtil.safeText(questao.getTopico(), null),
             QuestaoUtil.safeText(questao.getSubtopico(), null),
@@ -62,19 +57,19 @@ public record Teste_Pergunta(
             String.valueOf(respostaCorreta),
             QuestaoUtil.resolverTextoOpcao(questao, respostaUsuario),
             QuestaoUtil.resolverTextoOpcao(questao, respostaCorreta),
-            Math.max(0, tempoSegundos),
+            Math.max(0, reacao.tempoSegundos()),
             questao.getTempoSugerido(),
             questao.getNivelDificuldade(),
             questao.getRigor(),
             acertou ? 1d : 0d,
-            CalculoStats.calcularVelocidadePorQuestao(tempoSegundos, questao.getTempoSugerido()),
+            CalculoStats.calcularVelocidadePorQuestao( reacao.tempoSegundos(), questao.getTempoSugerido()),
             acertou,
-            consistencia,
-            resiliencia,
+            Double.valueOf(reacao.consistencia()),
+            Double.valueOf(reacao.resiliencia()),
             QuestaoUtil.safeText(questao.getReferenciaLivro(), null),
             questao.getPaginaInicio(),
             questao.getPaginaFim(),
-            respondidoEm
+            reacao.respondidoEm()
         );
     }
 
@@ -149,7 +144,7 @@ public record Teste_Pergunta(
             parseText(map.get("resposta_correta")),
             parseText(map.get("resposta_dada_texto")),
             parseText(map.get("resposta_correta_texto")),
-            parseInteger(map.get("tempo_segundos")),
+            parseLorg(map.get("tempo_segundos")),
             parseDouble(map.get("tempo_sugerido_segundos")),
             parseInteger(map.get("nivel_dificuldade")),
             parseDouble(map.get("rigor")),
@@ -204,6 +199,24 @@ public record Teste_Pergunta(
         }
         try {
             return Integer.parseInt(text);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static Long parseLorg(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        String text = value.toString();
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(text);
         } catch (NumberFormatException ignored) {
             return null;
         }

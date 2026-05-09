@@ -263,100 +263,69 @@ public class TesteRepository extends JdbcBasicSqlRepository {
         return id;
     }
 
-     public UUID inserirTeste_Pergunta(
-       Teste_Pergunta teste_Pergunta)
-        UUID id = UUID.randomUUID();
-        int totalQuestoesPersistido = Math.max(0, totalQuestoes);
-        int totalAcertosPersistido = Math.max(0, Math.min(totalAcertos, totalQuestoesPersistido));
-        int totalErrosPersistido = Math.max(0, Math.min(totalErros, totalQuestoesPersistido - totalAcertosPersistido));
-        Double resultadoPersistido = limitarPercentual(resultado);
-        Double percentualPersistido = limitarPercentual(percentualAcerto);
-        Double limiteInferiorPersistido = limitarUnitario(limiteInferior);
-        Double limiteSuperiorPersistido = limitarUnitario(limiteSuperior);
-        LocalDateTime criadoEmPersistido = criadoEm == null ? LocalDateTime.now() : criadoEm;
-        LocalDateTime atualizadoEmPersistido = atualizadoEm == null ? criadoEmPersistido : atualizadoEm;
-        String topicosPersistidos = normalizarJsonArray(topicosJson);
-        String subtopicosPersistidos = normalizarJsonArray(subtopicosJson);
-
-        if (limiteInferiorPersistido != null && limiteSuperiorPersistido != null
-            && limiteInferiorPersistido > limiteSuperiorPersistido) {
-            double ajusteInferior = limiteSuperiorPersistido;
-            limiteSuperiorPersistido = limiteInferiorPersistido;
-            limiteInferiorPersistido = ajusteInferior;
-        }
+    public void inserirTeste_Pergunta(
+       Teste_Pergunta teste_Pergunta,UUID teste_id) throws SQLException {
 
         String sql = """
-            insert into testes (
-              id,
-              candidato_id,
-              orientador_id,
-              relatorio_id,
-              data_teste,
-              resultado,
-              criado_em,
-              diagnostico_id,
-              disciplina_id,
-              disciplina_nome,
-              nivel_inicial,
-              nivel_final,
-              limite_questoes,
-              limite_inferior,
-              limite_superior,
-              topicos,
-              subtopicos,
-              duracao_segundos,
-              total_questoes,
-              total_acertos,
-              total_erros,
-              percentual_acerto,
-              velocidade,
-              precisao,
-              consistencia,
-              logica,
-              resiliencia,
-              observacoes,
-              atualizado_em
+            insert into teste_perguntas (
+                teste_id,
+                pergunta_id,
+                ordem,
+                resposta_dada,
+                tempo_segundos,
+                precisao,
+                velocidade,
+                acertou,
+                consistencia,
+                resiliencia,
+                topico,
+                subtopico,
+                enunciado,
+                resposta_correta,
+                resposta_dada_texto,
+                resposta_correta_texto,
+                disciplina_nome,
+                tempo_sugerido_segundos,
+                nivel_dificuldade,
+                rigor,
+                referencia_livro,
+                pagina_inicio,
+                pagina_fim,
+                respondido_em
             ) values (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), cast(? as jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
             )
             """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, id);
-            stmt.setObject(2, candidatoId);
-            stmt.setObject(3, orientadorId);
-            stmt.setObject(4, relatorioId);
-            stmt.setTimestamp(5, toTimestamp(dataTeste));
-            stmt.setObject(6, toNullableFloat(resultadoPersistido));
-            stmt.setTimestamp(7, toTimestamp(criadoEmPersistido));
-            stmt.setObject(8, diagnosticoId);
-            stmt.setObject(9, disciplinaId);
-            stmt.setString(10, disciplinaNome);
-            stmt.setString(11, nivelInicial);
-            stmt.setString(12, nivelFinal);
-            stmt.setObject(13, limiteQuestoes);
-            stmt.setObject(14, limiteInferiorPersistido);
-            stmt.setObject(15, limiteSuperiorPersistido);
-            stmt.setString(16, topicosPersistidos);
-            stmt.setString(17, subtopicosPersistidos);
-            stmt.setInt(18, Math.max(0, duracaoSegundos));
-            stmt.setInt(19, totalQuestoesPersistido);
-            stmt.setInt(20, totalAcertosPersistido);
-            stmt.setInt(21, totalErrosPersistido);
-            stmt.setObject(22, percentualPersistido);
-            stmt.setObject(23, toNullableFloat(limitarUnitario(velocidade)));
-            stmt.setObject(24, toNullableFloat(limitarUnitario(precisao)));
-            stmt.setObject(25, toNullableFloat(limitarUnitario(consistencia)));
-            stmt.setObject(26, toNullableFloat(limitarUnitario(logica)));
-            stmt.setObject(27, toNullableFloat(limitarUnitario(resiliencia)));
-            stmt.setString(28, observacoes);
-            stmt.setTimestamp(29, toTimestamp(atualizadoEmPersistido));
+        try (PreparedStatement stmt = openRequiredConnection().prepareStatement(sql)) {
+            stmt.setObject(1,teste_id);
+            stmt.setObject(2, teste_Pergunta.pergunta_id());
+            stmt.setObject(3, teste_Pergunta.ordem());
+            stmt.setString(4, teste_Pergunta.resposta_dada());
+            stmt.setLong(5, teste_Pergunta.tempo_segundos());
+            stmt.setDouble(6, teste_Pergunta.precisao());
+            stmt.setDouble(7, teste_Pergunta.velocidade());
+            stmt.setObject(8, teste_Pergunta.acertou());
+            stmt.setDouble(9, teste_Pergunta.consistencia());
+            stmt.setDouble(10, teste_Pergunta.resiliencia());
+            stmt.setString(11, teste_Pergunta.topico());
+            stmt.setString(12, teste_Pergunta.subtopico());
+            stmt.setString(13, teste_Pergunta.enunciado());
+            stmt.setString(14, teste_Pergunta.resposta_correta());
+            stmt.setString(15, teste_Pergunta.resposta_dada_texto());
+            stmt.setString(16, teste_Pergunta.resposta_correta_texto());
+            stmt.setString(17, teste_Pergunta.disciplina_nome());
+            stmt.setObject(18, teste_Pergunta.tempo_sugerido_segundos());
+            stmt.setInt(19, teste_Pergunta.nivel_dificuldade());
+            stmt.setDouble(20, teste_Pergunta.rigor());
+            stmt.setString(21, teste_Pergunta.referencia_livro());
+            stmt.setInt(22, teste_Pergunta.pagina_inicio());
+            stmt.setInt(23, teste_Pergunta.pagina_fim());
+            stmt.setTimestamp(24,toTimestamp( teste_Pergunta.respondido_em()));
             stmt.executeUpdate();
         }
-        return id;
-    }*/
 
-
+    }
 
     private List<Map<String, Object>> readRows(ResultSet rs) throws SQLException {
         ResultSetMetaData meta = rs.getMetaData();

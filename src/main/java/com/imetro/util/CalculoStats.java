@@ -15,7 +15,7 @@ public class CalculoStats {
         return Math.max(0d, Math.min(1d, normalizado));
     }
 
-    public static double calcularVelocidadePorQuestao(int duracaoSegundos, double tempoSugerido) {
+    public static double calcularVelocidadePorQuestao(long duracaoSegundos, double tempoSugerido) {
         if (duracaoSegundos <= 0 || tempoSugerido <= 0) {
             return 0.5d;
         }

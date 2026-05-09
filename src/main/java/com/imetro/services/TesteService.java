@@ -2,6 +2,7 @@ package com.imetro.services;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,7 +14,10 @@ import java.util.UUID;
 
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.stats.StatsProgress;
+import com.imetro.domain.dto.stats.Teste_Stat;
 import com.imetro.domain.dto.test.TestDtoAll;
+import com.imetro.domain.dto.test.Teste_Pergunta;
+import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.TesteRepository;
@@ -110,9 +114,12 @@ public class TesteService {
 
      public void registrarTesteConcluido(
         UUID candidatoId,
+        UUID diagnosticoId,
         List<Questao> questoes,
         List<Character> respostasUsuario,
-        String tempoFormatado
+         List <ReacaoTeste> questoesTest,
+        String tempoFormatado,
+        String recomendacao
     ) {
         if (candidatoId == null || questoes == null || questoes.isEmpty() || respostasUsuario == null || respostasUsuario.isEmpty()) {
             return;
@@ -170,7 +177,7 @@ public class TesteService {
                     String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
                     String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
 
-                    testeRepository.inserir(
+                    UUID id =testeRepository.inserir(
                         conn,
                         candidatoId,
                         null,
@@ -178,7 +185,7 @@ public class TesteService {
                         concluidoEm,
                         percentualAcerto,
                         concluidoEm,
-                        null,
+                        diagnosticoId,
                         disciplinaId,
                         nomeDisciplina,
                         nivel,
@@ -198,9 +205,44 @@ public class TesteService {
                         consistencia,
                         logica,
                         resiliencia,
-                        "Teste concluido com dados reais.",
+                        recomendacao,
                         concluidoEm
                     );
+                    questoesTest.forEach(t -> {
+                        try {
+                            testeRepository.inserirTeste_Pergunta(Teste_Pergunta.fromQuestao(t), id);
+                        } catch (SQLException e) {
+                            System.err.println(e);
+                            e.printStackTrace();
+                        }
+                    });
+
+                    testeStatsRepository.insert(
+                        new Teste_Stat(
+                            UUID.randomUUID(),
+                            id,
+                            diagnosticoId,
+                            candidatoId,
+                            disciplinaId,
+                            nomeDisciplina,
+                            null,
+                            null,
+                            null,
+                            totalQuestoes,
+                            totalAcertos,
+                            totalErros,
+                            null,
+                            velocidade,
+                            precisao,
+                            consistencia,
+                            logica,
+                            resiliencia,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.now(),
+                            LocalDateTime.now()));
+
                 }
 
                 conn.commit();

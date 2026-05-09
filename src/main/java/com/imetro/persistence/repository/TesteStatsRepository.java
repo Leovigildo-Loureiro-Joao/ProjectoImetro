@@ -11,10 +11,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.imetro.domain.dto.stats.Teste_Stat;
+
 public class TesteStatsRepository extends JdbcBasicSqlRepository {
 
     public TesteStatsRepository() {
         super("stats", "id");
+    }
+
+    public int insert(Teste_Stat teste_Stat) throws SQLException  {
+        return super.insert(teste_Stat.toMap());
     }
 
     public Optional<Map<String, Object>> findByTesteId(UUID testeId) throws SQLException {

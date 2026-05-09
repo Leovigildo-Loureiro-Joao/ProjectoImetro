@@ -564,10 +564,6 @@ public class DiagnosticoService {
                 continue;
             }
 
-            String topicoBase =  QuestaoUtil.safeText(
-                questao.getTopicoPrincipal(),
-                QuestaoUtil.safeText(questao.getTopico(), QuestaoUtil.safeText(questao.getSubtopico(), "Geral"))
-            );
             boolean acertou = respostasUsuario.get(indice) == questao.getRespostaCorreta();
             porTopico.computeIfAbsent(questao.getSubtopico(), ignored -> new ArrayList<>())
                 .add(new QuestaoRigorResultado(questao, acertou));

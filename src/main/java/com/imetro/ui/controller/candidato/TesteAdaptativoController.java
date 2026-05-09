@@ -1,6 +1,7 @@
 package com.imetro.ui.controller.candidato;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,8 +13,10 @@ import com.imetro.App;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
+import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
+import com.imetro.services.TesteService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.TesteCard;
 import com.imetro.ui.controller.lifecycle.DisposableController;
@@ -97,6 +100,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private final List<Long> temposResposta = new ArrayList<>();
     private final List<String> topicosSelecionados = new ArrayList<>();
     private final List<String> subtopicosSelecionados = new ArrayList<>();
+    private final List<ReacaoTeste> reacao = new ArrayList<>();
 
     private CircleProgress circleProgress;
     private List<Questao> questoes = new ArrayList<>();
@@ -119,11 +123,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private String disciplinaSelecionada;
     private FXMLLoader modFxml;
     private ModalController cont;
-
+    private TesteService testeService;
     @FXML
     public void initialize() {
         TesteAdaptativoCoordinator.setHost(this);
-
+        testeService=new TesteService();
         circleProgress = new CircleProgress(35, 35, 35, 0);
         circleProgressContainer.getChildren().add(circleProgress);
 
@@ -532,7 +536,16 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         Questao q = questoes.get(questaoAtual);
         boolean acertou = respostaSelecionada == q.getRespostaCorreta();
-
+        reacao.add(
+            new ReacaoTeste(
+                q,
+                questaoAtual,
+                respostaSelecionada,
+                tempoResposta,
+                0.1d,
+                0.1d,
+                LocalDateTime.now())
+            );
         if (acertou) {
             acertos++;
             sequenciaAcertos++;
@@ -710,8 +723,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         String perfil = determinarPerfil(porcentagemAcertos, mediaTempo);
         String recomendacao = getRecomendacao(porcentagemAcertos);
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
+        testeService.registrarTesteConcluido(Authentication.getCurrentUserId(), focoQuestoes, respostasUsuario, reacao,tempo.getText(), recomendacao);
 
-        
 
         ResultadoAvaliacaoController.setResultado(
             new ResultadoPayload(
