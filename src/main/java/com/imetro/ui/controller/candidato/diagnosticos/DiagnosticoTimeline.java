@@ -1,7 +1,6 @@
 package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.net.URL;
-import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -10,18 +9,18 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.imetro.domain.dto.Stats;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.diagnostico.TimelineDTO;
+import com.imetro.domain.dto.stats.Stats;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.TimelineCard;
 import com.imetro.util.Authentication;
 import com.imetro.util.ConversorTempo;
+import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXComboBox;
 
 import javafx.event.ActionEvent;
@@ -177,7 +176,7 @@ public class DiagnosticoTimeline implements Initializable {
             }
 
             horarios.add(momento.toLocalTime());
-            disciplinas.add(textoSeguro(diagnostico.disciplina_nome(), "Sem disciplina"));
+            disciplinas.add(TextoUtil.safeText(diagnostico.disciplina_nome(), "Sem disciplina"));
             duracoes.add(ConversorTempo.formatarDuracao(diagnostico.duracao_segundos()));
             acertos.add((float) diagnostico.total_acertos());
             erros.add((float) diagnostico.total_erros());
@@ -221,8 +220,8 @@ public class DiagnosticoTimeline implements Initializable {
         if (disciplinaSelecionada == null || disciplinaSelecionada.isBlank()) {
             return true;
         }
-        return normalizar(textoSeguro(diagnostico.disciplina_nome(), ""))
-            .equals(normalizar(disciplinaSelecionada));
+        return TextoUtil.normalizarMinusculo(TextoUtil.safeText(diagnostico.disciplina_nome(), ""))
+            .equals(TextoUtil.normalizarMinusculo(disciplinaSelecionada));
     }
 
     private boolean correspondeData(DiagnosticoDto diagnostico) {
@@ -287,20 +286,6 @@ public class DiagnosticoTimeline implements Initializable {
         estado.setAlignment(Pos.CENTER_LEFT);
         estado.setMaxWidth(540);
         return estado;
-    }
-
-    private String textoSeguro(String valor, String padrao) {
-        if (valor == null) {
-            return padrao;
-        }
-        String texto = valor.trim();
-        return texto.isEmpty() ? padrao : texto;
-    }
-
-    private String normalizar(String valor) {
-        String texto = valor == null ? "" : valor;
-        String semAcento = Normalizer.normalize(texto, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
-        return semAcento.trim().toLowerCase(Locale.ROOT);
     }
 
     @FXML

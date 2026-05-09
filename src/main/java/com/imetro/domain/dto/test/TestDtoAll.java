@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.util.ParseTimeStampLocalDate;
 
 public record TestDtoAll(

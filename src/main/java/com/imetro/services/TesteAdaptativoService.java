@@ -1,14 +1,13 @@
 package com.imetro.services;
 
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
-import java.text.Normalizer;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -17,6 +16,7 @@ import java.util.stream.Collectors;
 import com.imetro.domain.dto.Topico;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
+import com.imetro.util.TextoUtil;
 
 public class TesteAdaptativoService {
 
@@ -125,7 +125,7 @@ public class TesteAdaptativoService {
             stmt.setString(2, disciplina);
             try (var rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    String subtopico = normalizar(rs.getString("subtopico"));
+                    String subtopico = TextoUtil.normalizarMaiusculo(rs.getString("subtopico"));
                     double rigorAtual = rs.getObject("rigor_atual") instanceof Number number
                         ? Math.max(0d, Math.min(1d, number.doubleValue()))
                         : 0.12d;
@@ -140,7 +140,7 @@ public class TesteAdaptativoService {
     }
 
     private double distanciaDeRigor(Questao questao, Map<String, Double> rigorAtualPorSubtopico, double rigorBase) {
-        String chaveSubtopico = normalizar(
+        String chaveSubtopico = TextoUtil.normalizarMaiusculo(
             questao.getSubtopico() == null || questao.getSubtopico().isBlank()
                 ? (
                     questao.getTopicoPrincipal() == null || questao.getTopicoPrincipal().isBlank()
@@ -172,17 +172,17 @@ public class TesteAdaptativoService {
         Collection<String> subtopicos,
         Integer nivelDificuldade
     ) {
-        String disciplinaNormalizada = normalizar(disciplina);
+        String disciplinaNormalizada = TextoUtil.normalizarMaiusculo(disciplina);
         Set<String> topicosNormalizados = normalizarColecao(topicos);
         Set<String> subtopicosNormalizados = normalizarColecao(subtopicos);
 
         return diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId()).stream()
             .filter(questao -> disciplinaNormalizada.isBlank()
-                || disciplinaNormalizada.equals(normalizar(questao.getDisciplina())))
+                || disciplinaNormalizada.equals(TextoUtil.normalizarMaiusculo(questao.getDisciplina())))
             .filter(questao -> topicosNormalizados.isEmpty()
-                || topicosNormalizados.contains(normalizar(questao.getTopico())))
+                || topicosNormalizados.contains(TextoUtil.normalizarMaiusculo(questao.getTopico())))
             .filter(questao -> subtopicosNormalizados.isEmpty()
-                || subtopicosNormalizados.contains(normalizar(questao.getSubtopico())))
+                || subtopicosNormalizados.contains(TextoUtil.normalizarMaiusculo(questao.getSubtopico())))
             .filter(questao -> nivelDificuldade == null || questao.getNivelDificuldade() == nivelDificuldade)
             .collect(Collectors.toCollection(ArrayList::new));
     }
@@ -194,17 +194,7 @@ public class TesteAdaptativoService {
 
         return valores.stream()
             .filter(valor -> valor != null && !valor.isBlank())
-            .map(this::normalizar)
+            .map(TextoUtil::normalizarMaiusculo)
             .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private String normalizar(String valor) {
-        if (valor == null) {
-            return "";
-        }
-
-        String semAcento = Normalizer.normalize(valor, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}+", "");
-        return semAcento.trim().toUpperCase(Locale.ROOT);
     }
 }

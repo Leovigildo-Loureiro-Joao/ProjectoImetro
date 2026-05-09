@@ -9,6 +9,7 @@
     -color-text-secondary: #475569;
     -color-muted: #64748b;
     -color-border: #e2e8f0;
+    -color-orangeRed:#ff6138;
 
     /* Cores de ação */
     -color-primary: #3b82f6;
@@ -76,6 +77,12 @@
     -fx-text-fill: -color-text;
 }
 
+.h2 {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text;
+}
+
 .h1-thin {
     -fx-font-size: 18px;
     -fx-font-weight: 600;
@@ -91,6 +98,12 @@
 .h3-thin-big{
     -fx-font-size: 14px;
     -fx-font-weight: 500;
+    -fx-text-fill: -color-text-secondary;
+}
+
+.h3-bold{
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
     -fx-text-fill: -color-text-secondary;
 }
 

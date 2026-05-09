@@ -89,23 +89,30 @@ public class DisciplinaService {
                 : (pDto.disciplina() == null || pDto.disciplina().isBlank() ? "Disciplina" : pDto.disciplina());
             double progresso = resumo != null ? resumo.indicador() : pDto.calcularTaxaAcerto();
             double pesoAtual = pDto.pesoAtual() == null ? 1.0d : pDto.pesoAtual();
-            int tempo = pDto.totalQuestoesResolvidas() == null ? 0 : pDto.totalQuestoesResolvidas();
-            float velocidade=0,consistencia=0;
+            float velocidade = 0;
+            float consistencia = 0;
+            float precisao = 0;
             List<Map<String,Object>> listTest=test.findByCandidatoIdDisciplina(Authentication.getCurrentUserId(),pDto.disciplinaId());
             for (Map<String,Object> tes : listTest) {
                 TestDtoAll dto=TestDtoAll.ParseMapDto(tes);
-                velocidade+=dto.velocidade();
-                consistencia+=dto.consistencia();
+                velocidade += dto.velocidade();
+                consistencia += dto.consistencia();
+                precisao += dto.precisao();
             }
+
+            int totalTestes = listTest.size();
+            float mediaVelocidade = totalTestes == 0 ? 0f : velocidade / totalTestes;
+            float mediaConsistencia = totalTestes == 0 ? 0f : consistencia / totalTestes;
+            float mediaPrecisao = totalTestes == 0 ? 0f : precisao / totalTestes;
 
             pdtest.add(new ProgressoDisciplinaTeste(
                 nomeDisciplina,
                 progresso,
                 pesoAtual,
                 pDto.nivelAtual(),
-                (velocidade/listTest.size())/100,
-                (consistencia/listTest.size())/100,
-                tempo
+                mediaVelocidade,
+                mediaConsistencia,
+                mediaPrecisao
             ));
         }
         return pdtest;

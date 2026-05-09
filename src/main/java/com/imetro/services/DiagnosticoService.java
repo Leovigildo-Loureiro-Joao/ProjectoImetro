@@ -1,7 +1,5 @@
 package com.imetro.services;
 
-import com.imetro.domain.CacheService;
-import com.imetro.domain.dto.Stats;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
@@ -15,7 +13,7 @@ import com.imetro.domain.dto.diagnostico.StatsQuestaoQtd;
 import com.imetro.domain.dto.diagnostico.TempoStatsDiagnostico;
 import com.imetro.domain.dto.diagnostico.Value;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
-import com.imetro.domain.enums.NivelDisciplina;
+import com.imetro.domain.dto.stats.Stats;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
@@ -23,6 +21,7 @@ import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.CalculoStats;
 import com.imetro.util.ConversorTempo;
+import com.imetro.util.QuestaoUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -30,19 +29,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -56,13 +51,11 @@ public class DiagnosticoService {
     private static final DateTimeFormatter DATA_RESUMIDA = DateTimeFormatter.ofPattern("dd/MM");
 
     private final PerguntasRepository perguntasRepository;
-    private final DisciplinaService disciplinaService;
     private final DiagnosticoRepository diagnosticoRepository = new DiagnosticoRepository();
     private final PerguntasBootstrapService perguntasBootstrapService;
 
     public DiagnosticoService() {
         this.perguntasRepository = new PerguntasRepository();
-        this.disciplinaService = new DisciplinaService();
         this.perguntasBootstrapService = new PerguntasBootstrapService();
     }
 
@@ -86,9 +79,9 @@ public class DiagnosticoService {
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
-        String disciplinaNormalizada = normalizar(disciplina);
+        String disciplinaNormalizada =  QuestaoUtil.normalizar(disciplina);
         List<Questao> questoesDisciplina = carregarQuestoesReais().stream()
-            .filter(questao -> disciplinaNormalizada.equals(normalizar(questao.getDisciplina())))
+            .filter(questao -> disciplinaNormalizada.equals( QuestaoUtil.normalizar(questao.getDisciplina())))
             .collect(Collectors.toCollection(ArrayList::new));
 
         if (questoesDisciplina.isEmpty()) {
@@ -96,7 +89,7 @@ public class DiagnosticoService {
         }
 
         String nomeDisciplina = questoesDisciplina.getFirst().getDisciplina();
-        UUID disciplinaId = resolverDisciplinaId(nomeDisciplina);
+        UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
         return construirTopicos(disciplinaId, nomeDisciplina, questoesDisciplina);
     }
 
@@ -192,7 +185,7 @@ public class DiagnosticoService {
 
                         Object progressoRaw = rs.getObject("progresso_atingido");
                         if (progressoRaw instanceof Number number) {
-                            progressoPorDiagnostico.put(chave, limitarPercentualUnitario(number.doubleValue()));
+                            progressoPorDiagnostico.put(chave,  QuestaoUtil.limitarPercentualUnitario(number.doubleValue()));
                         }
                         precisaNovoDiagnosticoPorChave.put(chave, rs.getBoolean("precisa_novo_diagnostico"));
                     }
@@ -266,7 +259,7 @@ public class DiagnosticoService {
 
         Map<String, List<Questao>> questoesPorDisciplina = questoes.stream()
             .collect(Collectors.groupingBy(
-                questao -> normalizar(questao.getDisciplina()),
+                questao -> QuestaoUtil.normalizar(questao.getDisciplina()),
                 LinkedHashMap::new,
                 Collectors.toCollection(ArrayList::new)
             ));
@@ -277,7 +270,7 @@ public class DiagnosticoService {
         int totalDisciplinas = 0;
 
         for (DisciplinaDto disciplina : disciplinas) {
-            List<Questao> questoesDisciplina = questoesPorDisciplina.get(normalizar(disciplina.nome()));
+            List<Questao> questoesDisciplina = questoesPorDisciplina.get( QuestaoUtil.normalizar(disciplina.nome()));
             if (questoesDisciplina == null || questoesDisciplina.isEmpty()) {
                 disciplinasSemBase.add(disciplina.nome());
                 continue;
@@ -315,13 +308,13 @@ public class DiagnosticoService {
         List<DisciplinaDto> disciplinasAtivas = diagnosticoRepository.carregarDisciplinasAtivasDoCandidato(candidatoId);
         Set<String> disciplinasPermitidas = disciplinasAtivas.stream()
             .map(DisciplinaDto::nome)
-            .map(this::normalizar)
+            .map( QuestaoUtil::normalizar)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Map<String, DisciplinaDto> disciplinasPorNome = disciplinaService.discCategoria().stream()
+        Map<String, DisciplinaDto> disciplinasPorNome = DisciplinaService.discCategoria().stream()
             .filter(disciplina -> disciplina.id() != null)
             .collect(Collectors.toMap(
-                disciplina -> normalizar(disciplina.nome()),
+                disciplina ->  QuestaoUtil.normalizar(disciplina.nome()),
                 disciplina -> disciplina,
                 (left, right) -> left,
                 LinkedHashMap::new
@@ -333,7 +326,7 @@ public class DiagnosticoService {
 
         Map<String, List<Questao>> questoesPorDisciplina = questoes.stream()
             .collect(Collectors.groupingBy(
-                questao -> normalizar(questao.getDisciplina()),
+                questao ->  QuestaoUtil.normalizar(questao.getDisciplina()),
                 LinkedHashMap::new,
                 Collectors.toCollection(ArrayList::new)
             ));
@@ -352,7 +345,7 @@ public class DiagnosticoService {
             DisciplinaDto disciplinaDto = disciplinasPorNome.get(entry.getKey());
             UUID disciplinaId = disciplinaDto != null
                 ? disciplinaDto.id()
-                : resolverDisciplinaId(disciplinaDetectada);
+                :  QuestaoUtil.resolverDisciplinaId(disciplinaDetectada);
             String nomeDisciplina = disciplinaDto != null ? disciplinaDto.nome() : disciplinaDetectada;
             String objectivo = disciplinaDto == null ? null : disciplinaDto.objectivo();
 
@@ -374,13 +367,13 @@ public class DiagnosticoService {
                 ? "Acerto atual"
                 : "Cobertura";
             String destaque = historico != null && historico.percentualAcerto() != null
-                ? formatarPercentual(historico.percentualAcerto()) + " de acerto"
+                ?  QuestaoUtil.formatarPercentual(historico.percentualAcerto()) + " de acerto"
                 : "Base pronta";
             String resumo = historico != null
                 ? montarResumoHistorico(historico, totalQuestoes)
                 : totalQuestoes + " questoes reais prontas para o primeiro diagnostico.";
             String tendencia = historico != null && historico.evolucaoPercentual() != null
-                ? formatarDelta(historico.evolucaoPercentual())
+                ?  QuestaoUtil.formatarDelta(historico.evolucaoPercentual())
                 : "NOVO";
             String nivel = historico != null && historico.nivel() != null && !historico.nivel().isBlank()
                 ? historico.nivel()
@@ -421,7 +414,6 @@ public class DiagnosticoService {
         UUID candidatoId,
         List<Questao> questoes,
         List<Character> respostasUsuario,
-        double logica,
         String tempoFormatado
     ) {
         if (candidatoId == null || questoes == null || questoes.isEmpty() || respostasUsuario == null || respostasUsuario.isEmpty()) {
@@ -441,7 +433,7 @@ public class DiagnosticoService {
                 continue;
             }
             indicesPorDisciplina
-                .computeIfAbsent(normalizar(questao.getDisciplina()), ignored -> new ArrayList<>())
+                .computeIfAbsent( QuestaoUtil.normalizar(questao.getDisciplina()), ignored -> new ArrayList<>())
                 .add(i);
         }
 
@@ -458,8 +450,8 @@ public class DiagnosticoService {
                 for (Map.Entry<String, ArrayList<Integer>> entry : indicesPorDisciplina.entrySet()) {
                     ArrayList<Integer> indices = entry.getValue();
                     Questao questaoBase = questoes.get(indices.getFirst());
-                    String nomeDisciplina = formatarDisciplina(questaoBase.getDisciplina());
-                    UUID disciplinaId = resolverDisciplinaId(nomeDisciplina);
+                    String nomeDisciplina =  QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina());
+                    UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
 
                     int totalQuestoes = indices.size();
                     int totalAcertos = 0;
@@ -474,10 +466,11 @@ public class DiagnosticoService {
                     Double ultimoPercentual = diagnosticoRepository.buscarUltimoPercentualDiagnostico(conn, candidatoId, disciplinaId, nomeDisciplina);
 
                     Double evolucao = ultimoPercentual == null ? null : percentualAcerto - ultimoPercentual;
-                    String nivel = resolverNivelDiagnostico(percentualAcerto);
-                    double precisao = CalculoStats.calcularVelocidade(totalAcertos, totalQuestoes);
-                    double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual,percentualAcerto);
-                    double resiliencia = CalculoStats.calcularResiliencia(null);
+                    String nivel = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+                    double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
+                    double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual, percentualAcerto);
+                    double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
+                    double resiliencia = 0d;
                     double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
 
                     UUID diagnosticoId = diagnosticoRepository.inserir(
@@ -499,7 +492,7 @@ public class DiagnosticoService {
                         logica,
                         consistencia,
                         resiliencia,
-                        construirJsonRespostas(indices, questoes, respostasUsuario),
+                        QuestaoUtil.construirJsonRespostas(indices, questoes, respostasUsuario),
                         ultimoPercentual == null
                             ? "Primeiro diagnostico concluido com dados reais."
                             : "Diagnostico atualizado com nova tentativa."
@@ -571,9 +564,9 @@ public class DiagnosticoService {
                 continue;
             }
 
-            String topicoBase = safeText(
+            String topicoBase =  QuestaoUtil.safeText(
                 questao.getTopicoPrincipal(),
-                safeText(questao.getTopico(), safeText(questao.getSubtopico(), "Geral"))
+                QuestaoUtil.safeText(questao.getTopico(), QuestaoUtil.safeText(questao.getSubtopico(), "Geral"))
             );
             boolean acertou = respostasUsuario.get(indice) == questao.getRespostaCorreta();
             porTopico.computeIfAbsent(questao.getSubtopico(), ignored -> new ArrayList<>())
@@ -599,7 +592,7 @@ public class DiagnosticoService {
                 .average()
                 .orElse(atual.rigorAtual());
 
-            double rigorAtualNovo = calcularNovoRigor(atual.rigorAtual(), atual.rigorAlvo(), rigorMedioTentado, taxaAcerto);
+            double rigorAtualNovo = CalculoStats.calcularNovoRigor(atual.rigorAtual(), atual.rigorAlvo(), rigorMedioTentado, taxaAcerto);
             int acertosConsecutivos = taxaAcerto >= 0.8 ? atual.acertosConsecutivos() + acertos : 0;
             int errosConsecutivos = taxaAcerto < 0.5 ? atual.errosConsecutivos() + erros : 0;
             boolean precisaRevisao = taxaAcerto < 0.6 || errosConsecutivos >= 2;
@@ -622,8 +615,7 @@ public class DiagnosticoService {
                 .max(Double::compareTo)
                 .orElse(null);
 
-            upsertProgressaoRigor(
-                conn,
+            diagnosticoRepository.upsertProgressaoRigor(
                 atual.id(),
                 candidatoId,
                 disciplinaId,
@@ -640,8 +632,7 @@ public class DiagnosticoService {
                 recomendacaoPaginas
             );
 
-            inserirRecomendacaoRigor(
-                conn,
+            diagnosticoRepository.inserirRecomendacaoRigor(
                 diagnosticoId,
                 subtopico,
                 rigorRecomendado,
@@ -692,139 +683,6 @@ public class DiagnosticoService {
         }
 
         return new ProgressaoRigorAtual(null, 0.12d, 0.7d, 0, 0, 0);
-    }
-
-    private void upsertProgressaoRigor(
-        Connection conn,
-        UUID idAtual,
-        UUID candidatoId,
-        UUID disciplinaId,
-        String subtopico,
-        double rigorAtual,
-        double rigorAlvo,
-        Double ultimoAcertoEmRigor,
-        Double ultimoErroEmRigor,
-        int tentativasNoNivel,
-        int acertosConsecutivos,
-        int errosConsecutivos,
-        boolean precisaRevisao,
-        String recomendacaoLivro,
-        String recomendacaoPaginas
-    ) throws SQLException {
-        String sql = """
-            insert into progressao_rigor (
-              id,
-              aluno_id,
-              disciplina_id,
-              subtopico,
-              rigor_atual,
-              rigor_alvo,
-              ultimo_acerto_em_rigor,
-              ultimo_erro_em_rigor,
-              tentativas_no_nivel,
-              acertos_consecutivos,
-              erros_consecutivos,
-              precisa_revisao,
-              recomendacao_livro,
-              recomendacao_paginas,
-              atualizado_em
-            ) values (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now()
-            )
-            on conflict (aluno_id, disciplina_id, subtopico) do update
-            set rigor_atual = excluded.rigor_atual,
-                rigor_alvo = excluded.rigor_alvo,
-                ultimo_acerto_em_rigor = excluded.ultimo_acerto_em_rigor,
-                ultimo_erro_em_rigor = excluded.ultimo_erro_em_rigor,
-                tentativas_no_nivel = excluded.tentativas_no_nivel,
-                acertos_consecutivos = excluded.acertos_consecutivos,
-                erros_consecutivos = excluded.erros_consecutivos,
-                precisa_revisao = excluded.precisa_revisao,
-                recomendacao_livro = excluded.recomendacao_livro,
-                recomendacao_paginas = excluded.recomendacao_paginas,
-                atualizado_em = now()
-            """;
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, idAtual == null ? UUID.randomUUID() : idAtual);
-            stmt.setObject(2, candidatoId);
-            stmt.setObject(3, disciplinaId);
-            stmt.setString(4, subtopico);
-            stmt.setDouble(5, limitarRigor(rigorAtual));
-            stmt.setDouble(6, limitarRigor(rigorAlvo));
-            stmt.setObject(7, ultimoAcertoEmRigor == null ? null : limitarRigor(ultimoAcertoEmRigor));
-            stmt.setObject(8, ultimoErroEmRigor == null ? null : limitarRigor(ultimoErroEmRigor));
-            stmt.setInt(9, Math.max(0, tentativasNoNivel));
-            stmt.setInt(10, Math.max(0, acertosConsecutivos));
-            stmt.setInt(11, Math.max(0, errosConsecutivos));
-            stmt.setBoolean(12, precisaRevisao);
-            stmt.setString(13, recomendacaoLivro);
-            stmt.setString(14, recomendacaoPaginas);
-            stmt.executeUpdate();
-        }
-    }
-
-    private void inserirRecomendacaoRigor(
-        Connection conn,
-        UUID diagnosticoId,
-        String subtopico,
-        double rigorRecomendado,
-        double nivelAtual,
-        Double progressoAtingido,
-        String recomendacaoLivro,
-        String recomendacaoPaginas,
-        String exerciciosSugeridosJson,
-        boolean precisaNovoDiagnostico
-    ) throws SQLException {
-        String sql = """
-            insert into recomendacoes_rigor (
-              id,
-              diagnostico_id,
-              subtopico,
-              rigor_recomendado,
-              nivel_atual,
-              progresso_atingido,
-              recomendacao_livro,
-              recomendacao_paginas,
-              exercicios_sugeridos,
-              precisa_novo_diagnostico,
-              criado_em
-            ) values (
-              ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), ?, now()
-            )
-            """;
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, UUID.randomUUID());
-            stmt.setObject(2, diagnosticoId);
-            stmt.setString(3, subtopico);
-            stmt.setDouble(4, limitarRigor(rigorRecomendado));
-            stmt.setDouble(5, limitarRigor(nivelAtual));
-            stmt.setObject(6, progressoAtingido == null ? null : Math.max(0d, Math.min(1d, progressoAtingido)));
-            stmt.setString(7, recomendacaoLivro);
-            stmt.setString(8, recomendacaoPaginas);
-            stmt.setString(9, exerciciosSugeridosJson);
-            stmt.setBoolean(10, precisaNovoDiagnostico);
-            stmt.executeUpdate();
-        }
-    }
-
-    private double calcularNovoRigor(double rigorAtual, double rigorAlvo, double rigorMedioTentado, double taxaAcerto) {
-        double base = Math.max(rigorAtual, rigorMedioTentado);
-        if (taxaAcerto >= 0.85d) {
-            return Math.min(rigorAlvo, base + 0.08d);
-        }
-        if (taxaAcerto >= 0.65d) {
-            return Math.min(rigorAlvo, base + 0.03d);
-        }
-        if (taxaAcerto <= 0.35d) {
-            return Math.max(0.05d, Math.min(rigorAtual, rigorMedioTentado) - 0.08d);
-        }
-        return Math.max(0.05d, Math.min(rigorAtual, rigorMedioTentado) - 0.03d);
-    }
-
-    private double limitarRigor(double rigor) {
-        return Math.max(0d, Math.min(1d, rigor));
     }
 
     private String escolherReferenciaLivro(List<QuestaoRigorResultado> resultados) {
@@ -895,24 +753,10 @@ public class DiagnosticoService {
             if (i > 0) {
                 json.append(",");
             }
-            json.append("\"").append(escapeJson(ids.get(i))).append("\"");
+            json.append("\"").append(QuestaoUtil.escapeJson(ids.get(i))).append("\"");
         }
         json.append("]");
         return json.toString();
-    }
-
-
-    private String resolverNivelDiagnostico(double percentualAcerto) {
-        if (percentualAcerto >= 85d) {
-            return "EXPERT";
-        }
-        if (percentualAcerto >= 65d) {
-            return "AVANCADO";
-        }
-        if (percentualAcerto >= 40d) {
-            return "INTERMEDIARIO";
-        }
-        return "INICIANTE";
     }
 
     public StatsDiagnotico statsDiagnotico(){
@@ -920,27 +764,27 @@ public class DiagnosticoService {
         int total=0;
         double totalAcerto=0;
         Value melhoria=new Value("Sem disciplinas",0);
-        Value atencao=new Value("Sem disciplinas",0);
+        Value atencao=new Value("Sem disciplinas",100);
         String nome="";
         List<DiagnosticoDto> list = listDiagnotico();
         for (DiagnosticoDto typed : list) {
             if(typed.candidato_id().equals(Authentication.getCurrentUserId())){
                 total++;
-                media+=typed.evolucao_percentual();
+                media+=typed.evolucao_percentual()/100;
                 totalAcerto+=typed.percentual_acerto()/100;
                 if(!nome.contains(typed.disciplina_nome())){
                     nome+="-"+typed.disciplina_nome();
                     if (typed.evolucao_percentual()>melhoria.percemt())
-                        melhoria=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+                        melhoria=new Value(typed.disciplina_nome(), typed.evolucao_percentual()/100);
                     if (typed.evolucao_percentual()<atencao.percemt())
-                        atencao=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+                        atencao=new Value(typed.disciplina_nome(), typed.evolucao_percentual()/100);
 
                 }else{
                     if (typed.evolucao_percentual()>melhoria.percemt()) {
-                        melhoria=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+                        melhoria=new Value(typed.disciplina_nome(), typed.evolucao_percentual()/100);
                     }
                     if (typed.evolucao_percentual()<atencao.percemt())
-                        atencao=new Value(typed.disciplina_nome(), typed.evolucao_percentual());
+                        atencao=new Value(typed.disciplina_nome(), typed.evolucao_percentual()/100);
 
                 }
             }
@@ -1007,7 +851,7 @@ public class DiagnosticoService {
         if (rigorAlvo <= 0d) {
             return 0d;
         }
-        return limitarPercentualUnitario(rigorAtual / rigorAlvo);
+        return  QuestaoUtil.limitarPercentualUnitario(rigorAtual / rigorAlvo);
     }
 
     private double resolverProgressoSubtopico(
@@ -1033,54 +877,14 @@ public class DiagnosticoService {
             progresso = Math.min(progresso, 0.58d);
         }
 
-        return limitarPercentualUnitario(progresso);
-    }
-
-    private String construirJsonRespostas(
-        List<Integer> indices,
-        List<Questao> questoes,
-        List<Character> respostasUsuario
-    ) {
-        StringBuilder json = new StringBuilder("[");
-        for (int i = 0; i < indices.size(); i++) {
-            int indice = indices.get(i);
-            Questao questao = questoes.get(indice);
-            char marcada = respostasUsuario.get(indice);
-            boolean acertou = marcada == questao.getRespostaCorreta();
-
-            if (i > 0) {
-                json.append(", ");
-            }
-
-            json.append("{")
-                .append("\"questaoId\":\"").append(escapeJson(safeText(questao.getId(), ""))).append("\",")
-                .append("\"topico\":\"").append(escapeJson(safeText(questao.getTopico(), ""))).append("\",")
-                .append("\"subtopico\":\"").append(escapeJson(safeText(questao.getSubtopico(), ""))).append("\",")
-                .append("\"marcada\":\"").append(marcada).append("\",")
-                .append("\"correta\":\"").append(questao.getRespostaCorreta()).append("\",")
-                .append("\"acertou\":").append(acertou)
-                .append("}");
-        }
-        json.append("]");
-        return json.toString();
-    }
-
-
-
-    private String escapeJson(String valor) {
-        return valor
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\r", "\\r")
-            .replace("\n", "\\n")
-            .replace("\t", "\\t");
+        return  QuestaoUtil.limitarPercentualUnitario(progresso);
     }
 
     private List<Topico> construirTopicos(UUID disciplinaId, String disciplina, Collection<Questao> questoes) {
         Map<String, LinkedHashSet<String>> grupos = new LinkedHashMap<>();
         for (Questao questao : questoes) {
-            String topico = safeText(questao.getTopico(), "Geral");
-            String subtopico = safeText(questao.getSubtopico(), topico);
+            String topico =  QuestaoUtil.safeText(questao.getTopico(), "Geral");
+            String subtopico =  QuestaoUtil.safeText(questao.getSubtopico(), topico);
             grupos.computeIfAbsent(topico, ignored -> new LinkedHashSet<>()).add(subtopico);
         }
 
@@ -1092,7 +896,7 @@ public class DiagnosticoService {
                     disciplina,
                     entry.getKey(),
                     UUID.nameUUIDFromBytes(
-                        (normalizar(disciplina) + ":" + normalizar(entry.getKey())).getBytes(StandardCharsets.UTF_8)
+                        ( QuestaoUtil.normalizar(disciplina) + ":" +  QuestaoUtil.normalizar(entry.getKey())).getBytes(StandardCharsets.UTF_8)
                     ),
                     entry.getValue().toArray(String[]::new)
                 )
@@ -1105,17 +909,17 @@ public class DiagnosticoService {
         Questao questao = new Questao();
 
         questao.setId(String.valueOf(row.get("id")));
-        questao.setDisciplina(formatarDisciplina(safeText(row.get("disciplina"), "GERAL")));
-        questao.setTopico(safeText(row.get("topico"), "Geral"));
-        questao.setSubtopico(safeText(row.get("subtopico"), questao.getTopico()));
-        questao.setTopicoPrincipal(safeText(row.get("topico_principal"), questao.getTopico()));
-        questao.setEnunciado(safeText(row.get("questao"), ""));
+        questao.setDisciplina( QuestaoUtil.formatarDisciplina( QuestaoUtil.safeText(row.get("disciplina"), "GERAL")));
+        questao.setTopico( QuestaoUtil.safeText(row.get("topico"), "Geral"));
+        questao.setSubtopico( QuestaoUtil.safeText(row.get("subtopico"), questao.getTopico()));
+        questao.setTopicoPrincipal( QuestaoUtil.safeText(row.get("topico_principal"), questao.getTopico()));
+        questao.setEnunciado( QuestaoUtil.safeText(row.get("questao"), ""));
         questao.setBloco2(null);
 
         List<String> respostasOriginais = parseJsonStringArray(row.get("respostas"));
         List<String> respostasCompletasOriginais = completarRespostas(respostasOriginais);
-        String textoRespostaCorreta = resolverTextoRespostaCorreta(
-            safeText(row.get("resposta_correta"), ""),
+        String textoRespostaCorreta = QuestaoUtil.resolverTextoRespostaCorreta(
+            QuestaoUtil.safeText(row.get("resposta_correta"), ""),
             respostasCompletasOriginais
         );
         List<String> respostasEmbaralhadas = completarRespostas(embaralharAlternativas(respostasOriginais));
@@ -1128,10 +932,10 @@ public class DiagnosticoService {
         questao.setOpcaoF(respostasNormalizadas.get(5));
         questao.setOpcaoG(respostasNormalizadas.get(6));
 
-        questao.setRespostaCorreta(resolverRespostaCorreta(textoRespostaCorreta, respostasNormalizadas));
-        questao.setNivelDificuldade(mapearNivel(safeText(row.get("dificuldade"), "")));
+        questao.setRespostaCorreta(QuestaoUtil.resolverRespostaCorreta(textoRespostaCorreta, respostasNormalizadas));
+        questao.setNivelDificuldade(mapearNivel( QuestaoUtil.safeText(row.get("dificuldade"), "")));
         questao.setRigor(mapearRigor(row.get("rigor")));
-        questao.setReferenciaLivro(safeText(row.get("referencia_livro"), null));
+        questao.setReferenciaLivro( QuestaoUtil.safeText(row.get("referencia_livro"), null));
         questao.setPaginaInicio(mapearInteiro(row.get("pagina_inicio")));
         questao.setPaginaFim(mapearInteiro(row.get("pagina_fim")));
         questao.setTempoSugerido(mapearTempoSugerido(questao.getNivelDificuldade()));
@@ -1150,22 +954,6 @@ public class DiagnosticoService {
         return embaralhadas;
     }
 
-    private String resolverTextoRespostaCorreta(String respostaCorreta, List<String> respostas) {
-        if (respostas == null || respostas.isEmpty()) {
-            return "";
-        }
-
-        char letraCorreta = resolverRespostaCorreta(respostaCorreta, respostas);
-        return resolverTextoOpcao(respostas, letraCorreta);
-    }
-
-    private String resolverTextoOpcao(List<String> respostas, char letra) {
-        int indice = Character.toUpperCase(letra) - 'A';
-        if (indice < 0 || indice >= respostas.size()) {
-            return respostas.getFirst();
-        }
-        return respostas.get(indice);
-    }
 
     private Map<UUID, ProgressoResumo> carregarProgressos(UUID candidatoId) {
         if (candidatoId == null) {
@@ -1288,7 +1076,7 @@ public class DiagnosticoService {
                         continue;
                     }
 
-                    historicos.put(normalizar(disciplinaNome), mapearHistorico(rs));
+                    historicos.put( QuestaoUtil.normalizar(disciplinaNome), mapearHistorico(rs));
                 }
             }
         } catch (Exception e) {
@@ -1356,30 +1144,14 @@ public class DiagnosticoService {
         ArrayList<String> values = new ArrayList<>();
         Matcher matcher = JSON_STRING_PATTERN.matcher(raw);
         while (matcher.find()) {
-            values.add(unescapeJson(matcher.group(1)));
+            values.add( QuestaoUtil.unescapeJson(matcher.group(1)));
         }
         return values;
     }
 
-    private char resolverRespostaCorreta(String respostaCorreta, List<String> respostas) {
-        if (respostaCorreta != null && !respostaCorreta.isBlank()) {
-            char primeiraLetra = Character.toUpperCase(respostaCorreta.trim().charAt(0));
-            if (primeiraLetra >= 'A' && primeiraLetra <= 'G') {
-                return primeiraLetra;
-            }
-
-            String normalizada = normalizarTextoLivre(respostaCorreta);
-            for (int i = 0; i < respostas.size(); i++) {
-                if (normalizarTextoLivre(respostas.get(i)).equals(normalizada)) {
-                    return (char) ('A' + i);
-                }
-            }
-        }
-        return 'A';
-    }
 
     private int mapearNivel(String dificuldade) {
-        return switch (normalizar(dificuldade)) {
+        return switch ( QuestaoUtil.normalizar(dificuldade)) {
             case "facil" -> 1;
             case "medio" -> 2;
             case "desafiante" -> 3;
@@ -1418,7 +1190,7 @@ public class DiagnosticoService {
         HistoricoDiagnosticoResumo historico
     ) {
         if (historico != null && historico.percentualAcerto() != null) {
-            return limitarPercentual(historico.percentualAcerto());
+            return  QuestaoUtil.limitarPercentual(historico.percentualAcerto());
         }
         if (progresso != null && progresso.taxaAcertoGeral() != null) {
             double taxa = progresso.taxaAcertoGeral();
@@ -1456,119 +1228,7 @@ public class DiagnosticoService {
     }
 
     private String chaveSubtopico(String disciplina, String subtopico) {
-        return normalizar(disciplina) + "::" + normalizar(safeText(subtopico, "Geral"));
+        return  QuestaoUtil.normalizar(disciplina) + "::" +  QuestaoUtil.normalizar( QuestaoUtil.safeText(subtopico, "Geral"));
     }
-
-    private UUID resolverDisciplinaId(String disciplina) {
-        String disciplinaNormalizada = normalizar(disciplina);
-        for (DisciplinaDto disciplinaDto : disciplinaService.discCategoria()) {
-            if (disciplinaDto.id() != null && normalizar(disciplinaDto.nome()).equals(disciplinaNormalizada)) {
-                return disciplinaDto.id();
-            }
-        }
-
-        return UUID.nameUUIDFromBytes(("disciplina:" + disciplinaNormalizada).getBytes(StandardCharsets.UTF_8));
-    }
-
-    private String formatarDisciplina(String valor) {
-        return switch (normalizar(valor)) {
-            case "matematica" -> "Matematica";
-            case "portugues" -> "Portugues";
-            case "fisica" -> "Fisica";
-            case "quimica" -> "Quimica";
-            case "biologia" -> "Biologia";
-            case "raciocinio logico" -> "Raciocinio Logico";
-            default -> toTitleCase(valor);
-        };
-    }
-
-    private String toTitleCase(String valor) {
-        String[] partes = safeText(valor, "").trim().split("\\s+");
-        StringBuilder texto = new StringBuilder();
-        for (String parte : partes) {
-            if (parte.isBlank()) {
-                continue;
-            }
-            if (texto.length() > 0) {
-                texto.append(' ');
-            }
-            texto.append(parte.substring(0, 1).toUpperCase(Locale.ROOT));
-            if (parte.length() > 1) {
-                texto.append(parte.substring(1).toLowerCase(Locale.ROOT));
-            }
-        }
-        return texto.isEmpty() ? valor : texto.toString();
-    }
-
-    private String formatarPercentual(double percentual) {
-        return Math.round(percentual) + "%";
-    }
-
-    private String formatarDelta(double valor) {
-        long arredondado = Math.round(valor);
-        return (arredondado > 0 ? "+" : "") + arredondado + "%";
-    }
-
-    private double limitarPercentual(double percentual) {
-        return Math.max(0d, Math.min(1d, percentual / 100d));
-    }
-
-    private double limitarPercentualUnitario(double valor) {
-        return Math.max(0d, Math.min(1d, valor));
-    }
-
-    private String safeText(Object value, String defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-
-        String text = value.toString().trim();
-        return text.isEmpty() ? defaultValue : text;
-    }
-
-    private String normalizar(String valor) {
-        return normalizarTextoLivre(safeText(valor, ""));
-    }
-
-    private String normalizarTextoLivre(String valor) {
-        String semAcento = Normalizer.normalize(valor == null ? "" : valor, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}+", "");
-        return semAcento.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String unescapeJson(String value) {
-        StringBuilder out = new StringBuilder(value.length());
-        for (int i = 0; i < value.length(); i++) {
-            char ch = value.charAt(i);
-            if (ch != '\\' || i + 1 >= value.length()) {
-                out.append(ch);
-                continue;
-            }
-
-            char next = value.charAt(++i);
-            switch (next) {
-                case '"' -> out.append('"');
-                case '\\' -> out.append('\\');
-                case '/' -> out.append('/');
-                case 'b' -> out.append('\b');
-                case 'f' -> out.append('\f');
-                case 'n' -> out.append('\n');
-                case 'r' -> out.append('\r');
-                case 't' -> out.append('\t');
-                case 'u' -> {
-                    if (i + 4 >= value.length()) {
-                        out.append("\\u");
-                        break;
-                    }
-                    String hex = value.substring(i + 1, i + 5);
-                    out.append((char) Integer.parseInt(hex, 16));
-                    i += 4;
-                }
-                default -> out.append(next);
-            }
-        }
-        return out.toString();
-    }
-
 
 }

@@ -3,15 +3,14 @@ package com.imetro.ui.modals;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.text.Normalizer;
 
 import com.imetro.domain.dto.Topico;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.controller.candidato.TesteAdaptativoCoordinator;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 import com.imetro.util.Authentication;
+import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 
@@ -180,16 +179,7 @@ public class TopicModalController extends ModalController {
         if (topico == null) {
             return 0d;
         }
-        String chave = normalizar(topico.disciplina()) + "::" + normalizar(subtopico);
+        String chave = TextoUtil.normalizarMinusculo(topico.disciplina()) + "::" + TextoUtil.normalizarMinusculo(subtopico);
         return progressoPorSubtopico.getOrDefault(chave, 0d);
-    }
-
-    private String normalizar(String valor) {
-        if (valor == null) {
-            return "";
-        }
-        String semAcento = Normalizer.normalize(valor, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}+", "");
-        return semAcento.trim().toLowerCase(Locale.ROOT);
     }
 }

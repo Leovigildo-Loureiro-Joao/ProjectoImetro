@@ -24,6 +24,7 @@ import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
+import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXToggleNode;
 
@@ -98,13 +99,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private StackPane circleProgressContainer;
 
     @FXML
-    private Label corretas;
-
-    @FXML
     private VBox end;
-
-    @FXML
-    private Label errada;
 
     @FXML
     private VBox estatisticasPane;
@@ -175,9 +170,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private int h = 0;
     private int m = 0;
     private int s = 0;
-    private int a = 0;
-    private int e = 0;
-
 
 
     private JFXToggleNode selected;
@@ -194,8 +186,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private FXMLLoader modFxml;
     private Node mod;
     private Node modTop;
-    private int logica=0;
-    private int logicaCont=0;
     private ModalController cont;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
 
@@ -397,7 +387,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     }
 
     @FXML
-    void confirmarResposta(ActionEvent event) {
+    private void confirmarResposta(ActionEvent event) {
         if (alternativas.getSelectedToggle() == null) {
             mostrarAlerta("Atencao", "Selecione uma alternativa antes de confirmar.");
             return;
@@ -410,18 +400,13 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         Questao q = questoes.get(questaoAtual);
         boolean acertou = respostaSelecionada == q.getRespostaCorreta();
         if (acertou) {
-            logica+=q.getRigor()>=0.75?1:0;
-            a++;
             selected.getStyleClass().add("sucess");
         } else {
-            e++;
             selected.getStyleClass().add("error");
             destacarRespostaCorreta(q.getRespostaCorreta());
         }
 
         btnProximo.setDisable(false);
-        corretas.setText(String.valueOf(a));
-        errada.setText(String.valueOf(e));
         btnConfirmar.setDisable(true);
     }
 
@@ -490,7 +475,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             Authentication.getCurrentUserId(),
             questoes,
             respostasUsuario,
-            logica/questoes.stream().filter(t -> t.getRigor()>=0.75).count(),
             tempo.getText()
         );
 
@@ -630,7 +614,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             filtradas = base;
         }
 
-        int limite = switch (normalizar(config.duracao())) {
+        int limite = switch (TextoUtil.normalizarMinusculo(config.duracao())) {
             case "curto" -> 5;
             case "medio" -> 7;
             default -> filtradas.size();
@@ -649,29 +633,29 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         Set<String> disciplinas = topicosSelecionados.stream()
             .map(Topico::disciplina)
-            .map(this::normalizar)
+            .map(TextoUtil::normalizarMinusculo)
             .collect(Collectors.toSet());
 
         Set<String> topicos = topicosSelecionados.stream()
             .map(Topico::topicos)
-            .map(this::normalizar)
+            .map(TextoUtil::normalizarMinusculo)
             .collect(Collectors.toSet());
 
         Set<String> subtopicos = subtopicosSelecionados.values()
             .stream()
             .flatMap(List::stream)
-            .map(this::normalizar)
+            .map(TextoUtil::normalizarMinusculo)
             .collect(Collectors.toSet());
 
         return origem.stream()
-            .filter(questao -> disciplinas.isEmpty() || disciplinas.contains(normalizar(questao.getDisciplina())))
-            .filter(questao -> topicos.isEmpty() || topicos.contains(normalizar(questao.getTopico())))
-            .filter(questao -> subtopicos.isEmpty() || subtopicos.contains(normalizar(questao.getSubtopico())))
+            .filter(questao -> disciplinas.isEmpty() || disciplinas.contains(TextoUtil.normalizarMinusculo(questao.getDisciplina())))
+            .filter(questao -> topicos.isEmpty() || topicos.contains(TextoUtil.normalizarMinusculo(questao.getTopico())))
+            .filter(questao -> subtopicos.isEmpty() || subtopicos.contains(TextoUtil.normalizarMinusculo(questao.getSubtopico())))
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private List<Questao> filtrarPorNivel(List<Questao> origem, String nivelConfigurado) {
-        String nivelNormalizado = normalizar(nivelConfigurado);
+        String nivelNormalizado = TextoUtil.normalizarMinusculo(nivelConfigurado);
         List<Questao> filtradas = new ArrayList<>();
 
         for (Questao questao : origem) {
@@ -689,10 +673,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         }
 
         return filtradas;
-    }
-
-    private String normalizar(String valor) {
-        return valor == null ? "" : valor.trim().toLowerCase();
     }
 
     private void resetarEstadoDiagnostico() {
@@ -714,12 +694,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         h = 0;
         m = 0;
         s = 0;
-        a = 0;
-        e = 0;
 
         tempo.setText("00:00:00");
-        corretas.setText("0");
-        errada.setText("0");
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
         alternativas.selectToggle(null);

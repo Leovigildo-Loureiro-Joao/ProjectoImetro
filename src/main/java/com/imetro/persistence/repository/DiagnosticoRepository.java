@@ -7,22 +7,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.enums.NivelDisciplina;
-import com.imetro.domain.model.Candidato;
 import com.imetro.services.DisciplinaService;
+import com.imetro.util.CalculoStats;
 import com.imetro.util.ParseTimeStampLocalDate;
+import com.imetro.util.TextoUtil;
 
 public class DiagnosticoRepository extends JdbcBasicSqlRepository{
 
@@ -46,6 +45,120 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
 
         }
         return null;
+    }
+
+    public void upsertProgressaoRigor(
+        UUID idAtual,
+        UUID candidatoId,
+        UUID disciplinaId,
+        String subtopico,
+        double rigorAtual,
+        double rigorAlvo,
+        Double ultimoAcertoEmRigor,
+        Double ultimoErroEmRigor,
+        int tentativasNoNivel,
+        int acertosConsecutivos,
+        int errosConsecutivos,
+        boolean precisaRevisao,
+        String recomendacaoLivro,
+        String recomendacaoPaginas
+    ) throws SQLException {
+        String sql = """
+            insert into progressao_rigor (
+              id,
+              aluno_id,
+              disciplina_id,
+              subtopico,
+              rigor_atual,
+              rigor_alvo,
+              ultimo_acerto_em_rigor,
+              ultimo_erro_em_rigor,
+              tentativas_no_nivel,
+              acertos_consecutivos,
+              erros_consecutivos,
+              precisa_revisao,
+              recomendacao_livro,
+              recomendacao_paginas,
+              atualizado_em
+            ) values (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now()
+            )
+            on conflict (aluno_id, disciplina_id, subtopico) do update
+            set rigor_atual = excluded.rigor_atual,
+                rigor_alvo = excluded.rigor_alvo,
+                ultimo_acerto_em_rigor = excluded.ultimo_acerto_em_rigor,
+                ultimo_erro_em_rigor = excluded.ultimo_erro_em_rigor,
+                tentativas_no_nivel = excluded.tentativas_no_nivel,
+                acertos_consecutivos = excluded.acertos_consecutivos,
+                erros_consecutivos = excluded.erros_consecutivos,
+                precisa_revisao = excluded.precisa_revisao,
+                recomendacao_livro = excluded.recomendacao_livro,
+                recomendacao_paginas = excluded.recomendacao_paginas,
+                atualizado_em = now()
+            """;
+
+        try (PreparedStatement stmt = openRequiredConnection().prepareStatement(sql)) {
+            stmt.setObject(1, idAtual == null ? UUID.randomUUID() : idAtual);
+            stmt.setObject(2, candidatoId);
+            stmt.setObject(3, disciplinaId);
+            stmt.setString(4, subtopico);
+            stmt.setDouble(5,  CalculoStats.limitarRigor(rigorAtual));
+            stmt.setDouble(6, CalculoStats.limitarRigor(rigorAlvo));
+            stmt.setObject(7, ultimoAcertoEmRigor == null ? null : CalculoStats.limitarRigor(ultimoAcertoEmRigor));
+            stmt.setObject(8, ultimoErroEmRigor == null ? null : CalculoStats.limitarRigor(ultimoErroEmRigor));
+            stmt.setInt(9, Math.max(0, tentativasNoNivel));
+            stmt.setInt(10, Math.max(0, acertosConsecutivos));
+            stmt.setInt(11, Math.max(0, errosConsecutivos));
+            stmt.setBoolean(12, precisaRevisao);
+            stmt.setString(13, recomendacaoLivro);
+            stmt.setString(14, recomendacaoPaginas);
+            stmt.executeUpdate();
+        }
+    }
+
+
+    public void inserirRecomendacaoRigor(
+        UUID diagnosticoId,
+        String subtopico,
+        double rigorRecomendado,
+        double nivelAtual,
+        Double progressoAtingido,
+        String recomendacaoLivro,
+        String recomendacaoPaginas,
+        String exerciciosSugeridosJson,
+        boolean precisaNovoDiagnostico
+    ) throws SQLException {
+        String sql = """
+            insert into recomendacoes_rigor (
+              id,
+              diagnostico_id,
+              subtopico,
+              rigor_recomendado,
+              nivel_atual,
+              progresso_atingido,
+              recomendacao_livro,
+              recomendacao_paginas,
+              exercicios_sugeridos,
+              precisa_novo_diagnostico,
+              criado_em
+            ) values (
+              ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), ?, now()
+            )
+            """;
+
+        try (PreparedStatement stmt = openRequiredConnection().prepareStatement(sql)) {
+            stmt.setObject(1, UUID.randomUUID());
+            stmt.setObject(2, diagnosticoId);
+            stmt.setString(3, subtopico);
+            stmt.setDouble(4, CalculoStats.limitarRigor(rigorRecomendado));
+            stmt.setDouble(5, CalculoStats.limitarRigor(nivelAtual));
+            stmt.setObject(6, progressoAtingido == null ? null : Math.max(0d, Math.min(1d, progressoAtingido)));
+            stmt.setString(7, recomendacaoLivro);
+            stmt.setString(8, recomendacaoPaginas);
+            stmt.setString(9, exerciciosSugeridosJson);
+            stmt.setBoolean(10, precisaNovoDiagnostico);
+            stmt.executeUpdate();
+        }
     }
 
     public List<DiagnosticoDto> CandidatoDiagnostico(UUID caUuid){
@@ -111,6 +224,53 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
         return List.copyOf(disciplinas);
     }
 
+
+    public UUID inserir(
+        UUID candidatoId,
+        UUID disciplinaId,
+        String disciplinaNome,
+        LocalDateTime iniciadoEm,
+        LocalDateTime concluidoEm,
+        int duracaoSegundos,
+        int totalQuestoes,
+        int totalAcertos,
+        int totalErros,
+        Double percentualAcerto,
+        Double evolucao,
+        String nivel,
+        double velocidade,
+        double precisao,
+        double logica,
+        double consistencia,
+        double resiliencia,
+        String respostasJson,
+        String observacoes
+    ) throws SQLException {
+        try (Connection conn = openRequiredConnection()) {
+            return inserir(
+                conn,
+                candidatoId,
+                disciplinaId,
+                disciplinaNome,
+                iniciadoEm,
+                concluidoEm,
+                duracaoSegundos,
+                totalQuestoes,
+                totalAcertos,
+                totalErros,
+                percentualAcerto,
+                evolucao,
+                nivel,
+                velocidade,
+                precisao,
+                logica,
+                consistencia,
+                resiliencia,
+                respostasJson,
+                observacoes
+            );
+        }
+    }
 
     public UUID inserir(
         Connection conn,
@@ -404,7 +564,7 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
 
     private double pesoDisciplina(String disciplinaNome) {
         return disciplinaService.discCategoria().stream()
-            .filter(disciplina -> normalizar(disciplina.nome()).equals(normalizar(disciplinaNome)))
+            .filter(disciplina -> TextoUtil.normalizarMinusculo(disciplina.nome()).equals(TextoUtil.normalizarMinusculo(disciplinaNome)))
             .map(DisciplinaDto::peso)
             .filter(java.util.Objects::nonNull)
             .mapToDouble(Float::doubleValue)
@@ -427,27 +587,6 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
 
     private java.sql.Array toSqlArray(Connection conn, Integer[] valores) throws SQLException {
         return conn.createArrayOf("integer", valores == null ? new Integer[0] : valores);
-    }
-
-
-    private String normalizar(String valor) {
-        return normalizarTextoLivre(safeText(valor, ""));
-    }
-
-    private String safeText(Object value, String defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-
-        String text = value.toString().trim();
-        return text.isEmpty() ? defaultValue : text;
-    }
-
-
-    private String normalizarTextoLivre(String valor) {
-        String semAcento = Normalizer.normalize(valor == null ? "" : valor, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}+", "");
-        return semAcento.trim().toLowerCase(Locale.ROOT);
     }
 
 }

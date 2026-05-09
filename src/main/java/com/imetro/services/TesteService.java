@@ -1,19 +1,28 @@
 package com.imetro.services;
 
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.imetro.domain.dto.Stats;
-import com.imetro.domain.dto.StatsProgress;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
+import com.imetro.domain.dto.stats.StatsProgress;
 import com.imetro.domain.dto.test.TestDtoAll;
 import com.imetro.persistence.repository.DiagnosticoRepository;
+import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.persistence.repository.TesteStatsRepository;
+import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
+import com.imetro.util.CalculoStats;
+import com.imetro.util.ConversorTempo;
+import com.imetro.util.QuestaoUtil;
 
 public class TesteService {
     private final TesteRepository testeRepository;
@@ -84,7 +93,7 @@ public class TesteService {
         float velocidade=0,precisao=0,consistencia=0,resiliencia=0,logica=0,progresso=0;
         try {
             for (Map<String,Object> map : testeRepository.findByCandidatoId(Authentication.getCurrentUserId())) {
-                TestDtoAll test=TestDtoAll.ParseMapDto(map);    
+                TestDtoAll test=TestDtoAll.ParseMapDto(map);
                 Map<String, Object> value=diagnosticoRepository.findById(test.diagnostico_id()).orElseThrow();
                 DiagnosticoDto diagnosticoDto=DiagnosticoDto.ParseMapDto(value);
                 velocidade+=test.velocidade()-diagnosticoDto.velocidade();
@@ -93,9 +102,149 @@ public class TesteService {
                 logica+=test.logica()-diagnosticoDto.logica();
             }
         } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println("Erro ao calcular comparativo de stats dos testes: " + e.getMessage());
         }
         return new StatsProgress(velocidade,precisao,consistencia,resiliencia,logica,progresso);
     }
+
+
+     public void registrarTesteConcluido(
+        UUID candidatoId,
+        List<Questao> questoes,
+        List<Character> respostasUsuario,
+        String tempoFormatado
+    ) {
+        if (candidatoId == null || questoes == null || questoes.isEmpty() || respostasUsuario == null || respostasUsuario.isEmpty()) {
+            return;
+        }
+
+        int limite = Math.min(questoes.size(), respostasUsuario.size());
+        if (limite <= 0) {
+            return;
+        }
+
+        Map<String, ArrayList<Integer>> indicesPorDisciplina = new LinkedHashMap<>();
+
+        for (int i = 0; i < limite; i++) {
+            Questao questao = questoes.get(i);
+            if (questao == null || questao.getDisciplina() == null || questao.getDisciplina().isBlank()) {
+                continue;
+            }
+            indicesPorDisciplina
+                .computeIfAbsent(QuestaoUtil.normalizar(questao.getDisciplina()), ignored -> new ArrayList<>())
+                .add(i);
+        }
+
+        if (indicesPorDisciplina.isEmpty()) {
+            return;
+        }
+
+        int duracaoSegundos = ConversorTempo.parseTempoEmSegundos(tempoFormatado);
+        LocalDateTime concluidoEm = LocalDateTime.now();
+
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                for (Map.Entry<String, ArrayList<Integer>> entry : indicesPorDisciplina.entrySet()) {
+                    ArrayList<Integer> indices = entry.getValue();
+                    Questao questaoBase = questoes.get(indices.getFirst());
+                    String nomeDisciplina = QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina());
+                    UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
+
+                    int totalQuestoes = indices.size();
+                    int totalAcertos = 0;
+                    for (Integer indice : indices) {
+                        if (respostasUsuario.get(indice) == questoes.get(indice).getRespostaCorreta()) {
+                            totalAcertos++;
+                        }
+                    }
+
+                    int totalErros = Math.max(0, totalQuestoes - totalAcertos);
+                    double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
+                    String nivel = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+                    double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
+                    double consistencia = 0d;
+                    double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
+                    double resiliencia = 0d;
+                    double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
+                    String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
+                    String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
+
+                    testeRepository.inserir(
+                        conn,
+                        candidatoId,
+                        null,
+                        null,
+                        concluidoEm,
+                        percentualAcerto,
+                        concluidoEm,
+                        null,
+                        disciplinaId,
+                        nomeDisciplina,
+                        nivel,
+                        nivel,
+                        totalQuestoes,
+                        0d,
+                        1d,
+                        topicosJson,
+                        subtopicosJson,
+                        duracaoSegundos,
+                        totalQuestoes,
+                        totalAcertos,
+                        totalErros,
+                        percentualAcerto,
+                        velocidade,
+                        precisao,
+                        consistencia,
+                        logica,
+                        resiliencia,
+                        "Teste concluido com dados reais.",
+                        concluidoEm
+                    );
+                }
+
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao registrar teste concluido: " + e.getMessage());
+        }
+    }
+
+    private String construirJsonResumoQuestoes(
+        List<Integer> indices,
+        List<Questao> questoes,
+        boolean usarTopico
+    ) {
+        LinkedHashSet<String> valores = new LinkedHashSet<>();
+        for (Integer indice : indices) {
+            Questao questao = questoes.get(indice);
+            if (questao == null) {
+                continue;
+            }
+
+            String valor = usarTopico ? questao.getTopico() : questao.getSubtopico();
+            if (valor == null || valor.isBlank()) {
+                continue;
+            }
+            valores.add(valor);
+        }
+
+        StringBuilder json = new StringBuilder("[");
+        int posicao = 0;
+        for (String valor : valores) {
+            if (posicao++ > 0) {
+                json.append(", ");
+            }
+            json.append('"').append(QuestaoUtil.escapeJson(valor)).append('"');
+        }
+        json.append(']');
+        return json.toString();
+    }
+
+
 }

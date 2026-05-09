@@ -1,12 +1,10 @@
 package com.imetro.services;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -14,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.imetro.domain.dto.Topico;
 import com.imetro.ui.model.Questao;
+import com.imetro.util.TextoUtil;
 
 public class CatalogoQuestoesService {
 
@@ -33,10 +32,10 @@ public class CatalogoQuestoesService {
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
         Map<String, LinkedHashSet<String>> grupos = new LinkedHashMap<>();
-        String disciplinaNormalizada = normalizar(disciplina);
+        String disciplinaNormalizada = TextoUtil.normalizarMaiusculo(disciplina);
 
         for (Questao questao : BANCO) {
-            if (!disciplinaNormalizada.equals(normalizar(questao.getDisciplina()))) {
+            if (!disciplinaNormalizada.equals(TextoUtil.normalizarMaiusculo(questao.getDisciplina()))) {
                 continue;
             }
 
@@ -53,7 +52,7 @@ public class CatalogoQuestoesService {
                     disciplinaId,
                     disciplina,
                     entry.getKey(),
-                    idEstavel(disciplinaNormalizada + ":" + normalizar(entry.getKey())),
+                    idEstavel(disciplinaNormalizada + ":" + TextoUtil.normalizarMaiusculo(entry.getKey())),
                     entry.getValue().toArray(String[]::new)
                 )
             );
@@ -69,12 +68,12 @@ public class CatalogoQuestoesService {
     ) {
         Set<String> topicosNormalizados = normalizarColecao(topicos);
         Set<String> subtopicosNormalizados = normalizarColecao(subtopicos);
-        String disciplinaNormalizada = normalizar(disciplina);
+        String disciplinaNormalizada = TextoUtil.normalizarMaiusculo(disciplina);
 
         return BANCO.stream()
-            .filter(questao -> disciplinaNormalizada.isBlank() || disciplinaNormalizada.equals(normalizar(questao.getDisciplina())))
-            .filter(questao -> topicosNormalizados.isEmpty() || topicosNormalizados.contains(normalizar(questao.getTopico())))
-            .filter(questao -> subtopicosNormalizados.isEmpty() || subtopicosNormalizados.contains(normalizar(questao.getSubtopico())))
+            .filter(questao -> disciplinaNormalizada.isBlank() || disciplinaNormalizada.equals(TextoUtil.normalizarMaiusculo(questao.getDisciplina())))
+            .filter(questao -> topicosNormalizados.isEmpty() || topicosNormalizados.contains(TextoUtil.normalizarMaiusculo(questao.getTopico())))
+            .filter(questao -> subtopicosNormalizados.isEmpty() || subtopicosNormalizados.contains(TextoUtil.normalizarMaiusculo(questao.getSubtopico())))
             .filter(questao -> nivelDificuldade == null || questao.getNivelDificuldade() == nivelDificuldade)
             .map(this::copiarQuestao)
             .collect(Collectors.toCollection(ArrayList::new));
@@ -102,7 +101,7 @@ public class CatalogoQuestoesService {
 
         return valores.stream()
             .filter(valor -> valor != null && !valor.isBlank())
-            .map(this::normalizar)
+            .map(TextoUtil::normalizarMaiusculo)
             .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
@@ -213,15 +212,5 @@ public class CatalogoQuestoesService {
 
     private static UUID idEstavel(String valor) {
         return UUID.nameUUIDFromBytes(valor.getBytes());
-    }
-
-    private String normalizar(String valor) {
-        if (valor == null) {
-            return "";
-        }
-
-        String semAcento = Normalizer.normalize(valor, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}+", "");
-        return semAcento.trim().toUpperCase(Locale.ROOT);
     }
 }

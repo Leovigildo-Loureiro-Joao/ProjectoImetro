@@ -24,6 +24,7 @@ import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
+import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXToggleNode;
 
@@ -87,8 +88,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @FXML private Label nivelAtual;
     @FXML private Label dificuldadeAtual;
     @FXML private Label tempo;
-    @FXML private Label acertosLabel;
-    @FXML private Label errosLabel;
     @FXML private VBox feedbackContainer;
     @FXML private Label feedbackIcon;
     @FXML private Label feedbackMessage;
@@ -355,7 +354,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return 2;
         }
 
-        return switch (normalizar(config.nivel())) {
+        return switch (TextoUtil.normalizarMinusculo(config.nivel())) {
             case "facil" -> 1;
             case "desafiante" -> 3;
             case "extra dificil" -> 4;
@@ -368,7 +367,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return Math.min(7, totalDisponivel);
         }
 
-        return switch (normalizar(config.duracao())) {
+        return switch (TextoUtil.normalizarMinusculo(config.duracao())) {
             case "curto" -> 5;
             case "medio" -> 7;
             default -> Math.min(10, totalDisponivel);
@@ -538,14 +537,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             acertos++;
             sequenciaAcertos++;
             sequenciaErros = 0;
-            acertosLabel.setText(String.valueOf(acertos));
             selected.setStyle("-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;");
             mostrarFeedbackAdaptativo(true, tempoResposta);
         } else {
             erros++;
             sequenciaErros++;
             sequenciaAcertos = 0;
-            errosLabel.setText(String.valueOf(erros));
             selected.setStyle("-fx-background-color: #ef4444; -fx-border-color: #ef4444; -fx-text-fill: white;");
             mostrarFeedbackAdaptativo(false, tempoResposta);
             destacarRespostaCorreta(q.getRespostaCorreta());
@@ -714,6 +711,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         String recomendacao = getRecomendacao(porcentagemAcertos);
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
 
+        
+
         ResultadoAvaliacaoController.setResultado(
             new ResultadoPayload(
                 "Exame Adaptativo",
@@ -814,9 +813,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         respostaSelecionada = '\0';
         segundos = 0;
         minutos = 0;
-
-        acertosLabel.setText("0");
-        errosLabel.setText("0");
         tempo.setText("00:00");
         atualizarIndicadoresNivel();
         limparEstilosToggles();
@@ -841,10 +837,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             case "PORTUGUES" -> "Portugues";
             default -> disciplina;
         };
-    }
-
-    private String normalizar(String valor) {
-        return valor == null ? "" : valor.trim().toLowerCase();
     }
 
     @Override

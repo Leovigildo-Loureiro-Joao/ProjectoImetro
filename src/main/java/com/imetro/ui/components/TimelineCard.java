@@ -3,8 +3,8 @@ package com.imetro.ui.components;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import com.imetro.domain.dto.Stats;
 import com.imetro.domain.dto.diagnostico.TimelineDTO;
+import com.imetro.domain.dto.stats.Stats;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
