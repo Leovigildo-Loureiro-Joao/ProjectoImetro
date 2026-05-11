@@ -24,5 +24,6 @@ public interface BasicSqlRepository {
     int insert(Map<String, ?> fields) throws SQLException;
 
     int updateById(Object id, Map<String, ?> fields) throws SQLException;
-}
 
+    Optional<Map<String, Object>> findById(Object... id) throws SQLException;
+}

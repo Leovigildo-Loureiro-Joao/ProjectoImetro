@@ -2,8 +2,8 @@ package com.imetro.ui.modals;
 
 import java.util.Map;
 
-import com.imetro.ui.controller.candidato.TesteAdaptativoCoordinator;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.event.ActionEvent;

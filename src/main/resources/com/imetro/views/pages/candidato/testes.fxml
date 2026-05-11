@@ -18,13 +18,13 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="testeField" prefHeight="755.0" prefWidth="998.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.TesteAdaptativoController">
+<AnchorPane fx:id="testeField" prefHeight="755.0" prefWidth="998.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.testes.TesteAdaptativoController">
    <children>
       <VBox alignment="TOP_LEFT" prefHeight="722.0" prefWidth="820.0" spacing="15.0" styleClass="placeholder-card" AnchorPane.bottomAnchor="-13.0" AnchorPane.leftAnchor="-2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="-2.0">
          <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
-         
+
          <!-- CABECALHO -->
          <HBox alignment="CENTER_LEFT" spacing="70.0">
             <children>
@@ -36,10 +36,10 @@
                </VBox>
             </children>
          </HBox>
-         
+
          <AnchorPane prefHeight="609.0" prefWidth="778.0" VBox.vgrow="ALWAYS">
             <children>
-               
+
                <!-- TELA DE SELECAO (START) -->
                <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
@@ -55,7 +55,7 @@
                      </ScrollPane>
                   </children>
                </VBox>
-               
+
                <!-- TELA DO TESTE ADAPTATIVO -->
                <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
@@ -73,7 +73,7 @@
                                  </VBox>
                               </children>
                            </StackPane>
-                           
+
                            <VBox fx:id="tela" spacing="15.0">
                               <children>
                                  <!-- HEADER DA QUESTAO -->
@@ -90,7 +90,7 @@
                                              </VBox>
                                           </children>
                                        </HBox>
-                                       
+
                                        <VBox alignment="CENTER" spacing="5.0">
                                           <children>
                                              <HBox alignment="CENTER" spacing="5.0" />
@@ -141,7 +141,7 @@
                                        </HBox>
                                     </children>
                                  </HBox>
-                                 
+
                                  <!-- CORPO DA QUESTAO -->
                                  <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="card-blur" translateY="-80.0">
                                     <content>
@@ -152,7 +152,7 @@
                                           <children>
                                              <StackPane>
                                                 <children>
-                                                   
+
                                                    <!-- ENUNCIADO -->
                                                    <VBox spacing="10.0">
                                                       <children>
@@ -184,7 +184,7 @@
                                                          </HBox>
                                                       </children>
                                                    </VBox>
-                                                   
+
                                                    <!-- FEEDBACK ADAPTATIVO -->
                                                    <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card" visible="false">
                                                       <padding>
@@ -197,9 +197,9 @@
                                                    </VBox>
                                                 </children>
                                              </StackPane>
-                                             
+
                                              <Separator />
-                                             
+
                                              <!-- ALTERNATIVAS -->
                                              <VBox>
                                                 <children>
@@ -300,12 +300,12 @@
                                                    </FlowPane>
                                                 </children>
                                              </VBox>
-                                             
+
                                           </children>
                                        </VBox>
                                     </content>
                                  </ScrollPane>
-                                 
+
                                  <!-- BOTOES -->
                                  <HBox alignment="CENTER" spacing="20.0" translateY="-70.0">
                                     <children>
@@ -319,10 +319,10 @@
                      </StackPane>
                   </children>
                </VBox>
-               
+
             </children>
          </AnchorPane>
-         
+
       </VBox>
       <StackPane fx:id="modalPai" opacity="0.0" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #14141413;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <styleClass>

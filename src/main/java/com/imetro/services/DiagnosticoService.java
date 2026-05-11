@@ -17,6 +17,8 @@ import com.imetro.domain.dto.stats.Stats;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
+import com.imetro.persistence.repository.ProgressaoRigorRepository;
+import com.imetro.persistence.repository.RecomendacaoRepository;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.CalculoStats;
@@ -52,11 +54,17 @@ public class DiagnosticoService {
 
     private final PerguntasRepository perguntasRepository;
     private final DiagnosticoRepository diagnosticoRepository = new DiagnosticoRepository();
+    private final RecomendacaoRepository recomendacaoRepository = new RecomendacaoRepository();
+    private final ProgressaoRigorRepository progressaoRigorRepository = new ProgressaoRigorRepository();
     private final PerguntasBootstrapService perguntasBootstrapService;
 
     public DiagnosticoService() {
         this.perguntasRepository = new PerguntasRepository();
         this.perguntasBootstrapService = new PerguntasBootstrapService();
+    }
+
+    public DiagnosticoRepository getDiagnosticoRepository() {
+        return diagnosticoRepository;
     }
 
     public List<Questao> carregarQuestoesReais() {
@@ -611,7 +619,7 @@ public class DiagnosticoService {
                 .max(Double::compareTo)
                 .orElse(null);
 
-            diagnosticoRepository.upsertProgressaoRigor(
+            progressaoRigorRepository.upsertProgressaoRigor(
                 atual.id(),
                 candidatoId,
                 disciplinaId,
@@ -628,7 +636,7 @@ public class DiagnosticoService {
                 recomendacaoPaginas
             );
 
-            diagnosticoRepository.inserirRecomendacaoRigor(
+            recomendacaoRepository.inserirRecomendacaoRigor(
                 diagnosticoId,
                 subtopico,
                 rigorRecomendado,

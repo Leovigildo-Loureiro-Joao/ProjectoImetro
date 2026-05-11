@@ -42,3 +42,4 @@ alter table if exists teste_perguntas
 
 alter table if exists teste_perguntas
   add column if not exists respondido_em TIMESTAMP NOT null;
+

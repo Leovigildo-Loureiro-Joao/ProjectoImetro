@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.imetro.domain.dto.test.Teste_Pergunta;
 
 public class TesteRepository extends JdbcBasicSqlRepository {
 
@@ -261,70 +260,6 @@ public class TesteRepository extends JdbcBasicSqlRepository {
             stmt.executeUpdate();
         }
         return id;
-    }
-
-    public void inserirTeste_Pergunta(
-       Teste_Pergunta teste_Pergunta,UUID teste_id) throws SQLException {
-
-        String sql = """
-            insert into teste_perguntas (
-                teste_id,
-                pergunta_id,
-                ordem,
-                resposta_dada,
-                tempo_segundos,
-                precisao,
-                velocidade,
-                acertou,
-                consistencia,
-                resiliencia,
-                topico,
-                subtopico,
-                enunciado,
-                resposta_correta,
-                resposta_dada_texto,
-                resposta_correta_texto,
-                disciplina_nome,
-                tempo_sugerido_segundos,
-                nivel_dificuldade,
-                rigor,
-                referencia_livro,
-                pagina_inicio,
-                pagina_fim,
-                respondido_em
-            ) values (
-                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
-            )
-            """;
-
-        try (PreparedStatement stmt = openRequiredConnection().prepareStatement(sql)) {
-            stmt.setObject(1,teste_id);
-            stmt.setObject(2, teste_Pergunta.pergunta_id());
-            stmt.setObject(3, teste_Pergunta.ordem());
-            stmt.setString(4, teste_Pergunta.resposta_dada());
-            stmt.setLong(5, teste_Pergunta.tempo_segundos());
-            stmt.setDouble(6, teste_Pergunta.precisao());
-            stmt.setDouble(7, teste_Pergunta.velocidade());
-            stmt.setObject(8, teste_Pergunta.acertou());
-            stmt.setDouble(9, teste_Pergunta.consistencia());
-            stmt.setDouble(10, teste_Pergunta.resiliencia());
-            stmt.setString(11, teste_Pergunta.topico());
-            stmt.setString(12, teste_Pergunta.subtopico());
-            stmt.setString(13, teste_Pergunta.enunciado());
-            stmt.setString(14, teste_Pergunta.resposta_correta());
-            stmt.setString(15, teste_Pergunta.resposta_dada_texto());
-            stmt.setString(16, teste_Pergunta.resposta_correta_texto());
-            stmt.setString(17, teste_Pergunta.disciplina_nome());
-            stmt.setObject(18, teste_Pergunta.tempo_sugerido_segundos());
-            stmt.setInt(19, teste_Pergunta.nivel_dificuldade());
-            stmt.setDouble(20, teste_Pergunta.rigor());
-            stmt.setString(21, teste_Pergunta.referencia_livro());
-            stmt.setInt(22, teste_Pergunta.pagina_inicio());
-            stmt.setInt(23, teste_Pergunta.pagina_fim());
-            stmt.setTimestamp(24,toTimestamp( teste_Pergunta.respondido_em()));
-            stmt.executeUpdate();
-        }
-
     }
 
     private List<Map<String, Object>> readRows(ResultSet rs) throws SQLException {

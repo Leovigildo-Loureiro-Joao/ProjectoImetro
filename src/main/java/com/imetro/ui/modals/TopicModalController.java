@@ -7,8 +7,8 @@ import java.util.Map;
 
 import com.imetro.domain.dto.Topico;
 import com.imetro.services.DiagnosticoService;
-import com.imetro.ui.controller.candidato.TesteAdaptativoCoordinator;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator;
 import com.imetro.util.Authentication;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;

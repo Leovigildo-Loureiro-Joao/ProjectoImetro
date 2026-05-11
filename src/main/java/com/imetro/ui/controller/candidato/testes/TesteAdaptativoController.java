@@ -1,16 +1,19 @@
-package com.imetro.ui.controller.candidato;
+package com.imetro.ui.controller.candidato.testes;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
@@ -19,6 +22,9 @@ import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.TesteCard;
+import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator.TesteConfig;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator.TesteHost;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
@@ -26,6 +32,7 @@ import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoResultado;
+import com.imetro.util.QuestaoUtil;
 import com.imetro.util.ResultadoPayload;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
@@ -722,9 +729,16 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         double porcentagemAcertos = totalQuestoes == 0 ? 0 : (acertos * 100.0) / totalQuestoes;
         String perfil = determinarPerfil(porcentagemAcertos, mediaTempo);
         String recomendacao = getRecomendacao(porcentagemAcertos);
+        UUID candidatoID= Authentication.getCurrentUserId();
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
-        testeService.registrarTesteConcluido(Authentication.getCurrentUserId(), focoQuestoes, respostasUsuario, reacao,tempo.getText(), recomendacao);
-
+        DiagnosticoDto diagnos;
+        try {
+            diagnos = diagnosticoService.getDiagnosticoRepository().buscarUltimoDiagnostico(candidatoID, candidatoID, disciplinaSelecionada);
+            testeService.registrarTesteConcluido(candidatoID,diagnos.id(), focoQuestoes, respostasUsuario, reacao,nivelAtual.getText(), tempo.getText(), recomendacao);
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
 
         ResultadoAvaliacaoController.setResultado(
             new ResultadoPayload(

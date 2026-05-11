@@ -2,7 +2,6 @@ package com.imetro.services;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,6 +19,7 @@ import com.imetro.domain.dto.test.Teste_Pergunta;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
+import com.imetro.persistence.repository.TestePerguntasRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.persistence.repository.TesteStatsRepository;
 import com.imetro.ui.model.Questao;
@@ -31,11 +31,13 @@ import com.imetro.util.QuestaoUtil;
 public class TesteService {
     private final TesteRepository testeRepository;
     private final TesteStatsRepository testeStatsRepository;
+    private final TestePerguntasRepository testePerguntasRepository;
     private final DiagnosticoRepository diagnosticoRepository;
 
     public TesteService() {
         this.testeRepository = new TesteRepository();
         this.testeStatsRepository = new TesteStatsRepository();
+        this.testePerguntasRepository = new TestePerguntasRepository();
         this.diagnosticoRepository=new DiagnosticoRepository();
     }
 
@@ -117,7 +119,8 @@ public class TesteService {
         UUID diagnosticoId,
         List<Questao> questoes,
         List<Character> respostasUsuario,
-         List <ReacaoTeste> questoesTest,
+        List <ReacaoTeste> questoesTest,
+        String nivelInicial,
         String tempoFormatado,
         String recomendacao
     ) {
@@ -168,7 +171,7 @@ public class TesteService {
 
                     int totalErros = Math.max(0, totalQuestoes - totalAcertos);
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
-                    String nivel = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+                    String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
                     double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
                     double consistencia = 0d;
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
@@ -188,8 +191,8 @@ public class TesteService {
                         diagnosticoId,
                         disciplinaId,
                         nomeDisciplina,
-                        nivel,
-                        nivel,
+                        nivelInicial,
+                        nivelFinal,
                         totalQuestoes,
                         0d,
                         1d,
@@ -210,7 +213,7 @@ public class TesteService {
                     );
                     questoesTest.forEach(t -> {
                         try {
-                            testeRepository.inserirTeste_Pergunta(Teste_Pergunta.fromQuestao(t), id);
+                            testePerguntasRepository.inserir(Teste_Pergunta.fromQuestao(t), id);
                         } catch (SQLException e) {
                             System.err.println(e);
                             e.printStackTrace();

@@ -8,9 +8,9 @@ Este ficheiro foi organizado por ordem de execucao e por arquivo, para poderes s
 
 - [x] O `insert` principal de teste foi corrigido para gravar em `testes`.
 - [x] A responsabilidade de `diagnostico` foi removida do fluxo principal de `TesteService`.
-- [ ] Falta salvar `stats`.
-- [ ] Falta salvar `teste_perguntas`.
-- [ ] Falta ligar o fim do teste adaptativo ao salvamento real no banco.
+- [x] Falta salvar `stats`.
+- [x] Falta salvar `teste_perguntas`.
+- [x] Falta ligar o fim do teste adaptativo ao salvamento real no banco.
 - [ ] Falta revisar leitura dos dados reais de `testes`.
 
 ## Ordem recomendada de execucao
@@ -32,22 +32,22 @@ Segue esta ordem. Ela foi pensada para evitar retrabalho:
 
 Objetivo simples: garantir que quando o teste termina, os dados reais chegam ao service antes da troca de tela.
 
-- [ ] Confirmar onde o teste termina de verdade no metodo `finalizarTesteAdaptativo()`.
-- [ ] Antes de abrir a tela de resultado, chamar `TesteService.registrarTesteConcluido(...)`.
-- [ ] Passar o `candidatoId` real.
-- [ ] Passar a lista `questoes`.
-- [ ] Passar a lista `respostasUsuario`.
-- [ ] Passar o tempo total formatado (`tempo.getText()` ou equivalente).
-- [ ] Passar `temposResposta`.
+- [x] Confirmar onde o teste termina de verdade no metodo `finalizarTesteAdaptativo()`.
+- [x] Antes de abrir a tela de resultado, chamar `TesteService.registrarTesteConcluido(...)`.
+- [x] Passar o `candidatoId` real.
+- [x] Passar a lista `questoes`.
+- [x] Passar a lista `respostasUsuario`.
+- [x] Passar o tempo total formatado (`tempo.getText()` ou equivalente).
+- [x] Passar `temposResposta`.
   Explicacao simples: isso e o tempo gasto em cada questao, nao so o tempo total.
-- [ ] Passar `topicosSelecionados`.
-- [ ] Passar `subtopicosSelecionados`.
-- [ ] Passar o `nivelInicial`.
+- [x] Passar `topicosSelecionados`.
+- [x] Passar `subtopicosSelecionados`.
+- [x] Passar o `nivelInicial`.
   Explicacao simples: o nivel em que o teste comecou.
 - [ ] Passar o `nivelFinal`.
   Explicacao simples: o nivel em que o teste terminou.
-- [ ] Se existir contexto de diagnostico anterior, decidir se tambem vai passar `diagnosticoId`.
-- [ ] Garantir que o salvar acontece antes de `App.swapContent(...)`.
+- [x] Se existir contexto de diagnostico anterior, decidir se tambem vai passar `diagnosticoId`.
+- [x] Garantir que o salvar acontece antes de `App.swapContent(...)`.
 - [ ] Garantir que, se o salvamento falhar, o utilizador nao veja sucesso falso.
 
 ### Resultado esperado desta etapa
@@ -61,24 +61,24 @@ Objetivo simples: garantir que quando o teste termina, os dados reais chegam ao 
 
 Objetivo simples: transformar o service no orquestrador (quem coordena a ordem do salvamento) do teste.
 
-- [ ] Rever a assinatura de `registrarTesteConcluido(...)`.
-- [ ] Adicionar os parametros que ainda faltam:
+- [x] Rever a assinatura de `registrarTesteConcluido(...)`.
+- [x] Adicionar os parametros que ainda faltam:
   `List<Long> temposResposta`, `List<String> topicosSelecionados`, `List<String> subtopicosSelecionados`, `String nivelInicial`, `String nivelFinal`, `UUID diagnosticoId` se fizer sentido.
-- [ ] Manter a validacao inicial para evitar salvar listas vazias ou dados nulos importantes.
-- [ ] Continuar agrupando por disciplina, se esse comportamento ainda for o desejado.
+- [x] Manter a validacao inicial para evitar salvar listas vazias ou dados nulos importantes.
+- [x] Continuar agrupando por disciplina, se esse comportamento ainda for o desejado.
   Explicacao simples: se um teste misturar questoes de varias disciplinas, hoje o codigo separa por disciplina e salva uma entrada para cada grupo.
 - [ ] Decidir se isso vai continuar assim ou se um teste deve gerar apenas um registo.
 - [ ] Definir `resultado`.
   Explicacao simples: muito provavelmente sera o mesmo valor de `percentualAcerto`, mas isso deve ficar padronizado.
 - [ ] Definir `nivel_inicial` com base no nivel de arranque do teste.
 - [ ] Definir `nivel_final` com base no nivel final alcancado.
-- [ ] Montar o JSON de `topicosSelecionados`.
-- [ ] Montar o JSON de `subtopicosSelecionados`.
-- [ ] Chamar `testeRepository.inserir(...)` com todos os campos finais.
-- [ ] Guardar o `testeId` retornado.
-- [ ] Logo a seguir, chamar o repository de `stats`.
-- [ ] Logo a seguir, chamar o repository de `teste_perguntas`.
-- [ ] Fazer tudo dentro da mesma transacao (transacao = salvar tudo em bloco; se uma parte falhar, nada fica salvo pela metade).
+- [x] Montar o JSON de `topicosSelecionados`.
+- [x] Montar o JSON de `subtopicosSelecionados`.
+- [x] Chamar `testeRepository.inserir(...)` com todos os campos finais.
+- [x] Guardar o `testeId` retornado.
+- [x] Logo a seguir, chamar o repository de `stats`.
+- [x] Logo a seguir, chamar o repository de `teste_perguntas`.
+- [x] Fazer tudo dentro da mesma transacao (transacao = salvar tudo em bloco; se uma parte falhar, nada fica salvo pela metade).
 - [ ] Atualizar a mensagem de erro para refletir exatamente a fase que falhou, se quiseres logs mais claros.
 
 ### Resultado esperado desta etapa
@@ -93,18 +93,18 @@ Objetivo simples: transformar o service no orquestrador (quem coordena a ordem d
 Objetivo simples: fechar os campos reais da tabela `testes`.
 
 - [x] O `insert` ja grava em `testes`.
-- [ ] Rever se `diagnostico_id` precisa entrar no `insert`.
-- [ ] Rever se `topicos` precisa entrar no `insert`.
-- [ ] Rever se `subtopicos` precisa entrar no `insert`.
-- [ ] Rever se `resultado` vai mesmo ser `percentualAcerto`.
-- [ ] Rever se `nivel_inicial` e `nivel_final` estao vindo com valor real e nao so valor repetido.
-- [ ] Rever `limite_questoes`.
+- [x] Rever se `diagnostico_id` precisa entrar no `insert`.
+- [x] Rever se `topicos` precisa entrar no `insert`.
+- [x] Rever se `subtopicos` precisa entrar no `insert`.
+- [x] Rever se `resultado` vai mesmo ser `percentualAcerto`.
+- [x] Rever se `nivel_inicial` e `nivel_final` estao vindo com valor real e nao so valor repetido.
+- [x] Rever `limite_questoes`.
   Explicacao simples: pode ser o total planeado do teste, nao necessariamente o total respondido.
-- [ ] Rever `limite_inferior` e `limite_superior`.
+- [x] Rever `limite_inferior` e `limite_superior`.
   Explicacao simples: esses campos parecem guardar a faixa adaptativa (intervalo de dificuldade, ou “janela de nivel” do teste).
-- [ ] Se `topicos` e `subtopicos` forem salvos, usar `cast(? as jsonb)` no SQL.
+- [x] Se `topicos` e `subtopicos` forem salvos, usar `cast(? as jsonb)` no SQL.
   Explicacao simples: `jsonb` e o tipo do Postgres para guardar JSON de forma estruturada.
-- [ ] Remover parametros que nao forem realmente usados.
+- [x] Remover parametros que nao forem realmente usados.
   Explicacao simples: se um parametro entra no metodo mas nao vai para o banco nem para outra regra, ele so aumenta a confusao.
 
 ### Resultado esperado desta etapa
@@ -117,10 +117,10 @@ Objetivo simples: fechar os campos reais da tabela `testes`.
 
 Objetivo simples: parar de usar este repository so para leitura e passar a salvar `stats`.
 
-- [ ] Criar um metodo `inserir(...)` ou `upsert(...)`.
+- [x] Criar um metodo `inserir(...)` ou `upsert(...)`.
 - [ ] Preferir `upsert(...)` se quiseres proteger contra tentativa de salvar duas vezes o mesmo `teste_id`.
   Explicacao simples: `upsert` significa “se existir, atualiza; se nao existir, insere”.
-- [ ] Salvar pelo menos estes campos:
+- [x] Salvar pelo menos estes campos:
   `teste_id`, `diagnostico_id`, `candidato_id`, `disciplina_id`, `disciplina_nome`, `origem`, `tempo_total_segundos`, `tempo_medio_segundos`, `total_questoes`, `total_acertos`, `total_erros`, `percentual_acerto`, `velocidade`, `precisao`, `consistencia`, `logica`, `resiliencia`, `observacoes`.
 - [ ] Definir `origem = 'TESTE'`.
 - [ ] Calcular `tempo_medio_segundos`.
