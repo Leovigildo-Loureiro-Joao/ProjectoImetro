@@ -1,8 +1,10 @@
 package com.imetro.util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.imetro.domain.dto.diagnostico.ProgressoResumo;
+import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.ui.model.Questao;
 
 public class CalculoStats {
@@ -84,6 +86,151 @@ public class CalculoStats {
         return limitar01(1d - variacao);
     }
 
+    public static double calcularConsistenciaTeste(List<ReacaoTeste> reacoes) {
+        if (reacoes == null || reacoes.isEmpty()) {
+            return 0d;
+        }
+
+        List<Double> acertos = new ArrayList<>();
+        List<Double> ritmos = new ArrayList<>();
+
+        for (ReacaoTeste reacao : reacoes) {
+            if (reacao == null || reacao.questao() == null) {
+                continue;
+            }
+
+            acertos.add(acertou(reacao) ? 1d : 0d);
+
+            Double ritmoNormalizado = calcularRitmoNormalizado(reacao);
+            if (ritmoNormalizado != null) {
+                ritmos.add(ritmoNormalizado);
+            }
+        }
+
+        if (acertos.isEmpty()) {
+            return 0d;
+        }
+
+        double estabilidadeAcertos = 1d - Math.min(1d, calcularDesvioPadrao(acertos) / 0.5d);
+        double estabilidadeRitmo = ritmos.size() < 2
+            ? 0.5d
+            : 1d - Math.min(1d, calcularCoeficienteVariacao(ritmos));
+
+        double score = (estabilidadeAcertos * 0.7d) + (estabilidadeRitmo * 0.3d);
+        return suavizarPorAmostra(score, acertos.size());
+    }
+
+    public static double calcularConsistenciaQuestao(List<ReacaoTeste> historico, ReacaoTeste atual) {
+        if (atual == null || atual.questao() == null) {
+            return 0d;
+        }
+
+        List<ReacaoTeste> janela = ultimasReacoesValidas(historico, 3);
+        if (janela.isEmpty()) {
+            return 0.5d;
+        }
+
+        double mediaAcertos = janela.stream()
+            .mapToDouble(reacao -> acertou(reacao) ? 1d : 0d)
+            .average()
+            .orElse(0.5d);
+
+        double desvioAcerto = Math.abs((acertou(atual) ? 1d : 0d) - mediaAcertos);
+
+        Double ritmoAtual = calcularRitmoNormalizado(atual);
+        List<Double> ritmosHistoricos = janela.stream()
+            .map(CalculoStats::calcularRitmoNormalizado)
+            .filter(java.util.Objects::nonNull)
+            .toList();
+
+        double desvioRitmo = 0.5d;
+        if (ritmoAtual != null && !ritmosHistoricos.isEmpty()) {
+            double mediaRitmo = ritmosHistoricos.stream().mapToDouble(Double::doubleValue).average().orElse(1d);
+            desvioRitmo = Math.min(1d, Math.abs(ritmoAtual - mediaRitmo));
+        }
+
+        double score = ((1d - desvioAcerto) * 0.65d) + ((1d - desvioRitmo) * 0.35d);
+        return limitar01(score);
+    }
+
+    public static double calcularResilienciaTeste(List<ReacaoTeste> reacoes) {
+        if (reacoes == null || reacoes.isEmpty()) {
+            return 0d;
+        }
+
+        int totalValidos = 0;
+        int eventosAdversos = 0;
+        int recuperacoes = 0;
+        int maiorSequenciaErros = 0;
+        int sequenciaErros = 0;
+
+        for (int i = 0; i < reacoes.size(); i++) {
+            ReacaoTeste reacao = reacoes.get(i);
+            if (reacao == null || reacao.questao() == null) {
+                continue;
+            }
+
+            totalValidos++;
+
+            if (acertou(reacao)) {
+                sequenciaErros = 0;
+            } else {
+                sequenciaErros++;
+                maiorSequenciaErros = Math.max(maiorSequenciaErros, sequenciaErros);
+            }
+
+            if (!ehEventoAdverso(reacao)) {
+                continue;
+            }
+
+            eventosAdversos++;
+            if (recuperouNasProximasTentativas(reacoes, i, 2)) {
+                recuperacoes++;
+            }
+        }
+
+        if (totalValidos == 0) {
+            return 0d;
+        }
+
+        double taxaRecuperacao = eventosAdversos == 0 ? 0.65d : recuperacoes / (double) eventosAdversos;
+        double estabilidadeAposQueda = 1d - (maiorSequenciaErros / (double) totalValidos);
+        double score = (taxaRecuperacao * 0.7d) + (estabilidadeAposQueda * 0.3d);
+        return suavizarPorAmostra(score, totalValidos);
+    }
+
+    public static double calcularResilienciaQuestao(List<ReacaoTeste> historico, ReacaoTeste atual) {
+        if (atual == null || atual.questao() == null) {
+            return 0d;
+        }
+
+        ReacaoTeste ultimaReacao = ultimaReacaoValida(historico);
+        if (ultimaReacao == null) {
+            return 0.5d;
+        }
+
+        if (!ehEventoAdverso(ultimaReacao)) {
+            return 0.5d;
+        }
+
+        int adversidadesConsecutivas = contarAdversidadesConsecutivas(historico);
+        double score = 0.1d;
+
+        if (acertou(atual)) {
+            score += 0.65d;
+        }
+
+        if (!foiMuitoLento(atual, 1.10d)) {
+            score += 0.15d;
+        }
+
+        if (adversidadesConsecutivas >= 2 && acertou(atual)) {
+            score += 0.10d;
+        }
+
+        return limitar01(score);
+    }
+
     private static double normalizarPercentual(double percentual) {
         return limitar01(percentual / 100d);
     }
@@ -108,5 +255,147 @@ public class CalculoStats {
 
     public static double limitarRigor(double rigor) {
         return Math.max(0d, Math.min(1d, rigor));
+    }
+
+    private static boolean acertou(ReacaoTeste reacao) {
+        if (reacao == null || reacao.questao() == null) {
+            return false;
+        }
+
+        return Character.toUpperCase(reacao.respostaDada())
+            == Character.toUpperCase(reacao.questao().getRespostaCorreta());
+    }
+
+    private static Double calcularRitmoNormalizado(ReacaoTeste reacao) {
+        if (reacao == null || reacao.questao() == null || reacao.questao().getTempoSugerido() <= 0d) {
+            return null;
+        }
+
+        double tempoResposta = normalizarTempoResposta(reacao.tempoSegundos(), reacao.questao().getTempoSugerido());
+        if (tempoResposta <= 0d) {
+            return null;
+        }
+
+        return tempoResposta / reacao.questao().getTempoSugerido();
+    }
+
+    private static double normalizarTempoResposta(long valorBruto, double tempoSugeridoSegundos) {
+        if (valorBruto <= 0) {
+            return 0d;
+        }
+
+        if (tempoSugeridoSegundos > 0d && valorBruto > 1000L && valorBruto > (tempoSugeridoSegundos * 8d)) {
+            return valorBruto / 1000d;
+        }
+
+        return valorBruto;
+    }
+
+    private static double calcularDesvioPadrao(List<Double> valores) {
+        if (valores == null || valores.isEmpty()) {
+            return 0d;
+        }
+
+        double media = valores.stream().mapToDouble(Double::doubleValue).average().orElse(0d);
+        double variancia = valores.stream()
+            .mapToDouble(valor -> Math.pow(valor - media, 2))
+            .average()
+            .orElse(0d);
+        return Math.sqrt(variancia);
+    }
+
+    private static double calcularCoeficienteVariacao(List<Double> valores) {
+        if (valores == null || valores.size() < 2) {
+            return 0d;
+        }
+
+        double media = valores.stream().mapToDouble(Double::doubleValue).average().orElse(0d);
+        if (media <= 0d) {
+            return 0d;
+        }
+
+        return calcularDesvioPadrao(valores) / media;
+    }
+
+    private static double suavizarPorAmostra(double score, int totalAmostras) {
+        if (totalAmostras <= 0) {
+            return 0d;
+        }
+
+        double confianca = Math.min(1d, totalAmostras / 5d);
+        return limitar01((0.5d * (1d - confianca)) + (limitar01(score) * confianca));
+    }
+
+    private static boolean ehEventoAdverso(ReacaoTeste reacao) {
+        return reacao != null && (!acertou(reacao) || foiMuitoLento(reacao, 1.25d));
+    }
+
+    private static boolean foiMuitoLento(ReacaoTeste reacao, double tolerancia) {
+        Double ritmo = calcularRitmoNormalizado(reacao);
+        return ritmo != null && ritmo > tolerancia;
+    }
+
+    private static boolean recuperouNasProximasTentativas(List<ReacaoTeste> reacoes, int indiceBase, int alcance) {
+        int limite = Math.min(reacoes.size() - 1, indiceBase + alcance);
+        for (int i = indiceBase + 1; i <= limite; i++) {
+            ReacaoTeste proxima = reacoes.get(i);
+            if (proxima == null || proxima.questao() == null) {
+                continue;
+            }
+
+            if (acertou(proxima) && !foiMuitoLento(proxima, 1.10d)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<ReacaoTeste> ultimasReacoesValidas(List<ReacaoTeste> historico, int limite) {
+        List<ReacaoTeste> valores = new ArrayList<>();
+        if (historico == null || historico.isEmpty() || limite <= 0) {
+            return valores;
+        }
+
+        for (int i = historico.size() - 1; i >= 0 && valores.size() < limite; i--) {
+            ReacaoTeste reacao = historico.get(i);
+            if (reacao != null && reacao.questao() != null) {
+                valores.addFirst(reacao);
+            }
+        }
+
+        return valores;
+    }
+
+    private static ReacaoTeste ultimaReacaoValida(List<ReacaoTeste> historico) {
+        if (historico == null || historico.isEmpty()) {
+            return null;
+        }
+
+        for (int i = historico.size() - 1; i >= 0; i--) {
+            ReacaoTeste reacao = historico.get(i);
+            if (reacao != null && reacao.questao() != null) {
+                return reacao;
+            }
+        }
+        return null;
+    }
+
+    private static int contarAdversidadesConsecutivas(List<ReacaoTeste> historico) {
+        if (historico == null || historico.isEmpty()) {
+            return 0;
+        }
+
+        int total = 0;
+        for (int i = historico.size() - 1; i >= 0; i--) {
+            ReacaoTeste reacao = historico.get(i);
+            if (reacao == null || reacao.questao() == null) {
+                continue;
+            }
+            if (!ehEventoAdverso(reacao)) {
+                break;
+            }
+            total++;
+        }
+        return total;
     }
 }
