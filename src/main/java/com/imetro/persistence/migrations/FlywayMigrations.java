@@ -4,8 +4,11 @@ import com.imetro.config.Env;
 import com.imetro.persistence.connection.DbConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationVersion;
+import org.flywaydb.core.api.output.MigrateResult;
 
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class FlywayMigrations {
 
@@ -15,6 +18,7 @@ public final class FlywayMigrations {
      * aplica apenas migrations acima dessa versão.
      */
     private static final String DOCKER_SCHEMA_BASELINE_VERSION = "6";
+    private static final Logger LOGGER = Logger.getLogger(FlywayMigrations.class.getName());
 
     private FlywayMigrations() {
     }
@@ -31,15 +35,22 @@ public final class FlywayMigrations {
 
         DbConfig cfg = cfgOpt.get();
         try {
-            Flyway.configure()
+            Flyway flyway = Flyway.configure()
                     .dataSource(cfg.getUrl(), cfg.getUser(), cfg.getPassword())
                     .locations("classpath:db/migration")
                     .baselineOnMigrate(true)
                     .baselineVersion(MigrationVersion.fromVersion(DOCKER_SCHEMA_BASELINE_VERSION))
-                    .load()
-                    .migrate();
+                    .load();
+
+            MigrateResult result = flyway.migrate();
+            LOGGER.info(() -> String.format(
+                "Flyway concluido: %d migration(s) executada(s); schema atual=%s; baseline=%s.",
+                result.migrationsExecuted,
+                result.targetSchemaVersion == null ? "<desconhecido>" : result.targetSchemaVersion,
+                DOCKER_SCHEMA_BASELINE_VERSION
+            ));
         } catch (Exception e) {
-            System.err.println("[imetro] Flyway migrate falhou: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Flyway migrate falhou.", e);
         }
     }
 }

@@ -53,8 +53,7 @@ public class OrientadorService implements User{
                 return false;
             }
 
-            userRepository.insert(conta.toMap());
-            return true;
+            return userRepository.insertWithDefaultConfig(conta);
         } catch (SQLException e) {
             return false;
         }

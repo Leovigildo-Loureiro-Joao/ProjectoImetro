@@ -271,7 +271,7 @@ Na primeira criacao do volume, o container executa automaticamente `scripts/db/0
 
 - schema inicial do Docker: `scripts/db/001_schema.sql`
 - migrations versionadas: `src/main/resources/db/migration`
-- estado atual das migrations: `V1` ate `V17`
+- estado atual das migrations: `V1` ate `V19`
 
 Resumo das mais recentes:
 
@@ -288,6 +288,8 @@ Resumo das mais recentes:
 - `V15__recalcular_metricas_historicas.sql`: recalculo defensivo de metricas historicas
 - `V16__update_test_perguntas.sql`: extensao do detalhe por pergunta nos testes
 - `V17__configuracoes_teste_adaptativo.sql`: configuracao central do motor adaptativo, por nivel e por duracao
+- `V18__teste_perguntas_respondido_em.sql`: ajuste versionado do timestamp de resposta por pergunta
+- `V19__seed_configuracoes_por_utilizador.sql`: seed inicial das configuracoes por utilizador existente
 
 ### Observacao importante sobre ambiente
 
