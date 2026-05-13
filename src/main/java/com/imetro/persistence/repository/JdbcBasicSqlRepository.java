@@ -118,6 +118,62 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
         }
     }
 
+    public Optional<Map<String, Object>> findOneByField(String field, Object value) throws SQLException {
+        String sql = "select * from " + tableName + " where " + field + " = ?";
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, value);
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Map<String, Object>> rows = readAllRows(rs);
+                if (rows.isEmpty()) {
+                    return Optional.empty();
+                }
+                return Optional.of(rows.getFirst());
+            }
+        }
+    }
+
+        public int updateByField(String field, Object value, Map<String, ?> fields) throws SQLException {
+            if (fields == null || fields.isEmpty()) {
+                throw new IllegalArgumentException("fields must not be null/empty");
+            }
+
+            List<String> columns = fields.keySet().stream()
+                    .map(SqlIdentifiers::requireSafeQualifiedName)
+                    .sorted(Comparator.naturalOrder())
+                    .toList();
+
+            String setClause = String.join(", ", columns.stream().map(c -> c + " = ?").toList());
+            String sql = "update " + tableName + " set " + setClause + " where " + field + " = ?";
+
+            try (Connection conn = openRequiredConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+                int index = 1;
+                for (String column : columns) {
+                    stmt.setObject(index++, fields.get(column));
+                }
+                stmt.setObject(index, value);
+                return stmt.executeUpdate();
+            }
+        }
+
+
+        public List<Map<String, Object>> findAllByField(String field, Object value) throws SQLException {
+            String sql = "select * from " + tableName + " where " + field + " = ?";
+            try (Connection conn = openRequiredConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setObject(1, value);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<Map<String, Object>> rows = readAllRows(rs);
+                    if (rows.isEmpty()) {
+                        return List.of();
+                    }
+                    return rows;
+                }
+            }
+        }
+
+
     @Override
     public int deleteById(Object id) throws SQLException {
         String sql = "delete from " + tableName + " where " + idColumn + " = ?";

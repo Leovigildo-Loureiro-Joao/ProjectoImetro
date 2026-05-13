@@ -30,7 +30,7 @@ public record ProgressoAlunoDisciplinaDto(
     LocalDateTime criadoEm,
     LocalDateTime atualizadoEm
 ) {
-    
+
     public ProgressoAlunoDisciplinaDto {
         if (id == null) {
             id = UUID.randomUUID();
@@ -63,7 +63,7 @@ public record ProgressoAlunoDisciplinaDto(
             atualizadoEm = LocalDateTime.now();
         }
     }
-    
+
     // Método para calcular taxa de acerto automaticamente
     public double calcularTaxaAcerto() {
         if (totalQuestoesResolvidas == null || totalQuestoesResolvidas == 0) {
@@ -72,11 +72,11 @@ public record ProgressoAlunoDisciplinaDto(
         int acertos = totalAcertos != null ? totalAcertos : 0;
         return Math.round((double) acertos / totalQuestoesResolvidas * 100.0) / 100.0;
     }
-    
+
     public double getPercentualAcerto() {
         return calcularTaxaAcerto() * 100;
     }
-    
+
     public boolean precisaRevisao() {
         return diasSemEstudo != null && diasSemEstudo > 7;
     }
@@ -106,9 +106,33 @@ public record ProgressoAlunoDisciplinaDto(
         if (this.ultimos3DiagnosticosTotal != null) {
             map.put("ultimos_3_diagnosticos_total", this.ultimos3DiagnosticosTotal);
         }
-        
+
         return map;
     }
 
-    
-} 
+    public static ProgressoAlunoDisciplinaDto fromMap(Map<String, Object> map) {
+        return new ProgressoAlunoDisciplinaDto(
+            UUID.randomUUID(), // Gerar um novo ID para o progresso
+            (UUID) map.get("aluno_id"),
+            (UUID) map.get("disciplina_id"),
+            (String) map.get("disciplina"),
+            map.get("progresso") != null ? ((Number) map.get("progresso")).floatValue() : 0f,
+            map.get("nivel_atual") != null ? NivelDisciplina.valueOf((String) map.get("nivel_atual")) : null,
+            map.get("nivel_anterior") != null ? NivelDisciplina.valueOf((String) map.get("nivel_anterior")) : null,
+            (LocalDate) map.get("data_mudanca_nivel"),
+            map.get("peso_atual") != null ? ((Number) map.get("peso_atual")).doubleValue() : 1.0,
+            map.get("total_questoes_resolvidas") != null ? ((Number) map.get("total_questoes_resolvidas")).intValue() : 0,
+            map.get("total_acertos") != null ? ((Number) map.get("total_acertos")).intValue() : 0,
+            map.get("total_erros") != null ? ((Number) map.get("total_erros")).intValue() : 0,
+            map.get("taxa_acerto_geral") != null ? ((Number) map.get("taxa_acerto_geral")).doubleValue() : 0.0,
+            (Integer[]) map.get("ultimos_3_diagnosticos_acertos"),
+            (Integer[]) map.get("ultimos_3_diagnosticos_total"),
+            (LocalDateTime) map.get("ultimo_estudo"),
+            map.get("dias_sem_estudo") != null ? ((Number) map.get("dias_sem_estudo")).intValue() : 0,
+            map.get("streak_dias_consecutivos") != null ? ((Number) map.get("streak_dias_consecutivos")).intValue() : 0,
+            (LocalDateTime) map.getOrDefault("criado_em", LocalDateTime.now()),
+            (LocalDateTime) map.getOrDefault("atualizado_em", LocalDateTime.now())
+        );
+    }
+
+}

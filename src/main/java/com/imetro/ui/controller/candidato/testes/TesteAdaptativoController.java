@@ -362,26 +362,26 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private int resolverNivelInicial(TesteAdaptativoCoordinator.TesteConfig config) {
         if (config == null || config.nivel() == null) {
-            return 2;
+            return 2; // TODO CONFIG_ADAPTATIVA: nivel inicial padrao ainda fixo; ler do perfil/configuracao ativa.
         }
 
         return switch (TextoUtil.normalizarMinusculo(config.nivel())) {
-            case "facil" -> 1;
-            case "desafiante" -> 3;
-            case "extra dificil" -> 4;
-            default -> 2;
+            case "facil" -> 1; // TODO CONFIG_ADAPTATIVA: mapeamento de nivel ainda fixo no controller.
+            case "desafiante" -> 3; // TODO CONFIG_ADAPTATIVA: mapeamento de nivel ainda fixo no controller.
+            case "extra dificil" -> 4; // TODO CONFIG_ADAPTATIVA: mapeamento de nivel ainda fixo no controller.
+            default -> 2; // TODO CONFIG_ADAPTATIVA: fallback de nivel ainda fixo no controller.
         };
     }
 
     private int resolverLimiteQuestoes(TesteAdaptativoCoordinator.TesteConfig config, int totalDisponivel) {
         if (config == null || config.duracao() == null) {
-            return Math.min(7, totalDisponivel);
+            return Math.min(7, totalDisponivel); // TODO CONFIG_ADAPTATIVA: fallback MEDIO = 7 questoes ainda fixo.
         }
 
         return switch (TextoUtil.normalizarMinusculo(config.duracao())) {
-            case "curto" -> 5;
-            case "medio" -> 7;
-            default -> Math.min(10, totalDisponivel);
+            case "curto" -> 5; // TODO CONFIG_ADAPTATIVA: `CURTO = 5` ainda fixo; alinhar com `configuracoes_teste_adaptativo_duracoes`.
+            case "medio" -> 7; // TODO CONFIG_ADAPTATIVA: `MEDIO = 7` ainda fixo; alinhar com `configuracoes_teste_adaptativo_duracoes`.
+            default -> Math.min(10, totalDisponivel); // TODO CONFIG_ADAPTATIVA: `LONGO = 10` ainda fixo; alinhar com `configuracoes_teste_adaptativo_duracoes`.
         };
     }
 
@@ -549,8 +549,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 questaoAtual,
                 respostaSelecionada,
                 tempoResposta,
-                0.1d,
-                0.1d,
+                0.1d, // TODO CONFIG_ADAPTATIVA: placeholder de consistencia por questao; substituir pelo valor real calculado.
+                0.1d, // TODO CONFIG_ADAPTATIVA: placeholder de resiliencia por questao; substituir pelo valor real calculado.
                 LocalDateTime.now())
             );
         if (acertou) {
@@ -576,7 +576,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void mostrarFeedbackAdaptativo(boolean acertou, long tempoResposta) {
-        boolean foiRapido = tempoResposta < 30000;
+        boolean foiRapido = tempoResposta < 30000; // TODO CONFIG_ADAPTATIVA: limite de "rapido" ainda fixo em 30s.
         feedbackContainer.setVisible(true);
         feedbackContainer.setOpacity(1);
 
@@ -588,7 +588,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             feedbackIcon.setText("OK");
             feedbackMessage.setText("Correta! O foco continua nos mesmos subtopicos.");
             feedbackContainer.setStyle("-fx-background-color: #ecfdf5; -fx-border-color: #10b981;");
-        } else if (tempoResposta > 60000) {
+        } else if (tempoResposta > 60000) { // TODO CONFIG_ADAPTATIVA: limite de "muito lento" ainda fixo em 60s.
             feedbackIcon.setText("!");
             feedbackMessage.setText("Demorou bastante. Vou manter o foco e reduzir a pressao.");
             feedbackContainer.setStyle("-fx-background-color: #fef2f2; -fx-border-color: #ef4444;");
@@ -609,22 +609,22 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void ajustarNivelAdaptativo(boolean acertou, long tempoResposta) {
-        boolean foiRapido = tempoResposta < 30000;
+        boolean foiRapido = tempoResposta < 30000; // TODO CONFIG_ADAPTATIVA: tempo rapido ainda fixo em 30s.
 
         if (acertou && foiRapido) {
-            if (sequenciaAcertos >= 2 && nivelAtualInt < 4) {
+            if (sequenciaAcertos >= 2 && nivelAtualInt < 4) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_rapido = 2` ainda fixo.
                 nivelAtualInt++;
             }
         } else if (acertou) {
-            if (sequenciaAcertos >= 3 && nivelAtualInt < 4) {
+            if (sequenciaAcertos >= 3 && nivelAtualInt < 4) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_lento = 3` ainda fixo.
                 nivelAtualInt++;
             }
-        } else if (tempoResposta > 60000) {
+        } else if (tempoResposta > 60000) { // TODO CONFIG_ADAPTATIVA: tempo lento ainda fixo em 60s.
             if (nivelAtualInt > 1) {
                 nivelAtualInt--;
             }
             sequenciaErros = 0;
-        } else if (sequenciaErros >= 2 && nivelAtualInt > 1) {
+        } else if (sequenciaErros >= 2 && nivelAtualInt > 1) { // TODO CONFIG_ADAPTATIVA: `erros_descer = 2` ainda fixo.
             nivelAtualInt--;
             sequenciaErros = 0;
         }
@@ -733,8 +733,19 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
         DiagnosticoDto diagnos;
         try {
-            diagnos = diagnosticoService.getDiagnosticoRepository().buscarUltimoDiagnostico(candidatoID, candidatoID, disciplinaSelecionada);
-            testeService.registrarTesteConcluido(candidatoID,diagnos.id(), focoQuestoes, respostasUsuario, reacao,nivelAtual.getText(), tempo.getText(), recomendacao);
+            UUID disciplinaId = QuestaoUtil.resolverDisciplinaId(disciplinaSelecionada);
+            diagnos = diagnosticoService.getDiagnosticoRepository()
+                .buscarUltimoDiagnostico(candidatoID, disciplinaId, disciplinaSelecionada);
+            testeService.registrarTesteConcluido(
+                candidatoID,
+                diagnos == null ? null : diagnos.id(),
+                focoQuestoes,
+                respostasUsuario,
+                reacao,
+                nivelAtual.getText(),
+                tempo.getText(),
+                recomendacao
+            );
         } catch (SQLException e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -782,11 +793,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private String determinarPerfil(double porcentagem, double tempoMedio) {
-        if (porcentagem >= 80 && tempoMedio < 30000) return "Rapido e preciso";
-        if (porcentagem >= 80) return "Preciso mas lento";
-        if (porcentagem >= 60 && tempoMedio < 30000) return "Seguro e agil";
-        if (porcentagem >= 60) return "Cauteloso";
-        if (porcentagem >= 40) return "Intermediario";
+        if (porcentagem >= 80 && tempoMedio < 30000) return "Rapido e preciso"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (80% / 30s).
+        if (porcentagem >= 80) return "Preciso mas lento"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (80%).
+        if (porcentagem >= 60 && tempoMedio < 30000) return "Seguro e agil"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (60% / 30s).
+        if (porcentagem >= 60) return "Cauteloso"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (60%).
+        if (porcentagem >= 40) return "Intermediario"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (40%).
         return "Em consolidacao";
     }
 
@@ -805,11 +816,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             ? "os subtopicos escolhidos"
             : subtopicosSelecionados.stream().limit(3).collect(Collectors.joining(", "));
 
-        if (porcentagem >= 80) {
+        if (porcentagem >= 80) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (80%).
             return "Parabens! Voce esta pronto para desafios mais avancados em " + foco + ".";
-        } else if (porcentagem >= 60) {
+        } else if (porcentagem >= 60) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (60%).
             return "Bom trabalho! Continue praticando " + foco + " para subir de nivel.";
-        } else if (porcentagem >= 40) {
+        } else if (porcentagem >= 40) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (40%).
             return "Vamos melhorar! Foque nos subtopicos " + foco + ".";
         } else {
             return "Vale revisar os fundamentos de " + foco + " antes da proxima tentativa.";

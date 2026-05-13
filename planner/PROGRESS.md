@@ -74,6 +74,16 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
 - All pages of diagnostico join on database
 - Create dto for all parts of diagnotico
 
+### 2026-05-13
+- Revisao tecnica do estado atual do projeto com foco em desempenho, confiabilidade e ritmo de entrega.
+- `mvn -q -DskipTests compile` passou nesta maquina.
+- Entre `2026-04-20` e `2026-05-12`, o repositorio acumulou `33` commits, `27.364` linhas adicionadas e `8.463` removidas.
+- Leitura atual: o lado do candidato esta mais perto de fecho do que o lado do orientador.
+- Risco atual mais visivel: o fluxo de conclusao do teste adaptativo ainda pode falhar quando nao encontra o diagnostico-base da disciplina.
+- Risco estrutural: o salvamento de `testes`, `stats` e `teste_perguntas` ainda precisa fechar transacao real numa unica ligacao.
+- A configuracao adaptativa central (`V17`) ja existe na base, mas o motor ainda usa valores fixos em varios pontos.
+- Decisao pratica atual: primeiro deixar o fluxo de `testes` claramente auditavel e localizar os hardcodes; depois ligar a leitura real da configuracao adaptativa e eliminar os valores fixos.
+- Correcao de leitura: o onboarding do candidato ja persiste na BD atual por `users.avatar_url` e `progresso_aluno_disciplina`; o ponto em aberto e alinhar a fonte de verdade com `candidato_disciplinas`, se essa tabela continuar no schema.
 
 
 ## Objetivo de "projeto terminado"
@@ -98,7 +108,7 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [x] Avatar do candidato com escolha predefinida e fallback por iniciais.
 - [x] Selecao visual de disciplinas do candidato.
 - [x] Selecao visual de disciplina do orientador.
-- [ ] Persistencia real do onboarding com BD disponivel.
+- [x] Persistencia real do onboarding com BD disponivel.
 - [ ] UX clara quando a BD falhar em runtime.
 
 #### Candidato (core)
@@ -165,6 +175,13 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 #### Qualidade (BD)
 - [ ] Testes de unidade para analise e persistencia.
 
+## Prioridade atual de execucao
+
+- fechar o fluxo de `testes` sem sucesso falso na UI e sem gravacao parcial
+- manter os hardcodes do motor visiveis e marcados com `TODO CONFIG_ADAPTATIVA`
+- ligar a configuracao adaptativa real do banco logo depois do fluxo de testes ficar estavel
+- so depois expandir o lado do orientador com dados reais e comparacao de evolucao
+
 ## Foco recomendado enquanto nao houver BD neste PC
 
 - manter `TESTE=false`
@@ -175,7 +192,6 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 
 ## Foco recomendado assim que houver Postgres
 
-- validar onboarding persistente
 - validar `V7` e `V8`
 - gravar diagnosticos reais
 - trocar mocks da timeline, estatisticas, relatorios e bolsas por queries reais

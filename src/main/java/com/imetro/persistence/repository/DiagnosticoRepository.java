@@ -264,7 +264,6 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
         UUID disciplinaId,
         String disciplinaNome
     ) throws SQLException {
-        Connection conn=openRequiredConnection();
         String sql = """
             select *
             from diagnosticos
@@ -277,18 +276,17 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
             limit 1
             """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, candidatoId);
             stmt.setObject(2, disciplinaId);
             stmt.setString(3, disciplinaNome);
             try (ResultSet rs = stmt.executeQuery()) {
-                if (!rs.next()) {
+                List<Map<String, Object>> rows = readAllRows(rs);
+                if (rows.isEmpty()) {
                     return null;
                 }
-                for (Map<String,Object> ob : readAllRows(rs)) {
-                    return DiagnosticoDto.ParseMapDto(ob);
-                }
-                return null;
+                return DiagnosticoDto.ParseMapDto(rows.getFirst());
             }
         }
     }

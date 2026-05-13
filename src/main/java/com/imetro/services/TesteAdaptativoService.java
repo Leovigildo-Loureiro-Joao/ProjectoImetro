@@ -128,7 +128,7 @@ public class TesteAdaptativoService {
                     String subtopico = TextoUtil.normalizarMaiusculo(rs.getString("subtopico"));
                     double rigorAtual = rs.getObject("rigor_atual") instanceof Number number
                         ? Math.max(0d, Math.min(1d, number.doubleValue()))
-                        : 0.12d;
+                        : 0.12d; // TODO CONFIG_ADAPTATIVA: fallback de rigor atual ainda fixo quando a BD nao devolve valor.
                     if (!subtopico.isBlank()) {
                         rigores.put(subtopico, rigorAtual);
                     }
@@ -155,14 +155,14 @@ public class TesteAdaptativoService {
 
     private double resolverRigorBase(Integer nivelDificuldade) {
         if (nivelDificuldade == null) {
-            return 0.35d;
+            return 0.35d; // TODO CONFIG_ADAPTATIVA: fallback MEDIO ainda fixo; ler da configuracao ativa.
         }
         return switch (nivelDificuldade) {
-            case 1 -> 0.18d;
-            case 2 -> 0.35d;
-            case 3 -> 0.58d;
-            case 4 -> 0.78d;
-            default -> 0.35d;
+            case 1 -> 0.18d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel FACIL ainda fixo.
+            case 2 -> 0.35d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel MEDIO ainda fixo.
+            case 3 -> 0.58d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel DIFICIL ainda fixo.
+            case 4 -> 0.78d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel EXPERT ainda fixo.
+            default -> 0.35d; // TODO CONFIG_ADAPTATIVA: fallback MEDIO ainda fixo.
         };
     }
 

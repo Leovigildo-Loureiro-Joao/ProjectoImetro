@@ -597,12 +597,12 @@ public class DiagnosticoService {
                 .orElse(atual.rigorAtual());
 
             double rigorAtualNovo = CalculoStats.calcularNovoRigor(atual.rigorAtual(), atual.rigorAlvo(), rigorMedioTentado, taxaAcerto);
-            int acertosConsecutivos = taxaAcerto >= 0.8 ? atual.acertosConsecutivos() + acertos : 0;
-            int errosConsecutivos = taxaAcerto < 0.5 ? atual.errosConsecutivos() + erros : 0;
-            boolean precisaRevisao = taxaAcerto < 0.6 || errosConsecutivos >= 2;
+            int acertosConsecutivos = taxaAcerto >= 0.8 ? atual.acertosConsecutivos() + acertos : 0; // TODO CONFIG_ADAPTATIVA: limiar de acerto consecutivo ainda fixo em 0.8.
+            int errosConsecutivos = taxaAcerto < 0.5 ? atual.errosConsecutivos() + erros : 0; // TODO CONFIG_ADAPTATIVA: limiar de erro consecutivo ainda fixo em 0.5.
+            boolean precisaRevisao = taxaAcerto < 0.6 || errosConsecutivos >= 2; // TODO CONFIG_ADAPTATIVA: regra de revisao ainda fixa (0.6 / 2 erros).
             double rigorRecomendado = precisaRevisao
-                ? Math.max(0.05d, rigorAtualNovo - 0.04d)
-                : Math.min(atual.rigorAlvo(), Math.max(rigorAtualNovo, rigorMedioTentado) + 0.06d);
+                ? Math.max(0.05d, rigorAtualNovo - 0.04d) // TODO CONFIG_ADAPTATIVA: ajuste de descida e piso minimo ainda fixos.
+                : Math.min(atual.rigorAlvo(), Math.max(rigorAtualNovo, rigorMedioTentado) + 0.06d); // TODO CONFIG_ADAPTATIVA: ajuste de subida ainda fixo.
 
             String recomendacaoLivro = escolherReferenciaLivro(resultados);
             String recomendacaoPaginas = escolherIntervaloPaginas(resultados);
@@ -676,8 +676,8 @@ public class DiagnosticoService {
                 if (rs.next()) {
                     return new ProgressaoRigorAtual(
                         rs.getObject("id", UUID.class),
-                        rs.getObject("rigor_atual") instanceof Number number ? number.doubleValue() : 0.12d,
-                        rs.getObject("rigor_alvo") instanceof Number number ? number.doubleValue() : 0.7d,
+                        rs.getObject("rigor_atual") instanceof Number number ? number.doubleValue() : 0.12d, // TODO CONFIG_ADAPTATIVA: fallback de rigor atual ainda fixo.
+                        rs.getObject("rigor_alvo") instanceof Number number ? number.doubleValue() : 0.7d, // TODO CONFIG_ADAPTATIVA: fallback de rigor alvo ainda fixo.
                         rs.getObject("tentativas_no_nivel") instanceof Number number ? number.intValue() : 0,
                         rs.getObject("acertos_consecutivos") instanceof Number number ? number.intValue() : 0,
                         rs.getObject("erros_consecutivos") instanceof Number number ? number.intValue() : 0
@@ -686,7 +686,7 @@ public class DiagnosticoService {
             }
         }
 
-        return new ProgressaoRigorAtual(null, 0.12d, 0.7d, 0, 0, 0);
+        return new ProgressaoRigorAtual(null, 0.12d, 0.7d, 0, 0, 0); // TODO CONFIG_ADAPTATIVA: progresso inicial ainda nasce com rigores fixos.
     }
 
     private String escolherReferenciaLivro(List<QuestaoRigorResultado> resultados) {
@@ -870,7 +870,7 @@ public class DiagnosticoService {
 
         if (temRigor && temDiagnostico) {
             // O rigor atual mostra o estado mais recente; o diagnostico ancora o ponto de partida.
-            progresso = (progressoRigor * 0.65d) + (progressoDiagnostico * 0.35d);
+            progresso = (progressoRigor * 0.65d) + (progressoDiagnostico * 0.35d); // TODO CONFIG_ADAPTATIVA: pesos de combinacao ainda fixos.
         } else if (temRigor) {
             progresso = progressoRigor;
         } else if (temDiagnostico) {
@@ -878,7 +878,7 @@ public class DiagnosticoService {
         }
 
         if (precisaRevisao || precisaNovoDiagnostico) {
-            progresso = Math.min(progresso, 0.58d);
+            progresso = Math.min(progresso, 0.58d); // TODO CONFIG_ADAPTATIVA: teto de progresso em revisao ainda fixo.
         }
 
         return  QuestaoUtil.limitarPercentualUnitario(progresso);
@@ -1166,11 +1166,11 @@ public class DiagnosticoService {
 
     private double mapearTempoSugerido(int nivel) {
         return switch (nivel) {
-            case 1 -> 40d;
-            case 2 -> 55d;
-            case 3 -> 70d;
-            case 4 -> 85d;
-            default -> 60d;
+            case 1 -> 40d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel FACIL ainda fixo.
+            case 2 -> 55d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel MEDIO ainda fixo.
+            case 3 -> 70d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel DIFICIL ainda fixo.
+            case 4 -> 85d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel EXPERT ainda fixo.
+            default -> 60d; // TODO CONFIG_ADAPTATIVA: fallback de tempo sugerido ainda fixo.
         };
     }
 
@@ -1178,7 +1178,7 @@ public class DiagnosticoService {
         if (rawValue instanceof Number number) {
             return Math.max(0d, Math.min(1d, number.doubleValue()));
         }
-        return 0.5d;
+        return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback de rigor da questao ainda fixo quando a origem nao traz valor.
     }
 
     private Integer mapearInteiro(Object rawValue) {

@@ -11,14 +11,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
+import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.stats.StatsProgress;
 import com.imetro.domain.dto.stats.Teste_Stat;
 import com.imetro.domain.dto.test.TestDtoAll;
 import com.imetro.domain.dto.test.Teste_Pergunta;
 import com.imetro.domain.dto.test.ReacaoTeste;
+import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
+import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.TestePerguntasRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.persistence.repository.TesteStatsRepository;
@@ -33,12 +37,17 @@ public class TesteService {
     private final TesteStatsRepository testeStatsRepository;
     private final TestePerguntasRepository testePerguntasRepository;
     private final DiagnosticoRepository diagnosticoRepository;
+    private final ProgressoALunoDisciplinaRepository progressoALunoDisciplinaRepository;
+    private final ConfiguracaoTesteAdaptativoNivelRepositorty configuracaoTesteAdaptativoNivelRepositorty;
 
     public TesteService() {
         this.testeRepository = new TesteRepository();
         this.testeStatsRepository = new TesteStatsRepository();
         this.testePerguntasRepository = new TestePerguntasRepository();
         this.diagnosticoRepository=new DiagnosticoRepository();
+        this.progressoALunoDisciplinaRepository=new ProgressoALunoDisciplinaRepository();
+        this.configuracaoTesteAdaptativoNivelRepositorty=new ConfiguracaoTesteAdaptativoNivelRepositorty();
+
     }
 
     public Optional<Map<String, Object>> getTeste(UUID testeId) {
@@ -120,10 +129,11 @@ public class TesteService {
         List<Questao> questoes,
         List<Character> respostasUsuario,
         List <ReacaoTeste> questoesTest,
-        String nivelInicial,
         String tempoFormatado,
         String recomendacao
     ) {
+       String nivelInicial;
+
         if (candidatoId == null || questoes == null || questoes.isEmpty() || respostasUsuario == null || respostasUsuario.isEmpty()) {
             return;
         }
@@ -134,6 +144,7 @@ public class TesteService {
         }
 
         Map<String, ArrayList<Integer>> indicesPorDisciplina = new LinkedHashMap<>();
+
 
         for (int i = 0; i < limite; i++) {
             Questao questao = questoes.get(i);
@@ -159,26 +170,34 @@ public class TesteService {
                     ArrayList<Integer> indices = entry.getValue();
                     Questao questaoBase = questoes.get(indices.getFirst());
                     String nomeDisciplina = QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina());
+                    ;
+                    nivelInicial=NivelActual(candidatoId, nomeDisciplina).toUpperCase();
                     UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
-
+                    ConfiguracaoTesteAdaptativoNivelDto configNivelDto=configuracaoTesteAdaptativoNivelRepositorty.findByCodigo(nivelInicial);
                     int totalQuestoes = indices.size();
                     int totalAcertos = 0;
+
                     for (Integer indice : indices) {
                         if (respostasUsuario.get(indice) == questoes.get(indice).getRespostaCorreta()) {
                             totalAcertos++;
                         }
+                    }
+                    int totalSeg=0;
+                    for (long p : questoesTest.stream().map(t -> t.tempoSegundos()).toList()) {
+                        totalSeg+=p;
                     }
 
                     int totalErros = Math.max(0, totalQuestoes - totalAcertos);
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
                     String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
                     double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
-                    double consistencia = 0d;
+                    double consistencia = CalculoStats.calcularConsistenciaTeste(questoesTest);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
-                    double resiliencia = 0d;
+                    double resiliencia = CalculoStats.calcularResilienciaTeste(questoesTest);
                     double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
                     String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
                     String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
+
 
                     UUID id =testeRepository.inserir(
                         conn,
@@ -194,11 +213,11 @@ public class TesteService {
                         nivelInicial,
                         nivelFinal,
                         totalQuestoes,
-                        0d,
-                        1d,
+                        configNivelDto.limiteInferior(),
+                        configNivelDto.limiteSuperior(),
                         topicosJson,
                         subtopicosJson,
-                        duracaoSegundos,
+                        totalSeg,
                         totalQuestoes,
                         totalAcertos,
                         totalErros,
@@ -220,6 +239,7 @@ public class TesteService {
                         }
                     });
 
+
                     testeStatsRepository.insert(
                         new Teste_Stat(
                             UUID.randomUUID(),
@@ -229,18 +249,18 @@ public class TesteService {
                             disciplinaId,
                             nomeDisciplina,
                             null,
-                            null,
+                            totalSeg,
                             null,
                             totalQuestoes,
                             totalAcertos,
                             totalErros,
-                            null,
+                            percentualAcerto,
                             velocidade,
                             precisao,
                             consistencia,
                             logica,
                             resiliencia,
-                            null,
+                            CalcularErrosComuns(questoesTest).,
                             null,
                             null,
                             LocalDateTime.now(),
@@ -258,6 +278,22 @@ public class TesteService {
         } catch (Exception e) {
             System.err.println("Erro ao registrar teste concluido: " + e.getMessage());
         }
+    }
+
+    public String NivelActual(UUID candidatoId,String nomeDisciplina) throws SQLException{
+        return progressoALunoDisciplinaRepository.findAllByField("alunoId", candidatoId)
+            .stream().map(ProgressoAlunoDisciplinaDto::fromMap)
+            .filter(t -> t.disciplina().equals(nomeDisciplina)).toList().get(0)
+            .nivelAtual().getDescricao();
+    }
+
+    public List<String> CalcularErrosComuns(List<ReacaoTeste> reacao){
+        return reacao.stream().map(t -> {
+            if (t.respostaDada()!=t.questao().getRespostaCorreta()) {
+                return t.questao().getEnunciado();
+            }
+            return "";
+        }).toList();
     }
 
     private String construirJsonResumoQuestoes(
