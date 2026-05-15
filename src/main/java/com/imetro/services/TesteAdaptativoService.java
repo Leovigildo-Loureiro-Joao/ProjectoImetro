@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.TextoUtil;
@@ -154,16 +155,7 @@ public class TesteAdaptativoService {
     }
 
     private double resolverRigorBase(Integer nivelDificuldade) {
-        if (nivelDificuldade == null) {
-            return 0.35d; // TODO CONFIG_ADAPTATIVA: fallback MEDIO ainda fixo; ler da configuracao ativa.
-        }
-        return switch (nivelDificuldade) {
-            case 1 -> 0.18d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel FACIL ainda fixo.
-            case 2 -> 0.35d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel MEDIO ainda fixo.
-            case 3 -> 0.58d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel DIFICIL ainda fixo.
-            case 4 -> 0.78d; // TODO CONFIG_ADAPTATIVA: rigor base do nivel EXPERT ainda fixo.
-            default -> 0.35d; // TODO CONFIG_ADAPTATIVA: fallback MEDIO ainda fixo.
-        };
+        return NivelDificuldadeAdaptativa.fromNivel(nivelDificuldade).rigorBase();
     }
 
     private List<Questao> filtrarQuestoesReais(

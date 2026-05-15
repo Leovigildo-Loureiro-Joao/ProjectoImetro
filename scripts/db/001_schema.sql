@@ -45,6 +45,7 @@
     questao text not null,
     -- alternativas/respostas possíveis
     respostas jsonb not null default '[]'::jsonb,
+    pesos_resposta jsonb not null default '[]'::jsonb,
     -- opcional: resposta correta (quando aplicável)
     resposta_correta text null,
     topico text null,

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -203,7 +204,7 @@ public class TesteService {
                     double tempoMedioSegundos = totalQuestoes == 0 ? 0d : totalSeg / (double) totalQuestoes;
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
                     String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
-                    double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
+                    double precisao = CalculoStats.calcularPrecisaoMediaRespostas(reacoesDisciplina);
                     double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
                     double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina);
@@ -260,7 +261,7 @@ public class TesteService {
                         concluidoEm,
                         configNivelDto.configuracaoId()
                     );
-                    questoesTest.forEach(t -> {
+                    reacoesDisciplina.forEach(t -> {
                         try {
                             testePerguntasRepository.inserir(Teste_Pergunta.fromQuestao(t), id);
                         } catch (SQLException e) {
@@ -372,7 +373,10 @@ public class TesteService {
                     valores.get("topico"),
                     valores.get("subtopico"),
                     parseInteger(valores.get("qtdAcerto")),
-                    parseInteger(valores.get("qtdErros"))
+                    parseInteger(valores.get("qtdErros")),
+                    parseDouble(valores.get("precisaoAnteriorPercentual")),
+                    parseDouble(valores.get("precisaoAtualPercentual")),
+                    parseDouble(valores.get("melhoriaPercentual"))
                 )
             );
         }
@@ -387,7 +391,7 @@ public class TesteService {
         List<Character> respostasUsuario,
         List<ReacaoTeste> questoesTest
     ) {
-        Map<UUID, QuestaoUtil.Evolucao> historicoPorQuestao = carregarHistoricoQuestoes(candidatoId, disciplinaId);
+        Map<UUID, HistoricoQuestao> historicoPorQuestao = carregarHistoricoQuestoes(candidatoId, disciplinaId);
         StringBuilder json = new StringBuilder("[");
         boolean primeiroItem = true;
 
@@ -401,20 +405,24 @@ public class TesteService {
             }
 
             char marcada = respostasUsuario.get(indice);
-            boolean errou = Character.toUpperCase(marcada) != Character.toUpperCase(questao.getRespostaCorreta());
-            if (!errou) {
-                continue;
-            }
+            boolean acertou = Character.toUpperCase(marcada) == Character.toUpperCase(questao.getRespostaCorreta());
 
             UUID questaoId = parseUuid(questao.getId());
-            QuestaoUtil.Evolucao historico = historicoPorQuestao.getOrDefault(
+            HistoricoQuestao historico = historicoPorQuestao.getOrDefault(
                 questaoId,
-                new QuestaoUtil.Evolucao(0, 0, 0)
+                new HistoricoQuestao(0, 0, 0, 0d, 0)
             );
             ReacaoTeste reacao = encontrarReacao(questoesTest, indice, questao.getId());
             int tempoSegundos = reacao == null ? 0 : safeInt(reacao.tempoSegundos());
-            int qtdAcertos = historico.qtdAcertos();
-            int qtdErros = historico.qtdErros() + 1;
+            int qtdAcertos = historico.qtdAcertos() + (acertou ? 1 : 0);
+            int qtdErros = historico.qtdErros() + (acertou ? 0 : 1);
+            double precisaoAnterior = historico.mediaPrecisao() * 100d;
+            double precisaoAtual = CalculoStats.calcularPrecisaoResposta(questao, marcada) * 100d;
+            double melhoriaPercentual = precisaoAtual - precisaoAnterior;
+
+            if (historico.tentativas() > 0 && Math.abs(melhoriaPercentual) < 0.001d && precisaoAtual >= 100d) {
+                continue;
+            }
 
             if (!primeiroItem) {
                 json.append(", ");
@@ -429,7 +437,10 @@ public class TesteService {
                 .append("\"topico\":\"").append(QuestaoUtil.escapeJson(QuestaoUtil.safeText(questao.getTopico(), ""))).append("\",")
                 .append("\"subtopico\":\"").append(QuestaoUtil.escapeJson(QuestaoUtil.safeText(questao.getSubtopico(), ""))).append("\",")
                 .append("\"qtdAcerto\":").append(qtdAcertos).append(",")
-                .append("\"qtdErros\":").append(qtdErros)
+                .append("\"qtdErros\":").append(qtdErros).append(",")
+                .append("\"precisaoAnteriorPercentual\":").append(formatJsonDouble(precisaoAnterior)).append(",")
+                .append("\"precisaoAtualPercentual\":").append(formatJsonDouble(precisaoAtual)).append(",")
+                .append("\"melhoriaPercentual\":").append(formatJsonDouble(melhoriaPercentual))
                 .append("}");
 
             primeiroItem = false;
@@ -462,19 +473,23 @@ public class TesteService {
         }
     }
 
-    private Map<UUID, QuestaoUtil.Evolucao> carregarHistoricoQuestoes(UUID candidatoId, UUID disciplinaId) {
+    private Map<UUID, HistoricoQuestao> carregarHistoricoQuestoes(UUID candidatoId, UUID disciplinaId) {
         if (candidatoId == null || disciplinaId == null) {
             return Map.of();
         }
 
         String sql = """
-            select tp.pergunta_id, tp.acertou, tp.tempo_segundos
+            select tp.pergunta_id,
+              tp.acertou,
+              tp.tempo_segundos,
+              coalesce(tp.precisao, case when tp.acertou then 1 else 0 end) as precisao
             from teste_perguntas tp
             join testes t on t.id = tp.teste_id
             where t.candidato_id = ? and t.disciplina_id = ?
+              and lower(coalesce(tp.disciplina_nome, '')) = lower(coalesce(t.disciplina_nome, ''))
             """;
 
-        LinkedHashMap<UUID, QuestaoUtil.Evolucao> historico = new LinkedHashMap<>();
+        LinkedHashMap<UUID, HistoricoQuestao> historico = new LinkedHashMap<>();
         try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, candidatoId);
@@ -488,15 +503,17 @@ public class TesteService {
                         continue;
                     }
 
-                    QuestaoUtil.Evolucao atual = historico.getOrDefault(
+                    HistoricoQuestao atual = historico.getOrDefault(
                         perguntaId,
-                        new QuestaoUtil.Evolucao(0, 0, 0)
+                        new HistoricoQuestao(0, 0, 0, 0d, 0)
                     );
                     int qtdErros = atual.qtdErros() + (acertou ? 0 : 1);
                     int qtdAcertos = atual.qtdAcertos() + (acertou ? 1 : 0);
                     int tempoAcumulado = atual.tempoSegundos() + safeInt(rs.getObject("tempo_segundos"));
+                    double somaPrecisao = atual.somaPrecisao() + parseDouble(rs.getObject("precisao"));
+                    int tentativas = atual.tentativas() + 1;
 
-                    historico.put(perguntaId, new QuestaoUtil.Evolucao(qtdErros, qtdAcertos, tempoAcumulado));
+                    historico.put(perguntaId, new HistoricoQuestao(qtdErros, qtdAcertos, tempoAcumulado, somaPrecisao, tentativas));
                 }
             }
         } catch (SQLException e) {
@@ -812,6 +829,26 @@ public class TesteService {
         }
     }
 
+    private double parseDouble(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (value == null) {
+            return 0d;
+        }
+
+        String text = value.toString().trim();
+        if (text.isBlank()) {
+            return 0d;
+        }
+
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException ignored) {
+            return 0d;
+        }
+    }
+
     private int safeInt(long value) {
         if (value <= 0L) {
             return 0;
@@ -836,6 +873,25 @@ public class TesteService {
             }
         }
         return null;
+    }
+
+    private String formatJsonDouble(double value) {
+        return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private record HistoricoQuestao(
+        int qtdErros,
+        int qtdAcertos,
+        int tempoSegundos,
+        double somaPrecisao,
+        int tentativas
+    ) {
+        double mediaPrecisao() {
+            if (tentativas <= 0) {
+                return 0d;
+            }
+            return QuestaoUtil.limitarPercentualUnitario(somaPrecisao / tentativas);
+        }
     }
 
     private record ParsedJsonObject(Map<String, String> values, int nextIndex) {

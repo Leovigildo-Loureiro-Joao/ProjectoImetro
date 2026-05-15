@@ -3,6 +3,8 @@ package com.imetro.ui.model;
 import javafx.scene.image.Image;
 
 public class Questao {
+    private static final int TOTAL_OPCOES = 7;
+
     private String id;
     private String disciplina;
     private String topico;
@@ -25,6 +27,7 @@ public class Questao {
     private Integer paginaInicio;
     private Integer paginaFim;
     private String topicoPrincipal;
+    private double[] pesosResposta;
 
     
     public String getId() {
@@ -158,6 +161,34 @@ public class Questao {
     }
     public void setTopicoPrincipal(String topicoPrincipal) {
         this.topicoPrincipal = topicoPrincipal;
+    }
+    public double[] getPesosResposta() {
+        return pesosResposta == null ? null : pesosResposta.clone();
+    }
+    public void setPesosResposta(double[] pesosResposta) {
+        if (pesosResposta == null) {
+            this.pesosResposta = null;
+            return;
+        }
+
+        this.pesosResposta = new double[TOTAL_OPCOES];
+        int limite = Math.min(TOTAL_OPCOES, pesosResposta.length);
+        for (int i = 0; i < limite; i++) {
+            double valor = pesosResposta[i];
+            this.pesosResposta[i] = Double.isFinite(valor) ? valor : 0d;
+        }
+    }
+    public Double getPesoResposta(char letra) {
+        if (pesosResposta == null) {
+            return null;
+        }
+
+        int indice = Character.toUpperCase(letra) - 'A';
+        if (indice < 0 || indice >= pesosResposta.length) {
+            return null;
+        }
+
+        return pesosResposta[indice];
     }
     
     // Construtores, getters e setters...

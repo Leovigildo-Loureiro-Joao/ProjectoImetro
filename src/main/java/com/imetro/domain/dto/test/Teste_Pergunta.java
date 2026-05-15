@@ -44,6 +44,7 @@ public record Teste_Pergunta(
         char respostaUsuario = Character.toUpperCase(reacao.respostaDada());
         char respostaCorreta = Character.toUpperCase(reacao.questao().getRespostaCorreta());
         boolean acertou = respostaUsuario == respostaCorreta;
+        double precisaoResposta = CalculoStats.calcularPrecisaoResposta(reacao);
 
         return new Teste_Pergunta(
             parseUuid(questao.getId()),
@@ -61,7 +62,7 @@ public record Teste_Pergunta(
             questao.getTempoSugerido(),
             questao.getNivelDificuldade(),
             questao.getRigor(),
-            acertou ? 1d : 0d,
+            precisaoResposta,
             CalculoStats.calcularVelocidadePorQuestao( reacao.tempoSegundos(), questao.getTempoSugerido()),
             acertou,
             Double.valueOf(reacao.consistencia()),

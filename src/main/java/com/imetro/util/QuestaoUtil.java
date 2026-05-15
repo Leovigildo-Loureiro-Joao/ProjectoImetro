@@ -139,6 +139,7 @@ public class QuestaoUtil {
             Questao questao = questoes.get(indice);
             char marcada = respostasUsuario.get(indice);
             boolean acertou = marcada == questao.getRespostaCorreta();
+            double precisaoResposta = CalculoStats.calcularPrecisaoResposta(questao, marcada);
 
             if (i > 0) {
                 json.append(", ");
@@ -150,6 +151,8 @@ public class QuestaoUtil {
                 .append("\"subtopico\":\"").append(escapeJson( QuestaoUtil.safeText(questao.getSubtopico(), ""))).append("\",")
                 .append("\"marcada\":\"").append(marcada).append("\",")
                 .append("\"correta\":\"").append(questao.getRespostaCorreta()).append("\",")
+                .append("\"precisao\":").append(String.format(Locale.ROOT, "%.4f", precisaoResposta)).append(",")
+                .append("\"percentualAcerto\":").append(String.format(Locale.ROOT, "%.2f", precisaoResposta * 100d)).append(",")
                 .append("\"acertou\":").append(acertou)
                 .append("}");
         }

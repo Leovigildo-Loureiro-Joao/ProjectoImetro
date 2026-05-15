@@ -17,6 +17,7 @@ import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
@@ -115,7 +116,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private int questaoAtual = 0;
     private int totalQuestoes = 0;
     private char respostaSelecionada;
-    private int nivelAtualInt = 2;
+    private NivelDificuldadeAdaptativa nivelAtualAdaptativo = NivelDificuldadeAdaptativa.padrao();
     private int acertos = 0;
     private int erros = 0;
     private int sequenciaAcertos = 0;
@@ -341,7 +342,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return;
         }
 
-        nivelAtualInt = resolverNivelInicial(config);
+        nivelAtualAdaptativo = resolverNivelInicial(config);
         questoes.clear();
         totalQuestoes = Math.min(resolverLimiteQuestoes(config, focoQuestoes.size()), focoQuestoes.size());
         resetarMetricas();
@@ -360,17 +361,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         iniciarLoading(config);
     }
 
-    private int resolverNivelInicial(TesteAdaptativoCoordinator.TesteConfig config) {
+    private NivelDificuldadeAdaptativa resolverNivelInicial(TesteAdaptativoCoordinator.TesteConfig config) {
         if (config == null || config.nivel() == null) {
-            return 2; // TODO CONFIG_ADAPTATIVA: nivel inicial padrao ainda fixo; ler do perfil/configuracao ativa.
+            return NivelDificuldadeAdaptativa.padrao(); // TODO CONFIG_ADAPTATIVA: nivel inicial padrao ainda fixo; ler do perfil/configuracao ativa.
         }
-
-        return switch (TextoUtil.normalizarMinusculo(config.nivel())) {
-            case "facil" -> 1; // TODO CONFIG_ADAPTATIVA: mapeamento de nivel ainda fixo no controller.
-            case "desafiante" -> 3; // TODO CONFIG_ADAPTATIVA: mapeamento de nivel ainda fixo no controller.
-            case "extra dificil" -> 4; // TODO CONFIG_ADAPTATIVA: mapeamento de nivel ainda fixo no controller.
-            default -> 2; // TODO CONFIG_ADAPTATIVA: fallback de nivel ainda fixo no controller.
-        };
+        return NivelDificuldadeAdaptativa.fromTexto(config.nivel());
     }
 
     private int resolverLimiteQuestoes(TesteAdaptativoCoordinator.TesteConfig config, int totalDisponivel) {
@@ -613,51 +608,26 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         boolean foiRapido = tempoResposta < 30000; // TODO CONFIG_ADAPTATIVA: tempo rapido ainda fixo em 30s.
 
         if (acertou && foiRapido) {
-            if (sequenciaAcertos >= 2 && nivelAtualInt < 4) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_rapido = 2` ainda fixo.
-                nivelAtualInt++;
+            if (sequenciaAcertos >= 2) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_rapido = 2` ainda fixo.
+                nivelAtualAdaptativo = nivelAtualAdaptativo.subir();
             }
         } else if (acertou) {
-            if (sequenciaAcertos >= 3 && nivelAtualInt < 4) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_lento = 3` ainda fixo.
-                nivelAtualInt++;
+            if (sequenciaAcertos >= 3) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_lento = 3` ainda fixo.
+                nivelAtualAdaptativo = nivelAtualAdaptativo.subir();
             }
         } else if (tempoResposta > 60000) { // TODO CONFIG_ADAPTATIVA: tempo lento ainda fixo em 60s.
-            if (nivelAtualInt > 1) {
-                nivelAtualInt--;
-            }
+            nivelAtualAdaptativo = nivelAtualAdaptativo.descer();
             sequenciaErros = 0;
-        } else if (sequenciaErros >= 2 && nivelAtualInt > 1) { // TODO CONFIG_ADAPTATIVA: `erros_descer = 2` ainda fixo.
-            nivelAtualInt--;
+        } else if (sequenciaErros >= 2) { // TODO CONFIG_ADAPTATIVA: `erros_descer = 2` ainda fixo.
+            nivelAtualAdaptativo = nivelAtualAdaptativo.descer();
             sequenciaErros = 0;
         }
-
-        nivelAtualInt = Math.max(1, Math.min(nivelAtualInt, 4));
     }
 
     private void atualizarIndicadoresNivel() {
-        switch (nivelAtualInt) {
-            case 1 -> {
-                nivelAtual.setText("FACIL");
-                dificuldadeAtual.setText("*");
-                nivelAtual.setStyle("-fx-text-fill: #10b981;");
-            }
-            case 2 -> {
-                nivelAtual.setText("MEDIO");
-                dificuldadeAtual.setText("**");
-                nivelAtual.setStyle("-fx-text-fill: #f59e0b;");
-            }
-            case 3 -> {
-                nivelAtual.setText("DIFICIL");
-                dificuldadeAtual.setText("***");
-                nivelAtual.setStyle("-fx-text-fill: #ef4444;");
-            }
-            case 4 -> {
-                nivelAtual.setText("EXPERT");
-                dificuldadeAtual.setText("****");
-                nivelAtual.setStyle("-fx-text-fill: #8b5cf6;");
-            }
-            default -> {
-            }
-        }
+        nivelAtual.setText(nivelAtualAdaptativo.codigo());
+        dificuldadeAtual.setText(nivelAtualAdaptativo.estrelas());
+        nivelAtual.setStyle("-fx-text-fill: " + nivelAtualAdaptativo.corHex() + ";");
     }
 
     private void destacarRespostaCorreta(char letra) {
@@ -701,7 +671,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         return service.getProximaQuestaoAdaptativa(
             disciplinaSelecionada,
-            nivelAtualInt,
+            nivelAtualAdaptativo.nivel(),
             topicosSelecionados,
             subtopicosSelecionados,
             idsUsados
@@ -760,7 +730,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 totalQuestoes,
                 porcentagemAcertos,
                 tempo.getText(),
-                getNomeNivel(nivelAtualInt),
+                nivelAtualAdaptativo.codigo(),
                 perfil,
                 recomendacao,
                 "views/pages/candidato/testes",
@@ -784,7 +754,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             acertos,
             totalQuestoes,
             porcentagemAcertos,
-            getNomeNivel(nivelAtualInt),
+            nivelAtualAdaptativo.codigo(),
             mediaTempo / 1000,
             perfil,
             recomendacao
@@ -799,16 +769,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         if (porcentagem >= 60) return "Cauteloso"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (60%).
         if (porcentagem >= 40) return "Intermediario"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (40%).
         return "Em consolidacao";
-    }
-
-    private String getNomeNivel(int nivel) {
-        return switch (nivel) {
-            case 1 -> "FACIL";
-            case 2 -> "MEDIO";
-            case 3 -> "DIFICIL";
-            case 4 -> "EXPERT";
-            default -> "MEDIO";
-        };
     }
 
     private String getRecomendacao(double porcentagem) {

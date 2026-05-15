@@ -1,9 +1,11 @@
 package com.imetro.domain.dto.progresso;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -150,9 +152,43 @@ public record ProgressoAlunoDisciplinaDto(
         if (value instanceof Integer[] vector) {
             return vector;
         }
-        System.out.println(value);
+        if (value instanceof java.sql.Array sqlArray) {
+            try {
+                return ConvertIntegerVector(sqlArray.getArray());
+            } catch (SQLException e) {
+                throw new IllegalArgumentException("Nao foi possivel converter array SQL para Integer[]", e);
+            }
+        }
+        if (value instanceof Object[] vector) {
+            return Arrays.stream(vector)
+                .filter(java.util.Objects::nonNull)
+                .map(item -> item instanceof Number number ? number.intValue() : Integer.valueOf(item.toString()))
+                .toArray(Integer[]::new);
+        }
+        if (value instanceof List<?> vectorL) {
+            return vectorL.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(item -> item instanceof Number number ? number.intValue() : Integer.valueOf(item.toString()))
+                .toArray(Integer[]::new);
+        }
+        if (value instanceof String vectorTexto) {
+            String conteudo = vectorTexto
+                .replace("{", "")
+                .replace("}", "")
+                .trim();
 
-        return null;
+            if (conteudo.isEmpty()) {
+                return new Integer[0];
+            }
+
+            return Arrays.stream(conteudo.split(","))
+                .map(String::trim)
+                .filter(item -> !item.isEmpty())
+                .map(Integer::valueOf)
+                .toArray(Integer[]::new);
+        }
+
+        throw new IllegalArgumentException("Tipo nao suportado para vetor de inteiros: " + value.getClass().getName());
     }
 
 

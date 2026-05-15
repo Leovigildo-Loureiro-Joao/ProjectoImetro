@@ -8,6 +8,12 @@ import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.ui.model.Questao;
 
 public class CalculoStats {
+    private static final double PRECISAO_RESPOSTA_CORRETA = 1d;
+    private static final double PRECISAO_ALTERNATIVA_INCORRETA = 0.25d;
+    private static final double PRECISAO_NAO_SEI = 0.10d;
+    private static final double PRECISAO_CONFUSO = 0.20d;
+    private static final double PRECISAO_PULAR = 0d;
+
     public static double calcularVelocidade(int duracaoSegundos, int totalQuestoes) {
         if (duracaoSegundos <= 0 || totalQuestoes <= 0) {
             return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro de velocidade ainda fixo.
@@ -53,6 +59,98 @@ public class CalculoStats {
             return 0d;
         }
         return limitar01(totalAcertos / (double) totalQuestoes);
+    }
+
+    public static double calcularPrecisaoResposta(Questao questao, char respostaUsuario) {
+        if (questao == null) {
+            return 0d;
+        }
+
+        char respostaNormalizada = Character.toUpperCase(respostaUsuario);
+        Double pesoConfigurado = questao.getPesoResposta(respostaNormalizada);
+        if (pesoConfigurado != null) {
+            return limitar01(pesoConfigurado);
+        }
+
+        return calcularPrecisaoRespostaFallback(questao, respostaNormalizada);
+    }
+
+    private static double calcularPrecisaoRespostaFallback(Questao questao, char respostaNormalizada) {
+        char respostaCorreta = Character.toUpperCase(questao.getRespostaCorreta());
+        if (respostaNormalizada == respostaCorreta) {
+            return PRECISAO_RESPOSTA_CORRETA;
+        }
+
+        // Respostas de ajuda mantem progresso parcial; chute em alternativa errada vale mais
+        // do que desistir da pergunta, mas menos do que acertar.
+        return switch (respostaNormalizada) {
+            case 'A', 'B', 'C', 'D' -> PRECISAO_ALTERNATIVA_INCORRETA;
+            case 'E' -> PRECISAO_NAO_SEI;
+            case 'F' -> PRECISAO_CONFUSO;
+            case 'G' -> PRECISAO_PULAR;
+            default -> 0d;
+        };
+    }
+
+    public static double calcularPrecisaoResposta(ReacaoTeste reacao) {
+        if (reacao == null) {
+            return 0d;
+        }
+        return calcularPrecisaoResposta(reacao.questao(), reacao.respostaDada());
+    }
+
+    public static double calcularPrecisaoMediaRespostas(List<ReacaoTeste> reacoes) {
+        if (reacoes == null || reacoes.isEmpty()) {
+            return 0d;
+        }
+
+        double soma = 0d;
+        int totalValidos = 0;
+        for (ReacaoTeste reacao : reacoes) {
+            if (reacao == null || reacao.questao() == null) {
+                continue;
+            }
+            soma += calcularPrecisaoResposta(reacao);
+            totalValidos++;
+        }
+
+        if (totalValidos == 0) {
+            return 0d;
+        }
+
+        return limitar01(soma / totalValidos);
+    }
+
+    public static double calcularPrecisaoMedia(
+        List<Integer> indices,
+        List<Questao> questoes,
+        List<Character> respostasUsuario
+    ) {
+        if (indices == null || indices.isEmpty() || questoes == null || respostasUsuario == null) {
+            return 0d;
+        }
+
+        double soma = 0d;
+        int totalValidos = 0;
+        for (Integer indice : indices) {
+            if (indice == null || indice < 0 || indice >= questoes.size() || indice >= respostasUsuario.size()) {
+                continue;
+            }
+
+            Questao questao = questoes.get(indice);
+            if (questao == null) {
+                continue;
+            }
+
+            soma += calcularPrecisaoResposta(questao, respostasUsuario.get(indice));
+            totalValidos++;
+        }
+
+        if (totalValidos == 0) {
+            return 0d;
+        }
+
+        return limitar01(soma / totalValidos);
     }
 
     public static double calcularResiliencia(List<ProgressoResumo> list){

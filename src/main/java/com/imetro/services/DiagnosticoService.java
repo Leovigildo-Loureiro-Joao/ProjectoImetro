@@ -13,6 +13,7 @@ import com.imetro.domain.dto.diagnostico.StatsQuestaoQtd;
 import com.imetro.domain.dto.diagnostico.TempoStatsDiagnostico;
 import com.imetro.domain.dto.diagnostico.Value;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 public class DiagnosticoService {
 
     private static final Pattern JSON_STRING_PATTERN = Pattern.compile("\"((?:\\\\.|[^\"\\\\])*)\"");
+    private static final Pattern JSON_NUMBER_PATTERN = Pattern.compile("-?\\d+(?:\\.\\d+)?");
     private static final DateTimeFormatter DATA_RESUMIDA = DateTimeFormatter.ofPattern("dd/MM");
 
     private final PerguntasRepository perguntasRepository;
@@ -475,7 +477,7 @@ public class DiagnosticoService {
 
                     Double evolucao = ultimoPercentual == null ? null : percentualAcerto - ultimoPercentual;
                     String nivel = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
-                    double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
+                    double precisao = CalculoStats.calcularPrecisaoMedia(indices, questoes, respostasUsuario);
                     double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual, percentualAcerto);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
                     double resiliencia = 0d;
@@ -921,13 +923,24 @@ public class DiagnosticoService {
         questao.setBloco2(null);
 
         List<String> respostasOriginais = parseJsonStringArray(row.get("respostas"));
+        List<Double> pesosOriginais = parseJsonDoubleArray(row.get("pesos_resposta"));
         List<String> respostasCompletasOriginais = completarRespostas(respostasOriginais);
-        String textoRespostaCorreta = QuestaoUtil.resolverTextoRespostaCorreta(
+        String textoRespostaCorreta = resolverTextoRespostaCorreta(
             QuestaoUtil.safeText(row.get("resposta_correta"), ""),
-            respostasCompletasOriginais
+            respostasCompletasOriginais,
+            pesosOriginais
         );
-        List<String> respostasEmbaralhadas = completarRespostas(embaralharAlternativas(respostasOriginais));
-        List<String> respostasNormalizadas = respostasEmbaralhadas;
+        List<AlternativaComPeso> alternativasOriginais = normalizarAlternativasComPeso(
+            respostasOriginais,
+            pesosOriginais,
+            textoRespostaCorreta
+        );
+        List<AlternativaComPeso> alternativasEmbaralhadas = completarAlternativas(
+            embaralharAlternativas(alternativasOriginais)
+        );
+        List<String> respostasNormalizadas = alternativasEmbaralhadas.stream()
+            .map(AlternativaComPeso::texto)
+            .toList();
         questao.setOpcaoA(respostasNormalizadas.get(0));
         questao.setOpcaoB(respostasNormalizadas.get(1));
         questao.setOpcaoC(respostasNormalizadas.get(2));
@@ -935,6 +948,7 @@ public class DiagnosticoService {
         questao.setOpcaoE(respostasNormalizadas.get(4));
         questao.setOpcaoF(respostasNormalizadas.get(5));
         questao.setOpcaoG(respostasNormalizadas.get(6));
+        questao.setPesosResposta(alternativasEmbaralhadas.stream().mapToDouble(AlternativaComPeso::pesoAcerto).toArray());
 
         questao.setRespostaCorreta(QuestaoUtil.resolverRespostaCorreta(textoRespostaCorreta, respostasNormalizadas));
         questao.setNivelDificuldade(mapearNivel( QuestaoUtil.safeText(row.get("dificuldade"), "")));
@@ -946,12 +960,12 @@ public class DiagnosticoService {
         return questao;
     }
 
-    private List<String> embaralharAlternativas(List<String> alternativas) {
+    private List<AlternativaComPeso> embaralharAlternativas(List<AlternativaComPeso> alternativas) {
         if (alternativas == null || alternativas.isEmpty()) {
             return List.of();
         }
 
-        ArrayList<String> embaralhadas = new ArrayList<>(alternativas);
+        ArrayList<AlternativaComPeso> embaralhadas = new ArrayList<>(alternativas);
         if (embaralhadas.size() > 1) {
             Collections.shuffle(embaralhadas);
         }
@@ -1153,25 +1167,136 @@ public class DiagnosticoService {
         return values;
     }
 
+    private List<Double> parseJsonDoubleArray(Object rawValue) {
+        if (rawValue == null) {
+            return List.of();
+        }
+
+        String raw = rawValue.toString();
+        ArrayList<Double> values = new ArrayList<>();
+        Matcher matcher = JSON_NUMBER_PATTERN.matcher(raw);
+        while (matcher.find()) {
+            try {
+                values.add(Double.parseDouble(matcher.group()));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return values;
+    }
+
+    private String resolverTextoRespostaCorreta(
+        String respostaCorreta,
+        List<String> respostas,
+        List<Double> pesosAlternativas
+    ) {
+        if (respostas == null || respostas.isEmpty()) {
+            return "";
+        }
+
+        String respostaNormalizada = QuestaoUtil.normalizarTextoLivre(respostaCorreta);
+        if (!respostaNormalizada.isBlank()) {
+            char primeiraLetra = Character.toUpperCase(respostaCorreta.trim().charAt(0));
+            int indice = primeiraLetra - 'A';
+            if (indice >= 0 && indice < respostas.size()) {
+                return respostas.get(indice);
+            }
+
+            for (String resposta : respostas) {
+                if (QuestaoUtil.normalizarTextoLivre(resposta).equals(respostaNormalizada)) {
+                    return resposta;
+                }
+            }
+        }
+
+        int indicePesoMaximo = indicePesoCorreto(pesosAlternativas, respostas.size());
+        if (indicePesoMaximo >= 0) {
+            return respostas.get(indicePesoMaximo);
+        }
+
+        return QuestaoUtil.resolverTextoRespostaCorreta(respostaCorreta, respostas);
+    }
+
+    private List<AlternativaComPeso> normalizarAlternativasComPeso(
+        List<String> respostasOriginais,
+        List<Double> pesosOriginais,
+        String textoRespostaCorreta
+    ) {
+        if (respostasOriginais == null || respostasOriginais.isEmpty()) {
+            return List.of();
+        }
+
+        String respostaCorretaNormalizada = QuestaoUtil.normalizarTextoLivre(textoRespostaCorreta);
+        ArrayList<AlternativaComPeso> alternativas = new ArrayList<>();
+
+        for (int i = 0; i < respostasOriginais.size(); i++) {
+            String texto = QuestaoUtil.safeText(respostasOriginais.get(i), "").trim();
+            if (texto.isBlank()) {
+                continue;
+            }
+
+            boolean correta = !respostaCorretaNormalizada.isBlank()
+                && QuestaoUtil.normalizarTextoLivre(texto).equals(respostaCorretaNormalizada);
+            double peso = pesoOriginalOuFallback(pesosOriginais, i, correta);
+            alternativas.add(new AlternativaComPeso(texto, peso));
+        }
+
+        return alternativas;
+    }
+
+    private List<AlternativaComPeso> completarAlternativas(List<AlternativaComPeso> alternativas) {
+        ArrayList<AlternativaComPeso> completas = new ArrayList<>(alternativas);
+        while (completas.size() < 7) {
+            completas.add(switch (completas.size()) {
+                case 4 -> new AlternativaComPeso("Nao sei", 0.10d);
+                case 5 -> new AlternativaComPeso("Estou em duvida", 0.20d);
+                default -> new AlternativaComPeso("Prefiro pular", 0d);
+            });
+        }
+        if (completas.size() > 7) {
+            return new ArrayList<>(completas.subList(0, 7));
+        }
+        return completas;
+    }
+
+    private int indicePesoCorreto(List<Double> pesosAlternativas, int limiteRespostas) {
+        if (pesosAlternativas == null || pesosAlternativas.isEmpty() || limiteRespostas <= 0) {
+            return -1;
+        }
+
+        int indice = -1;
+        for (int i = 0; i < pesosAlternativas.size() && i < limiteRespostas; i++) {
+            Double peso = pesosAlternativas.get(i);
+            if (peso == null || peso < 0.999d) {
+                continue;
+            }
+            if (indice >= 0) {
+                return -1;
+            }
+            indice = i;
+        }
+        return indice;
+    }
+
+    private double pesoOriginalOuFallback(List<Double> pesosOriginais, int indice, boolean correta) {
+        if (correta) {
+            return 1d;
+        }
+
+        if (pesosOriginais != null && indice >= 0 && indice < pesosOriginais.size()) {
+            double peso = pesosOriginais.get(indice) == null ? 0.25d : pesosOriginais.get(indice);
+            return Math.max(0d, Math.min(0.95d, peso));
+        }
+
+        return 0.25d;
+    }
+
 
     private int mapearNivel(String dificuldade) {
-        return switch ( QuestaoUtil.normalizar(dificuldade)) {
-            case "facil" -> 1;
-            case "medio" -> 2;
-            case "desafiante" -> 3;
-            case "extra" -> 4;
-            default -> 2;
-        };
+        return NivelDificuldadeAdaptativa.fromTexto(dificuldade).nivel();
     }
 
     private double mapearTempoSugerido(int nivel) {
-        return switch (nivel) {
-            case 1 -> 40d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel FACIL ainda fixo.
-            case 2 -> 55d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel MEDIO ainda fixo.
-            case 3 -> 70d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel DIFICIL ainda fixo.
-            case 4 -> 85d; // TODO CONFIG_ADAPTATIVA: tempo sugerido do nivel EXPERT ainda fixo.
-            default -> 60d; // TODO CONFIG_ADAPTATIVA: fallback de tempo sugerido ainda fixo.
-        };
+        return NivelDificuldadeAdaptativa.fromNivel(nivel).tempoSugeridoSegundos();
     }
 
     private double mapearRigor(Object rawValue) {
@@ -1233,6 +1358,9 @@ public class DiagnosticoService {
 
     private String chaveSubtopico(String disciplina, String subtopico) {
         return  QuestaoUtil.normalizar(disciplina) + "::" +  QuestaoUtil.normalizar( QuestaoUtil.safeText(subtopico, "Geral"));
+    }
+
+    private record AlternativaComPeso(String texto, double pesoAcerto) {
     }
 
 }

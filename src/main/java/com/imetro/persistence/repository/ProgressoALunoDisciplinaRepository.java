@@ -75,12 +75,10 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
                     Integer totalErros = rs.getInt("total_erros");
                     Double taxaAcertoGeral = rs.getDouble("taxa_acerto_geral");
                     float progresso = taxaAcertoGeral == null ? 0f : taxaAcertoGeral.floatValue();
-                    Integer[] ultimos3DiagnosticosAcertos = rs.getArray("ultimos_3_diagnosticos_acertos") == null
-                        ? null
-                        : (Integer[]) rs.getArray("ultimos_3_diagnosticos_acertos").getArray();
-                    Integer[] ultimos3DiagnosticosTotal = rs.getArray("ultimos_3_diagnosticos_total") == null
-                        ? null
-                        : (Integer[]) rs.getArray("ultimos_3_diagnosticos_total").getArray();
+                    Integer[] ultimos3DiagnosticosAcertos =
+                        ProgressoAlunoDisciplinaDto.ConvertIntegerVector(rs.getArray("ultimos_3_diagnosticos_acertos"));
+                    Integer[] ultimos3DiagnosticosTotal =
+                        ProgressoAlunoDisciplinaDto.ConvertIntegerVector(rs.getArray("ultimos_3_diagnosticos_total"));
                     LocalDateTime ultimoEstudo = rs.getTimestamp("ultimo_estudo") != null ? rs.getTimestamp("ultimo_estudo").toLocalDateTime() : null;
                     Integer diasSemEstudo = rs.getInt("dias_sem_estudo");
                     Integer streakDiasConsecutivos = rs.getInt("streak_dias_consecutivos");

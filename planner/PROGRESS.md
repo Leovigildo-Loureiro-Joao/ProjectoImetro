@@ -85,6 +85,14 @@ Documento de acompanhamento do projeto (MVP -> versao utilizavel).
 - Decisao pratica atual: primeiro deixar o fluxo de `testes` claramente auditavel e localizar os hardcodes; depois ligar a leitura real da configuracao adaptativa e eliminar os valores fixos.
 - Correcao de leitura: o onboarding do candidato ja persiste na BD atual por `users.avatar_url` e `progresso_aluno_disciplina`; o ponto em aberto e alinhar a fonte de verdade com `candidato_disciplinas`, se essa tabela continuar no schema.
 
+### 2026-05-15
+- O consumo de vetores `integer[]` do PostgreSQL em `progresso_aluno_disciplina` foi reforcado para aceitar `java.sql.Array`, arrays simples, listas e texto serializado.
+- O exame adaptativo passou a usar um enum canonico de dificuldade com `FACIL`, `MEDIO`, `DIFICIL` e `EXPERT`, incluindo aliases legados no parse.
+- O calculo de precisao deixou de ser apenas binario no fluxo novo: cada resposta pode carregar peso proprio e a melhoria passou a ser medida por precisao anterior vs precisao atual por questao.
+- O historico detalhado de `teste_perguntas` e o resumo em `stats` passaram a suportar melhor a leitura de evolucao por pergunta.
+- A geracao de perguntas por IA foi alargada para exigir pesos por alternativa e a base ganhou `V20__perguntas_pesos_resposta.sql`, sem remocao destrutiva de colunas antigas.
+- `scripts/db/001_schema.sql` e `README.md` foram alinhados com a coluna nova `pesos_resposta` e com a retrocompatibilidade das perguntas legadas.
+
 
 ## Objetivo de "projeto terminado"
 
@@ -116,8 +124,11 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [x] Diagnostico com experiencia de uso completa em UI.
 - [x] Exame/Teste adaptativo com loading overlay.
 - [x] Exame/Teste adaptativo com configuracao por modal alinhada ao diagnostico.
+- [x] Exame/Teste adaptativo com niveis canonicos `FACIL`, `MEDIO`, `DIFICIL` e `EXPERT`.
 - [x] Tela de configuracoes com modo editar/salvar visual.
 - [x] Perfil do candidato com avatar dinamico, modal de troca e mural inicial de medalhas.
+- [x] Precisao parcial por resposta e melhoria por questao no fluxo novo de teste/diagnostico.
+- [x] Perguntas novas geradas por IA com pesos por alternativa e fallback para legado.
 - [ ] Tela "Revisao do Diagnostico".
 - [x] `views/pages/candidato/relatorios.fxml` em versao inicial visual.
 - [x] `views/pages/candidato/bolsas.fxml` em versao inicial visual.
@@ -138,14 +149,15 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 
 #### Infra + migrations
 - [x] Postgres local via `docker-compose.yml` + schema inicial `scripts/db/001_schema.sql`.
-- [x] Migrations Flyway versionadas (`V1...V9`).
+- [x] Migrations Flyway versionadas (`V1...V20`).
 - [x] Flyway `migrate()` no arranque com `baseline` em `V6`.
 - [x] Chaves de runtime: `TESTE`, `DB_ENABLED` e `DB_MIGRATE`.
 - [x] Documentacao para trabalhar sem BD local.
-- [ ] Validar `V7`, `V8` e `V9` em Postgres real neste fluxo atual.
+- [ ] Validar `V7`, `V8`, `V9` e `V20` em Postgres real neste fluxo atual.
 
 #### Repositorios/CRUD
 - [x] Base JDBC generica e repositorios baseados em tabela.
+- [x] Consumo defensivo de vetores `integer[]` do Postgres no progresso do aluno.
 - [ ] Garantir operacoes minimas usadas no fluxo.
 - [ ] Banco de questoes unificado entre memoria e BD.
 - [ ] Persistencia real do simulador (`testes` + `teste_perguntas`).

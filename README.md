@@ -8,11 +8,22 @@ Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, c
 - onboarding com escolha de avatar predefinido, fallback por iniciais e selecao visual de disciplinas
 - modulo de diagnostico no candidato com lista, timeline, estatisticas, perguntas e resultado final
 - exame adaptativo com configuracao por modal, foco por disciplina/topico/subtopico e arranque alinhado ao fluxo de diagnostico
+- motor adaptativo com niveis canonicos `FACIL`, `MEDIO`, `DIFICIL` e `EXPERT`, com aliases normalizados no codigo
+- calculo de precisao parcial por resposta, melhoria por questao e historico detalhado por tentativa
+- geracao de perguntas por IA com pesos por alternativa e retrocompatibilidade para perguntas antigas sem pesos
 - tela de relatorios do candidato com resumo, graficos e insights iniciais
 - tela de bolsas do candidato com prontidao, match visual e proximos passos
 - perfil do candidato com troca de avatar por modal e mural inicial de 20 medalhas do sistema
-- persistencia JDBC para `users`, `disciplinas`, `perguntas`, `testes` e `relatorios`
+- persistencia JDBC para `users`, `disciplinas`, `perguntas`, `testes`, `teste_perguntas`, `stats`, `progresso_aluno_disciplina` e `relatorios`
 - schema SQL versionado em `src/main/resources/db/migration`
+
+## Atualizacoes recentes
+
+- O consumo de vetores `integer[]` do PostgreSQL no progresso do aluno foi reforcado para aceitar `java.sql.Array`, `Object[]`, `List<?>` e texto no formato `"{1,2,3}"`.
+- O nivel atual do exame adaptativo foi padronizado num enum proprio, evitando variantes soltas como `normal`, `medio`, `desafiante` ou `extra dificil`.
+- Cada resposta passou a carregar uma precisao propria, usada no calculo de `teste_perguntas.precisao`, `stats.precisao` e na comparacao de melhoria por questao.
+- Perguntas novas geradas por IA podem definir `pesosAlternativas`, persistidos em `perguntas.pesos_resposta`, sem remover `respostas` ou `resposta_correta`.
+- O comportamento antigo foi mantido como fallback para perguntas legadas que ainda nao tenham pesos de resposta.
 
 ## Stack
 
@@ -35,13 +46,32 @@ Estas formulas passam a ser a referencia oficial do projecto para calculo de met
 - `i` representa um subtopico.
 - `n` representa a ordem cronologica do teste dentro de uma sequencia.
 
+### Precisao por resposta
+
+`p_resposta_j in [0, 1]`
+
+Regra de uso:
+
+- se a questao tiver pesos explicitos por alternativa, usar o peso alinhado com a alternativa escolhida
+- se a questao for legada, aplicar o fallback operacional do projeto
+
+Fallback atual:
+
+- resposta correta: `1.00`
+- alternativa objetiva errada: `0.25`
+- opcao `E`: `0.10`
+- opcao `F`: `0.20`
+- opcao `G`: `0.00`
+
+Esta precisao parcial alimenta `teste_perguntas.precisao`, `stats.precisao` e os calculos de melhoria por questao.
+
 ### Precisao por subtopico
 
-`P_i = acertos_i / totais_i`
+`P_i = (sum p_resposta_j) / totais_i`
 
 Onde:
 
-- `acertos_i`: quantidade de respostas corretas no subtopico `i`
+- `p_resposta_j`: precisao da resposta `j` no subtopico `i`
 - `totais_i`: quantidade total de questoes respondidas no subtopico `i`
 
 ### Precisao geral
@@ -150,6 +180,25 @@ Interpretacao:
 - `G = 0`: nao houve ganho real
 - `G > 0`: houve crescimento
 - `G < 0`: houve regressao
+
+### Melhoria por questao
+
+`M_q = precisao_atual_q - precisao_anterior_q`
+
+Forma percentual:
+
+`M_q_percentual = 100 * M_q`
+
+Onde:
+
+- `precisao_anterior_q`: media historica da precisao do aluno para a mesma questao
+- `precisao_atual_q`: precisao da resposta atual nessa questao
+
+Uso pratico:
+
+- valores positivos indicam melhoria
+- valores negativos indicam regressao
+- `0` indica repeticao do mesmo nivel de desempenho naquela questao
 
 ### Uso esperado no produto
 
@@ -271,7 +320,7 @@ Na primeira criacao do volume, o container executa automaticamente `scripts/db/0
 
 - schema inicial do Docker: `scripts/db/001_schema.sql`
 - migrations versionadas: `src/main/resources/db/migration`
-- estado atual das migrations: `V1` ate `V19`
+- estado atual das migrations: `V1` ate `V20`
 
 Resumo das mais recentes:
 
@@ -290,6 +339,12 @@ Resumo das mais recentes:
 - `V17__configuracoes_teste_adaptativo.sql`: configuracao central do motor adaptativo, por nivel e por duracao
 - `V18__teste_perguntas_respondido_em.sql`: ajuste versionado do timestamp de resposta por pergunta
 - `V19__seed_configuracoes_por_utilizador.sql`: seed inicial das configuracoes por utilizador existente
+- `V20__perguntas_pesos_resposta.sql`: adiciona `pesos_resposta` em `perguntas` para suportar precisao parcial por alternativa
+
+### Compatibilidade das perguntas
+
+- `V20` adiciona apenas a coluna `pesos_resposta`; nao remove `respostas` nem `resposta_correta`
+- perguntas antigas continuam validas e usam o fallback de precisao quando ainda nao tiverem pesos
 
 ### Observacao importante sobre ambiente
 

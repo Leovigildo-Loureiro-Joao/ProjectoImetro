@@ -207,6 +207,7 @@ public class CatalogoQuestoesService {
         copia.setRespostaCorreta(origem.getRespostaCorreta());
         copia.setNivelDificuldade(origem.getNivelDificuldade());
         copia.setTempoSugerido(origem.getTempoSugerido());
+        copia.setPesosResposta(origem.getPesosResposta());
         return copia;
     }
 

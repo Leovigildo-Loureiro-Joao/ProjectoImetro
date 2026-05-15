@@ -2,6 +2,7 @@ package com.imetro.ui.modals;
 
 import java.util.Map;
 
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator;
 import com.jfoenix.controls.JFXButton;
@@ -50,7 +51,7 @@ public class DificultModalController extends ModalController {
     @FXML
     public Map<String, String> InteligentDiagnostic(ActionEvent event) {
         String durac = getToggleText(duracao, "Curto");
-        String niv = getToggleText(nivel, "Normal");
+        String niv = getToggleText(nivel, NivelDificuldadeAdaptativa.padrao().rotulo());
         String foc = getToggleText(foco, "Pontos fracos");
 
         if (event != null) {

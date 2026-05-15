@@ -466,8 +466,11 @@ public class GeminiService {
         prompt.append("Nivel desejado: ").append(request.nivel()).append(".\n");
         prompt.append("Regras obrigatorias:\n");
         prompt.append("- Usa somente conteudo suportado pelos documentos.\n");
-        prompt.append("- Cria alternativas plausiveis e apenas uma resposta correta.\n");
+        prompt.append("- Cria exatamente 4 alternativas objetivas e apenas uma resposta correta.\n");
         prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
+        prompt.append("- No campo pesosAlternativas, devolve 4 numeros entre 0.0 e 1.0 alinhados com as 4 alternativas.\n");
+        prompt.append("- A alternativa correta deve ter peso 1.0 e as outras devem ter pesos menores que 1.0.\n");
+        prompt.append("- Usa pesos baixos para erros graves, pesos medios para distratores proximos e nunca deixes duas alternativas corretas.\n");
         prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Mantem a dificuldade coerente com o material.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
@@ -478,6 +481,7 @@ public class GeminiService {
         prompt.append("- Se houver multiplos PDFs, consolida os topicos em um unico simulado.\n");
         prompt.append("- No campo fonteResumo, resume em poucas linhas os assuntos-base dos PDFs.\n");
         prompt.append("- No campo explicacao, justifica a resposta correta de forma curta e objetiva.\n");
+        prompt.append("- Antes de responder, verifica que respostaCorreta coincide exatamente com a alternativa cujo peso e 1.0.\n");
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
 
         if (request.instrucoesExtras() != null && !request.instrucoesExtras().isBlank()) {
@@ -498,8 +502,11 @@ public class GeminiService {
         prompt.append("Nivel desejado: ").append(request.nivel()).append(".\n");
         prompt.append("Regras obrigatorias:\n");
         prompt.append("- Usa somente os topicos e subtopicos presentes no JSON informado.\n");
-        prompt.append("- Cria alternativas plausiveis e apenas uma resposta correta.\n");
+        prompt.append("- Cria exatamente 4 alternativas objetivas e apenas uma resposta correta.\n");
         prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
+        prompt.append("- No campo pesosAlternativas, devolve 4 numeros entre 0.0 e 1.0 alinhados com as 4 alternativas.\n");
+        prompt.append("- A alternativa correta deve ter peso 1.0 e as outras devem ter pesos menores que 1.0.\n");
+        prompt.append("- Usa pesos baixos para erros graves, pesos medios para distratores proximos e nunca deixes duas alternativas corretas.\n");
         prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Equilibra a distribuicao das questoes pelos topicos principais.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
@@ -510,6 +517,7 @@ public class GeminiService {
         prompt.append("- Quando o JSON ou o contexto permitir, preenche referenciaLivro, paginaInicio e paginaFim.\n");
         prompt.append("- No campo fonteResumo, resume a cobertura indicada no JSON.\n");
         prompt.append("- No campo explicacao, justifica a resposta correta de forma curta e objetiva.\n");
+        prompt.append("- Antes de responder, verifica que respostaCorreta coincide exatamente com a alternativa cujo peso e 1.0.\n");
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
         prompt.append("JSON de topicos:\n");
         prompt.append(topicosJson).append('\n');
@@ -897,7 +905,15 @@ public class GeminiService {
                   "paginaFim": { "type": "integer" },
                   "alternativas": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": { "type": "string" },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "pesosAlternativas": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 4,
+                    "maxItems": 4
                   },
                   "respostaCorreta": { "type": "string" },
                   "explicacao": { "type": "string" }
@@ -914,6 +930,7 @@ public class GeminiService {
                   "paginaInicio",
                   "paginaFim",
                   "alternativas",
+                  "pesosAlternativas",
                   "respostaCorreta",
                   "explicacao"
                 ]

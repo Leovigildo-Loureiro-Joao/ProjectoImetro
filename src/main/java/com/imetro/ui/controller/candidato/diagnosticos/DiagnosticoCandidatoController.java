@@ -12,6 +12,7 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.Item_Cell;
@@ -655,19 +656,11 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     }
 
     private List<Questao> filtrarPorNivel(List<Questao> origem, String nivelConfigurado) {
-        String nivelNormalizado = TextoUtil.normalizarMinusculo(nivelConfigurado);
+        NivelDificuldadeAdaptativa nivel = NivelDificuldadeAdaptativa.fromTexto(nivelConfigurado);
         List<Questao> filtradas = new ArrayList<>();
 
         for (Questao questao : origem) {
-            int nivelQuestao = questao.getNivelDificuldade();
-            boolean incluir = switch (nivelNormalizado) {
-                case "facil" -> nivelQuestao <= 1;
-                case "desafiante" -> nivelQuestao >= 2;
-                case "extra dificil" -> nivelQuestao >= 3;
-                default -> true;
-            };
-
-            if (incluir) {
+            if (nivel.incluiQuestaoNoFiltroDiagnostico(questao.getNivelDificuldade())) {
                 filtradas.add(questao);
             }
         }

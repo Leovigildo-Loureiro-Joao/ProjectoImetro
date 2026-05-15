@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.ui.modals.FluxoModalContext;
 
 public final class TesteAdaptativoCoordinator {
@@ -74,7 +75,7 @@ public final class TesteAdaptativoCoordinator {
             new TesteConfig(
                 configuracao.getOrDefault("duracao", "Curto"),
                 configuracao.getOrDefault("foco", "Pontos fracos"),
-                configuracao.getOrDefault("nivel", "Normal")
+                configuracao.getOrDefault("nivel", NivelDificuldadeAdaptativa.padrao().rotulo())
             )
         );
 

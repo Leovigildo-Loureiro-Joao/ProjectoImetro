@@ -390,6 +390,7 @@ public class PerguntasBootstrapService {
               subtopico,
               questao,
               respostas,
+              pesos_resposta,
               resposta_correta,
               dificuldade,
               rigor,
@@ -416,6 +417,10 @@ public class PerguntasBootstrapService {
               q->>'enunciado',
               case
                 when jsonb_typeof(q->'alternativas') = 'array' then q->'alternativas'
+                else '[]'::jsonb
+              end,
+              case
+                when jsonb_typeof(q->'pesosAlternativas') = 'array' then q->'pesosAlternativas'
                 else '[]'::jsonb
               end,
               coalesce(nullif(q->>'respostaCorreta', ''), 'A'),
