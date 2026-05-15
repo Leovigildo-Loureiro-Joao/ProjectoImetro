@@ -24,25 +24,33 @@ public class DisciplinaService {
 
     public static ArrayList<DisciplinaDto> discCategoria(){
         ArrayList<DisciplinaDto> disc=new ArrayList<>();
-        
+
         try {
             for (Object elObject : disciplinaRepository.findAll()) {
                 if (elObject instanceof LinkedHashMap) {
-                    @SuppressWarnings("unchecked")
-                    LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) elObject;
-                    UUID id = (UUID) map.get("id");
-                    String nome = (String) map.get("nome");
-                    Float peso = ((Number) map.get("peso")).floatValue();
-                    String nivelStr = (String) map.get("nivel");
-                    String objectivo = (String) map.get("objectivo");
-                    NivelDisciplina nivelDisciplina=NivelDisciplina.fromDescricao(nivelStr);
-                    disc.add(new DisciplinaDto(id,nome,peso,nivelDisciplina,objectivo));
+                    disc.add(ParseDto(elObject));
                 }
             }
         } catch (Exception e) {
              System.err.println("Erro ao buscar disciplinas: " + e.getMessage());
         };
         return disc;
+    }
+
+    public static String findByNomeIdSearch(UUID id){
+        return discCategoria().stream().map(t -> t.nome()).toList().get(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static DisciplinaDto ParseDto(Object elObject ){
+        LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) elObject;
+        UUID id = (UUID) map.get("id");
+        String nome = (String) map.get("nome");
+        Float peso = ((Number) map.get("peso")).floatValue();
+        String nivelStr = (String) map.get("nivel");
+        String objectivo = (String) map.get("objectivo");
+        NivelDisciplina nivelDisciplina=NivelDisciplina.fromDescricao(nivelStr);
+        return new DisciplinaDto(id,nome,peso,nivelDisciplina,objectivo);
     }
 
     public static void associarDisciplinaCandidato(UUID disciplinaId) throws SQLException {

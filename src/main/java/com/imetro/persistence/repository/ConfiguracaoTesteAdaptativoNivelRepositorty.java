@@ -7,7 +7,7 @@ import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
 public class ConfiguracaoTesteAdaptativoNivelRepositorty extends JdbcBasicSqlRepository {
 
     public ConfiguracaoTesteAdaptativoNivelRepositorty() {
-        super("configuracoes_teste_adaptativo_nivel", "id");
+        super("configuracoes_teste_adaptativo_niveis", "id");
      }
 
      public int inserirNivel(ConfiguracaoTesteAdaptativoNivelDto nivel) {

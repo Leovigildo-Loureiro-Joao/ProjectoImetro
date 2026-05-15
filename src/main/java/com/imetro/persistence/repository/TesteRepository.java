@@ -103,7 +103,8 @@ public class TesteRepository extends JdbcBasicSqlRepository {
         Double logica,
         Double resiliencia,
         String observacoes,
-        LocalDateTime atualizadoEm
+        LocalDateTime atualizadoEm,
+        UUID configuracaoID
     ) throws SQLException {
         try (Connection conn = openRequiredConnection()) {
             return inserir(
@@ -135,7 +136,8 @@ public class TesteRepository extends JdbcBasicSqlRepository {
                 logica,
                 resiliencia,
                 observacoes,
-                atualizadoEm
+                atualizadoEm,
+                configuracaoID
             );
         }
     }
@@ -169,7 +171,8 @@ public class TesteRepository extends JdbcBasicSqlRepository {
         Double logica,
         Double resiliencia,
         String observacoes,
-        LocalDateTime atualizadoEm
+        LocalDateTime atualizadoEm,
+        UUID configuracaoID
     ) throws SQLException {
         UUID id = UUID.randomUUID();
         int totalQuestoesPersistido = Math.max(0, totalQuestoes);
@@ -221,7 +224,8 @@ public class TesteRepository extends JdbcBasicSqlRepository {
               logica,
               resiliencia,
               observacoes,
-              atualizado_em
+              atualizado_em,
+              configuracao_teste_adaptativo_id
             ) values (
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), cast(? as jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
@@ -257,6 +261,7 @@ public class TesteRepository extends JdbcBasicSqlRepository {
             stmt.setObject(27, toNullableFloat(limitarUnitario(resiliencia)));
             stmt.setString(28, observacoes);
             stmt.setTimestamp(29, toTimestamp(atualizadoEmPersistido));
+            stmt.setObject(30, configuracaoID);
             stmt.executeUpdate();
         }
         return id;

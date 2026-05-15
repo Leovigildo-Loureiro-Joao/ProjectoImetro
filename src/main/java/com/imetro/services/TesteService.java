@@ -174,16 +174,18 @@ public class TesteService {
         LocalDateTime concluidoEm = LocalDateTime.now();
 
         try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+            System.out.println("iniciou");
             conn.setAutoCommit(false);
             try {
                 for (Map.Entry<String, ArrayList<Integer>> entry : indicesPorDisciplina.entrySet()) {
+                    System.out.println("rodou");
                     ArrayList<Integer> indices = entry.getValue();
                     Questao questaoBase = questoes.get(indices.getFirst());
                     List<ReacaoTeste> reacoesDisciplina = filtrarReacoesPorIndices(questoesTest, indices, questoes);
                     String nomeDisciplina = QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina());
                     ;
-                    nivelInicial=NivelActual(candidatoId, nomeDisciplina).toUpperCase();
                     UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
+                    nivelInicial=NivelActual(candidatoId, disciplinaId).toUpperCase();
                     ConfiguracaoTesteAdaptativoNivelDto configNivelDto=configuracaoTesteAdaptativoNivelRepositorty.findByCodigo(nivelInicial);
                     int totalQuestoes = indices.size();
                     int totalAcertos = 0;
@@ -226,12 +228,11 @@ public class TesteService {
                         recomendacao
                     );
 
-
+                    System.out.println("chegou");
                     UUID id =testeRepository.inserir(
-                        conn,
                         candidatoId,
-                        null,
-                        null,
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
                         concluidoEm,
                         percentualAcerto,
                         concluidoEm,
@@ -256,7 +257,8 @@ public class TesteService {
                         logica,
                         resiliencia,
                         recomendacao,
-                        concluidoEm
+                        concluidoEm,
+                        configNivelDto.configuracaoId()
                     );
                     questoesTest.forEach(t -> {
                         try {
@@ -305,14 +307,15 @@ public class TesteService {
             }
         } catch (Exception e) {
             System.err.println("Erro ao registrar teste concluido: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public String NivelActual(UUID candidatoId,String nomeDisciplina) throws SQLException{
-        return progressoALunoDisciplinaRepository.findAllByField("alunoId", candidatoId)
-            .stream().map(ProgressoAlunoDisciplinaDto::fromMap)
-            .filter(t -> t.disciplina().equals(nomeDisciplina)).toList().get(0)
-            .nivelAtual().getDescricao();
+    public String NivelActual(UUID candidatoId,UUID disciplinaID) throws SQLException{
+        List<ProgressoAlunoDisciplinaDto> lista=progressoALunoDisciplinaRepository.findAllByField("aluno_id", candidatoId)
+        .stream().map(ProgressoAlunoDisciplinaDto::fromMap)
+        .filter(t -> t.disciplinaId().equals(disciplinaID)).toList();
+        return lista.get(0).nivelAtual().name();
     }
 
     public List<ErrosComuns> buscarErrosComuns(UUID disciplinaId) {

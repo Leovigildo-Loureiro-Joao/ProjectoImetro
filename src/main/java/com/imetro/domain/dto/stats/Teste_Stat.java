@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.imetro.util.ParseTimeStampLocalDate;
+
 public record Teste_Stat(
     UUID id,
     UUID teste_id,
@@ -82,8 +84,8 @@ public record Teste_Stat(
         String erros_comuns= (String)   map.get(   "erros_comuns");
         String melhorias= (String) map.get(    "melhorias");
         String  observacoes= (String)   map.get(   "observacoes");
-        LocalDateTime criado_em= (LocalDateTime) map.get(  "criado_em");
-        LocalDateTime atualizado_em= (LocalDateTime)map.get(   "atualizado_em");
+        LocalDateTime criado_em=ParseTimeStampLocalDate.mapearDataHora( map.get(  "criado_em")) ;
+        LocalDateTime atualizado_em=ParseTimeStampLocalDate.mapearDataHora( map.get("atualizado_em"));
         return new Teste_Stat(id, teste_id, diagnostico_id, candidato_id, disciplina_id, disciplina_nome, origem, tempo_total_segundos, tempo_medio_segundos, total_questoes, total_acertos, total_erros, percentual_acerto, velocidade, precisao, consistencia, logica, resiliencia, erros_comuns, melhorias, observacoes, criado_em, atualizado_em)
         ;
     }

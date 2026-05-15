@@ -97,7 +97,7 @@ Objetivo simples: fechar os campos reais da tabela `testes`.
 - [x] Rever se `topicos` precisa entrar no `insert`.
 - [x] Rever se `subtopicos` precisa entrar no `insert`.
 - [x] Rever se `resultado` vai mesmo ser `percentualAcerto`.
-- [ ] Rever se `nivel_inicial` e `nivel_final` estao vindo com valor real e nao so valor repetido.
+- [x] Rever se `nivel_inicial` e `nivel_final` estao vindo com valor real e nao so valor repetido.
 - [ ] Rever `limite_questoes`.
   Explicacao simples: pode ser o total planeado do teste, nao necessariamente o total respondido.
 - [ ] Rever `limite_inferior` e `limite_superior`.
