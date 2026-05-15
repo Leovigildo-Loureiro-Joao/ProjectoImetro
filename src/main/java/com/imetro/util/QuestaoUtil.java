@@ -157,6 +157,45 @@ public class QuestaoUtil {
         return json.toString();
     }
 
+
+    public static String construirJsonErrosComuns(
+        List<Integer> indices,
+        List<Questao> questoes,
+        List<Character> respostasUsuario
+    ) {
+        StringBuilder json = new StringBuilder("[");
+        boolean primeiroItem = true;
+
+        for (int i = 0; i < indices.size(); i++) {
+            int indice = indices.get(i);
+            Questao questao = questoes.get(indice);
+            char marcada = respostasUsuario.get(indice);
+            boolean errou = marcada != questao.getRespostaCorreta();
+
+            if (!errou) {
+                continue;
+            }
+
+            if (!primeiroItem) {
+                json.append(", ");
+            }
+
+            json.append("{")
+                .append("\"questaoId\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getId(), ""))).append("\",")
+                .append("\"topico\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getTopico(), ""))).append("\",")
+                .append("\"subtopico\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getSubtopico(), ""))).append("\",")
+                .append("\"marcada\":\"").append(marcada).append("\",")
+                .append("\"enuciado\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getEnunciado(), ""))).append("\",")
+                .append("\"resposta\":\"").append(questao.getRespostaCorreta()).append("\"")
+                .append("}");
+
+            primeiroItem = false;
+
+        }
+        json.append("]");
+        return json.toString();
+    }
+
     public static String escapeJson(String valor) {
         return valor
             .replace("\\", "\\\\")
@@ -221,5 +260,8 @@ public class QuestaoUtil {
     }
 
 
+
+    public static record Evolucao(int qtdErros,int qtdAcertos,int tempoSegundos) {
+    }
 
 }

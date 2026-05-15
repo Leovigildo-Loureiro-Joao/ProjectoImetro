@@ -538,6 +538,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         respostaSelecionada = selected.getText().charAt(0);
 
         long tempoResposta = System.currentTimeMillis() - tempoInicioQuestao;
+        long tempoRespostaSegundos = Math.max(1L, Math.round(tempoResposta / 1000.0));
         temposResposta.add(tempoResposta);
         respostasUsuario.add(respostaSelecionada);
 
@@ -548,7 +549,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 q,
                 questaoAtual,
                 respostaSelecionada,
-                tempoResposta,
+                tempoRespostaSegundos,
                 0.1d, // TODO CONFIG_ADAPTATIVA: placeholder de consistencia por questao; substituir pelo valor real calculado.
                 0.1d, // TODO CONFIG_ADAPTATIVA: placeholder de resiliencia por questao; substituir pelo valor real calculado.
                 LocalDateTime.now())
@@ -742,7 +743,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 focoQuestoes,
                 respostasUsuario,
                 reacao,
-                nivelAtual.getText(),
                 tempo.getText(),
                 recomendacao
             );

@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,8 +18,10 @@ import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.stats.StatsProgress;
 import com.imetro.domain.dto.stats.Teste_Stat;
 import com.imetro.domain.dto.test.TestDtoAll;
-import com.imetro.domain.dto.test.Teste_Pergunta;
+import com.imetro.domain.dto.test.ErrosComuns;
+import com.imetro.domain.dto.test.Melhorias;
 import com.imetro.domain.dto.test.ReacaoTeste;
+import com.imetro.domain.dto.test.Teste_Pergunta;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
@@ -48,6 +51,12 @@ public class TesteService {
         this.progressoALunoDisciplinaRepository=new ProgressoALunoDisciplinaRepository();
         this.configuracaoTesteAdaptativoNivelRepositorty=new ConfiguracaoTesteAdaptativoNivelRepositorty();
 
+    }
+
+    public List<TestDtoAll> findDtoAll() throws SQLException{
+        return testeRepository.findAll().stream()
+        .map(TestDtoAll::ParseMapDto)
+        .toList();
     }
 
     public Optional<Map<String, Object>> getTeste(UUID testeId) {
@@ -123,6 +132,7 @@ public class TesteService {
     }
 
 
+
      public void registrarTesteConcluido(
         UUID candidatoId,
         UUID diagnosticoId,
@@ -169,6 +179,7 @@ public class TesteService {
                 for (Map.Entry<String, ArrayList<Integer>> entry : indicesPorDisciplina.entrySet()) {
                     ArrayList<Integer> indices = entry.getValue();
                     Questao questaoBase = questoes.get(indices.getFirst());
+                    List<ReacaoTeste> reacoesDisciplina = filtrarReacoesPorIndices(questoesTest, indices, questoes);
                     String nomeDisciplina = QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina());
                     ;
                     nivelInicial=NivelActual(candidatoId, nomeDisciplina).toUpperCase();
@@ -182,21 +193,38 @@ public class TesteService {
                             totalAcertos++;
                         }
                     }
-                    int totalSeg=0;
-                    for (long p : questoesTest.stream().map(t -> t.tempoSegundos()).toList()) {
-                        totalSeg+=p;
-                    }
+                    int totalSeg = reacoesDisciplina.stream()
+                        .mapToInt(reacao -> safeInt(reacao.tempoSegundos()))
+                        .sum();
 
                     int totalErros = Math.max(0, totalQuestoes - totalAcertos);
+                    double tempoMedioSegundos = totalQuestoes == 0 ? 0d : totalSeg / (double) totalQuestoes;
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
                     String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
                     double precisao = CalculoStats.calcularPrecisao(totalAcertos, totalQuestoes);
-                    double consistencia = CalculoStats.calcularConsistenciaTeste(questoesTest);
+                    double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
-                    double resiliencia = CalculoStats.calcularResilienciaTeste(questoesTest);
-                    double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
+                    double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina);
+                    double velocidade = CalculoStats.calcularVelocidade(totalSeg, totalQuestoes);
                     String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
                     String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
+                    String errosComunsJson = QuestaoUtil.construirJsonErrosComuns(indices, questoes, respostasUsuario);
+                    String melhoriasJson = construirJsonMelhorias(
+                        candidatoId,
+                        disciplinaId,
+                        indices,
+                        questoes,
+                        respostasUsuario,
+                        questoesTest
+                    );
+                    String origem = "TESTE";
+                    String observacoesStats = construirObservacoesStats(
+                        indices,
+                        questoes,
+                        respostasUsuario,
+                        tempoMedioSegundos,
+                        recomendacao
+                    );
 
 
                     UUID id =testeRepository.inserir(
@@ -248,9 +276,9 @@ public class TesteService {
                             candidatoId,
                             disciplinaId,
                             nomeDisciplina,
-                            null,
+                            origem,
                             totalSeg,
-                            null,
+                            tempoMedioSegundos,
                             totalQuestoes,
                             totalAcertos,
                             totalErros,
@@ -260,9 +288,9 @@ public class TesteService {
                             consistencia,
                             logica,
                             resiliencia,
-                            CalcularErrosComuns(questoesTest).,
-                            null,
-                            null,
+                            errosComunsJson,
+                            melhoriasJson,
+                            observacoesStats,
                             LocalDateTime.now(),
                             LocalDateTime.now()));
 
@@ -287,13 +315,530 @@ public class TesteService {
             .nivelAtual().getDescricao();
     }
 
-    public List<String> CalcularErrosComuns(List<ReacaoTeste> reacao){
-        return reacao.stream().map(t -> {
-            if (t.respostaDada()!=t.questao().getRespostaCorreta()) {
-                return t.questao().getEnunciado();
+    public List<ErrosComuns> buscarErrosComuns(UUID disciplinaId) {
+        return buscarErrosComuns(Authentication.getCurrentUserId(), disciplinaId);
+    }
+
+    public List<ErrosComuns> buscarErrosComuns(UUID candidatoId, UUID disciplinaId) {
+        ArrayList<ErrosComuns> itens = new ArrayList<>();
+        for (String json : carregarStatsJson(candidatoId, disciplinaId, "erros_comuns")) {
+            itens.addAll(parseErrosComunsJson(json));
+        }
+        return itens;
+    }
+
+    public List<Melhorias> buscarMelhorias(UUID disciplinaId) {
+        return buscarMelhorias(Authentication.getCurrentUserId(), disciplinaId);
+    }
+
+    public List<Melhorias> buscarMelhorias(UUID candidatoId, UUID disciplinaId) {
+        ArrayList<Melhorias> itens = new ArrayList<>();
+        for (String json : carregarStatsJson(candidatoId, disciplinaId, "melhorias")) {
+            itens.addAll(parseMelhoriasJson(json));
+        }
+        return itens;
+    }
+
+    public List<ErrosComuns> parseErrosComunsJson(String json) {
+        ArrayList<ErrosComuns> itens = new ArrayList<>();
+        for (Map<String, String> valores : parseJsonObjectArray(json)) {
+            itens.add(
+                new ErrosComuns(
+                    parseUuid(valores.get("questaoId")),
+                    firstNonBlank(valores.get("enuciado"), valores.get("enunciado")),
+                    firstNonBlank(valores.get("marcada"), valores.get("resposta")),
+                    valores.get("topico"),
+                    valores.get("subtopico"),
+                    firstNonBlank(valores.get("resposta"), valores.get("correta"))
+                )
+            );
+        }
+        return itens;
+    }
+
+    public List<Melhorias> parseMelhoriasJson(String json) {
+        ArrayList<Melhorias> itens = new ArrayList<>();
+        for (Map<String, String> valores : parseJsonObjectArray(json)) {
+            itens.add(
+                new Melhorias(
+                    parseUuid(valores.get("questaoId")),
+                    firstNonBlank(valores.get("enuciado"), valores.get("enunciado")),
+                    valores.get("correta"),
+                    firstNonBlank(valores.get("resposta"), valores.get("marcada")),
+                    parseInteger(valores.get("tempoSegundos")),
+                    valores.get("topico"),
+                    valores.get("subtopico"),
+                    parseInteger(valores.get("qtdAcerto")),
+                    parseInteger(valores.get("qtdErros"))
+                )
+            );
+        }
+        return itens;
+    }
+
+    public String construirJsonMelhorias(
+        UUID candidatoId,
+        UUID disciplinaId,
+        List<Integer> indices,
+        List<Questao> questoes,
+        List<Character> respostasUsuario,
+        List<ReacaoTeste> questoesTest
+    ) {
+        Map<UUID, QuestaoUtil.Evolucao> historicoPorQuestao = carregarHistoricoQuestoes(candidatoId, disciplinaId);
+        StringBuilder json = new StringBuilder("[");
+        boolean primeiroItem = true;
+
+        for (Integer indice : indices) {
+            if (indice == null || indice < 0 || indice >= questoes.size() || indice >= respostasUsuario.size()) {
+                continue;
             }
-            return "";
-        }).toList();
+            Questao questao = questoes.get(indice);
+            if (questao == null) {
+                continue;
+            }
+
+            char marcada = respostasUsuario.get(indice);
+            boolean errou = Character.toUpperCase(marcada) != Character.toUpperCase(questao.getRespostaCorreta());
+            if (!errou) {
+                continue;
+            }
+
+            UUID questaoId = parseUuid(questao.getId());
+            QuestaoUtil.Evolucao historico = historicoPorQuestao.getOrDefault(
+                questaoId,
+                new QuestaoUtil.Evolucao(0, 0, 0)
+            );
+            ReacaoTeste reacao = encontrarReacao(questoesTest, indice, questao.getId());
+            int tempoSegundos = reacao == null ? 0 : safeInt(reacao.tempoSegundos());
+            int qtdAcertos = historico.qtdAcertos();
+            int qtdErros = historico.qtdErros() + 1;
+
+            if (!primeiroItem) {
+                json.append(", ");
+            }
+
+            json.append("{")
+                .append("\"questaoId\":\"").append(QuestaoUtil.escapeJson(QuestaoUtil.safeText(questao.getId(), ""))).append("\",")
+                .append("\"enuciado\":\"").append(QuestaoUtil.escapeJson(QuestaoUtil.safeText(questao.getEnunciado(), ""))).append("\",")
+                .append("\"correta\":\"").append(questao.getRespostaCorreta()).append("\",")
+                .append("\"resposta\":\"").append(marcada).append("\",")
+                .append("\"tempoSegundos\":").append(tempoSegundos).append(",")
+                .append("\"topico\":\"").append(QuestaoUtil.escapeJson(QuestaoUtil.safeText(questao.getTopico(), ""))).append("\",")
+                .append("\"subtopico\":\"").append(QuestaoUtil.escapeJson(QuestaoUtil.safeText(questao.getSubtopico(), ""))).append("\",")
+                .append("\"qtdAcerto\":").append(qtdAcertos).append(",")
+                .append("\"qtdErros\":").append(qtdErros)
+                .append("}");
+
+            primeiroItem = false;
+        }
+        json.append("]");
+        return json.toString();
+    }
+
+    private List<String> carregarStatsJson(UUID candidatoId, UUID disciplinaId, String campo) {
+        if (candidatoId == null || disciplinaId == null || campo == null || campo.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            ArrayList<String> jsons = new ArrayList<>();
+            for (Map<String, Object> row : testeStatsRepository.findByDisciplinaId(disciplinaId)) {
+                if (!Objects.equals(candidatoId, parseUuid(row.get("candidato_id")))) {
+                    continue;
+                }
+
+                String json = QuestaoUtil.safeText(row.get(campo), "");
+                if (!json.isBlank()) {
+                    jsons.add(json);
+                }
+            }
+            return jsons;
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar historico JSON do teste: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    private Map<UUID, QuestaoUtil.Evolucao> carregarHistoricoQuestoes(UUID candidatoId, UUID disciplinaId) {
+        if (candidatoId == null || disciplinaId == null) {
+            return Map.of();
+        }
+
+        String sql = """
+            select tp.pergunta_id, tp.acertou, tp.tempo_segundos
+            from teste_perguntas tp
+            join testes t on t.id = tp.teste_id
+            where t.candidato_id = ? and t.disciplina_id = ?
+            """;
+
+        LinkedHashMap<UUID, QuestaoUtil.Evolucao> historico = new LinkedHashMap<>();
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setObject(2, disciplinaId);
+
+            try (var rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    UUID perguntaId = parseUuid(rs.getObject("pergunta_id"));
+                    Boolean acertou = parseBoolean(rs.getObject("acertou"));
+                    if (perguntaId == null || acertou == null) {
+                        continue;
+                    }
+
+                    QuestaoUtil.Evolucao atual = historico.getOrDefault(
+                        perguntaId,
+                        new QuestaoUtil.Evolucao(0, 0, 0)
+                    );
+                    int qtdErros = atual.qtdErros() + (acertou ? 0 : 1);
+                    int qtdAcertos = atual.qtdAcertos() + (acertou ? 1 : 0);
+                    int tempoAcumulado = atual.tempoSegundos() + safeInt(rs.getObject("tempo_segundos"));
+
+                    historico.put(perguntaId, new QuestaoUtil.Evolucao(qtdErros, qtdAcertos, tempoAcumulado));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar historico de questoes do teste: " + e.getMessage());
+            return Map.of();
+        }
+
+        return historico;
+    }
+
+    private List<ReacaoTeste> filtrarReacoesPorIndices(
+        List<ReacaoTeste> questoesTest,
+        List<Integer> indices,
+        List<Questao> questoes
+    ) {
+        if (questoesTest == null || questoesTest.isEmpty() || indices == null || indices.isEmpty()) {
+            return List.of();
+        }
+
+        ArrayList<ReacaoTeste> reacoes = new ArrayList<>();
+        for (Integer indice : indices) {
+            if (indice == null || indice < 0 || indice >= questoes.size()) {
+                continue;
+            }
+
+            Questao questao = questoes.get(indice);
+            ReacaoTeste reacao = encontrarReacao(questoesTest, indice, questao == null ? null : questao.getId());
+            if (reacao != null) {
+                reacoes.add(reacao);
+            }
+        }
+
+        return reacoes;
+    }
+
+    private String construirObservacoesStats(
+        List<Integer> indices,
+        List<Questao> questoes,
+        List<Character> respostasUsuario,
+        double tempoMedioSegundos,
+        String recomendacao
+    ) {
+        LinkedHashMap<String, Integer> errosPorTopico = new LinkedHashMap<>();
+        LinkedHashMap<String, Integer> errosPorSubtopico = new LinkedHashMap<>();
+
+        for (Integer indice : indices) {
+            if (indice == null || indice < 0 || indice >= questoes.size() || indice >= respostasUsuario.size()) {
+                continue;
+            }
+
+            Questao questao = questoes.get(indice);
+            if (questao == null) {
+                continue;
+            }
+
+            if (Character.toUpperCase(respostasUsuario.get(indice)) == Character.toUpperCase(questao.getRespostaCorreta())) {
+                continue;
+            }
+
+            incrementarContagem(errosPorTopico, QuestaoUtil.safeText(questao.getTopico(), "Sem topico"));
+            incrementarContagem(errosPorSubtopico, QuestaoUtil.safeText(questao.getSubtopico(), "Sem subtopico"));
+        }
+
+        StringBuilder observacao = new StringBuilder();
+        if (errosPorTopico.isEmpty()) {
+            observacao.append("Sem erros comuns neste teste.");
+        } else {
+            observacao.append("Erros concentrados em ")
+                .append(chaveComMaiorContagem(errosPorTopico));
+
+            String subtopicoCritico = chaveComMaiorContagem(errosPorSubtopico);
+            if (subtopicoCritico != null && !subtopicoCritico.isBlank()) {
+                observacao.append(" / ").append(subtopicoCritico);
+            }
+            observacao.append(".");
+        }
+
+        observacao.append(" Tempo medio por questao: ")
+            .append(String.format(java.util.Locale.ROOT, "%.2f", tempoMedioSegundos))
+            .append("s.");
+
+        if (recomendacao != null && !recomendacao.isBlank()) {
+            observacao.append(" ").append(recomendacao);
+        }
+
+        return observacao.toString();
+    }
+
+    private void incrementarContagem(Map<String, Integer> contagem, String chave) {
+        contagem.merge(chave, 1, Integer::sum);
+    }
+
+    private String chaveComMaiorContagem(Map<String, Integer> contagem) {
+        String melhorChave = null;
+        int maiorValor = Integer.MIN_VALUE;
+
+        for (Map.Entry<String, Integer> entry : contagem.entrySet()) {
+            if (entry.getValue() != null && entry.getValue() > maiorValor) {
+                melhorChave = entry.getKey();
+                maiorValor = entry.getValue();
+            }
+        }
+
+        return melhorChave;
+    }
+
+    private ReacaoTeste encontrarReacao(List<ReacaoTeste> questoesTest, int indice, String questaoId) {
+        if (questoesTest == null || questoesTest.isEmpty()) {
+            return null;
+        }
+
+        for (ReacaoTeste reacao : questoesTest) {
+            if (reacao == null) {
+                continue;
+            }
+            if (reacao.ordem() == indice) {
+                return reacao;
+            }
+            if (reacao.questao() != null && Objects.equals(reacao.questao().getId(), questaoId)) {
+                return reacao;
+            }
+        }
+
+        return null;
+    }
+
+    private List<Map<String, String>> parseJsonObjectArray(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+
+        ArrayList<Map<String, String>> itens = new ArrayList<>();
+        int cursor = skipWhitespace(json, 0);
+        if (cursor >= json.length() || json.charAt(cursor) != '[') {
+            return List.of();
+        }
+
+        cursor++;
+        while (cursor < json.length()) {
+            cursor = skipWhitespace(json, cursor);
+            if (cursor >= json.length() || json.charAt(cursor) == ']') {
+                break;
+            }
+            if (json.charAt(cursor) == ',') {
+                cursor++;
+                continue;
+            }
+            if (json.charAt(cursor) != '{') {
+                cursor++;
+                continue;
+            }
+
+            ParsedJsonObject parsed = parseJsonObject(json, cursor);
+            itens.add(parsed.values());
+            cursor = parsed.nextIndex();
+        }
+
+        return itens;
+    }
+
+    private ParsedJsonObject parseJsonObject(String json, int startIndex) {
+        LinkedHashMap<String, String> valores = new LinkedHashMap<>();
+        int cursor = startIndex + 1;
+
+        while (cursor < json.length()) {
+            cursor = skipWhitespace(json, cursor);
+            if (cursor >= json.length()) {
+                break;
+            }
+
+            char atual = json.charAt(cursor);
+            if (atual == '}') {
+                return new ParsedJsonObject(valores, cursor + 1);
+            }
+            if (atual == ',') {
+                cursor++;
+                continue;
+            }
+            if (atual != '"') {
+                cursor++;
+                continue;
+            }
+
+            ParsedJsonToken chave = parseJsonStringToken(json, cursor);
+            cursor = skipWhitespace(json, chave.nextIndex());
+            if (cursor < json.length() && json.charAt(cursor) == ':') {
+                cursor++;
+            }
+            cursor = skipWhitespace(json, cursor);
+
+            ParsedJsonToken valor = cursor < json.length() && json.charAt(cursor) == '"'
+                ? parseJsonStringToken(json, cursor)
+                : parseJsonLiteralToken(json, cursor);
+
+            valores.put(chave.value(), valor.value());
+            cursor = skipWhitespace(json, valor.nextIndex());
+            if (cursor < json.length() && json.charAt(cursor) == ',') {
+                cursor++;
+            }
+        }
+
+        return new ParsedJsonObject(valores, cursor);
+    }
+
+    private ParsedJsonToken parseJsonStringToken(String json, int startIndex) {
+        StringBuilder out = new StringBuilder();
+        int cursor = startIndex + 1;
+
+        while (cursor < json.length()) {
+            char atual = json.charAt(cursor);
+            if (atual == '"') {
+                return new ParsedJsonToken(out.toString(), cursor + 1);
+            }
+            if (atual == '\\' && cursor + 1 < json.length()) {
+                char proximo = json.charAt(++cursor);
+                switch (proximo) {
+                    case '"' -> out.append('"');
+                    case '\\' -> out.append('\\');
+                    case '/' -> out.append('/');
+                    case 'b' -> out.append('\b');
+                    case 'f' -> out.append('\f');
+                    case 'n' -> out.append('\n');
+                    case 'r' -> out.append('\r');
+                    case 't' -> out.append('\t');
+                    case 'u' -> {
+                        if (cursor + 4 < json.length()) {
+                            String hex = json.substring(cursor + 1, cursor + 5);
+                            out.append((char) Integer.parseInt(hex, 16));
+                            cursor += 4;
+                        }
+                    }
+                    default -> out.append(proximo);
+                }
+            } else {
+                out.append(atual);
+            }
+            cursor++;
+        }
+
+        return new ParsedJsonToken(out.toString(), json.length());
+    }
+
+    private ParsedJsonToken parseJsonLiteralToken(String json, int startIndex) {
+        int cursor = startIndex;
+        while (cursor < json.length()) {
+            char atual = json.charAt(cursor);
+            if (atual == ',' || atual == '}') {
+                break;
+            }
+            cursor++;
+        }
+
+        String literal = json.substring(startIndex, cursor).trim();
+        if (literal.isBlank() || "null".equalsIgnoreCase(literal)) {
+            return new ParsedJsonToken(null, cursor);
+        }
+        return new ParsedJsonToken(literal, cursor);
+    }
+
+    private int skipWhitespace(String value, int startIndex) {
+        int cursor = startIndex;
+        while (cursor < value.length() && Character.isWhitespace(value.charAt(cursor))) {
+            cursor++;
+        }
+        return cursor;
+    }
+
+    private UUID parseUuid(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof UUID uuid) {
+            return uuid;
+        }
+
+        String text = value.toString().trim();
+        if (text.isBlank()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(text);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private Boolean parseBoolean(Object value) {
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value == null) {
+            return null;
+        }
+
+        String text = value.toString().trim();
+        if (text.isBlank()) {
+            return null;
+        }
+
+        return Boolean.parseBoolean(text);
+    }
+
+    private int parseInteger(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    private int safeInt(long value) {
+        if (value <= 0L) {
+            return 0;
+        }
+        return (int) Math.min(Integer.MAX_VALUE, value);
+    }
+
+    private int safeInt(Object value) {
+        if (value instanceof Number number) {
+            return safeInt(number.longValue());
+        }
+        if (value == null) {
+            return 0;
+        }
+        return parseInteger(value.toString());
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private record ParsedJsonObject(Map<String, String> values, int nextIndex) {
+    }
+
+    private record ParsedJsonToken(String value, int nextIndex) {
     }
 
     private String construirJsonResumoQuestoes(
