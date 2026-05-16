@@ -16,6 +16,7 @@ import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.Item_Cell;
+import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
@@ -23,6 +24,7 @@ import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
+import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
 import com.imetro.util.TextoUtil;
@@ -45,9 +47,11 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -188,6 +192,12 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private Node mod;
     private Node modTop;
     private ModalController cont;
+    private VBox apoioVisualBox;
+    private Separator apoioVisualSeparator;
+    private Node imagemQuestaoPane;
+    private Label imagemQuestaoLabel;
+    private StackPane planoCartesianoContainer;
+    private PlanoCartesianoPane planoCartesianoPane;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
 
     @FXML
@@ -220,6 +230,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         Platform.runLater(() -> {
             circleProgress = new CircleProgress(35, 35, 35, 0);
             circleProgressContainer.getChildren().add(circleProgress);
+            configurarPainelApoioVisual();
 
             bancoQuestoes = diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId());
             questoes = new ArrayList<>(bancoQuestoes);
@@ -361,12 +372,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         ResF.setText(q.getOpcaoF());
         ResG.setText(q.getOpcaoG());
 
-        if (q.getImagem() != null) {
-            imgBloco2.setImage(q.getImagem());
-            imgBloco2.setVisible(true);
-        } else {
-            imgBloco2.setVisible(false);
-        }
+        atualizarApoioVisual(q);
 
         alternativas.selectToggle(null);
         respostaSelecionada = '\0';
@@ -385,6 +391,87 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             return foco;
         }
         return questao.getBloco2() + "\n" + foco;
+    }
+
+    private void configurarPainelApoioVisual() {
+        if (bloco1 == null || !(bloco1.getParent() instanceof VBox textoPane) || !(textoPane.getParent() instanceof HBox linhaQuestao)) {
+            return;
+        }
+        if (linhaQuestao.getChildren().size() < 3 || !(linhaQuestao.getChildren().get(1) instanceof Separator separator)) {
+            return;
+        }
+
+        Node painelImagemExistente = linhaQuestao.getChildren().get(2);
+        apoioVisualSeparator = separator;
+        imagemQuestaoPane = painelImagemExistente;
+        planoCartesianoPane = new PlanoCartesianoPane();
+        planoCartesianoContainer = new StackPane(planoCartesianoPane);
+        planoCartesianoContainer.setVisible(false);
+        planoCartesianoContainer.setManaged(false);
+
+        apoioVisualBox = new VBox(14, painelImagemExistente, planoCartesianoContainer);
+        apoioVisualBox.setPrefWidth(320);
+        apoioVisualBox.setVisible(false);
+        apoioVisualBox.setManaged(false);
+
+        if (painelImagemExistente instanceof StackPane imagemPane) {
+            imagemPane.getStyleClass().add("question-side-card");
+            imagemPane.setVisible(false);
+            imagemPane.setManaged(false);
+            imagemPane.setPrefWidth(320);
+            imagemPane.setMaxWidth(320);
+
+            imagemQuestaoLabel = imagemPane.getChildren()
+                .stream()
+                .filter(Label.class::isInstance)
+                .map(Label.class::cast)
+                .findFirst()
+                .orElse(null);
+
+            if (imagemQuestaoLabel != null) {
+                imagemQuestaoLabel.setText("Imagem da questao");
+                imagemQuestaoLabel.getStyleClass().remove("desc-text");
+                if (!imagemQuestaoLabel.getStyleClass().contains("question-side-copy")) {
+                    imagemQuestaoLabel.getStyleClass().add("question-side-copy");
+                }
+            }
+        }
+
+        apoioVisualSeparator.setVisible(false);
+        apoioVisualSeparator.setManaged(false);
+        linhaQuestao.getChildren().setAll(textoPane, apoioVisualSeparator, apoioVisualBox);
+    }
+
+    private void atualizarApoioVisual(Questao questao) {
+        boolean imagemVisivel = questao.getImagem() != null;
+        if (imagemVisivel) {
+            imgBloco2.setImage(questao.getImagem());
+            imgBloco2.setVisible(true);
+        } else {
+            imgBloco2.setImage(null);
+            imgBloco2.setVisible(false);
+        }
+
+        setNodeVisivel(imagemQuestaoPane, imagemVisivel);
+
+        var planoConfig = QuestaoGraficoSupport.resolver(questao);
+        boolean graficoVisivel = planoConfig.isPresent();
+        if (graficoVisivel && planoCartesianoPane != null) {
+            planoCartesianoPane.aplicarConfig(planoConfig.get());
+        }
+        setNodeVisivel(planoCartesianoContainer, graficoVisivel);
+
+        boolean apoioVisivel = imagemVisivel || graficoVisivel;
+        setNodeVisivel(apoioVisualBox, apoioVisivel);
+        setNodeVisivel(apoioVisualSeparator, apoioVisivel);
+    }
+
+    private void setNodeVisivel(Node node, boolean visivel) {
+        if (node == null) {
+            return;
+        }
+        node.setVisible(visivel);
+        node.setManaged(visivel);
     }
 
     @FXML

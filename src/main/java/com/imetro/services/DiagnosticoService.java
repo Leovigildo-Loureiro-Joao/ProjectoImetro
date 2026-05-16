@@ -1,5 +1,6 @@
 package com.imetro.services;
 
+import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
@@ -177,6 +178,7 @@ public class DiagnosticoService {
                             : 0d;
                         progressoPorRigor.put(chave, calcularProgressoPorRigor(rigorAtual, rigorAlvo));
                         precisaRevisaoPorChave.put(chave, rs.getBoolean("precisa_revisao"));
+                        CacheService.put(chave, NivelDificuldadeAdaptativa.resolverNivelPorRigor(rigorAtual));
                     }
                 }
             }
@@ -458,6 +460,7 @@ public class DiagnosticoService {
             conn.setAutoCommit(false);
             try {
                 for (Map.Entry<String, ArrayList<Integer>> entry : indicesPorDisciplina.entrySet()) {
+                    System.out.println("Entrando");
                     ArrayList<Integer> indices = entry.getValue();
                     Questao questaoBase = questoes.get(indices.getFirst());
                     String nomeDisciplina =  QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina());
@@ -482,9 +485,9 @@ public class DiagnosticoService {
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
                     double resiliencia = 0d;
                     double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
+                    System.out.println("Inserindo");
 
                     UUID diagnosticoId = diagnosticoRepository.inserir(
-                        conn,
                         candidatoId,
                         disciplinaId,
                         nomeDisciplina,
@@ -534,6 +537,7 @@ public class DiagnosticoService {
                 conn.commit();
             } catch (Exception e) {
                 conn.rollback();
+                e.printStackTrace();
                 throw e;
             } finally {
                 conn.setAutoCommit(true);
@@ -957,6 +961,16 @@ public class DiagnosticoService {
         questao.setPaginaInicio(mapearInteiro(row.get("pagina_inicio")));
         questao.setPaginaFim(mapearInteiro(row.get("pagina_fim")));
         questao.setTempoSugerido(mapearTempoSugerido(questao.getNivelDificuldade()));
+        questao.setUsaGrafico(mapearBoolean(row.get("usa_grafico")));
+        questao.setGraficoTipoCurva( QuestaoUtil.safeText(row.get("grafico_tipo_curva"), null));
+        questao.setGraficoA(mapearDoubleNullable(row.get("grafico_a")));
+        questao.setGraficoB(mapearDoubleNullable(row.get("grafico_b")));
+        questao.setGraficoC(mapearDoubleNullable(row.get("grafico_c")));
+        questao.setGraficoEixoX( QuestaoUtil.safeText(row.get("grafico_eixo_x"), null));
+        questao.setGraficoEixoY( QuestaoUtil.safeText(row.get("grafico_eixo_y"), null));
+        questao.setGraficoXMin(mapearDoubleNullable(row.get("grafico_x_min")));
+        questao.setGraficoXMax(mapearDoubleNullable(row.get("grafico_x_max")));
+        questao.setGraficoXTickUnit(mapearDoubleNullable(row.get("grafico_x_tick_unit")));
         return questao;
     }
 
@@ -1311,6 +1325,35 @@ public class DiagnosticoService {
             return number.intValue();
         }
         return null;
+    }
+
+    private Double mapearDoubleNullable(Object rawValue) {
+        if (rawValue instanceof Number number) {
+            double value = number.doubleValue();
+            return Double.isFinite(value) ? value : null;
+        }
+        if (rawValue instanceof String text && !text.isBlank()) {
+            try {
+                double value = Double.parseDouble(text.trim());
+                return Double.isFinite(value) ? value : null;
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private boolean mapearBoolean(Object rawValue) {
+        if (rawValue instanceof Boolean bool) {
+            return bool;
+        }
+        if (rawValue instanceof Number number) {
+            return number.intValue() != 0;
+        }
+        if (rawValue instanceof String text && !text.isBlank()) {
+            return Boolean.parseBoolean(text.trim());
+        }
+        return false;
     }
 
     private double resolverIndicadorPrincipal(

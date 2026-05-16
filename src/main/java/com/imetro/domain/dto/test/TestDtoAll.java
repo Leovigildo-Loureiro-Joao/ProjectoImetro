@@ -44,14 +44,14 @@ public record TestDtoAll(
         UUID disciplina_id = (UUID)link.get("disciplina_id");
         UUID relatorio_id = (UUID)link.get("relatorio_id");
         UUID diagnostico_id = (UUID)link.get("diagnostico_id");
-        String nome = link.get("nome").toString();
+        String nome = link.get("disciplina_nome").toString();
         String nivel_inicial=link.get("nivel_inicial").toString();
         String nivel_final=link.get("nivel_final").toString();
         int duracao_seg=(int)link.get("duracao_segundos");
         int total_questoes=(int)link.get("total_questoes");
         int total_acertos=(int)link.get("total_acertos");
         int total_erros=(int)link.get("total_erros");
-        double percentual_acerto=(int)link.get("percentual_acerto");
+        double percentual_acerto=(double)link.get("percentual_acerto");
          int limite_questoes=(int)link.get("limite_questoes");
         double limite_inferior=(double)link.get("limite_inferior");
         double limite_superior=(double)link.get("limite_superior");

@@ -109,16 +109,16 @@ public class CatalogoQuestoesService {
         List<Questao> questoes = new ArrayList<>();
 
         questoes.add(criarQuestao("MAT001", "MATEMATICA", "Algebra", "Juros", "Um investidor aplicou R$ 5.000,00 a juros compostos de 2% ao mes. Apos 3 meses, qual sera o montante?", "R$ 5.300,00", "R$ 5.306,04", "R$ 5.302,00", "R$ 5.310,00", "Nao sei fazer conta de juros", "Precisaria de uma calculadora", "Vou pular essa", 'B', 1, 60, null));
-        questoes.add(criarQuestao("MAT002", "MATEMATICA", "Algebra", "Equacoes", "Se 3x + 7 = 22, qual e o valor de x?", "3", "4", "5", "6", "Sei resolver mas demoro", "Nao lembro como faz", "Pular", 'C', 1, 45, null));
+        questoes.add(criarQuestaoReta("MAT002", "MATEMATICA", "Algebra", "Equacoes", "Se 3x + 7 = 22, qual e o valor de x?", "3", "4", "5", "6", "Sei resolver mas demoro", "Nao lembro como faz", "Pular", 'C', 1, 45, null, 3d, 7d, "x", "y"));
         questoes.add(criarQuestao("MAT003", "MATEMATICA", "Geometria", "Circulos", "Qual e a area de um circulo cujo raio mede 5 cm? (Use pi = 3,14)", "78,5 cm2", "31,4 cm2", "15,7 cm2", "314 cm2", "Sei a formula mas vou errar conta", "Confundo area com circunferencia", "Chute educado", 'A', 2, 50, "Formula: Area = pi x r2"));
         questoes.add(criarQuestao("MAT004", "MATEMATICA", "Algebra", "Fracoes", "O resultado da expressao 2/3 + 1/4 e:", "3/7", "3/12", "11/12", "8/12", "Faco mas erro MMC", "Confundo soma com multiplicacao", "Pular", 'C', 2, 55, null));
         questoes.add(criarQuestao("MAT005", "MATEMATICA", "Algebra", "Porcentagem", "Uma loja oferece 20% de desconto em um produto que custa R$ 250,00. Qual o valor com desconto?", "R$ 200,00", "R$ 230,00", "R$ 50,00", "R$ 180,00", "Faco mas erro o calculo do desconto", "Sei mas confundo com acrescimo", "Chutar", 'A', 2, 50, null));
-        questoes.add(criarQuestao("MAT006", "MATEMATICA", "Algebra", "Equacoes", "Qual e a soma das raizes da equacao x2 - 7x + 10 = 0?", "5", "7", "10", "-7", "Sei a formula de Bhaskara mas demoro", "Confundo soma com produto", "Muito dificil, vou pular", 'B', 3, 70, null));
+        questoes.add(criarQuestaoParabola("MAT006", "MATEMATICA", "Algebra", "Equacoes", "Qual e a soma das raizes da equacao x2 - 7x + 10 = 0?", "5", "7", "10", "-7", "Sei a formula de Bhaskara mas demoro", "Confundo soma com produto", "Muito dificil, vou pular", 'B', 3, 70, null, 1d, -7d, 10d, "x", "y"));
         questoes.add(criarQuestao("MAT007", "MATEMATICA", "Raciocinio", "Proporcao", "Em um mapa, a escala e 1:100.000. Se a distancia no mapa e 5 cm, qual a distancia real em km?", "5 km", "50 km", "500 km", "0,5 km", "Sei mas erro na conversao", "Confundo escala", "Chutar", 'A', 3, 65, null));
         questoes.add(criarQuestao("MAT008", "MATEMATICA", "Estatistica", "Mediana", "Qual e a mediana dos numeros: 12, 7, 9, 15, 10?", "9", "10", "10,6", "12", "Sei mas confundo mediana com media", "Nao sei ordenar os numeros", "Pular", 'B', 2, 55, null));
 
-        questoes.add(criarQuestao("FIS001", "FISICA", "Mecanica", "MRU", "Um carro percorre 200 km em 4 horas. Qual e sua velocidade media?", "40 km/h", "45 km/h", "50 km/h", "55 km/h", "Nao sei", "Confundi a formula", "Pular", 'C', 1, 40, null));
-        questoes.add(criarQuestao("FIS002", "FISICA", "Mecanica", "Forca", "Segunda Lei de Newton: qual forca acelera um corpo de 5 kg a 4 m/s2?", "10 N", "15 N", "20 N", "25 N", "Nao sei", "Esqueci a formula", "Pular", 'C', 2, 50, null));
+        questoes.add(criarQuestaoReta("FIS001", "FISICA", "Mecanica", "MRU", "Um carro percorre 200 km em 4 horas. Qual e sua velocidade media?", "40 km/h", "45 km/h", "50 km/h", "55 km/h", "Nao sei", "Confundi a formula", "Pular", 'C', 1, 40, null, 50d, 0d, "tempo (h)", "distancia (km)"));
+        questoes.add(criarQuestaoReta("FIS002", "FISICA", "Mecanica", "Forca", "Segunda Lei de Newton: qual forca acelera um corpo de 5 kg a 4 m/s2?", "10 N", "15 N", "20 N", "25 N", "Nao sei", "Esqueci a formula", "Pular", 'C', 2, 50, null, 5d, 0d, "aceleracao (m/s2)", "forca (N)"));
         questoes.add(criarQuestao("FIS003", "FISICA", "Mecanica", "Energia", "Um carro de 1000 kg esta a 20 m/s. Qual e sua energia cinetica?", "100.000 J", "200.000 J", "300.000 J", "400.000 J", "Nao sei", "Erro a conta", "Pular", 'B', 2, 55, null));
         questoes.add(criarQuestao("FIS004", "FISICA", "Termologia", "Temperatura", "Qual e o ponto de ebulicao da agua ao nivel do mar em Celsius?", "0C", "50C", "100C", "212C", "Nao sei", "Esqueci", "Pular", 'C', 1, 35, null));
         questoes.add(criarQuestao("FIS005", "FISICA", "Termologia", "Calor", "Quantas calorias sao necessarias para aquecer 100 g de agua de 20C para 30C? (c=1 cal/gC)", "500 cal", "1000 cal", "1500 cal", "2000 cal", "Nao sei", "Esqueci a formula", "Pular", 'B', 3, 65, null));
@@ -188,6 +188,119 @@ public class CatalogoQuestoesService {
         return questao;
     }
 
+    private static Questao criarQuestaoReta(
+        String id,
+        String disciplina,
+        String topico,
+        String subtopico,
+        String enunciado,
+        String opcaoA,
+        String opcaoB,
+        String opcaoC,
+        String opcaoD,
+        String opcaoE,
+        String opcaoF,
+        String opcaoG,
+        char respostaCorreta,
+        int nivel,
+        double tempoSugerido,
+        String bloco2,
+        double a,
+        double b,
+        String eixoX,
+        String eixoY
+    ) {
+        Questao questao = criarQuestao(
+            id,
+            disciplina,
+            topico,
+            subtopico,
+            enunciado,
+            opcaoA,
+            opcaoB,
+            opcaoC,
+            opcaoD,
+            opcaoE,
+            opcaoF,
+            opcaoG,
+            respostaCorreta,
+            nivel,
+            tempoSugerido,
+            bloco2
+        );
+        aplicarGrafico(questao, "RETA", a, b, 0d, eixoX, eixoY, -4d, 4d, 1d);
+        return questao;
+    }
+
+    private static Questao criarQuestaoParabola(
+        String id,
+        String disciplina,
+        String topico,
+        String subtopico,
+        String enunciado,
+        String opcaoA,
+        String opcaoB,
+        String opcaoC,
+        String opcaoD,
+        String opcaoE,
+        String opcaoF,
+        String opcaoG,
+        char respostaCorreta,
+        int nivel,
+        double tempoSugerido,
+        String bloco2,
+        double a,
+        double b,
+        double c,
+        String eixoX,
+        String eixoY
+    ) {
+        Questao questao = criarQuestao(
+            id,
+            disciplina,
+            topico,
+            subtopico,
+            enunciado,
+            opcaoA,
+            opcaoB,
+            opcaoC,
+            opcaoD,
+            opcaoE,
+            opcaoF,
+            opcaoG,
+            respostaCorreta,
+            nivel,
+            tempoSugerido,
+            bloco2
+        );
+        aplicarGrafico(questao, "PARABOLA", a, b, c, eixoX, eixoY, -4d, 8d, 1d);
+        return questao;
+    }
+
+    private static void aplicarGrafico(
+        Questao questao,
+        String tipoCurva,
+        double a,
+        double b,
+        double c,
+        String eixoX,
+        String eixoY,
+        double xMin,
+        double xMax,
+        double xTickUnit
+    ) {
+        questao.setUsaGrafico(true);
+        questao.setGraficoTipoCurva(tipoCurva);
+        questao.setGraficoA(a);
+        questao.setGraficoB(b);
+        questao.setGraficoC(c);
+        questao.setGraficoEixoX(eixoX);
+        questao.setGraficoEixoY(eixoY);
+        questao.setGraficoXMin(xMin);
+        questao.setGraficoXMax(xMax);
+        questao.setGraficoXTickUnit(xTickUnit);
+    }
+
     private Questao copiarQuestao(Questao origem) {
         Questao copia = new Questao();
         copia.setId(origem.getId());
@@ -208,6 +321,16 @@ public class CatalogoQuestoesService {
         copia.setNivelDificuldade(origem.getNivelDificuldade());
         copia.setTempoSugerido(origem.getTempoSugerido());
         copia.setPesosResposta(origem.getPesosResposta());
+        copia.setUsaGrafico(origem.isUsaGrafico());
+        copia.setGraficoTipoCurva(origem.getGraficoTipoCurva());
+        copia.setGraficoA(origem.getGraficoA());
+        copia.setGraficoB(origem.getGraficoB());
+        copia.setGraficoC(origem.getGraficoC());
+        copia.setGraficoEixoX(origem.getGraficoEixoX());
+        copia.setGraficoEixoY(origem.getGraficoEixoY());
+        copia.setGraficoXMin(origem.getGraficoXMin());
+        copia.setGraficoXMax(origem.getGraficoXMax());
+        copia.setGraficoXTickUnit(origem.getGraficoXTickUnit());
         return copia;
     }
 

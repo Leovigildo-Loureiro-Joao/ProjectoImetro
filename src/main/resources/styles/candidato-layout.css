@@ -865,3 +865,90 @@
     -fx-background-radius: 8;
 
 }
+
+.question-side-card {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.99),
+        rgba(248, 250, 252, 0.97)
+    );
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(226, 232, 240, 0.96);
+    -fx-border-radius: 18;
+    -fx-padding: 14;
+    -fx-spacing: 10;
+}
+
+.question-side-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-text;
+}
+
+.question-side-copy {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-text-secondary;
+    -fx-line-spacing: 2px;
+}
+
+.question-side-caption {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-muted;
+    -fx-line-spacing: 2px;
+}
+
+.question-side-shell {
+    -fx-background-color: rgba(248, 250, 252, 0.94);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(226, 232, 240, 0.92);
+    -fx-border-radius: 14;
+    -fx-padding: 10;
+    -fx-alignment: center;
+}
+
+.plano-cartesiano-card {
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.08), 18, 0.16, 0, 6);
+}
+
+.plano-cartesiano-badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+.plano-cartesiano-shell {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(191, 219, 254, 0.92);
+    -fx-border-radius: 14;
+    -fx-alignment: center;
+}
+
+.plano-cartesiano-chart {
+    -fx-background-color: transparent;
+    -fx-padding: 4 2 2 2;
+}
+
+.plano-cartesiano-chart .chart-content {
+    -fx-padding: 8 12 8 8;
+}
+
+.plano-cartesiano-chart .chart-plot-background {
+    -fx-background-color: rgba(248, 250, 252, 0.92);
+    -fx-background-radius: 10;
+}
+
+.plano-cartesiano-chart .chart-vertical-grid-lines,
+.plano-cartesiano-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(203, 213, 225, 0.55);
+}
+
+.plano-cartesiano-chart .axis {
+    -fx-tick-label-fill: -color-muted;
+}
+
+.plano-cartesiano-chart .axis-label {
+    -fx-text-fill: -color-muted;
+}

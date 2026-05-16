@@ -1,6 +1,11 @@
 package com.imetro.services;
 
 import com.imetro.config.Env;
+import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
+import com.imetro.domain.dto.gemini.GeracaoSimuladoRequest;
+import com.imetro.domain.dto.gemini.ParsedJsonString;
+import com.imetro.domain.dto.gemini.UploadedPdf;
+import com.imetro.util.TextoUtil;
 import com.imetro.util.AppLogger;
 
 import java.io.IOException;
@@ -32,8 +37,10 @@ public class GeminiService {
     private static final Duration FILE_UPLOAD_TIMEOUT = Duration.ofMinutes(5);
     private static final Duration FILE_PROCESSING_TIMEOUT = Duration.ofMinutes(3);
     private static final Duration FILE_PROCESSING_POLL_INTERVAL = Duration.ofSeconds(2);
-    private static final int DEFAULT_SIMULADO_QUESTOES = 48;
+    private static final Duration GENERATE_CONTENT_RETRY_BASE_DELAY = Duration.ofSeconds(2);
+    public static final int DEFAULT_SIMULADO_QUESTOES = 48;
     private static final int MINIMO_QUESTOES_BASE_TOPICOS = 72;
+    private static final int GENERATE_CONTENT_MAX_ATTEMPTS = 3;
 
     private static final long MAX_DOCUMENT_BYTES = 50L * 1024L * 1024L;
     private static final long INLINE_BYTES_LIMIT = 15L * 1024L * 1024L;
@@ -120,9 +127,23 @@ public class GeminiService {
 
     public String gerarSimuladoJsonAPartirDeTopicos(String topicosJson, GeracaoSimuladoRequest request)
         throws IOException, InterruptedException {
-        GeracaoSimuladoRequest requestFinal = expandirRequestParaBaseDeQuestoes(
-            request == null ? GeracaoSimuladoRequest.padrao() : request
-        );
+        return gerarSimuladoJsonAPartirDeTopicos(topicosJson, request, true);
+    }
+
+    public String gerarSimuladoJsonAPartirDeTopicosEmLote(String topicosJson, GeracaoSimuladoRequest request)
+        throws IOException, InterruptedException {
+        return gerarSimuladoJsonAPartirDeTopicos(topicosJson, request, false);
+    }
+
+    private String gerarSimuladoJsonAPartirDeTopicos(
+        String topicosJson,
+        GeracaoSimuladoRequest request,
+        boolean expandirQuantidadeMinima
+    ) throws IOException, InterruptedException {
+        GeracaoSimuladoRequest baseRequest = request == null ? GeracaoSimuladoRequest.padrao() : request;
+        GeracaoSimuladoRequest requestFinal = expandirQuantidadeMinima
+            ? expandirRequestParaBaseDeQuestoes(baseRequest)
+            : baseRequest;
         String contexto = requireNonBlank(topicosJson, "topicosJson");
         LOGGER.info(
             "A gerar base alargada de questoes a partir do JSON de topicos para a disciplina "
@@ -380,7 +401,7 @@ public class GeminiService {
     private String postJson(URI uri, String jsonBody) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(uri)
-            .timeout(Duration.ofMinutes(2))
+            .timeout(Duration.ofMinutes(5))
             .header("Content-Type", "application/json")
             .header("x-goog-api-key", apiKey)
             .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
@@ -398,21 +419,41 @@ public class GeminiService {
         IOException lastError = null;
 
         for (String model : resolveModelAttempts()) {
-            try {
-                LOGGER.info("A chamar generateContent no modelo " + model + ".");
-                return postJson(
-                    URI.create(GENERATE_CONTENT_URL_TEMPLATE.formatted(model)),
-                    jsonBody
-                );
-            } catch (IOException e) {
-                lastError = e;
-                LOGGER.log(
-                    shouldTryModelFallback(model, e) ? Level.WARNING : Level.SEVERE,
-                    "Falha ao chamar o Gemini no modelo " + model + ": " + e.getMessage(),
-                    shouldTryModelFallback(model, e) ? null : e
-                );
-                if (!shouldTryModelFallback(model, e)) {
-                    throw e;
+            for (int attempt = 1; attempt <= GENERATE_CONTENT_MAX_ATTEMPTS; attempt++) {
+                try {
+                    LOGGER.info(
+                        "A chamar generateContent no modelo " + model + " (tentativa "
+                            + attempt + "/" + GENERATE_CONTENT_MAX_ATTEMPTS + ")."
+                    );
+                    return postJson(
+                        URI.create(GENERATE_CONTENT_URL_TEMPLATE.formatted(model)),
+                        jsonBody
+                    );
+                } catch (IOException e) {
+                    lastError = e;
+                    boolean retryable = isRetryableGenerateContentError(e);
+                    boolean fallback = shouldTryModelFallback(model, e);
+                    boolean hasMoreAttempts = attempt < GENERATE_CONTENT_MAX_ATTEMPTS;
+
+                    LOGGER.log(
+                        retryable || fallback ? Level.WARNING : Level.SEVERE,
+                        "Falha ao chamar o Gemini no modelo " + model + ": " + e.getMessage(),
+                        retryable || fallback ? null : e
+                    );
+
+                    if (retryable && hasMoreAttempts) {
+                        long delayMillis = GENERATE_CONTENT_RETRY_BASE_DELAY.toMillis() * (1L << (attempt - 1));
+                        LOGGER.info(
+                            "Nova tentativa do Gemini em " + delayMillis + "ms para o modelo " + model + "."
+                        );
+                        Thread.sleep(delayMillis);
+                        continue;
+                    }
+
+                    if (!fallback) {
+                        throw e;
+                    }
+                    break;
                 }
             }
         }
@@ -482,6 +523,7 @@ public class GeminiService {
         prompt.append("- No campo fonteResumo, resume em poucas linhas os assuntos-base dos PDFs.\n");
         prompt.append("- No campo explicacao, justifica a resposta correta de forma curta e objetiva.\n");
         prompt.append("- Antes de responder, verifica que respostaCorreta coincide exatamente com a alternativa cujo peso e 1.0.\n");
+        appendContratoGrafico(prompt, request.disciplina());
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
 
         if (request.instrucoesExtras() != null && !request.instrucoesExtras().isBlank()) {
@@ -518,6 +560,7 @@ public class GeminiService {
         prompt.append("- No campo fonteResumo, resume a cobertura indicada no JSON.\n");
         prompt.append("- No campo explicacao, justifica a resposta correta de forma curta e objetiva.\n");
         prompt.append("- Antes de responder, verifica que respostaCorreta coincide exatamente com a alternativa cujo peso e 1.0.\n");
+        appendContratoGrafico(prompt, request.disciplina());
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
         prompt.append("JSON de topicos:\n");
         prompt.append(topicosJson).append('\n');
@@ -528,6 +571,30 @@ public class GeminiService {
         }
 
         return prompt.toString();
+    }
+
+    private void appendContratoGrafico(StringBuilder prompt, String disciplina) {
+        if (disciplinaSuportaGrafico(disciplina)) {
+            prompt.append("- Nesta fase do projeto, podes gerar questoes com grafico apenas para MATEMATICA e FISICA.\n");
+            prompt.append("- Quando a leitura da questao melhorar com grafico, preenche o objeto grafico com usar=true.\n");
+            prompt.append("- Quando nao precisares de grafico, devolve grafico.usar=false e grafico.tipoCurva='NENHUM'.\n");
+            prompt.append("- Usa apenas os tipos de curva RETA ou PARABOLA.\n");
+            prompt.append("- Para RETA, usa a formula y = a*x + b.\n");
+            prompt.append("- Para PARABOLA, usa a formula y = a*x^2 + b*x + c.\n");
+            prompt.append("- Faz o grafico bater exatamente com o enunciado e com a resposta correta.\n");
+            prompt.append("- Se a questao depender de energia, vetores, setas, diagrama de forcas ou muitos elementos visuais, nao uses grafico nesta versao.\n");
+            prompt.append("- Em Fisica, prefere graficos simples de tempo-posicao, tempo-velocidade, forca-aceleracao ou trajetoria parabolica.\n");
+            prompt.append("- Em Matematica, prefere reta, funcao afim e funcao quadratica.\n");
+            prompt.append("- Quando grafico.usar=true, preenche obrigatoriamente: tipoCurva, a, b, c, eixoX, eixoY, xMin, xMax e xTickUnit.\n");
+            prompt.append("- Usa janelas simples e estaveis como xMin/xMax pequenos e xTickUnit positivo.\n");
+        } else {
+            prompt.append("- Para disciplinas fora de MATEMATICA e FISICA, devolve sempre grafico.usar=false e grafico.tipoCurva='NENHUM'.\n");
+        }
+    }
+
+    private boolean disciplinaSuportaGrafico(String disciplina) {
+        String normalizada = TextoUtil.normalizarMaiusculo(disciplina);
+        return "MATEMATICA".equals(normalizada) || "FISICA".equals(normalizada);
     }
 
     private GeracaoSimuladoRequest expandirRequestParaBaseDeQuestoes(GeracaoSimuladoRequest request) {
@@ -639,11 +706,30 @@ public class GeminiService {
 
         String normalized = message.toLowerCase(Locale.ROOT);
         return normalized.contains("http 429")
+            || normalized.contains("http 503")
             || normalized.contains("quota")
             || normalized.contains("free tier")
+            || normalized.contains("high demand")
+            || normalized.contains("temporar")
             || normalized.contains("model")
             || normalized.contains("not found")
             || normalized.contains("unsupported");
+    }
+
+    private boolean isRetryableGenerateContentError(IOException error) {
+        String message = error == null ? null : error.getMessage();
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+
+        String normalized = message.toLowerCase(Locale.ROOT);
+        return normalized.contains("http 500")
+            || normalized.contains("http 502")
+            || normalized.contains("http 503")
+            || normalized.contains("http 504")
+            || normalized.contains("high demand")
+            || normalized.contains("temporar")
+            || normalized.contains("service unavailable");
     }
 
     private String normalizeFileState(String state) {
@@ -811,47 +897,7 @@ public class GeminiService {
         return cursor;
     }
 
-    private record ParsedJsonString(String value, int nextIndex) {
-    }
 
-    private record UploadedPdf(String uri, String mimeType, String name, String state) {
-    }
-
-    public record GeracaoSimuladoRequest(
-        String disciplina,
-        String idioma,
-        int quantidadeQuestoes,
-        String nivel,
-        String instrucoesExtras
-    ) {
-        public GeracaoSimuladoRequest {
-            disciplina = disciplina == null || disciplina.isBlank() ? "GERAL" : disciplina.trim();
-            idioma = idioma == null || idioma.isBlank() ? "pt-AO" : idioma.trim();
-            quantidadeQuestoes = quantidadeQuestoes <= 0 ? DEFAULT_SIMULADO_QUESTOES : quantidadeQuestoes;
-            nivel = nivel == null || nivel.isBlank() ? "MISTO" : nivel.trim().toUpperCase(Locale.ROOT);
-            instrucoesExtras = instrucoesExtras == null ? "" : instrucoesExtras.trim();
-        }
-
-        public static GeracaoSimuladoRequest padrao() {
-            return new GeracaoSimuladoRequest("GERAL", "pt-AO", DEFAULT_SIMULADO_QUESTOES, "MISTO", "");
-        }
-    }
-
-    public record ExtracaoTopicosRequest(
-        String disciplina,
-        String idioma,
-        String instrucoesExtras
-    ) {
-        public ExtracaoTopicosRequest {
-            disciplina = disciplina == null || disciplina.isBlank() ? "GERAL" : disciplina.trim();
-            idioma = idioma == null || idioma.isBlank() ? "pt-AO" : idioma.trim();
-            instrucoesExtras = instrucoesExtras == null ? "" : instrucoesExtras.trim();
-        }
-
-        public static ExtracaoTopicosRequest padrao() {
-            return new ExtracaoTopicosRequest("GERAL", "pt-AO", "");
-        }
-    }
 
     private static final String TOPICOS_JSON_SCHEMA = """
         {
@@ -915,6 +961,33 @@ public class GeminiService {
                     "minItems": 4,
                     "maxItems": 4
                   },
+                  "grafico": {
+                    "type": "object",
+                    "properties": {
+                      "usar": { "type": "boolean" },
+                      "tipoCurva": { "type": "string" },
+                      "a": { "type": "number" },
+                      "b": { "type": "number" },
+                      "c": { "type": "number" },
+                      "eixoX": { "type": "string" },
+                      "eixoY": { "type": "string" },
+                      "xMin": { "type": "number" },
+                      "xMax": { "type": "number" },
+                      "xTickUnit": { "type": "number" }
+                    },
+                    "required": [
+                      "usar",
+                      "tipoCurva",
+                      "a",
+                      "b",
+                      "c",
+                      "eixoX",
+                      "eixoY",
+                      "xMin",
+                      "xMax",
+                      "xTickUnit"
+                    ]
+                  },
                   "respostaCorreta": { "type": "string" },
                   "explicacao": { "type": "string" }
                 },
@@ -931,6 +1004,7 @@ public class GeminiService {
                   "paginaFim",
                   "alternativas",
                   "pesosAlternativas",
+                  "grafico",
                   "respostaCorreta",
                   "explicacao"
                 ]

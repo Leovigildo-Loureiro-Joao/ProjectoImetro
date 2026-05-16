@@ -56,6 +56,16 @@
     referencia_livro text null,
     pagina_inicio integer null,
     pagina_fim integer null,
+    usa_grafico boolean not null default false,
+    grafico_tipo_curva text null,
+    grafico_a double precision null,
+    grafico_b double precision null,
+    grafico_c double precision null,
+    grafico_eixo_x text null,
+    grafico_eixo_y text null,
+    grafico_x_min double precision null,
+    grafico_x_max double precision null,
+    grafico_x_tick_unit double precision null,
     criado_em timestamptz not null default now()
   );
 
@@ -65,6 +75,7 @@
   create index if not exists idx_perguntas_rigor on perguntas (rigor);
   create index if not exists idx_perguntas_topico_rigor on perguntas (topico, rigor);
   create index if not exists idx_perguntas_topico_principal on perguntas (topico_principal);
+  create index if not exists idx_perguntas_usa_grafico on perguntas (usa_grafico);
 
   -- Sessões/testes/simulados
   create table if not exists testes (

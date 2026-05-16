@@ -23,6 +23,7 @@ import com.imetro.domain.dto.test.ErrosComuns;
 import com.imetro.domain.dto.test.Melhorias;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.Teste_Pergunta;
+import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
@@ -30,6 +31,7 @@ import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.TestePerguntasRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.persistence.repository.TesteStatsRepository;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator.TesteConfig;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.CalculoStats;
@@ -135,6 +137,7 @@ public class TesteService {
 
 
      public void registrarTesteConcluido(
+        NivelDificuldadeAdaptativa config,
         UUID candidatoId,
         UUID diagnosticoId,
         List<Questao> questoes,
@@ -187,7 +190,7 @@ public class TesteService {
                     ;
                     UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
                     nivelInicial=NivelActual(candidatoId, disciplinaId).toUpperCase();
-                    ConfiguracaoTesteAdaptativoNivelDto configNivelDto=configuracaoTesteAdaptativoNivelRepositorty.findByCodigo(nivelInicial);
+                    ConfiguracaoTesteAdaptativoNivelDto configNivelDto=configuracaoTesteAdaptativoNivelRepositorty.findByCodigo(config.codigo());
                     int totalQuestoes = indices.size();
                     int totalAcertos = 0;
 
@@ -232,8 +235,8 @@ public class TesteService {
                     System.out.println("chegou");
                     UUID id =testeRepository.inserir(
                         candidatoId,
-                        UUID.randomUUID(),
-                        UUID.randomUUID(),
+                       null,
+                       null,
                         concluidoEm,
                         percentualAcerto,
                         concluidoEm,
@@ -272,6 +275,7 @@ public class TesteService {
 
 
                     testeStatsRepository.insert(
+                        conn,
                         new Teste_Stat(
                             UUID.randomUUID(),
                             id,

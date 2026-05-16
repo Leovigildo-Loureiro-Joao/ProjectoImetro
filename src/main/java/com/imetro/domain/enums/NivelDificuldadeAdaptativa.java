@@ -184,6 +184,21 @@ public enum NivelDificuldadeAdaptativa {
         return PADRAO;
     }
 
+    public static NivelDificuldadeAdaptativa resolverNivelPorRigor(double rigor) {
+        double rigorNormalizado = Math.max(0d, Math.min(1d, rigor));
+
+        NivelDificuldadeAdaptativa maisProximo = PADRAO;
+        double menorDistancia = Double.MAX_VALUE;
+        for (NivelDificuldadeAdaptativa value : values()) {
+            double distancia = Math.abs(rigorNormalizado - value.rigorBase);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                maisProximo = value;
+            }
+        }
+        return maisProximo;
+    }
+
     private static Set<String> normalizarAliases(String codigo, String rotulo, String[] aliases) {
         LinkedHashSet<String> valores = new LinkedHashSet<>();
         valores.add(normalizar(codigo));
@@ -196,5 +211,16 @@ public enum NivelDificuldadeAdaptativa {
 
     private static String normalizar(String valor) {
         return TextoUtil.normalizarMinusculo(valor);
+    }
+
+    public static NivelDificuldadeAdaptativa resolverNivelPorRigor2(double rigor) {
+        NivelDificuldadeAdaptativa nivelAnterior = null;
+        for (NivelDificuldadeAdaptativa nivel : values()) {
+            if (rigor < nivel.rigorBase) {
+                return nivelAnterior != null ? nivelAnterior : nivel;
+            }
+            nivelAnterior = nivel;
+        }
+        return EXPERT;
     }
 }

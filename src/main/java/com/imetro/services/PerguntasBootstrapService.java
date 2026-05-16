@@ -1,9 +1,11 @@
 package com.imetro.services;
 
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.util.AppLogger;
+import com.imetro.util.QuestaoUtil;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,16 +16,33 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PerguntasBootstrapService {
 
-    private static final int DEFAULT_QUESTOES_INICIAIS = 72;
+    private static final int DEFAULT_QUESTOES_INICIAIS = 120;
+    private static final int QUESTOES_POR_SUBTOPICO = 40;
+    private static final int MAX_QUESTOES_INICIAIS = 160;
+    private static final int MAX_GEMINI_WORKERS = 2;
+    private static final int MAX_LOTES_POR_DISCIPLINA = 8;
+    private static final int MIN_SUBTOPICOS_POR_LOTE = 4;
     private static final String GENERATED_QUESTIONS_FILE = "questoes-geradas.json";
+    private static final Pattern SUBTOPICOS_ARRAY_PATTERN =
+        Pattern.compile("\"subtopicos\"\\s*:\\s*\\[(.*?)]", Pattern.DOTALL);
+    private static final Pattern JSON_STRING_PATTERN = Pattern.compile("\"((?:\\\\.|[^\"\\\\])*)\"");
     private static final Logger LOGGER = AppLogger.getLogger(PerguntasBootstrapService.class);
 
     private final GeminiService geminiService;
@@ -53,7 +72,6 @@ public class PerguntasBootstrapService {
             return List.of();
         }
 
-        LOGGER.info("A preparar processamento automatico das disciplinas do candidato " + candidatoId + ".");
 
         emitirProgresso(
             progressListener,
@@ -98,8 +116,12 @@ public class PerguntasBootstrapService {
         ArrayList<BootstrapResult> resultados = new ArrayList<>();
         int totalDisciplinas = disciplinas.size();
         for (int indice = 0; indice < totalDisciplinas; indice++) {
+            if (Thread.currentThread().isInterrupted()) {
+                LOGGER.warning("Bootstrap automatico interrompido antes de concluir todas as disciplinas.");
+                break;
+            }
+
             DisciplinaDto disciplina = disciplinas.get(indice);
-            LOGGER.info("A avaliar a disciplina " + disciplina.nome() + " (" + disciplina.id() + ").");
             emitirProgresso(
                 progressListener,
                 calcularProgresso(indice, totalDisciplinas, 0.12),
@@ -110,7 +132,7 @@ public class PerguntasBootstrapService {
 
             int perguntasExistentes = contarPerguntasPorDisciplina(disciplina.nome());
             if (perguntasExistentes > 0) {
-                LOGGER.info("A disciplina " + disciplina.nome() + " ja possui " + perguntasExistentes + " perguntas.");
+
                 BootstrapResult result = new BootstrapResult(
                     disciplina.id(),
                     disciplina.nome(),
@@ -158,7 +180,6 @@ public class PerguntasBootstrapService {
             "Base inicial atualizada",
             "O processamento automatico das disciplinas terminou."
         );
-        LOGGER.info("Processamento automatico concluido para o candidato " + candidatoId + ".");
         return List.copyOf(resultados);
     }
 
@@ -228,28 +249,23 @@ public class PerguntasBootstrapService {
             );
 
             String jsonTopicos = Files.readString(topicosResult.arquivoTopicos(), StandardCharsets.UTF_8);
-            String jsonQuestoes = geminiService.gerarSimuladoJsonAPartirDeTopicos(
+            int totalSubtopicos = contarSubtopicos(jsonTopicos);
+            int quantidadeInicial = calcularQuantidadeInicial(totalSubtopicos);
+            GeracaoQuestoesEmLotes geracao = gerarQuestoesEmLotes(
+                disciplina,
                 jsonTopicos,
-                new GeminiService.GeracaoSimuladoRequest(
-                    disciplina.nome(),
-                    "pt-AO",
-                    DEFAULT_QUESTOES_INICIAIS,
-                    "MISTO",
-                    """
-                    Gera uma base inicial de estudo para uso individual do candidato.
-                    Distribui as questoes pelos principais topicos e subtopicos do material.
-                    Produz cobertura suficiente para testes curtos, medios e longos sem ficar presa a uma amostra pequena.
-                    Sempre que houver cobertura suficiente, gera varias questoes por subtopico em niveis graduais.
-                    Evita repetir enunciados e cobre o conteudo programatico central identificado nos livros.
-                    """
-                )
+                totalSubtopicos,
+                quantidadeInicial,
+                progressListener,
+                indiceDisciplina,
+                totalDisciplinas
             );
 
             Path pastaDisciplina = uploadBootstrapService.pastaDisciplina(disciplina.id());
             Path arquivoQuestoes = pastaDisciplina.resolve(GENERATED_QUESTIONS_FILE);
             Files.writeString(
                 arquivoQuestoes,
-                jsonQuestoes,
+                geracao.jsonAgregado(),
                 StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING,
@@ -265,7 +281,10 @@ public class PerguntasBootstrapService {
                 "A inserir a base inicial de questoes na tabela perguntas."
             );
 
-            int inseridas = inserirPerguntasGeradas(disciplina, jsonQuestoes);
+            int inseridas = 0;
+            for (String jsonLote : geracao.jsonLotesComSucesso()) {
+                inseridas += inserirPerguntasGeradas(disciplina, jsonLote);
+            }
             int totalPerguntas = contarPerguntasPorDisciplina(disciplina.nome());
             LOGGER.info(
                 "Disciplina " + disciplina.nome() + " recebeu " + inseridas
@@ -281,10 +300,28 @@ public class PerguntasBootstrapService {
                 inseridas > 0
                     ? "Livros processados automaticamente. "
                         + topicosResult.detalhe()
+                        + " "
+                        + construirResumoGeracaoEmLotes(geracao)
                         + " E a base recebeu "
                         + inseridas
                         + " perguntas reais."
-                    : "Os livros foram lidos, mas nenhuma pergunta nova foi inserida."
+                    : "Os livros foram lidos, mas nenhuma pergunta nova foi inserida. "
+                        + construirResumoGeracaoEmLotes(geracao)
+            );
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.log(
+                Level.WARNING,
+                "Processamento interrompido para a disciplina " + disciplina.nome() + " (" + disciplina.id() + ").",
+                e
+            );
+            return new BootstrapResult(
+                disciplina.id(),
+                disciplina.nome(),
+                BootstrapStatus.ERRO,
+                contarPdfsDaDisciplina(disciplina.id()),
+                contarPerguntasPorDisciplina(disciplina.nome()),
+                "O processamento foi interrompido antes de concluir a geracao das perguntas."
             );
         } catch (Exception e) {
             LOGGER.log(
@@ -301,6 +338,450 @@ public class PerguntasBootstrapService {
                 "Falha ao processar os livros automaticamente: " + e.getMessage()
             );
         }
+    }
+
+    private GeracaoQuestoesEmLotes gerarQuestoesEmLotes(
+        DisciplinaDto disciplina,
+        String jsonTopicos,
+        int totalSubtopicos,
+        int quantidadeInicial,
+        BootstrapProgressListener progressListener,
+        int indiceDisciplina,
+        int totalDisciplinas
+    ) throws InterruptedException, IOException {
+        List<GeracaoLote> lotes = construirLotesGeracao(jsonTopicos, quantidadeInicial);
+        if (lotes.isEmpty()) {
+            throw new IOException("Nao foi possivel montar lotes de geracao para a disciplina " + disciplina.nome() + ".");
+        }
+
+        ExecutorService executor = criarExecutorLotesGemini();
+        ExecutorCompletionService<GeracaoLoteResultado> completionService = new ExecutorCompletionService<>(executor);
+        ArrayList<String> jsonLotesComSucesso = new ArrayList<>();
+        int concluidos = 0;
+        int sucessos = 0;
+        int falhas = 0;
+
+        try {
+            for (GeracaoLote lote : lotes) {
+                completionService.submit(() -> executarGeracaoLote(disciplina, jsonTopicos, lote, totalSubtopicos));
+            }
+
+            while (concluidos < lotes.size()) {
+                Future<GeracaoLoteResultado> future = completionService.take();
+                GeracaoLoteResultado resultado = obterResultadoLote(future);
+                concluidos++;
+
+                if (resultado.sucesso()) {
+                    jsonLotesComSucesso.add(resultado.jsonQuestoes());
+                    sucessos++;
+                    LOGGER.info(
+                        "Lote " + resultado.lote().indice() + "/" + resultado.lote().totalLotes()
+                            + " concluido para " + disciplina.nome() + "."
+                    );
+                } else {
+                    falhas++;
+                    LOGGER.warning(
+                        "Lote " + resultado.lote().indice() + "/" + resultado.lote().totalLotes()
+                            + " falhou para " + disciplina.nome() + ": " + resultado.erro()
+                    );
+                }
+
+                double etapa = 0.72 + (0.18 * concluidos / lotes.size());
+                emitirProgresso(
+                    progressListener,
+                    calcularProgresso(indiceDisciplina, totalDisciplinas, etapa),
+                    false,
+                    "A gerar perguntas de " + disciplina.nome(),
+                    construirDetalheProgressoLotes(concluidos, lotes.size(), sucessos, falhas)
+                );
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        if (jsonLotesComSucesso.isEmpty()) {
+            throw new IOException(
+                "O Gemini nao conseguiu devolver nenhum lote de perguntas aproveitavel para " + disciplina.nome() + "."
+            );
+        }
+
+        return new GeracaoQuestoesEmLotes(
+            List.copyOf(jsonLotesComSucesso),
+            montarJsonQuestoesAgregado(disciplina, jsonLotesComSucesso, sucessos, falhas),
+            lotes.size(),
+            sucessos,
+            falhas
+        );
+    }
+
+    private GeracaoLoteResultado obterResultadoLote(Future<GeracaoLoteResultado> future) throws InterruptedException {
+        try {
+            return future.get();
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            String mensagem = cause.getMessage() == null || cause.getMessage().isBlank()
+                ? "Falha inesperada ao concluir o lote."
+                : cause.getMessage();
+            return new GeracaoLoteResultado(new GeracaoLote(0, 0, List.of(), 0), null, mensagem);
+        }
+    }
+
+    private ExecutorService criarExecutorLotesGemini() {
+        AtomicInteger contador = new AtomicInteger(1);
+        return Executors.newFixedThreadPool(MAX_GEMINI_WORKERS, runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("imetro-gemini-lote-" + contador.getAndIncrement());
+            thread.setDaemon(true);
+            thread.setUncaughtExceptionHandler((worker, throwable) ->
+                LOGGER.log(Level.SEVERE, "Excecao nao tratada num worker de lotes do Gemini.", throwable)
+            );
+            return thread;
+        });
+    }
+
+    private GeracaoLoteResultado executarGeracaoLote(
+        DisciplinaDto disciplina,
+        String jsonTopicos,
+        GeracaoLote lote,
+        int totalSubtopicos
+    ) {
+        try {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException("Lote interrompido antes de iniciar.");
+            }
+
+            String jsonQuestoes = geminiService.gerarSimuladoJsonAPartirDeTopicosEmLote(
+                jsonTopicos,
+                new GeminiService.GeracaoSimuladoRequest(
+                    disciplina.nome(),
+                    "pt-AO",
+                    lote.quantidadeQuestoes(),
+                    "MISTO",
+                    construirInstrucaoBaseInicial(totalSubtopicos, lote.quantidadeQuestoes())
+                        + construirInstrucaoFocoDoLote(lote)
+                )
+            );
+            return new GeracaoLoteResultado(lote, jsonQuestoes, null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new GeracaoLoteResultado(lote, null, "Lote interrompido antes de concluir a chamada ao Gemini.");
+        } catch (Exception e) {
+            return new GeracaoLoteResultado(
+                lote,
+                null,
+                e.getMessage() == null || e.getMessage().isBlank()
+                    ? "Falha desconhecida ao gerar o lote."
+                    : e.getMessage()
+            );
+        }
+    }
+
+    private List<GeracaoLote> construirLotesGeracao(String jsonTopicos, int quantidadeInicial) {
+        ArrayList<TopicoSubtopico> focos = extrairTopicosSubtopicos(jsonTopicos);
+        if (focos.isEmpty()) {
+            return List.of(new GeracaoLote(1, 1, List.of(), quantidadeInicial));
+        }
+
+        int subtopicosPorLote = calcularSubtopicosPorLote(focos.size());
+        ArrayList<List<TopicoSubtopico>> grupos = particionarSubtopicos(focos, subtopicosPorLote);
+        int totalFocos = focos.size();
+        int restantes = quantidadeInicial;
+        int focosRestantes = totalFocos;
+        ArrayList<GeracaoLote> lotes = new ArrayList<>();
+
+        for (int i = 0; i < grupos.size(); i++) {
+            List<TopicoSubtopico> grupo = grupos.get(i);
+            int quantidadeLote;
+            if (i == grupos.size() - 1) {
+                quantidadeLote = Math.max(1, restantes);
+            } else {
+                quantidadeLote = Math.max(1, (quantidadeInicial * grupo.size()) / Math.max(1, totalFocos));
+                int minimoReservado = grupos.size() - i - 1;
+                quantidadeLote = Math.min(quantidadeLote, Math.max(1, restantes - minimoReservado));
+            }
+
+            lotes.add(new GeracaoLote(i + 1, grupos.size(), List.copyOf(grupo), quantidadeLote));
+            restantes -= quantidadeLote;
+            focosRestantes -= grupo.size();
+
+            if (focosRestantes <= 0 && restantes > 0 && !lotes.isEmpty()) {
+                GeracaoLote ultimo = lotes.removeLast();
+                lotes.add(new GeracaoLote(
+                    ultimo.indice(),
+                    ultimo.totalLotes(),
+                    ultimo.focos(),
+                    ultimo.quantidadeQuestoes() + restantes
+                ));
+                restantes = 0;
+            }
+        }
+
+        return List.copyOf(lotes);
+    }
+
+    private int calcularSubtopicosPorLote(int totalFocos) {
+        if (totalFocos <= 0) {
+            return 0;
+        }
+        int sugerido = (int) Math.ceil((double) totalFocos / MAX_LOTES_POR_DISCIPLINA);
+        return Math.max(1, Math.min(totalFocos, Math.max(MIN_SUBTOPICOS_POR_LOTE, sugerido)));
+    }
+
+    private ArrayList<List<TopicoSubtopico>> particionarSubtopicos(
+        List<TopicoSubtopico> focos,
+        int subtopicosPorLote
+    ) {
+        ArrayList<List<TopicoSubtopico>> grupos = new ArrayList<>();
+        if (focos == null || focos.isEmpty()) {
+            return grupos;
+        }
+
+        int tamanhoLote = Math.max(1, subtopicosPorLote);
+        for (int inicio = 0; inicio < focos.size(); inicio += tamanhoLote) {
+            int fim = Math.min(focos.size(), inicio + tamanhoLote);
+            grupos.add(new ArrayList<>(focos.subList(inicio, fim)));
+        }
+        return grupos;
+    }
+
+    private ArrayList<TopicoSubtopico> extrairTopicosSubtopicos(String jsonTopicos) {
+        String topicosArray = extrairCampoArrayJson(jsonTopicos, "topicos");
+        if (topicosArray == null || topicosArray.isBlank()) {
+            return new ArrayList<>();
+        }
+
+        LinkedHashSet<String> chaves = new LinkedHashSet<>();
+        ArrayList<TopicoSubtopico> pares = new ArrayList<>();
+        for (String objetoTopico : extrairObjetosJsonArray(topicosArray)) {
+            String topico = extrairCampoStringJson(objetoTopico, "nome");
+            List<String> subtopicos = extrairCampoArrayStringsJson(objetoTopico, "subtopicos");
+            if (subtopicos.isEmpty()) {
+                continue;
+            }
+
+            for (String subtopico : subtopicos) {
+                String nomeTopico = topico == null || topico.isBlank() ? "Geral" : topico.trim();
+                String nomeSubtopico = subtopico == null || subtopico.isBlank() ? null : subtopico.trim();
+                if (nomeSubtopico == null) {
+                    continue;
+                }
+
+                String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
+                if (!chaves.add(chave)) {
+                    continue;
+                }
+                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico));
+            }
+        }
+
+        return pares;
+    }
+
+    private String extrairCampoStringJson(String json, String campo) {
+        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
+        Matcher matcher = pattern.matcher(json);
+        if (!matcher.find()) {
+            return null;
+        }
+        return QuestaoUtil.unescapeJson(matcher.group(1));
+    }
+
+    private List<String> extrairCampoArrayStringsJson(String json, String campo) {
+        String arrayJson = extrairCampoArrayJson(json, campo);
+        if (arrayJson == null || arrayJson.isBlank()) {
+            return List.of();
+        }
+
+        LinkedHashSet<String> valores = new LinkedHashSet<>();
+        Matcher matcher = JSON_STRING_PATTERN.matcher(arrayJson);
+        while (matcher.find()) {
+            String valor = QuestaoUtil.unescapeJson(matcher.group(1));
+            if (valor != null && !valor.isBlank()) {
+                valores.add(valor.trim());
+            }
+        }
+        return List.copyOf(valores);
+    }
+
+    private String extrairCampoArrayJson(String json, String campo) {
+        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*\\[", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(json);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        int inicioArray = matcher.end() - 1;
+        int fimArray = localizarFechoJson(json, inicioArray, '[', ']');
+        if (fimArray < 0) {
+            return null;
+        }
+        return json.substring(inicioArray, fimArray + 1);
+    }
+
+    private ArrayList<String> extrairObjetosJsonArray(String arrayJson) {
+        ArrayList<String> objetos = new ArrayList<>();
+        if (arrayJson == null || arrayJson.isBlank()) {
+            return objetos;
+        }
+
+        int cursor = 0;
+        while (cursor < arrayJson.length()) {
+            char atual = arrayJson.charAt(cursor);
+            if (atual != '{') {
+                cursor++;
+                continue;
+            }
+
+            int fimObjeto = localizarFechoJson(arrayJson, cursor, '{', '}');
+            if (fimObjeto < 0) {
+                break;
+            }
+
+            objetos.add(arrayJson.substring(cursor, fimObjeto + 1));
+            cursor = fimObjeto + 1;
+        }
+
+        return objetos;
+    }
+
+    private int localizarFechoJson(String valor, int inicio, char abre, char fecha) {
+        boolean emString = false;
+        int profundidade = 0;
+
+        for (int i = inicio; i < valor.length(); i++) {
+            char atual = valor.charAt(i);
+            if (atual == '"' && !isEscaped(valor, i)) {
+                emString = !emString;
+                continue;
+            }
+            if (emString) {
+                continue;
+            }
+            if (atual == abre) {
+                profundidade++;
+            } else if (atual == fecha) {
+                profundidade--;
+                if (profundidade == 0) {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private boolean isEscaped(String valor, int indice) {
+        int barras = 0;
+        for (int i = indice - 1; i >= 0 && valor.charAt(i) == '\\'; i--) {
+            barras++;
+        }
+        return barras % 2 != 0;
+    }
+
+    private String construirInstrucaoBaseInicial(int totalSubtopicos, int quantidadeInicial) {
+        return """
+            Gera uma base inicial de estudo para uso individual do candidato.
+            Distribui as questoes pelos principais topicos e subtopicos do material.
+            Produz cobertura suficiente para testes curtos, medios e longos sem ficar presa a uma amostra pequena.
+            Sempre que houver cobertura suficiente, gera varias questoes por subtopico em niveis graduais.
+            Evita repetir enunciados e cobre o conteudo programatico central identificado nos livros.
+            """
+            + construirInstrucaoDistribuicao(totalSubtopicos, quantidadeInicial);
+    }
+
+    private String construirInstrucaoFocoDoLote(GeracaoLote lote) {
+        if (lote.focos().isEmpty()) {
+            return """
+
+                Este lote nao recebeu uma lista explicita de subtopicos.
+                Usa os topicos e subtopicos do JSON completo, mantendo variedade e sem repetir enunciados.
+                """;
+        }
+
+        StringBuilder instrucao = new StringBuilder();
+        instrucao.append('\n');
+        instrucao.append("Este e o lote ").append(lote.indice()).append(" de ").append(lote.totalLotes()).append(".\n");
+        instrucao.append("Gera aproximadamente ").append(lote.quantidadeQuestoes()).append(" questoes.\n");
+        instrucao.append("Foca o lote apenas nestes pares topico/subtopico:\n");
+        for (TopicoSubtopico foco : lote.focos()) {
+            instrucao.append("- ").append(foco.topico()).append(" -> ").append(foco.subtopico()).append('\n');
+        }
+        instrucao.append("Nao saias desta lista, exceto se precisares de contexto imediato do mesmo topico.\n");
+        instrucao.append("Evita repetir enunciados de outros lotes e reparte as questoes por mais de um item quando houver base suficiente.\n");
+        instrucao.append("Se um subtopico tiver pouca base, redistribui dentro desta mesma lista sem inventar conteudo.\n");
+        return instrucao.toString();
+    }
+
+    private String construirDetalheProgressoLotes(int concluidos, int total, int sucessos, int falhas) {
+        StringBuilder detalhe = new StringBuilder();
+        detalhe.append("Lotes concluidos: ").append(concluidos).append('/').append(total).append('.');
+        detalhe.append(" Sucesso: ").append(sucessos).append('.');
+        if (falhas > 0) {
+            detalhe.append(" Falhas toleradas: ").append(falhas).append('.');
+        }
+        detalhe.append(" No maximo ").append(MAX_GEMINI_WORKERS).append(" chamadas ao Gemini em paralelo.");
+        return detalhe.toString();
+    }
+
+    private String montarJsonQuestoesAgregado(
+        DisciplinaDto disciplina,
+        List<String> jsonLotesComSucesso,
+        int lotesSucesso,
+        int lotesFalha
+    ) {
+        StringBuilder questoes = new StringBuilder();
+        boolean primeiro = true;
+        for (String jsonLote : jsonLotesComSucesso) {
+            String arrayQuestoes = extrairCampoArrayJson(jsonLote, "questoes");
+            if (arrayQuestoes == null || arrayQuestoes.length() < 2) {
+                continue;
+            }
+
+            String conteudo = arrayQuestoes.substring(1, arrayQuestoes.length() - 1).trim();
+            if (conteudo.isBlank()) {
+                continue;
+            }
+
+            if (!primeiro) {
+                questoes.append(',');
+            }
+            questoes.append(conteudo);
+            primeiro = false;
+        }
+
+        String fonteResumo = lotesFalha > 0
+            ? "Base inicial gerada em " + lotesSucesso + " lotes com " + lotesFalha + " falhas toleradas."
+            : "Base inicial gerada em " + lotesSucesso + " lotes com ate " + MAX_GEMINI_WORKERS + " workers.";
+
+        return new StringBuilder()
+            .append("{\"titulo\":\"Base inicial de estudo - ").append(QuestaoUtil.escapeJson(disciplina.nome())).append("\",")
+            .append("\"disciplina\":\"").append(QuestaoUtil.escapeJson(disciplina.nome())).append("\",")
+            .append("\"idioma\":\"pt-AO\",")
+            .append("\"fonteResumo\":\"").append(QuestaoUtil.escapeJson(fonteResumo)).append("\",")
+            .append("\"questoes\":[").append(questoes).append("]}")
+            .toString();
+    }
+
+    private String construirResumoGeracaoEmLotes(GeracaoQuestoesEmLotes geracao) {
+        if (geracao.totalLotes() <= 1) {
+            return "A geracao correu num lote unico.";
+        }
+        if (geracao.lotesFalha() <= 0) {
+            return "A geracao foi repartida em " + geracao.totalLotes()
+                + " lotes com no maximo " + MAX_GEMINI_WORKERS + " chamadas paralelas.";
+        }
+        return "A geracao foi repartida em " + geracao.totalLotes()
+            + " lotes; " + geracao.lotesSucesso()
+            + " concluiram e " + geracao.lotesFalha()
+            + " falharam sem interromper o restante fluxo.";
     }
 
     private void emitirConclusaoDisciplina(
@@ -397,6 +878,16 @@ public class PerguntasBootstrapService {
               referencia_livro,
               pagina_inicio,
               pagina_fim,
+              usa_grafico,
+              grafico_tipo_curva,
+              grafico_a,
+              grafico_b,
+              grafico_c,
+              grafico_eixo_x,
+              grafico_eixo_y,
+              grafico_x_min,
+              grafico_x_max,
+              grafico_x_tick_unit,
               criado_em
             )
             select
@@ -433,6 +924,62 @@ public class PerguntasBootstrapService {
               end,
               case
                 when coalesce(nullif(q->>'paginaFim', ''), '') ~ '^[0-9]+$' then (q->>'paginaFim')::integer
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  then coalesce((q->'grafico'->>'usar')::boolean, false)
+                else false
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  then upper(nullif(q->'grafico'->>'tipoCurva', ''))
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  and coalesce(nullif(q->'grafico'->>'a', ''), '') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+                  then (q->'grafico'->>'a')::double precision
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  and coalesce(nullif(q->'grafico'->>'b', ''), '') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+                  then (q->'grafico'->>'b')::double precision
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  and coalesce(nullif(q->'grafico'->>'c', ''), '') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+                  then (q->'grafico'->>'c')::double precision
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  then nullif(q->'grafico'->>'eixoX', '')
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  then nullif(q->'grafico'->>'eixoY', '')
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  and coalesce(nullif(q->'grafico'->>'xMin', ''), '') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+                  then (q->'grafico'->>'xMin')::double precision
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  and coalesce(nullif(q->'grafico'->>'xMax', ''), '') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+                  then (q->'grafico'->>'xMax')::double precision
+                else null
+              end,
+              case
+                when jsonb_typeof(q->'grafico') = 'object'
+                  and coalesce(nullif(q->'grafico'->>'xTickUnit', ''), '') ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+                  then (q->'grafico'->>'xTickUnit')::double precision
                 else null
               end,
               now()
@@ -476,6 +1023,46 @@ public class PerguntasBootstrapService {
         }
     }
 
+    private int contarSubtopicos(String jsonTopicos) {
+        if (jsonTopicos == null || jsonTopicos.isBlank()) {
+            return 0;
+        }
+
+        int total = 0;
+        Matcher arrays = SUBTOPICOS_ARRAY_PATTERN.matcher(jsonTopicos);
+        while (arrays.find()) {
+            Matcher strings = JSON_STRING_PATTERN.matcher(arrays.group(1));
+            while (strings.find()) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private int calcularQuantidadeInicial(int totalSubtopicos) {
+        if (totalSubtopicos <= 0) {
+            return DEFAULT_QUESTOES_INICIAIS;
+        }
+
+        int quantidade = totalSubtopicos * QUESTOES_POR_SUBTOPICO;
+        return Math.max(QUESTOES_POR_SUBTOPICO, Math.min(MAX_QUESTOES_INICIAIS, quantidade));
+    }
+
+    private String construirInstrucaoDistribuicao(int totalSubtopicos, int quantidadeInicial) {
+        StringBuilder instrucao = new StringBuilder();
+        instrucao.append('\n');
+        instrucao.append("Meta de cobertura desta geracao: ").append(quantidadeInicial).append(" questoes.\n");
+        if (totalSubtopicos > 0) {
+            instrucao.append("O JSON atual trouxe cerca de ").append(totalSubtopicos).append(" subtopicos.\n");
+            instrucao.append("Tenta cobrir cada subtopico com cerca de ")
+                .append(QUESTOES_POR_SUBTOPICO)
+                .append(" questoes no total, repartidas entre FACIL, MEDIO, DESAFIANTE e EXTRA quando houver base suficiente.\n");
+            instrucao.append("Quando nao houver cobertura suficiente para 40 no mesmo subtopico, usa o maximo sustentado pelo material sem inventar conteudo.\n");
+        }
+        instrucao.append("Mantem variedade de dificuldade e nao concentres quase tudo num unico topico.\n");
+        return instrucao.toString();
+    }
+
     public record BootstrapResult(
         UUID disciplinaId,
         String nomeDisciplina,
@@ -486,20 +1073,43 @@ public class PerguntasBootstrapService {
     ) {
     }
 
-    public enum BootstrapStatus {
-        PROCESSADO_AUTOMATICAMENTE,
-        AGUARDANDO_ORIENTACAO,
-        SEM_PDFS,
-        GEMINI_NAO_CONFIGURADO,
-        JA_EXISTENTE,
-        ERRO
-    }
+
 
     public record BootstrapProgressSnapshot(
         double progress,
         boolean indeterminate,
         String titulo,
         String detalhe
+    ) {
+    }
+
+    private record TopicoSubtopico(String topico, String subtopico) {
+    }
+
+    private record GeracaoLote(
+        int indice,
+        int totalLotes,
+        List<TopicoSubtopico> focos,
+        int quantidadeQuestoes
+    ) {
+    }
+
+    private record GeracaoLoteResultado(
+        GeracaoLote lote,
+        String jsonQuestoes,
+        String erro
+    ) {
+        boolean sucesso() {
+            return jsonQuestoes != null && !jsonQuestoes.isBlank();
+        }
+    }
+
+    private record GeracaoQuestoesEmLotes(
+        List<String> jsonLotesComSucesso,
+        String jsonAgregado,
+        int totalLotes,
+        int lotesSucesso,
+        int lotesFalha
     ) {
     }
 

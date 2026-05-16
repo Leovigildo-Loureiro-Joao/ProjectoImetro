@@ -22,16 +22,16 @@ import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
 import com.imetro.ui.components.CircleProgress;
+import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.components.TesteCard;
 import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
-import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator.TesteConfig;
-import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator.TesteHost;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
+import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.QuestaoUtil;
 import com.imetro.util.ResultadoPayload;
@@ -50,6 +50,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -132,12 +133,18 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private FXMLLoader modFxml;
     private ModalController cont;
     private TesteService testeService;
+    private VBox apoioVisualBox;
+    private VBox imagemQuestaoPane;
+    private Separator apoioVisualSeparator;
+    private StackPane planoCartesianoContainer;
+    private PlanoCartesianoPane planoCartesianoPane;
     @FXML
     public void initialize() {
         TesteAdaptativoCoordinator.setHost(this);
         testeService=new TesteService();
         circleProgress = new CircleProgress(35, 35, 35, 0);
         circleProgressContainer.getChildren().add(circleProgress);
+        configurarPainelApoioVisual();
 
         service = new TesteAdaptativoService();
         disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
@@ -256,7 +263,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         List<Questao> questoesTopico = service.carregarQuestoesDisponiveis(
             disciplina,
             List.of(topico.topicos()),
-            List.of()
+            List.of(topico.subTopicos())
         );
         int totalSubtopicos = topico.subTopicos() == null ? 0 : topico.subTopicos().length;
         return Math.min(100f, 30f + (questoesTopico.size() * 12f) + (totalSubtopicos * 10f));
@@ -336,13 +343,19 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.TesteConfig config) {
-        focoQuestoes = service.carregarQuestoesDisponiveis(disciplinaSelecionada, topicosSelecionados, subtopicosSelecionados);
+        nivelAtualAdaptativo = resolverNivelInicial(config);
+        focoQuestoes = service.carregarQuestoesDisponiveis(
+            disciplinaSelecionada,
+            topicosSelecionados,
+            subtopicosSelecionados,
+            nivelAtualAdaptativo.nivel()
+        );
         if (focoQuestoes.isEmpty()) {
             mostrarAlerta("Atencao", "Nao encontramos questoes para esse foco. Tente outro recorte.");
             return;
         }
 
-        nivelAtualAdaptativo = resolverNivelInicial(config);
+
         questoes.clear();
         totalQuestoes = Math.min(resolverLimiteQuestoes(config, focoQuestoes.size()), focoQuestoes.size());
         resetarMetricas();
@@ -362,10 +375,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private NivelDificuldadeAdaptativa resolverNivelInicial(TesteAdaptativoCoordinator.TesteConfig config) {
-        if (config == null || config.nivel() == null) {
-            return NivelDificuldadeAdaptativa.padrao(); // TODO CONFIG_ADAPTATIVA: nivel inicial padrao ainda fixo; ler do perfil/configuracao ativa.
-        }
-        return NivelDificuldadeAdaptativa.fromTexto(config.nivel());
+        return service.resolverNivelAtual(
+            disciplinaSelecionada,
+            topicosSelecionados,
+            subtopicosSelecionados,
+            config == null ? null : config.nivel()
+        );
     }
 
     private int resolverLimiteQuestoes(TesteAdaptativoCoordinator.TesteConfig config, int totalDisponivel) {
@@ -495,12 +510,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         ResF.setText(q.getOpcaoF());
         ResG.setText(q.getOpcaoG());
 
-        if (q.getImagem() != null) {
-            imgBloco2.setImage(q.getImagem());
-            imgBloco2.setVisible(true);
-        } else {
-            imgBloco2.setVisible(false);
-        }
+        atualizarApoioVisual(q);
 
         alternativas.selectToggle(null);
         respostaSelecionada = '\0';
@@ -520,6 +530,78 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return foco;
         }
         return questao.getBloco2() + "\n" + foco;
+    }
+
+    private void configurarPainelApoioVisual() {
+        if (bloco1 == null || !(bloco1.getParent() instanceof VBox textoPane) || !(textoPane.getParent() instanceof HBox linhaQuestao)) {
+            return;
+        }
+        if (linhaQuestao.getChildren().size() < 5 || !(linhaQuestao.getChildren().get(1) instanceof Separator separator)) {
+            return;
+        }
+
+        Node imagemNode = linhaQuestao.getChildren().get(2);
+        apoioVisualSeparator = separator;
+
+        Label tituloImagem = new Label("Imagem da questao");
+        tituloImagem.getStyleClass().add("question-side-title");
+
+        StackPane imagemShell = new StackPane(imagemNode);
+        imagemShell.getStyleClass().add("question-side-shell");
+
+        imagemQuestaoPane = new VBox(10, tituloImagem, imagemShell);
+        imagemQuestaoPane.getStyleClass().add("question-side-card");
+        imagemQuestaoPane.setVisible(false);
+        imagemQuestaoPane.setManaged(false);
+
+        planoCartesianoPane = new PlanoCartesianoPane();
+        planoCartesianoContainer = new StackPane(planoCartesianoPane);
+        planoCartesianoContainer.setVisible(false);
+        planoCartesianoContainer.setManaged(false);
+
+        apoioVisualBox = new VBox(14, imagemQuestaoPane, planoCartesianoContainer);
+        apoioVisualBox.setPrefWidth(320);
+        apoioVisualBox.setVisible(false);
+        apoioVisualBox.setManaged(false);
+
+        imgBloco2.setFitHeight(190);
+        imgBloco2.setFitWidth(260);
+        imgBloco2.setVisible(false);
+
+        apoioVisualSeparator.setVisible(false);
+        apoioVisualSeparator.setManaged(false);
+        linhaQuestao.getChildren().setAll(textoPane, apoioVisualSeparator, apoioVisualBox);
+    }
+
+    private void atualizarApoioVisual(Questao questao) {
+        boolean imagemVisivel = questao.getImagem() != null;
+        if (imagemVisivel) {
+            imgBloco2.setImage(questao.getImagem());
+            imgBloco2.setVisible(true);
+        } else {
+            imgBloco2.setImage(null);
+            imgBloco2.setVisible(false);
+        }
+        setNodeVisivel(imagemQuestaoPane, imagemVisivel);
+
+        var planoConfig = QuestaoGraficoSupport.resolver(questao);
+        boolean graficoVisivel = planoConfig.isPresent();
+        if (graficoVisivel && planoCartesianoPane != null) {
+            planoCartesianoPane.aplicarConfig(planoConfig.get());
+        }
+        setNodeVisivel(planoCartesianoContainer, graficoVisivel);
+
+        boolean apoioVisivel = imagemVisivel || graficoVisivel;
+        setNodeVisivel(apoioVisualBox, apoioVisivel);
+        setNodeVisivel(apoioVisualSeparator, apoioVisivel);
+    }
+
+    private void setNodeVisivel(Node node, boolean visivel) {
+        if (node == null) {
+            return;
+        }
+        node.setVisible(visivel);
+        node.setManaged(visivel);
     }
 
     @FXML
@@ -707,7 +789,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             UUID disciplinaId = QuestaoUtil.resolverDisciplinaId(disciplinaSelecionada);
             diagnos = diagnosticoService.getDiagnosticoRepository()
                 .buscarUltimoDiagnostico(candidatoID, disciplinaId, disciplinaSelecionada);
+
             testeService.registrarTesteConcluido(
+                nivelAtualAdaptativo,
                 candidatoID,
                 diagnos == null ? null : diagnos.id(),
                 focoQuestoes,

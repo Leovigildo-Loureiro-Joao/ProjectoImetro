@@ -28,6 +28,16 @@ public class Questao {
     private Integer paginaFim;
     private String topicoPrincipal;
     private double[] pesosResposta;
+    private boolean usaGrafico;
+    private String graficoTipoCurva;
+    private Double graficoA;
+    private Double graficoB;
+    private Double graficoC;
+    private String graficoEixoX;
+    private String graficoEixoY;
+    private Double graficoXMin;
+    private Double graficoXMax;
+    private Double graficoXTickUnit;
 
     
     public String getId() {
@@ -161,6 +171,66 @@ public class Questao {
     }
     public void setTopicoPrincipal(String topicoPrincipal) {
         this.topicoPrincipal = topicoPrincipal;
+    }
+    public boolean isUsaGrafico() {
+        return usaGrafico;
+    }
+    public void setUsaGrafico(boolean usaGrafico) {
+        this.usaGrafico = usaGrafico;
+    }
+    public String getGraficoTipoCurva() {
+        return graficoTipoCurva;
+    }
+    public void setGraficoTipoCurva(String graficoTipoCurva) {
+        this.graficoTipoCurva = graficoTipoCurva;
+    }
+    public Double getGraficoA() {
+        return graficoA;
+    }
+    public void setGraficoA(Double graficoA) {
+        this.graficoA = graficoA;
+    }
+    public Double getGraficoB() {
+        return graficoB;
+    }
+    public void setGraficoB(Double graficoB) {
+        this.graficoB = graficoB;
+    }
+    public Double getGraficoC() {
+        return graficoC;
+    }
+    public void setGraficoC(Double graficoC) {
+        this.graficoC = graficoC;
+    }
+    public String getGraficoEixoX() {
+        return graficoEixoX;
+    }
+    public void setGraficoEixoX(String graficoEixoX) {
+        this.graficoEixoX = graficoEixoX;
+    }
+    public String getGraficoEixoY() {
+        return graficoEixoY;
+    }
+    public void setGraficoEixoY(String graficoEixoY) {
+        this.graficoEixoY = graficoEixoY;
+    }
+    public Double getGraficoXMin() {
+        return graficoXMin;
+    }
+    public void setGraficoXMin(Double graficoXMin) {
+        this.graficoXMin = graficoXMin;
+    }
+    public Double getGraficoXMax() {
+        return graficoXMax;
+    }
+    public void setGraficoXMax(Double graficoXMax) {
+        this.graficoXMax = graficoXMax;
+    }
+    public Double getGraficoXTickUnit() {
+        return graficoXTickUnit;
+    }
+    public void setGraficoXTickUnit(Double graficoXTickUnit) {
+        this.graficoXTickUnit = graficoXTickUnit;
     }
     public double[] getPesosResposta() {
         return pesosResposta == null ? null : pesosResposta.clone();
