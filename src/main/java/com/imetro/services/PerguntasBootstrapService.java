@@ -1,6 +1,13 @@
 package com.imetro.services;
 
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.dto.gemini.GeracaoSimuladoRequest;
+import com.imetro.domain.dto.perguntas.BootstrapProgressSnapshot;
+import com.imetro.domain.dto.perguntas.BootstrapResult;
+import com.imetro.domain.dto.perguntas.GeracaoLote;
+import com.imetro.domain.dto.perguntas.GeracaoLoteResultado;
+import com.imetro.domain.dto.perguntas.GeracaoQuestoesEmLotes;
+import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
@@ -452,7 +459,7 @@ public class PerguntasBootstrapService {
 
             String jsonQuestoes = geminiService.gerarSimuladoJsonAPartirDeTopicosEmLote(
                 jsonTopicos,
-                new GeminiService.GeracaoSimuladoRequest(
+                new GeracaoSimuladoRequest(
                     disciplina.nome(),
                     "pt-AO",
                     lote.quantidadeQuestoes(),
@@ -1061,56 +1068,6 @@ public class PerguntasBootstrapService {
         }
         instrucao.append("Mantem variedade de dificuldade e nao concentres quase tudo num unico topico.\n");
         return instrucao.toString();
-    }
-
-    public record BootstrapResult(
-        UUID disciplinaId,
-        String nomeDisciplina,
-        BootstrapStatus status,
-        int totalPdfs,
-        int totalPerguntas,
-        String detalhe
-    ) {
-    }
-
-
-
-    public record BootstrapProgressSnapshot(
-        double progress,
-        boolean indeterminate,
-        String titulo,
-        String detalhe
-    ) {
-    }
-
-    private record TopicoSubtopico(String topico, String subtopico) {
-    }
-
-    private record GeracaoLote(
-        int indice,
-        int totalLotes,
-        List<TopicoSubtopico> focos,
-        int quantidadeQuestoes
-    ) {
-    }
-
-    private record GeracaoLoteResultado(
-        GeracaoLote lote,
-        String jsonQuestoes,
-        String erro
-    ) {
-        boolean sucesso() {
-            return jsonQuestoes != null && !jsonQuestoes.isBlank();
-        }
-    }
-
-    private record GeracaoQuestoesEmLotes(
-        List<String> jsonLotesComSucesso,
-        String jsonAgregado,
-        int totalLotes,
-        int lotesSucesso,
-        int lotesFalha
-    ) {
     }
 
     @FunctionalInterface

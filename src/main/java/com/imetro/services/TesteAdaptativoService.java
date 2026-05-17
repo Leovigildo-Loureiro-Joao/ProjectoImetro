@@ -37,7 +37,9 @@ public class TesteAdaptativoService {
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
-        diagnosticoService.sincronizarDisciplinasAutomaticas(Authentication.getCurrentUserId());
+        if (!PerguntasBootstrapAsyncService.getInstance().isRunningFor(Authentication.getCurrentUserId())) {
+            diagnosticoService.sincronizarDisciplinasAutomaticas(Authentication.getCurrentUserId());
+        }
         return diagnosticoService.carregarTopicosPorDisciplina(disciplina);
     }
 

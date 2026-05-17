@@ -232,7 +232,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             circleProgressContainer.getChildren().add(circleProgress);
             configurarPainelApoioVisual();
 
-            bancoQuestoes = diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId());
+            bancoQuestoes = diagnosticoService.carregarQuestoesReais();
             questoes = new ArrayList<>(bancoQuestoes);
             totalQuestoes = questoes.size();
 
@@ -410,7 +410,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         planoCartesianoContainer.setManaged(false);
 
         apoioVisualBox = new VBox(14, painelImagemExistente, planoCartesianoContainer);
-        apoioVisualBox.setPrefWidth(320);
+        apoioVisualBox.setPrefWidth(400);
         apoioVisualBox.setVisible(false);
         apoioVisualBox.setManaged(false);
 

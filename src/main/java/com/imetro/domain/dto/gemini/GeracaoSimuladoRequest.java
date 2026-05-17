@@ -14,7 +14,7 @@ public record GeracaoSimuladoRequest(
     public GeracaoSimuladoRequest {
         disciplina = disciplina == null || disciplina.isBlank() ? "GERAL" : disciplina.trim();
         idioma = idioma == null || idioma.isBlank() ? "pt-AO" : idioma.trim();
-        quantidadeQuestoes = quantidadeQuestoes <= 0 ? DEFAULT_SIMULADO_QUESTOES : quantidadeQuestoes;
+        quantidadeQuestoes = quantidadeQuestoes <= 0 ? GeminiService.DEFAULT_SIMULADO_QUESTOES : quantidadeQuestoes;
         nivel = nivel == null || nivel.isBlank() ? "MISTO" : nivel.trim().toUpperCase(Locale.ROOT);
         instrucoesExtras = instrucoesExtras == null ? "" : instrucoesExtras.trim();
     }

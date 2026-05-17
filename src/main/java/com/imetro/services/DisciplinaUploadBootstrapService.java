@@ -1,6 +1,7 @@
 package com.imetro.services;
 
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -110,7 +111,7 @@ public class DisciplinaUploadBootstrapService {
 
         String jsonTopicos = geminiService.extrairTopicosJson(
             pdfs,
-            new GeminiService.ExtracaoTopicosRequest(
+            new ExtracaoTopicosRequest(
                 disciplina.nome(),
                 "pt-AO",
                 "Organiza os topicos com foco no conteudo programatico da disciplina " + disciplina.nome() + "."

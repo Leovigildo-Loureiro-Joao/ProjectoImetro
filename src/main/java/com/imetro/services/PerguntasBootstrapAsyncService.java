@@ -1,6 +1,8 @@
 package com.imetro.services;
 
 import com.imetro.App;
+import com.imetro.domain.dto.perguntas.BootstrapResult;
+import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.util.AppLogger;
 
 import javafx.beans.property.BooleanProperty;
@@ -33,7 +35,7 @@ public final class PerguntasBootstrapAsyncService {
     private final ObjectProperty<BootstrapUiState> state = new SimpleObjectProperty<>(BootstrapUiState.IDLE);
 
     private volatile UUID activeCandidateId;
-    private Task<List<PerguntasBootstrapService.BootstrapResult>> currentTask;
+    private Task<List<BootstrapResult>> currentTask;
 
     private PerguntasBootstrapAsyncService() {
     }
@@ -66,9 +68,9 @@ public final class PerguntasBootstrapAsyncService {
         running.set(true);
         showBanner.set(true);
 
-        Task<List<PerguntasBootstrapService.BootstrapResult>> task = new Task<>() {
+        Task<List<BootstrapResult>> task = new Task<>() {
             @Override
-            protected List<PerguntasBootstrapService.BootstrapResult> call() {
+            protected List<BootstrapResult> call() {
                 updateTitle("A preparar a tua base de estudo");
                 updateMessage("Os livros vao ser lidos em segundo plano. Podes navegar noutras abas.");
                 updateProgress(0, 1);
@@ -154,7 +156,7 @@ public final class PerguntasBootstrapAsyncService {
         }
     }
 
-    private void finishSuccessfully(List<PerguntasBootstrapService.BootstrapResult> results) {
+    private void finishSuccessfully(List<BootstrapResult> results) {
         releaseTaskBindings();
         currentTask = null;
         running.set(false);
@@ -201,20 +203,20 @@ public final class PerguntasBootstrapAsyncService {
         LOGGER.warning("Bootstrap automatico cancelado para o candidato " + activeCandidateId + ".");
     }
 
-    private BootstrapUiState resolveState(List<PerguntasBootstrapService.BootstrapResult> results) {
+    private BootstrapUiState resolveState(List<BootstrapResult> results) {
         if (results == null || results.isEmpty()) {
             return BootstrapUiState.WARNING;
         }
 
         boolean hasProcessed = results.stream()
-            .anyMatch(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.PROCESSADO_AUTOMATICAMENTE);
+            .anyMatch(result -> result.status() == BootstrapStatus.PROCESSADO_AUTOMATICAMENTE);
         boolean hasErrors = results.stream()
-            .anyMatch(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.ERRO);
+            .anyMatch(result -> result.status() == BootstrapStatus.ERRO);
         boolean hasWarnings = results.stream()
             .anyMatch(result ->
-                result.status() == PerguntasBootstrapService.BootstrapStatus.SEM_PDFS
-                    || result.status() == PerguntasBootstrapService.BootstrapStatus.GEMINI_NAO_CONFIGURADO
-                    || result.status() == PerguntasBootstrapService.BootstrapStatus.AGUARDANDO_ORIENTACAO
+                result.status() == BootstrapStatus.SEM_PDFS
+                    || result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO
+                    || result.status() == BootstrapStatus.AGUARDANDO_ORIENTACAO
             );
 
         if (hasErrors) {
@@ -236,33 +238,33 @@ public final class PerguntasBootstrapAsyncService {
         };
     }
 
-    private String buildSummary(List<PerguntasBootstrapService.BootstrapResult> results) {
+    private String buildSummary(List<BootstrapResult> results) {
         if (results == null || results.isEmpty()) {
             return "Nao havia disciplinas para processar nesta sessao.";
         }
 
         long processadas = results.stream()
-            .filter(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.PROCESSADO_AUTOMATICAMENTE)
+            .filter(result -> result.status() == BootstrapStatus.PROCESSADO_AUTOMATICAMENTE)
             .count();
         long aguardando = results.stream()
-            .filter(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.AGUARDANDO_ORIENTACAO)
+            .filter(result -> result.status() == BootstrapStatus.AGUARDANDO_ORIENTACAO)
             .count();
         long semPdfs = results.stream()
-            .filter(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.SEM_PDFS)
+            .filter(result -> result.status() == BootstrapStatus.SEM_PDFS)
             .count();
         long erros = results.stream()
-            .filter(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.ERRO)
+            .filter(result -> result.status() == BootstrapStatus.ERRO)
             .count();
         long semGemini = results.stream()
-            .filter(result -> result.status() == PerguntasBootstrapService.BootstrapStatus.GEMINI_NAO_CONFIGURADO)
+            .filter(result -> result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO)
             .count();
 
         int totalPerguntas = results.stream()
             .filter(result ->
-                result.status() == PerguntasBootstrapService.BootstrapStatus.PROCESSADO_AUTOMATICAMENTE
-                    || result.status() == PerguntasBootstrapService.BootstrapStatus.JA_EXISTENTE
+                result.status() == BootstrapStatus.PROCESSADO_AUTOMATICAMENTE
+                    || result.status() == BootstrapStatus.JA_EXISTENTE
             )
-            .mapToInt(PerguntasBootstrapService.BootstrapResult::totalPerguntas)
+            .mapToInt(BootstrapResult::totalPerguntas)
             .sum();
 
         StringBuilder resumo = new StringBuilder();

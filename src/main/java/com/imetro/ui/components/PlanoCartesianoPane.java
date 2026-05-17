@@ -39,6 +39,8 @@ public class PlanoCartesianoPane extends VBox {
         getStyleClass().addAll("question-side-card", "plano-cartesiano-card");
         setSpacing(12);
         setPadding(new Insets(14));
+        setPrefWidth(400);
+        setPrefSize(400, 400);
 
         HBox topo = new HBox(badgeLabel);
         topo.setAlignment(Pos.CENTER_LEFT);

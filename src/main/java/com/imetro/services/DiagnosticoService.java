@@ -14,6 +14,7 @@ import com.imetro.domain.dto.diagnostico.StatsQuestaoQtd;
 import com.imetro.domain.dto.diagnostico.TempoStatsDiagnostico;
 import com.imetro.domain.dto.diagnostico.Value;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.dto.perguntas.BootstrapResult;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.persistence.repository.DiagnosticoRepository;
@@ -251,7 +252,7 @@ public class DiagnosticoService {
         }
     }
 
-    public List<PerguntasBootstrapService.BootstrapResult> sincronizarDisciplinasAutomaticas(UUID candidatoId) {
+    public List<BootstrapResult> sincronizarDisciplinasAutomaticas(UUID candidatoId) {
         if (candidatoId == null) {
             return List.of();
         }
