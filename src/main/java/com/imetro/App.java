@@ -47,6 +47,16 @@ public class App extends Application {
         return thread;
     });
 
+    public static final ExecutorService EXECUTOR_DIAGNOSTICO = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("imetro-app-executor-diagnotico");
+        thread.setDaemon(true);
+        thread.setUncaughtExceptionHandler((worker, throwable) ->
+            LOGGER.log(Level.SEVERE, "Excecao nao tratada no executor da aplicacao.", throwable)
+        );
+        return thread;
+    });
+
     @Override
     public void start(Stage stage) throws IOException {
         AppLogger.configure();

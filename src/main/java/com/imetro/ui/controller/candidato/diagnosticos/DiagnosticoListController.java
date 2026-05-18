@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import com.imetro.App;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.PrimeiroDiagnosticoResumo;
@@ -15,6 +19,7 @@ import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.components.diagnostico.DiagnosticoCard;
 import com.imetro.ui.components.diagnostico.FirsCardDiagnostico;
 import com.imetro.util.Authentication;
+import com.imetro.util.Loading;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.application.Platform;
@@ -66,6 +71,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
         carregarConteudo();
     }
 
+
     private void carregarConteudo() {
         if (diagnosticosPane == null) {
             return;
@@ -83,17 +89,23 @@ public class DiagnosticoListController implements Initializable, DisposableContr
             configurarCabecalhoPrimeiraVez(processamentoLivros);
             configurarAcoesLote(false);
         } else {
-            List<DiagnosticoDisciplinaResumo> resumos = diagnosticoService
-                .carregarDiagnosticosDisponiveis(candidatoId);
-            if (resumos.isEmpty()) {
-                diagnosticosPane.getChildren().add(criarEstadoVazio(processamentoLivros));
-            } else {
-                for (DiagnosticoDisciplinaResumo resumo : resumos) {
-                    diagnosticosPane.getChildren().add(criarCard(resumo));
+           
+                List<DiagnosticoDisciplinaResumo> resumos = diagnosticoService
+                    .carregarDiagnosticosDisponiveis(candidatoId);
+                if (resumos.isEmpty()) {
+                    diagnosticosPane.getChildren().add(criarEstadoVazio(processamentoLivros));
+                } else {
+                     diagnosticosPane.getChildren().add(Loading.load());
+                    CompletableFuture.runAsync(() -> {
+                        for (DiagnosticoDisciplinaResumo resumo : resumos) {
+                            Platform.runLater(() -> diagnosticosPane.getChildren().add(criarCard(resumo)));
+                        }
+                        diagnosticosPane.getChildren().remove(0);
+                    },App.EXECUTOR_DIAGNOSTICO);
                 }
-            }
-            configurarCabecalhoHistorico();
-            configurarAcoesLote(true);
+                configurarCabecalhoHistorico();
+                configurarAcoesLote(true);
+            
         }
         atualizarEstadoBotoes();
     }

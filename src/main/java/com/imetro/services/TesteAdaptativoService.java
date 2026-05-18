@@ -28,7 +28,7 @@ public class TesteAdaptativoService {
     }
 
     public List<String> carregarDisciplinasDisponiveis() {
-        return diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId()).stream()
+        return diagnosticoService.agendarSincronizacaoSeNecessario(Authentication.getCurrentUserId()).stream()
             .map(Questao::getDisciplina)
             .filter(disciplina -> disciplina != null && !disciplina.isBlank())
             .distinct()
@@ -227,7 +227,7 @@ public class TesteAdaptativoService {
         Set<String> topicosNormalizados = normalizarColecao(topicos);
         Set<String> subtopicosNormalizados = normalizarColecao(subtopicos);
 
-        return diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId()).stream()
+        return diagnosticoService.carregarQuestoesReais().stream()
             .filter(questao -> disciplinaNormalizada.isBlank()
                 || disciplinaNormalizada.equals(TextoUtil.normalizarMaiusculo(questao.getDisciplina())))
             .filter(questao -> topicosNormalizados.isEmpty()

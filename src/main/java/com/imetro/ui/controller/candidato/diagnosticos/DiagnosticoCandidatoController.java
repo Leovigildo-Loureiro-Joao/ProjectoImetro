@@ -677,7 +677,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     private void prepararDiagnostico() {
         if (bancoQuestoes.isEmpty()) {
-            bancoQuestoes = diagnosticoService.carregarQuestoesReais(Authentication.getCurrentUserId());
+            bancoQuestoes = diagnosticoService.carregarQuestoesReais();
         }
 
         questoes = aplicarConfiguracaoAoBanco(bancoQuestoes);

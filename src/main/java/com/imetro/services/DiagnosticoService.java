@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -83,9 +85,11 @@ public class DiagnosticoService {
         }
     }
 
-    public List<Questao> carregarQuestoesReais(UUID candidatoId) {
+    public List<Questao> agendarSincronizacaoSeNecessario(UUID candidatoId) {
         if (!PerguntasBootstrapAsyncService.getInstance().isRunningFor(candidatoId)) {
-            sincronizarDisciplinasAutomaticas(candidatoId);
+            CompletableFuture.runAsync(() -> {
+                sincronizarDisciplinasAutomaticas(candidatoId);
+            });
         }
         return carregarQuestoesReais();
     }
@@ -264,7 +268,7 @@ public class DiagnosticoService {
 
     public PrimeiroDiagnosticoResumo carregarPrimeiroDiagnosticoResumo(UUID candidatoId) {
         boolean processamentoEmCurso = PerguntasBootstrapAsyncService.getInstance().isRunningFor(candidatoId);
-        List<Questao> questoes = carregarQuestoesReais(candidatoId);
+        List<Questao> questoes = agendarSincronizacaoSeNecessario(candidatoId);
         List<DisciplinaDto> disciplinas = diagnosticoRepository.carregarDisciplinasAtivasDoCandidato(candidatoId);
         if (disciplinas.isEmpty()) {
             disciplinas = DisciplinaService.discCategoria();
@@ -313,7 +317,7 @@ public class DiagnosticoService {
     }
 
     public List<DiagnosticoDisciplinaResumo> carregarDiagnosticosDisponiveis(UUID candidatoId) {
-        List<Questao> questoes = carregarQuestoesReais(candidatoId);
+        List<Questao> questoes = carregarQuestoesReais();
         if (questoes.isEmpty()) {
             return List.of();
         }
