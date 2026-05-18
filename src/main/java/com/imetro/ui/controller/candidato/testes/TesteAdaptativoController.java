@@ -209,14 +209,24 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private void carregarDisciplinas() {
         botoesDisciplinasBox.getChildren().clear();
 
-        Label titulo = new Label("Escolha uma disciplina e decida se quer entrar com o banco inteiro ou configurar o foco antes do teste.");
+        Label titulo = new Label("Escolha uma disciplina para ver os topicos ja testados e iniciar a proxima rodada.");
         titulo.getStyleClass().add("h3-thin");
         botoesDisciplinasBox.getChildren().add(titulo);
 
-        for (String disciplina : service.carregarDisciplinasDisponiveis()) {
+        List<String> disciplinas = service.carregarDisciplinasDisponiveis();
+        Map<String, TesteService.ResumoHistoricoDisciplina> resumos = testeService
+            .carregarResumoHistoricoDisciplinas(disciplinas, 4);
+
+        for (String disciplina : disciplinas) {
             List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
+            String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
+            TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
+                chaveResumo,
+                TesteService.ResumoHistoricoDisciplina.vazio()
+            );
             TesteCard teste = new TesteCard(
-                construirResumoDisciplina(disciplina, topicos),
+                construirResumoDisciplina(disciplina, topicos, historico),
+                topicos != null && !topicos.isEmpty(),
                 () -> iniciarTestePadrao(disciplina, topicos),
                 () -> abrirConfiguracaoInteligente(disciplina, topicos)
             );
@@ -224,64 +234,32 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }
     }
 
-    private TesteDto construirResumoDisciplina(String disciplina, List<Topico> topicos) {
-        List<Questao> questoesDisciplina = service.carregarQuestoesDisponiveis(disciplina, List.of(), List.of());
-        int totalQuestoes = questoesDisciplina.size();
-        int totalSubtopicos = topicos.stream()
-            .mapToInt(topico -> topico.subTopicos() == null ? 0 : topico.subTopicos().length)
-            .sum();
+    private TesteDto construirResumoDisciplina(
+        String disciplina,
+        List<Topico> topicos,
+        TesteService.ResumoHistoricoDisciplina historico
+    ) {
+        String nomeDisciplina = formatarDisciplina(disciplina);
 
-        float baseAtual = totalQuestoes == 0 ? 0f : (float) questoesDisciplina.stream()
-            .filter(questao -> questao.getNivelDificuldade() <= 1)
-            .count() / totalQuestoes;
-        float desafio = totalQuestoes == 0 ? 0f : (float) questoesDisciplina.stream()
-            .filter(questao -> questao.getNivelDificuldade() >= 3)
-            .count() / totalQuestoes;
-        float cobertura = Math.min(1f, totalSubtopicos / 10f);
-        float variedade = Math.min(1f, Math.max(topicos.size(), 1) / 4f);
-
-        List<Percent> percentuaisTopicos = topicos.stream()
-            .map(topico -> new Percent(topico.topicos(), calcularIndicadorTopico(disciplina, topico)))
-            .collect(Collectors.toCollection(ArrayList::new));
-
-        List<String> passos = construirPassosCard(topicos);
+        List<Percent> percentuaisTopicos = historico.topicosTestados();
+        float coberturaTopicos = topicos == null || topicos.isEmpty()
+            ? 0f
+            : limitarUnitario((float) percentuaisTopicos.size() / topicos.size());
+        float acertoMedio = limitarUnitario(historico.acertoMedio());
+        float precisaoMedia = limitarUnitario(historico.precisaoMedia());
+        float evolucao = acertoMedio;
 
         return new TesteDto(
-            formatarDisciplina(disciplina),
-            baseAtual,
-            desafio,
-            cobertura,
-            variedade,
-            totalQuestoes,
-            totalSubtopicos,
+            nomeDisciplina,
+            acertoMedio,
+            precisaoMedia,
+            coberturaTopicos,
+            evolucao,
+            historico.totalQuestoesRespondidas(),
+            historico.totalTestes(),
             percentuaisTopicos,
-            passos
+            List.of()
         );
-    }
-
-    private float calcularIndicadorTopico(String disciplina, Topico topico) {
-        List<Questao> questoesTopico = service.carregarQuestoesDisponiveis(
-            disciplina,
-            List.of(topico.topicos()),
-            List.of(topico.subTopicos())
-        );
-        int totalSubtopicos = topico.subTopicos() == null ? 0 : topico.subTopicos().length;
-        return Math.min(100f, 30f + (questoesTopico.size() * 12f) + (totalSubtopicos * 10f));
-    }
-
-    private List<String> construirPassosCard(List<Topico> topicos) {
-        List<String> passos = new ArrayList<>();
-        passos.add("Modo padrao usa toda a disciplina com o banco real ja disponivel.");
-        passos.add("Modo inteligente abre a selecao de topicos e subtopicos antes de comecar.");
-
-        if (!topicos.isEmpty()) {
-            passos.add("Se quiser um arranque guiado, comece por " + topicos.getFirst().topicos() + ".");
-        }
-        if (topicos.size() > 1) {
-            passos.add("Depois avance para " + topicos.get(1).topicos() + " para ampliar o treino.");
-        }
-
-        return passos;
     }
 
     private void iniciarTestePadrao(String disciplina, List<Topico> topicos) {
@@ -919,6 +897,10 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             case "PORTUGUES" -> "Portugues";
             default -> disciplina;
         };
+    }
+
+    private float limitarUnitario(float valor) {
+        return Math.max(0f, Math.min(1f, valor));
     }
 
     @Override

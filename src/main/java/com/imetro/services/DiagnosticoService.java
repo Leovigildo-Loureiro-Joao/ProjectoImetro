@@ -1,5 +1,6 @@
 package com.imetro.services;
 
+import com.imetro.App;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
@@ -47,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -85,13 +85,16 @@ public class DiagnosticoService {
         }
     }
 
-    public List<Questao> agendarSincronizacaoSeNecessario(UUID candidatoId) {
-        if (!PerguntasBootstrapAsyncService.getInstance().isRunningFor(candidatoId)) {
-            CompletableFuture.runAsync(() -> {
-                sincronizarDisciplinasAutomaticas(candidatoId);
-            });
+    public boolean agendarSincronizacaoSeNecessario(UUID candidatoId) {
+        if (candidatoId == null) {
+            return false;
         }
-        return carregarQuestoesReais();
+        if (PerguntasBootstrapAsyncService.getInstance().isRunningFor(candidatoId)) {
+            return false;
+        }
+
+        CompletableFuture.runAsync(() -> sincronizarDisciplinasAutomaticas(candidatoId), App.EXECUTOR_DIAGNOSTICO);
+        return true;
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
@@ -268,7 +271,8 @@ public class DiagnosticoService {
 
     public PrimeiroDiagnosticoResumo carregarPrimeiroDiagnosticoResumo(UUID candidatoId) {
         boolean processamentoEmCurso = PerguntasBootstrapAsyncService.getInstance().isRunningFor(candidatoId);
-        List<Questao> questoes = agendarSincronizacaoSeNecessario(candidatoId);
+        agendarSincronizacaoSeNecessario(candidatoId);
+        List<Questao> questoes = carregarQuestoesReais();
         List<DisciplinaDto> disciplinas = diagnosticoRepository.carregarDisciplinasAtivasDoCandidato(candidatoId);
         if (disciplinas.isEmpty()) {
             disciplinas = DisciplinaService.discCategoria();

@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.imetro.App;
 import com.imetro.domain.dto.Topico;
@@ -89,23 +87,23 @@ public class DiagnosticoListController implements Initializable, DisposableContr
             configurarCabecalhoPrimeiraVez(processamentoLivros);
             configurarAcoesLote(false);
         } else {
-           
-                List<DiagnosticoDisciplinaResumo> resumos = diagnosticoService
-                    .carregarDiagnosticosDisponiveis(candidatoId);
-                if (resumos.isEmpty()) {
-                    diagnosticosPane.getChildren().add(criarEstadoVazio(processamentoLivros));
-                } else {
-                     diagnosticosPane.getChildren().add(Loading.load());
-                    CompletableFuture.runAsync(() -> {
+            diagnosticosPane.getChildren().add(Loading.load());
+            CompletableFuture
+                .supplyAsync(() -> diagnosticoService.carregarDiagnosticosDisponiveis(candidatoId), App.EXECUTOR_DIAGNOSTICO)
+                .whenComplete((resumos, error) -> Platform.runLater(() -> {
+                    diagnosticosPane.getChildren().clear();
+
+                    if (error != null || resumos == null || resumos.isEmpty()) {
+                        diagnosticosPane.getChildren().add(criarEstadoVazio(processamentoLivros));
+                    } else {
                         for (DiagnosticoDisciplinaResumo resumo : resumos) {
-                            Platform.runLater(() -> diagnosticosPane.getChildren().add(criarCard(resumo)));
+                            diagnosticosPane.getChildren().add(criarCard(resumo));
                         }
-                        diagnosticosPane.getChildren().remove(0);
-                    },App.EXECUTOR_DIAGNOSTICO);
-                }
-                configurarCabecalhoHistorico();
-                configurarAcoesLote(true);
-            
+                    }
+                    atualizarEstadoBotoes();
+                }));
+            configurarCabecalhoHistorico();
+            configurarAcoesLote(true);
         }
         atualizarEstadoBotoes();
     }

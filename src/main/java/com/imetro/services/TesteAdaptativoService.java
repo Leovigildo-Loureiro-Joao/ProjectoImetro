@@ -28,7 +28,8 @@ public class TesteAdaptativoService {
     }
 
     public List<String> carregarDisciplinasDisponiveis() {
-        return diagnosticoService.agendarSincronizacaoSeNecessario(Authentication.getCurrentUserId()).stream()
+        diagnosticoService.agendarSincronizacaoSeNecessario(Authentication.getCurrentUserId());
+        return diagnosticoService.carregarQuestoesReais().stream()
             .map(Questao::getDisciplina)
             .filter(disciplina -> disciplina != null && !disciplina.isBlank())
             .distinct()
@@ -37,9 +38,7 @@ public class TesteAdaptativoService {
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
-        if (!PerguntasBootstrapAsyncService.getInstance().isRunningFor(Authentication.getCurrentUserId())) {
-            diagnosticoService.sincronizarDisciplinasAutomaticas(Authentication.getCurrentUserId());
-        }
+        diagnosticoService.agendarSincronizacaoSeNecessario(Authentication.getCurrentUserId());
         return diagnosticoService.carregarTopicosPorDisciplina(disciplina);
     }
 

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +19,7 @@ import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.stats.StatsProgress;
 import com.imetro.domain.dto.stats.Teste_Stat;
+import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TestDtoAll;
 import com.imetro.domain.dto.test.ErrosComuns;
 import com.imetro.domain.dto.test.Melhorias;
@@ -114,6 +116,178 @@ public class TesteService {
             System.err.println("Erro ao carregar stats do candidato: " + e.getMessage());
             return List.of();
         }
+    }
+
+    public ResumoHistoricoDisciplina carregarResumoHistoricoDisciplina(String disciplina) {
+        return carregarResumoHistoricoDisciplina(Authentication.getCurrentUserId(), disciplina);
+    }
+
+    public ResumoHistoricoDisciplina carregarResumoHistoricoDisciplina(UUID candidatoId, String disciplina) {
+        if (candidatoId == null || disciplina == null || disciplina.isBlank()) {
+            return ResumoHistoricoDisciplina.vazio();
+        }
+        Map<String, ResumoHistoricoDisciplina> resumos = carregarResumoHistoricoDisciplinas(
+            candidatoId,
+            List.of(disciplina),
+            6
+        );
+        return resumos.getOrDefault(QuestaoUtil.normalizar(disciplina), ResumoHistoricoDisciplina.vazio());
+    }
+
+    public Map<String, ResumoHistoricoDisciplina> carregarResumoHistoricoDisciplinas(
+        List<String> disciplinas,
+        int limiteTopicos
+    ) {
+        return carregarResumoHistoricoDisciplinas(Authentication.getCurrentUserId(), disciplinas, limiteTopicos);
+    }
+
+    public Map<String, ResumoHistoricoDisciplina> carregarResumoHistoricoDisciplinas(
+        UUID candidatoId,
+        List<String> disciplinas,
+        int limiteTopicos
+    ) {
+        if (candidatoId == null || disciplinas == null || disciplinas.isEmpty()) {
+            return Map.of();
+        }
+
+        ArrayList<String> disciplinasNormalizadas = new ArrayList<>();
+        for (String disciplina : disciplinas) {
+            String chave = QuestaoUtil.normalizar(disciplina);
+            if (chave == null || chave.isBlank() || disciplinasNormalizadas.contains(chave)) {
+                continue;
+            }
+            disciplinasNormalizadas.add(chave);
+        }
+        if (disciplinasNormalizadas.isEmpty()) {
+            return Map.of();
+        }
+
+        int limiteTopicosSeguro = Math.max(1, limiteTopicos);
+        String placeholders = String.join(", ", Collections.nCopies(disciplinasNormalizadas.size(), "?"));
+
+        String sqlResumo = """
+            select
+              lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) as disciplina_key,
+              count(distinct tp.teste_id) as total_testes,
+              count(*) as total_questoes,
+              avg(case
+                    when tp.acertou is true then 1.0
+                    when tp.acertou is false then 0.0
+                    else null
+                  end) as acerto_medio,
+              avg(coalesce(
+                    tp.precisao,
+                    case
+                      when tp.acertou is true then 1.0
+                      when tp.acertou is false then 0.0
+                      else null
+                    end
+                  )) as precisao_media
+            from teste_perguntas tp
+            join testes t on t.id = tp.teste_id
+            where t.candidato_id = ?
+              and lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) in (%s)
+            group by 1
+            """.formatted(placeholders);
+
+        String sqlTopicos = """
+            with topicos as (
+              select
+                lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) as disciplina_key,
+                coalesce(nullif(trim(tp.topico), ''), 'Sem topico') as topico,
+                count(*) as total_questoes,
+                sum(case when tp.acertou is true then 1 else 0 end) as total_acertos
+              from teste_perguntas tp
+              join testes t on t.id = tp.teste_id
+              where t.candidato_id = ?
+                and lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) in (%s)
+              group by 1, 2
+            ),
+            ranqueados as (
+              select
+                disciplina_key,
+                topico,
+                total_questoes,
+                total_acertos,
+                row_number() over (partition by disciplina_key order by total_questoes desc, topico asc) as posicao
+              from topicos
+            )
+            select disciplina_key, topico, total_questoes, total_acertos
+            from ranqueados
+            where posicao <= ?
+            order by disciplina_key asc, posicao asc
+            """.formatted(placeholders);
+
+        LinkedHashMap<String, ResumoHistoricoDisciplinaBuilder> builders = new LinkedHashMap<>();
+        for (String disciplina : disciplinasNormalizadas) {
+            builders.put(disciplina, new ResumoHistoricoDisciplinaBuilder());
+        }
+
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+            try (var stmt = conn.prepareStatement(sqlResumo)) {
+                stmt.setObject(1, candidatoId);
+                int index = 2;
+                for (String disciplina : disciplinasNormalizadas) {
+                    stmt.setString(index++, disciplina);
+                }
+
+                try (var rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String disciplinaKey = QuestaoUtil.safeText(rs.getObject("disciplina_key"), "");
+                        ResumoHistoricoDisciplinaBuilder builder = builders.get(disciplinaKey);
+                        if (builder == null) {
+                            continue;
+                        }
+
+                        builder.totalTestes = safeInt(rs.getObject("total_testes"));
+                        builder.totalQuestoes = safeInt(rs.getObject("total_questoes"));
+                        builder.acertoMedio = limitarUnitario(parseDouble(rs.getObject("acerto_medio")));
+                        builder.precisaoMedia = limitarUnitario(parseDouble(rs.getObject("precisao_media")));
+                    }
+                }
+            }
+
+            try (var stmt = conn.prepareStatement(sqlTopicos)) {
+                stmt.setObject(1, candidatoId);
+                int index = 2;
+                for (String disciplina : disciplinasNormalizadas) {
+                    stmt.setString(index++, disciplina);
+                }
+                stmt.setInt(index, limiteTopicosSeguro);
+
+                try (var rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String disciplinaKey = QuestaoUtil.safeText(rs.getObject("disciplina_key"), "");
+                        ResumoHistoricoDisciplinaBuilder builder = builders.get(disciplinaKey);
+                        if (builder == null) {
+                            continue;
+                        }
+
+                        int totalTopico = safeInt(rs.getObject("total_questoes"));
+                        int acertosTopico = safeInt(rs.getObject("total_acertos"));
+                        if (totalTopico <= 0) {
+                            continue;
+                        }
+
+                        String nomeTopico = QuestaoUtil.safeText(rs.getObject("topico"), "Sem topico");
+                        float evolucaoTopico = Math.max(
+                            0f,
+                            Math.min(100f, (acertosTopico * 100f) / totalTopico)
+                        );
+                        builder.topicos.add(new Percent(nomeTopico, evolucaoTopico));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar resumo historico em lote: " + e.getMessage());
+            return Map.of();
+        }
+
+        LinkedHashMap<String, ResumoHistoricoDisciplina> resultado = new LinkedHashMap<>();
+        for (Map.Entry<String, ResumoHistoricoDisciplinaBuilder> entry : builders.entrySet()) {
+            resultado.put(entry.getKey(), entry.getValue().build());
+        }
+        return resultado;
     }
 
     public StatsProgress Stats(){
@@ -881,6 +1055,40 @@ public class TesteService {
 
     private String formatJsonDouble(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private float limitarUnitario(double valor) {
+        return (float) Math.max(0d, Math.min(1d, valor));
+    }
+
+    private static final class ResumoHistoricoDisciplinaBuilder {
+        private int totalTestes;
+        private int totalQuestoes;
+        private float acertoMedio;
+        private float precisaoMedia;
+        private final ArrayList<Percent> topicos = new ArrayList<>();
+
+        private ResumoHistoricoDisciplina build() {
+            return new ResumoHistoricoDisciplina(
+                totalTestes,
+                totalQuestoes,
+                acertoMedio,
+                precisaoMedia,
+                List.copyOf(topicos)
+            );
+        }
+    }
+
+    public record ResumoHistoricoDisciplina(
+        int totalTestes,
+        int totalQuestoesRespondidas,
+        float acertoMedio,
+        float precisaoMedia,
+        List<Percent> topicosTestados
+    ) {
+        public static ResumoHistoricoDisciplina vazio() {
+            return new ResumoHistoricoDisciplina(0, 0, 0f, 0f, List.of());
+        }
     }
 
     private record HistoricoQuestao(

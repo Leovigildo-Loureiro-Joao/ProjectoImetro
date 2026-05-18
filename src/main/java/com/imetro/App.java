@@ -86,6 +86,7 @@ public class App extends Application {
     @Override
     public void stop() {
         EXECUTOR.shutdownNow();
+        EXECUTOR_DIAGNOSTICO.shutdownNow();
     }
 
     private static void loadAppFonts() {
