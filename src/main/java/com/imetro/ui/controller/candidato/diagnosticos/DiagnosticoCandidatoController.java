@@ -52,6 +52,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -192,10 +193,10 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private Node mod;
     private Node modTop;
     private ModalController cont;
+    private HBox linhaQuestaoPane;
+    private VBox textoQuestaoPane;
     private VBox apoioVisualBox;
     private Separator apoioVisualSeparator;
-    private Node imagemQuestaoPane;
-    private Label imagemQuestaoLabel;
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
@@ -401,69 +402,50 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             return;
         }
 
-        Node painelImagemExistente = linhaQuestao.getChildren().get(2);
+        linhaQuestaoPane = linhaQuestao;
+        textoQuestaoPane = textoPane;
         apoioVisualSeparator = separator;
-        imagemQuestaoPane = painelImagemExistente;
+        textoQuestaoPane.setFillWidth(true);
+        textoQuestaoPane.setMinWidth(0);
+        textoQuestaoPane.setPrefWidth(0);
+        textoQuestaoPane.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textoQuestaoPane, Priority.ALWAYS);
+        bloco1.setMaxWidth(Double.MAX_VALUE);
+        bloco2.setMaxWidth(Double.MAX_VALUE);
+
         planoCartesianoPane = new PlanoCartesianoPane();
         planoCartesianoContainer = new StackPane(planoCartesianoPane);
+        planoCartesianoContainer.setMinWidth(0);
+        planoCartesianoContainer.setPrefWidth(0);
+        planoCartesianoContainer.setMaxWidth(Double.MAX_VALUE);
         planoCartesianoContainer.setVisible(false);
         planoCartesianoContainer.setManaged(false);
 
-        apoioVisualBox = new VBox(14, painelImagemExistente, planoCartesianoContainer);
-        apoioVisualBox.setPrefWidth(400);
+        apoioVisualBox = new VBox(planoCartesianoContainer);
+        apoioVisualBox.setMinWidth(0);
+        apoioVisualBox.setPrefWidth(0);
+        apoioVisualBox.setMaxWidth(Double.MAX_VALUE);
         apoioVisualBox.setVisible(false);
         apoioVisualBox.setManaged(false);
-
-        if (painelImagemExistente instanceof StackPane imagemPane) {
-            imagemPane.getStyleClass().add("question-side-card");
-            imagemPane.setVisible(false);
-            imagemPane.setManaged(false);
-            imagemPane.setPrefWidth(320);
-            imagemPane.setMaxWidth(320);
-
-            imagemQuestaoLabel = imagemPane.getChildren()
-                .stream()
-                .filter(Label.class::isInstance)
-                .map(Label.class::cast)
-                .findFirst()
-                .orElse(null);
-
-            if (imagemQuestaoLabel != null) {
-                imagemQuestaoLabel.setText("Imagem da questao");
-                imagemQuestaoLabel.getStyleClass().remove("desc-text");
-                if (!imagemQuestaoLabel.getStyleClass().contains("question-side-copy")) {
-                    imagemQuestaoLabel.getStyleClass().add("question-side-copy");
-                }
-            }
-        }
+        HBox.setHgrow(apoioVisualBox, Priority.ALWAYS);
+        imgBloco2.setImage(null);
+        imgBloco2.setVisible(false);
+        imgBloco2.setManaged(false);
 
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
-        linhaQuestao.getChildren().setAll(textoPane, apoioVisualSeparator, apoioVisualBox);
+        linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator, apoioVisualBox);
     }
 
     private void atualizarApoioVisual(Questao questao) {
-        boolean imagemVisivel = questao.getImagem() != null;
-        if (imagemVisivel) {
-            imgBloco2.setImage(questao.getImagem());
-            imgBloco2.setVisible(true);
-        } else {
-            imgBloco2.setImage(null);
-            imgBloco2.setVisible(false);
-        }
-
-        setNodeVisivel(imagemQuestaoPane, imagemVisivel);
-
         var planoConfig = QuestaoGraficoSupport.resolver(questao);
         boolean graficoVisivel = planoConfig.isPresent();
         if (graficoVisivel && planoCartesianoPane != null) {
             planoCartesianoPane.aplicarConfig(planoConfig.get());
         }
         setNodeVisivel(planoCartesianoContainer, graficoVisivel);
-
-        boolean apoioVisivel = imagemVisivel || graficoVisivel;
-        setNodeVisivel(apoioVisualBox, apoioVisivel);
-        setNodeVisivel(apoioVisualSeparator, apoioVisivel);
+        setNodeVisivel(apoioVisualBox, graficoVisivel);
+        setNodeVisivel(apoioVisualSeparator, graficoVisivel);
     }
 
     private void setNodeVisivel(Node node, boolean visivel) {

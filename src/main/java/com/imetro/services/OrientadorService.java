@@ -35,13 +35,9 @@ public class OrientadorService implements User{
         throw new UnsupportedOperationException("Unimplemented method 'VerRelatorios'");
     }
 
-    @Override
-    public void VerPerfil() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'VerPerfil'");
-    }
 
-  
+
+
 
   @Override
     public boolean CriarConta(UserRegister conta) {
@@ -58,5 +54,5 @@ public class OrientadorService implements User{
             return false;
         }
     }
-    
+
 }

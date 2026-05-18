@@ -5,6 +5,7 @@ import java.util.List;
 import com.imetro.util.QuestaoGraficoSupport.PlanoCartesianoConfig;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -16,8 +17,10 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 public class PlanoCartesianoPane extends VBox {
 
@@ -39,8 +42,13 @@ public class PlanoCartesianoPane extends VBox {
         getStyleClass().addAll("question-side-card", "plano-cartesiano-card");
         setSpacing(12);
         setPadding(new Insets(14));
-        setPrefWidth(400);
-        setPrefSize(400, 400);
+        setFillWidth(true);
+        setMinWidth(0);
+        setPrefWidth(0);
+        setMaxWidth(Double.MAX_VALUE);
+        setMinHeight(360);
+        setPrefHeight(420);
+        setMaxHeight(Double.MAX_VALUE);
 
         HBox topo = new HBox(badgeLabel);
         topo.setAlignment(Pos.CENTER_LEFT);
@@ -65,17 +73,36 @@ public class PlanoCartesianoPane extends VBox {
         StackPane chartShell = new StackPane(chart);
         chartShell.getStyleClass().add("plano-cartesiano-shell");
         chartShell.setPadding(new Insets(6));
-        chartShell.setPrefSize(296, 248);
+        chartShell.setMinWidth(0);
+        chartShell.setPrefHeight(290);
+        chartShell.setMaxWidth(Double.MAX_VALUE);
+        chartShell.setMaxHeight(Double.MAX_VALUE);
+        Rectangle shellClip = new Rectangle();
+        shellClip.setArcWidth(28);
+        shellClip.setArcHeight(28);
+        shellClip.widthProperty().bind(chartShell.widthProperty());
+        shellClip.heightProperty().bind(chartShell.heightProperty());
+        chartShell.setClip(shellClip);
+
+        chart.prefWidthProperty().bind(Bindings.max(0d, chartShell.widthProperty().subtract(12d)));
+        chart.maxWidthProperty().bind(Bindings.max(0d, chartShell.widthProperty().subtract(12d)));
+        chart.prefHeightProperty().bind(Bindings.max(220d, chartShell.heightProperty().subtract(12d)));
+        chart.maxHeightProperty().bind(Bindings.max(220d, chartShell.heightProperty().subtract(12d)));
 
         StackPane eixoYHolder = new StackPane(eixoYLabel);
+        eixoYHolder.setMinWidth(24);
         eixoYHolder.setPrefWidth(24);
+        eixoYHolder.setMaxWidth(24);
         eixoYHolder.setAlignment(Pos.CENTER);
 
         BorderPane planoBox = new BorderPane();
+        planoBox.setMinWidth(0);
+        planoBox.setMaxWidth(Double.MAX_VALUE);
         planoBox.setLeft(eixoYHolder);
         planoBox.setCenter(chartShell);
         planoBox.setBottom(eixoXLabel);
         BorderPane.setMargin(eixoXLabel, new Insets(8, 0, 0, 0));
+        VBox.setVgrow(planoBox, Priority.ALWAYS);
 
         getChildren().addAll(topo, tituloLabel, subtituloLabel, planoBox, dicaLabel);
     }
@@ -119,12 +146,12 @@ public class PlanoCartesianoPane extends VBox {
         chart.setVerticalGridLinesVisible(true);
         chart.setHorizontalZeroLineVisible(true);
         chart.setVerticalZeroLineVisible(true);
-        chart.setMinHeight(228);
-        chart.setPrefHeight(228);
-        chart.setMaxHeight(228);
-        chart.setMinWidth(280);
-        chart.setPrefWidth(280);
-        chart.setMaxWidth(280);
+        chart.setMinHeight(220);
+        chart.setMinWidth(0);
+        chart.setPrefHeight(260);
+        chart.setMaxHeight(Double.MAX_VALUE);
+        chart.setPrefWidth(0);
+        chart.setMaxWidth(Double.MAX_VALUE);
 
         eixoX.setAnimated(false);
         eixoY.setAnimated(false);

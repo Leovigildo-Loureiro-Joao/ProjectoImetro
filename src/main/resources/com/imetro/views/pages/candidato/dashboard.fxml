@@ -179,11 +179,7 @@
                                              <Font size="11.0" />
                                           </font>
                                        </Label>
-                                       <ProgressBar fx:id="velocidade" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
-                                          <padding>
-                                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                          </padding>
-                                       </ProgressBar>
+                                       <ProgressBar fx:id="velocidade" maxHeight="20.0" minHeight="12.0" prefHeight="20.0" prefWidth="273.0" progress="0.0" styleClass="progresso" />
                                     </children>
                                  </VBox>
                                  <VBox>
@@ -196,11 +192,7 @@
                                              <Font size="11.0" />
                                           </font>
                                        </Label>
-                                       <ProgressBar fx:id="resiliencia" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
-                                          <padding>
-                                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                          </padding>
-                                       </ProgressBar>
+                                       <ProgressBar fx:id="resiliencia" maxHeight="15.0" minHeight="12.0" prefHeight="8.0" prefWidth="384.0" progress="0.0" styleClass="progresso" />
                                     </children>
                                  </VBox>
                                  <VBox>
@@ -213,11 +205,7 @@
                                              <Font size="11.0" />
                                           </font>
                                        </Label>
-                                       <ProgressBar fx:id="precisao" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
-                                          <padding>
-                                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                          </padding>
-                                       </ProgressBar>
+                                       <ProgressBar fx:id="precisao" maxHeight="15.0" minHeight="12.0" prefHeight="8.0" prefWidth="384.0" progress="0.0" styleClass="progresso" />
                                     </children>
                                  </VBox>
                                  <VBox>
@@ -230,11 +218,7 @@
                                              <Font size="11.0" />
                                           </font>
                                        </Label>
-                                       <ProgressBar fx:id="consistencia" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
-                                          <padding>
-                                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                          </padding>
-                                       </ProgressBar>
+                                       <ProgressBar fx:id="consistencia" maxHeight="15.0" minHeight="12.0" prefHeight="8.0" prefWidth="384.0" progress="0.0" styleClass="progresso" />
                                     </children>
                                  </VBox>
                                  <VBox>
@@ -247,11 +231,7 @@
                                              <Font size="11.0" />
                                           </font>
                                        </Label>
-                                       <ProgressBar fx:id="logica" maxHeight="15.0" prefHeight="0.0" prefWidth="384.0" progress="0.0" styleClass="progresso">
-                                          <padding>
-                                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                          </padding>
-                                       </ProgressBar>
+                                       <ProgressBar fx:id="logica" maxHeight="15.0" minHeight="12.0" prefHeight="8.0" prefWidth="384.0" progress="0.0" styleClass="progresso" />
                                     </children>
                                  </VBox>
                               </children>

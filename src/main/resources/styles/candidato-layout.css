@@ -40,22 +40,22 @@
         rgba(255, 255, 255, 0.99),
         rgba(248, 250, 252, 0.98)
     );
-    -fx-background-radius: 24;
+    -fx-background-radius: 20;
     -fx-border-color: rgba(203, 213, 225, 0.95);
-    -fx-border-radius: 24;
-    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 24, 0.16, 0, 8);
+    -fx-border-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.07), 18, 0.14, 0, 6);
 }
 
 .teste-card-title {
-    -fx-font-size: 24px;
+    -fx-font-size: 20px;
     -fx-font-weight: 900;
     -fx-text-fill: -color-text;
 }
 
 .teste-card-subtitle {
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-text-fill: -color-muted;
-    -fx-line-spacing: 2px;
+    -fx-line-spacing: 1px;
 }
 
 .teste-card-badge {
@@ -63,8 +63,8 @@
     -fx-border-color: rgba(59, 130, 246, 0.18);
     -fx-border-radius: 999;
     -fx-background-radius: 999;
-    -fx-padding: 6 12 6 12;
-    -fx-font-size: 11px;
+    -fx-padding: 5 10 5 10;
+    -fx-font-size: 10px;
     -fx-font-weight: 800;
     -fx-text-fill: #1d4ed8;
 }
@@ -75,48 +75,48 @@
         rgba(239, 246, 255, 0.95),
         rgba(248, 250, 252, 0.95)
     );
-    -fx-background-radius: 20;
+    -fx-background-radius: 16;
     -fx-border-color: rgba(191, 219, 254, 0.95);
-    -fx-border-radius: 20;
+    -fx-border-radius: 16;
 }
 
 .teste-card-hero-title {
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: 800;
     -fx-text-fill: #2563eb;
 }
 
 .teste-card-hero-value {
-    -fx-font-size: 24px;
+    -fx-font-size: 20px;
     -fx-font-weight: 900;
     -fx-text-fill: -color-text;
 }
 
 .teste-card-hero-copy {
-    -fx-font-size: 11px;
+    -fx-font-size: 10px;
     -fx-text-fill: -color-muted;
-    -fx-line-spacing: 2px;
-    -fx-alignment: center;
-    -fx-text-alignment: center;
+    -fx-line-spacing: 1px;
+    -fx-alignment: center-left;
+    -fx-text-alignment: left;
 }
 
 .teste-card-surface {
     -fx-background-color: rgba(248, 250, 252, 0.92);
-    -fx-background-radius: 18;
+    -fx-background-radius: 16;
     -fx-border-color: rgba(226, 232, 240, 0.95);
-    -fx-border-radius: 18;
+    -fx-border-radius: 16;
 }
 
 .teste-card-section-title {
-    -fx-font-size: 14px;
+    -fx-font-size: 13px;
     -fx-font-weight: 800;
     -fx-text-fill: -color-text;
 }
 
 .teste-card-section-subtitle {
-    -fx-font-size: 11px;
+    -fx-font-size: 10px;
     -fx-text-fill: -color-muted;
-    -fx-line-spacing: 2px;
+    -fx-line-spacing: 1px;
 }
 
 .teste-card-metric {
@@ -124,13 +124,13 @@
 }
 
 .teste-card-metric-title {
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: 700;
     -fx-text-fill: -color-text;
 }
 
 .teste-card-metric-value {
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: 900;
     -fx-text-fill: #1d4ed8;
 }
@@ -151,15 +151,15 @@
     -fx-border-color: rgba(191, 219, 254, 0.95);
     -fx-border-radius: 999;
     -fx-background-radius: 999;
-    -fx-padding: 7 12 7 12;
-    -fx-font-size: 11px;
+    -fx-padding: 6 10 6 10;
+    -fx-font-size: 10px;
     -fx-font-weight: 700;
     -fx-text-fill: #1e3a8a;
 }
 
 .teste-card-topics-wrap {
-    -fx-hgap: 8;
-    -fx-vgap: 8;
+    -fx-hgap: 6;
+    -fx-vgap: 6;
 }
 
 .teste-card-step {

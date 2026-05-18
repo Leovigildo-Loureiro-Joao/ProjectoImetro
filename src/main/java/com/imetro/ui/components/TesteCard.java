@@ -17,6 +17,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class TesteCard extends VBox {
+    private static final double CARD_PREF_WIDTH = 680;
+    private static final double CARD_MAX_WIDTH = 720;
 
     private final ProgressBar acertoBar = new ProgressBar();
     private final ProgressBar precisaoBar = new ProgressBar();
@@ -30,10 +32,12 @@ public class TesteCard extends VBox {
         Runnable onInteligente
     ) {
         getStyleClass().addAll("card", "teste-card");
-        setPadding(new Insets(20));
-        setSpacing(18);
+        setPadding(new Insets(16));
+        setSpacing(14);
+        setAlignment(Pos.TOP_LEFT);
         setFillWidth(true);
-        setMaxWidth(Double.MAX_VALUE);
+        setPrefWidth(CARD_PREF_WIDTH);
+        setMaxWidth(CARD_MAX_WIDTH);
 
         Label disciplina = new Label(teste.disciplina());
         disciplina.getStyleClass().add("teste-card-title");
@@ -42,29 +46,27 @@ public class TesteCard extends VBox {
         subtitulo.getStyleClass().add("teste-card-subtitle");
         subtitulo.setWrapText(true);
 
-        VBox tituloBox = new VBox(4, disciplina, subtitulo);
+        VBox tituloBox = new VBox(2, disciplina, subtitulo);
         tituloBox.setAlignment(Pos.CENTER_LEFT);
 
-        HBox badges = new HBox(
-            8,
+        FlowPane badges = new FlowPane(6, 6);
+        badges.getChildren().addAll(
             criarBadge(teste.totalSubtopicos() + " testes"),
             criarBadge(teste.totalQuestoes() + " questoes respondidas"),
             criarBadge(teste.topicos().size() + " topicos testados")
         );
-        badges.setAlignment(Pos.CENTER_RIGHT);
+        badges.setAlignment(Pos.CENTER_LEFT);
+        badges.setPrefWrapLength(CARD_PREF_WIDTH - 36);
 
-        Region headerSpacer = new Region();
-        HBox.setHgrow(headerSpacer, Priority.ALWAYS);
-
-        HBox header = new HBox(16, tituloBox, headerSpacer, badges);
+        VBox header = new VBox(10, tituloBox, badges);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        CircleProgress progresso = new CircleProgress(58, 58);
+        CircleProgress progresso = new CircleProgress(50, 50);
         progresso.setValue(limitar(teste.percent()));
         VBox hero = criarHero(teste, progresso);
 
         VBox indicadores = new VBox(
-            12,
+            10,
             indicador(
                 "Acerto medio",
                 teste.ritmoEvolutivo(),
@@ -82,31 +84,36 @@ public class TesteCard extends VBox {
             )
         );
         indicadores.getStyleClass().add("teste-card-surface");
-        indicadores.setPadding(new Insets(16));
-        indicadores.setPrefWidth(300);
+        indicadores.setPadding(new Insets(14));
         indicadores.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(indicadores, Priority.ALWAYS);
 
         JFXButton buttonPadrao = new JFXButton("Entrar com foco padrao");
         buttonPadrao.getStyleClass().add("btn-primary-two");
         buttonPadrao.setMaxWidth(Double.MAX_VALUE);
+        buttonPadrao.setPrefHeight(38);
         buttonPadrao.setOnAction(event -> onPadrao.run());
 
         JFXButton buttonInteligente = new JFXButton("Abrir foco inteligente");
         buttonInteligente.getStyleClass().add("btn-primary");
         buttonInteligente.setMaxWidth(Double.MAX_VALUE);
+        buttonInteligente.setPrefHeight(38);
         buttonInteligente.setDisable(!inteligenteDisponivel);
         buttonInteligente.setOnAction(event -> onInteligente.run());
 
         Label actionTitle = new Label("Iniciar teste");
         actionTitle.getStyleClass().add("teste-card-section-title");
 
-        VBox acoes = new VBox(12, actionTitle, buttonPadrao, buttonInteligente);
+        VBox acoes = new VBox(10, actionTitle, buttonPadrao, buttonInteligente);
         acoes.getStyleClass().add("teste-card-surface");
-        acoes.setPadding(new Insets(16));
-        acoes.setPrefWidth(260);
+        acoes.setPadding(new Insets(14));
+        acoes.setPrefWidth(220);
+        acoes.setMaxWidth(220);
 
-        HBox resumo = new HBox(16, hero, indicadores, acoes);
+        VBox resumoPrincipal = new VBox(12, hero, indicadores);
+        resumoPrincipal.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(resumoPrincipal, Priority.ALWAYS);
+
+        HBox resumo = new HBox(12, resumoPrincipal, acoes);
         resumo.setAlignment(Pos.TOP_LEFT);
 
         Label topicosTitulo = new Label("Topicos ja testados");
@@ -120,12 +127,12 @@ public class TesteCard extends VBox {
 
         topicoBadge = new FlowPane(8, 8);
         topicoBadge.getStyleClass().add("teste-card-topics-wrap");
-        topicoBadge.setPrefWrapLength(460);
+        topicoBadge.setPrefWrapLength(CARD_PREF_WIDTH - 64);
         adicionarTopicos(teste.topicos());
 
-        VBox topicosBox = new VBox(10, topicosTitulo, topicosSubtitulo, topicoBadge);
+        VBox topicosBox = new VBox(8, topicosTitulo, topicosSubtitulo, topicoBadge);
         topicosBox.getStyleClass().add("teste-card-surface");
-        topicosBox.setPadding(new Insets(16));
+        topicosBox.setPadding(new Insets(14));
         topicosBox.setMaxWidth(Double.MAX_VALUE);
         getChildren().addAll(header, resumo, topicosBox);
     }
@@ -141,11 +148,18 @@ public class TesteCard extends VBox {
         descricao.getStyleClass().add("teste-card-hero-copy");
         descricao.setWrapText(true);
 
-        VBox hero = new VBox(12, titulo, progresso, valor, descricao);
+        VBox infoBox = new VBox(4, titulo, valor, descricao);
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setMaxWidth(Double.MAX_VALUE);
+
+        HBox heroConteudo = new HBox(12, progresso, infoBox);
+        heroConteudo.setAlignment(Pos.CENTER_LEFT);
+
+        VBox hero = new VBox(heroConteudo);
         hero.getStyleClass().add("teste-card-hero");
-        hero.setPadding(new Insets(16));
-        hero.setAlignment(Pos.TOP_CENTER);
-        hero.setPrefWidth(220);
+        hero.setPadding(new Insets(14));
+        hero.setAlignment(Pos.CENTER_LEFT);
+        hero.setMaxWidth(Double.MAX_VALUE);
         return hero;
     }
 
@@ -187,7 +201,7 @@ public class TesteCard extends VBox {
             return;
         }
 
-        int limite = Math.min(4, topicos.size());
+        int limite = Math.min(3, topicos.size());
         for (int i = 0; i < limite; i++) {
             Percent topico = topicos.get(i);
             Label label = new Label(topico.topico() + "  " + formatPercentualTopico(topico.evolucao()));

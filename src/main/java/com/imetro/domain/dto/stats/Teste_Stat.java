@@ -63,31 +63,93 @@ public record Teste_Stat(
     }
 
     public static Teste_Stat ParseDto(Map<String,Object> map) {
-        UUID id= (UUID)map.get( "id");
-        UUID teste_id= (UUID) map.get(  "teste_id");
-        UUID diagnostico_id= (UUID)  map.get( "diagnostico_id");
-        UUID candidato_id= (UUID) map.get( "candidato_id");
-        UUID disciplina_id= (UUID)map.get( "disciplina_id");
-        String  disciplina_nome= (String) map.get(  "disciplina_nome");
-        String origem= (String)  map.get(  "origem");
-        Integer tempo_total_segundos= (Integer)  map.get( "tempo_total_segundos");
-        Double tempo_medio_segundos= (Double)  map.get( "tempo_medio_segundos");
-        Integer total_questoes= (Integer)  map.get(  "total_questoes");
-        Integer total_acertos= (Integer) map.get(  "total_acertos");
-        Integer total_erros= (Integer) map.get(  "total_erros");
-        Double  percentual_acerto= (Double) map.get( "percentual_acerto");
-        Double velocidade= (Double)map.get( "velocidade");
-        Double precisao= (Double)map.get( "precisao");
-        Double consistencia= (Double)map.get( "consistencia");
-        Double logica= (Double)map.get( "logica");
-        Double resiliencia= (Double)map.get( "resiliencia");
-        String erros_comuns= (String)   map.get(   "erros_comuns");
-        String melhorias= (String) map.get(    "melhorias");
-        String  observacoes= (String)   map.get(   "observacoes");
-        LocalDateTime criado_em=ParseTimeStampLocalDate.mapearDataHora( map.get(  "criado_em")) ;
-        LocalDateTime atualizado_em=ParseTimeStampLocalDate.mapearDataHora( map.get("atualizado_em"));
+        UUID id = parseUuid(map.get("id"));
+        UUID teste_id = parseUuid(map.get("teste_id"));
+        UUID diagnostico_id = parseUuid(map.get("diagnostico_id"));
+        UUID candidato_id = parseUuid(map.get("candidato_id"));
+        UUID disciplina_id = parseUuid(map.get("disciplina_id"));
+        String disciplina_nome = parseText(map.get("disciplina_nome"));
+        String origem = parseText(map.get("origem"));
+        Integer tempo_total_segundos = parseInteger(map.get("tempo_total_segundos"));
+        Double tempo_medio_segundos = parseDouble(map.get("tempo_medio_segundos"));
+        Integer total_questoes = parseInteger(map.get("total_questoes"));
+        Integer total_acertos = parseInteger(map.get("total_acertos"));
+        Integer total_erros = parseInteger(map.get("total_erros"));
+        Double percentual_acerto = parseDouble(map.get("percentual_acerto"));
+        Double velocidade = parseDouble(map.get("velocidade"));
+        Double precisao = parseDouble(map.get("precisao"));
+        Double consistencia = parseDouble(map.get("consistencia"));
+        Double logica = parseDouble(map.get("logica"));
+        Double resiliencia = parseDouble(map.get("resiliencia"));
+        String erros_comuns = parseText(map.get("erros_comuns"));
+        String melhorias = parseText(map.get("melhorias"));
+        String observacoes = parseText(map.get("observacoes"));
+        LocalDateTime criado_em = ParseTimeStampLocalDate.mapearDataHora(map.get("criado_em"));
+        LocalDateTime atualizado_em = ParseTimeStampLocalDate.mapearDataHora(map.get("atualizado_em"));
         return new Teste_Stat(id, teste_id, diagnostico_id, candidato_id, disciplina_id, disciplina_nome, origem, tempo_total_segundos, tempo_medio_segundos, total_questoes, total_acertos, total_erros, percentual_acerto, velocidade, precisao, consistencia, logica, resiliencia, erros_comuns, melhorias, observacoes, criado_em, atualizado_em)
         ;
+    }
+
+    private static String parseText(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = value.toString();
+        return text.isBlank() ? null : text;
+    }
+
+    private static UUID parseUuid(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof UUID uuid) {
+            return uuid;
+        }
+        String text = value.toString();
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(text);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private static Integer parseInteger(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        String text = value.toString();
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static Double parseDouble(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        String text = value.toString();
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
 }

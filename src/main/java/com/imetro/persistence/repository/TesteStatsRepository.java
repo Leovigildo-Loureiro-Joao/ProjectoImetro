@@ -139,6 +139,10 @@ public class TesteStatsRepository extends JdbcBasicSqlRepository {
         }
     }
 
+    public List<Teste_Stat> findAllDto() throws Exception{
+        return findAll().stream().map(Teste_Stat::ParseDto).toList();
+    }
+
     private List<Map<String, Object>> readRows(ResultSet rs) throws SQLException {
         ResultSetMetaData meta = rs.getMetaData();
         int totalColunas = meta.getColumnCount();

@@ -133,8 +133,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private FXMLLoader modFxml;
     private ModalController cont;
     private TesteService testeService;
+    private HBox linhaQuestaoPane;
+    private VBox textoQuestaoPane;
     private VBox apoioVisualBox;
-    private VBox imagemQuestaoPane;
     private Separator apoioVisualSeparator;
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
@@ -147,6 +148,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         configurarPainelApoioVisual();
 
         service = new TesteAdaptativoService();
+        botoesDisciplinasBox.setFillWidth(false);
+        botoesDisciplinasBox.setAlignment(Pos.TOP_LEFT);
         disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
 
         if (diagnosticoService.temHistoricoDiagnostico(Authentication.getCurrentUserId())) {
@@ -211,6 +214,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         Label titulo = new Label("Escolha uma disciplina para ver os topicos ja testados e iniciar a proxima rodada.");
         titulo.getStyleClass().add("h3-thin");
+        titulo.setWrapText(true);
+        titulo.setMaxWidth(720);
         botoesDisciplinasBox.getChildren().add(titulo);
 
         List<String> disciplinas = service.carregarDisciplinasDisponiveis();
@@ -518,60 +523,51 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return;
         }
 
-        Node imagemNode = linhaQuestao.getChildren().get(2);
+        linhaQuestaoPane = linhaQuestao;
+        textoQuestaoPane = textoPane;
         apoioVisualSeparator = separator;
-
-        Label tituloImagem = new Label("Imagem da questao");
-        tituloImagem.getStyleClass().add("question-side-title");
-
-        StackPane imagemShell = new StackPane(imagemNode);
-        imagemShell.getStyleClass().add("question-side-shell");
-
-        imagemQuestaoPane = new VBox(10, tituloImagem, imagemShell);
-        imagemQuestaoPane.getStyleClass().add("question-side-card");
-        imagemQuestaoPane.setVisible(false);
-        imagemQuestaoPane.setManaged(false);
+        textoQuestaoPane.setFillWidth(true);
+        textoQuestaoPane.setMinWidth(0);
+        textoQuestaoPane.setPrefWidth(0);
+        textoQuestaoPane.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textoQuestaoPane, Priority.ALWAYS);
+        bloco1.setMaxWidth(Double.MAX_VALUE);
+        bloco2.setMaxWidth(Double.MAX_VALUE);
 
         planoCartesianoPane = new PlanoCartesianoPane();
         planoCartesianoContainer = new StackPane(planoCartesianoPane);
+        planoCartesianoContainer.setMinWidth(0);
+        planoCartesianoContainer.setPrefWidth(0);
+        planoCartesianoContainer.setMaxWidth(Double.MAX_VALUE);
         planoCartesianoContainer.setVisible(false);
         planoCartesianoContainer.setManaged(false);
 
-        apoioVisualBox = new VBox(14, imagemQuestaoPane, planoCartesianoContainer);
-        apoioVisualBox.setPrefWidth(320);
+        apoioVisualBox = new VBox(planoCartesianoContainer);
+        apoioVisualBox.setMinWidth(0);
+        apoioVisualBox.setPrefWidth(0);
+        apoioVisualBox.setMaxWidth(Double.MAX_VALUE);
         apoioVisualBox.setVisible(false);
         apoioVisualBox.setManaged(false);
+        HBox.setHgrow(apoioVisualBox, Priority.ALWAYS);
 
-        imgBloco2.setFitHeight(190);
-        imgBloco2.setFitWidth(260);
+        imgBloco2.setImage(null);
         imgBloco2.setVisible(false);
+        imgBloco2.setManaged(false);
 
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
-        linhaQuestao.getChildren().setAll(textoPane, apoioVisualSeparator, apoioVisualBox);
+        linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator, apoioVisualBox);
     }
 
     private void atualizarApoioVisual(Questao questao) {
-        boolean imagemVisivel = questao.getImagem() != null;
-        if (imagemVisivel) {
-            imgBloco2.setImage(questao.getImagem());
-            imgBloco2.setVisible(true);
-        } else {
-            imgBloco2.setImage(null);
-            imgBloco2.setVisible(false);
-        }
-        setNodeVisivel(imagemQuestaoPane, imagemVisivel);
-
         var planoConfig = QuestaoGraficoSupport.resolver(questao);
         boolean graficoVisivel = planoConfig.isPresent();
         if (graficoVisivel && planoCartesianoPane != null) {
             planoCartesianoPane.aplicarConfig(planoConfig.get());
         }
         setNodeVisivel(planoCartesianoContainer, graficoVisivel);
-
-        boolean apoioVisivel = imagemVisivel || graficoVisivel;
-        setNodeVisivel(apoioVisualBox, apoioVisivel);
-        setNodeVisivel(apoioVisualSeparator, apoioVisivel);
+        setNodeVisivel(apoioVisualBox, graficoVisivel);
+        setNodeVisivel(apoioVisualSeparator, graficoVisivel);
     }
 
     private void setNodeVisivel(Node node, boolean visivel) {

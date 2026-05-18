@@ -5,10 +5,8 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.imetro.App;
@@ -17,10 +15,13 @@ import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.domain.model.Candidato;
 import com.imetro.services.DiagnosticoService;
+import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
 import com.imetro.util.Authentication;
+import com.imetro.domain.dto.stats.Stats;
+
 
 
 import javafx.animation.FadeTransition;
@@ -119,6 +120,7 @@ public class DashboardOrientadoController implements Initializable {
 
     private Timeline startupTimeline;
     private DiagnosticoService diagnosticoService;
+    private CandidatoService candidatoService=new CandidatoService();
 
     private  double VELOCIDADE_TARGET = 0;
     private  double LOGICA_TARGET = 0;
@@ -142,6 +144,7 @@ public class DashboardOrientadoController implements Initializable {
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
+
         Object currentUser = CacheService.get("currentUser");
         if (currentUser instanceof Candidato cachedCandidato) {
             candidato = cachedCandidato;
@@ -191,7 +194,7 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void setupTargetData() {
-        
+
     }
 
     private void setupImprovementData() {
@@ -203,17 +206,17 @@ public class DashboardOrientadoController implements Initializable {
         "64%", "Foco! Você pode melhorar ainda mais",
         "78%", "Consistente! Mantenha o ritmo"
     };
-    
+
     // Escolhe um aleatório
-   
-    
+
+
     percentMelhoria.setText(null);
     descMelhoRia.setText(null);
-    
+
     // Cor dinâmica baseada na porcentagem
     String percentText = "0".replace("%", "");
     int percentValue = Integer.parseInt(percentText);
-    
+
     if (percentValue >= 80) {
         percentMelhoria.setStyle("-fx-text-fill: #059669;");
         descMelhoRia.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
@@ -231,10 +234,10 @@ public class DashboardOrientadoController implements Initializable {
     // Mesmo para sucesso
     percentSucesso.setText(null);
     descSucesso.setText(null);
-    
+
     String percentTextSucesso = "0".replace("%", "");
     int percentValueSucesso = Integer.parseInt(percentTextSucesso);
-    
+
     if (percentValueSucesso >= 80) {
         percentSucesso.setStyle("-fx-text-fill: #059669;");
         descSucesso.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
@@ -248,7 +251,7 @@ public class DashboardOrientadoController implements Initializable {
     CircleProgress circleProgressSucesso = new CircleProgress(30, 30);
     sucesso.getChildren().add(circleProgressSucesso);
     circleProgressSucesso.setValue(percentValueSucesso / 100.0);
-} 
+}
 
     private void updateHeader() {
         if (welcome != null) {
@@ -291,6 +294,7 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void setupRadar() {
+
         if (velocidade == null || logica == null || precisao == null || resiliencia == null || consistencia == null) {
             return;
         }
@@ -305,15 +309,17 @@ public class DashboardOrientadoController implements Initializable {
     private void setupLastResults() {
         if (lastResult == null) return;
         lastResult.getChildren().clear();
-        
+
         // Dados fictícios mais detalhados e variados
-        List<ResultData> resultados = Arrays.asList(
-            new ResultData("Exame Adaptativo", "89%", LocalDate.now().minusDays(1), "excelente", "+12%"),
-            new ResultData("Diagnóstico Rápido", "76%", LocalDate.now().minusDays(3), "bom", "+5%"),
-            new ResultData("Simulado Final", "94%", LocalDate.now().minusDays(5), "excelente", "+18%"),
-            new ResultData("Quiz Semanal", "68%", LocalDate.now().minusDays(7), "regular", "-3%")
-        );
-        
+        List<ResultData> resultados = candidatoService.ListarResultados();
+        if (resultados.isEmpty()) {
+            Label emptyState = new Label("Ainda nao ha resultados registados.");
+            emptyState.getStyleClass().add("muted");
+            emptyState.setWrapText(true);
+            lastResult.getChildren().add(emptyState);
+            return;
+        }
+            
         for (ResultData data : resultados) {
             lastResult.getChildren().add(createResultCard(data));
         }
@@ -322,27 +328,27 @@ public class DashboardOrientadoController implements Initializable {
     private VBox createResultCard(ResultData data) {
         VBox card = new VBox(6);
         card.getStyleClass().add("result-item");
-        
+
         // Linha superior: título e score
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
-        
+
         Label titleLabel = new Label(data.title);
         titleLabel.getStyleClass().add("result-title");
-        
+
         Label scoreLabel = new Label(data.score);
         scoreLabel.getStyleClass().addAll("pill", getPillStyle(data.type));
-        
+
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
         header.getChildren().addAll(titleLabel, scoreLabel);
-        
+
         // Linha inferior: data e variação
         HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER_LEFT);
-        
+
         Label dateLabel = new Label(data.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         dateLabel.getStyleClass().add("result-date");
-        
+
         Label variationLabel = new Label(data.variation);
         variationLabel.getStyleClass().add("result-date");
         if (data.variation.contains("+")) {
@@ -352,9 +358,9 @@ public class DashboardOrientadoController implements Initializable {
             variationLabel.setTextFill(Color.web("#dc2626"));
             variationLabel.setGraphic(createIcon("▼"));
         }
-        
+
         footer.getChildren().addAll(dateLabel, variationLabel);
-        
+
         card.getChildren().addAll(header, footer);
         return card;
     }
@@ -397,6 +403,7 @@ public class DashboardOrientadoController implements Initializable {
         if (descMelhoRia != null) {
             descMelhoRia.setText("(A ajustar)");
         }
+        CalcularStats();
 
         startupTimeline = new Timeline();
         startupTimeline.getKeyFrames().add(new KeyFrame(Duration.seconds(1.2),
@@ -468,6 +475,19 @@ public class DashboardOrientadoController implements Initializable {
         }
     }
 
+    private void CalcularStats(){
+        Stats stats;
+        stats = candidatoService.CalcularStats();
+        VELOCIDADE_TARGET = stats.velocidade();
+        LOGICA_TARGET = stats.logica();
+        PRECISAO_TARGET = stats.precisao();
+        RESILIENCIA_TARGET = stats.resiliencia();
+        CONSISTENCIA_TARGET = stats.consistencia();
+        PROGRESSO_TARGET = (VELOCIDADE_TARGET + LOGICA_TARGET + PRECISAO_TARGET + RESILIENCIA_TARGET + CONSISTENCIA_TARGET) / 5.0;
+        System.out.println(stats);
+        System.out.println("sdfsdfs sdfsd sdfsdf dfsdfsd sdf dsfs dfsdfsd df dfsdf sdfsd sd sdf d d dsf sdsd sdfsd sd dsfsdfsdf");
+    }
+
     private void setChartValue(eu.hansolo.tilesfx.chart.ChartData data, double value) {
         try {
             data.setValue(value);
@@ -488,8 +508,8 @@ public class DashboardOrientadoController implements Initializable {
         private final Label nivel = new Label();
         private final VBox progressos= new VBox(3, new Label("Velocidade"),velocidade,new Label("Consistência"), consistencia, new Label("Precisão"), precisao);
         private final HBox root = new HBox(10, progress, new VBox(5, name, percent, peso, nivel),progressos);
-        
-        
+
+
         private DisciplineStatusCell() {
             root.getStyleClass().add("status-row");
             name.getStyleClass().add("status-name");
@@ -528,4 +548,3 @@ public class DashboardOrientadoController implements Initializable {
     }
 
 }
-
