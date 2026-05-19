@@ -37,6 +37,7 @@ import com.imetro.ui.modals.ResultadoCelebracaoContext;
 import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
+import com.imetro.util.Loading;
 import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoCelebracaoSupport;
@@ -373,13 +374,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void carregarDisciplinas() {
-        botoesDisciplinasBox.getChildren().clear();
-
         Label titulo = new Label("Escolha uma disciplina para ver os topicos ja testados e iniciar a proxima rodada.");
         titulo.getStyleClass().add("h3-thin");
         titulo.setWrapText(true);
         titulo.setMaxWidth(720);
-        botoesDisciplinasBox.getChildren().add(titulo);
+        botoesDisciplinasBox.getChildren().add(Loading.load());
         CompletableFuture.supplyAsync(() -> service.carregarDisciplinasDisponiveis())
         .thenAcceptAsync(disciplinasDisponiveis -> {
             disciplinas=disciplinasDisponiveis;
@@ -387,6 +386,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         })
         .whenComplete((t, u) -> {
             Platform.runLater(() -> {
+                botoesDisciplinasBox.getChildren().clear();
+                botoesDisciplinasBox.getChildren().add(titulo);
                 for (String disciplina :  disciplinas ) {
                     List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
                     String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));

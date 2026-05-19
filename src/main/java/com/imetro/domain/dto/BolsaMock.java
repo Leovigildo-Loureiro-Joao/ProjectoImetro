@@ -10,4 +10,5 @@ package com.imetro.domain.dto;
         String risco,
         String pillClass
     ) {
+        
     }
