@@ -229,7 +229,7 @@
 
 /* Alternativas com letras maiores */
 .radio-label {
-    -fx-font-size: 16px;  /* Antigo 14px */
+    -fx-font-size: 14px;  /* Antigo 14px */
     -fx-text-fill: -color-text-secondary;
     -fx-padding: 8 0 8 0;
     -fx-font-weight: 500;
@@ -238,7 +238,7 @@
 
 /* Enunciado maior */
 #bloco1, #bloco2 {
-    -fx-font-size: 16px;    /* Antigo 12px (h3-thin) */
+    -fx-font-size: 14px;    /* Antigo 12px (h3-thin) */
     -fx-line-spacing: 4px;
 }
 

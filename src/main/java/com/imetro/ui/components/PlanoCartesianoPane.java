@@ -47,7 +47,7 @@ public class PlanoCartesianoPane extends VBox {
         setPrefWidth(0);
         setMaxWidth(Double.MAX_VALUE);
         setMinHeight(360);
-        setPrefHeight(420);
+        setPrefHeight(360);
         setMaxHeight(Double.MAX_VALUE);
 
         HBox topo = new HBox(badgeLabel);
@@ -148,7 +148,7 @@ public class PlanoCartesianoPane extends VBox {
         chart.setVerticalZeroLineVisible(true);
         chart.setMinHeight(220);
         chart.setMinWidth(0);
-        chart.setPrefHeight(260);
+        chart.setPrefHeight(220);
         chart.setMaxHeight(Double.MAX_VALUE);
         chart.setPrefWidth(0);
         chart.setMaxWidth(Double.MAX_VALUE);

@@ -17,4 +17,6 @@ public record Melhorias(
     double melhoriaPercentual
 ) {
 
+    
+
 }

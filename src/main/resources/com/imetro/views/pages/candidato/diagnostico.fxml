@@ -121,12 +121,116 @@
                                                       <children>
                                                          <VBox alignment="CENTER_LEFT" prefHeight="150.0" prefWidth="623.0" spacing="10.0">
                                                             <children>
-                                                               <Label fx:id="bloco1" alignment="TOP_LEFT" prefHeight="100.0" prefWidth="609.0" style="-fx-font-size: 16;" text="Aqui vai o texto do enunciado da questão." wrapText="true">
+                                                               <Label fx:id="bloco1" alignment="TOP_LEFT" prefHeight="100.0" prefWidth="609.0" style="-fx-font-size: 14;" text="Aqui vai o texto do enunciado da questão." wrapText="true">
                                                                   <styleClass>
                                                                      <String fx:value="h3-thin" />
                                                                      <String fx:value="diagnostico-question" />
                                                                   </styleClass></Label>
                                                                <Label fx:id="bloco2" prefHeight="20.0" prefWidth="550.0" styleClass="h3-thin" text="" wrapText="true" />
+                                                               
+                                                                     <!-- ALTERNATIVAS -->
+                                                               <VBox alignment="TOP_CENTER">
+                                                                  <children>
+                                                                     <Label styleClass="h3-thin-big" text="Selecione uma alternativa:" />
+                                                                     <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="10.0" prefHeight="188.0" prefWidth="1091.0" vgap="10.0">
+                                                                        <children>
+                                                                           <JFXToggleNode fx:id="toggleA" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" minHeight="45.0" minWidth="422.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="60.0" prefWidth="300.0" styleClass="toggle-letter" text="A">
+                                                                              <toggleGroup>
+                                                                                 <ToggleGroup fx:id="alternativas" />
+                                                                              </toggleGroup>
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResA" maxWidth="381.0" minWidth="294.0" prefHeight="36.0" prefWidth="381.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                           
+                                                                                 <JFXToggleNode fx:id="toggleB" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="55.0" maxWidth="350.0" minHeight="45.0" minWidth="422.0" prefHeight="55.0" prefWidth="350.0" styleClass="toggle-letter" text="B" toggleGroup="$alternativas">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResB" maxWidth="384.0" minWidth="294.0" prefHeight="54.0" prefWidth="375.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                           
+                                                                                 <JFXToggleNode fx:id="toggleC" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="C" toggleGroup="$alternativas">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResC" maxWidth="381.0" minWidth="294.0" prefHeight="36.0" prefWidth="381.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                           
+                                                                                 <JFXToggleNode fx:id="toggleD" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="D" toggleGroup="$alternativas">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResD" maxWidth="378.0" minWidth="294.0" prefHeight="36.0" prefWidth="378.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                           
+                                                                                 <JFXToggleNode fx:id="toggleE" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="E" toggleGroup="$alternativas">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResE" maxWidth="382.0" minWidth="294.0" prefHeight="36.0" prefWidth="382.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                           
+                                                                                 <JFXToggleNode fx:id="toggleF" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="F" toggleGroup="$alternativas">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResF" maxWidth="374.0" minWidth="294.0" prefHeight="36.0" prefWidth="374.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                           
+                                                                                 <JFXToggleNode fx:id="toggleG" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="G" toggleGroup="$alternativas">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <graphic>
+                                                                                 <Label fx:id="ResG" maxWidth="374.0" minWidth="294.0" prefHeight="36.0" prefWidth="374.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                                    <padding>
+                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                                    </padding>
+                                                                                 </Label>
+                                                                              </graphic>
+                                                                           </JFXToggleNode>
+                                                                        </children>
+                                                                     </FlowPane>
+                                                                  </children>
+                                                               </VBox>
                                                             </children>
                                                             <padding>
                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -152,110 +256,6 @@
                                              </VBox>
                                              
                                                    <Separator />
-                                             
-                                                   <!-- ALTERNATIVAS -->
-                                             <VBox alignment="TOP_CENTER">
-                                                <children>
-                                                   <Label styleClass="h3-thin-big" text="Selecione uma alternativa:" />
-                                                   <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="10.0" prefHeight="188.0" prefWidth="1091.0" vgap="10.0">
-                                                      <children>
-                                                         <JFXToggleNode fx:id="toggleA" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" minHeight="45.0" minWidth="350.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="60.0" prefWidth="300.0" styleClass="toggle-letter" text="A">
-                                                            <toggleGroup>
-                                                               <ToggleGroup fx:id="alternativas" />
-                                                            </toggleGroup>
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResA" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="294.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                         
-                                                               <JFXToggleNode fx:id="toggleB" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="B" toggleGroup="$alternativas">
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResB" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="234.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                         
-                                                               <JFXToggleNode fx:id="toggleC" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="C" toggleGroup="$alternativas">
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResC" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="246.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                         
-                                                               <JFXToggleNode fx:id="toggleD" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="D" toggleGroup="$alternativas">
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResD" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="236.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                         
-                                                               <JFXToggleNode fx:id="toggleE" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="E" toggleGroup="$alternativas">
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResE" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="251.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                         
-                                                               <JFXToggleNode fx:id="toggleF" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="F" toggleGroup="$alternativas">
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResF" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="242.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                         
-                                                               <JFXToggleNode fx:id="toggleG" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="350.0" styleClass="toggle-letter" text="G" toggleGroup="$alternativas">
-                                                            <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                            </padding>
-                                                            <graphic>
-                                                               <Label fx:id="ResG" maxWidth="294.0" minWidth="294.0" prefHeight="36.0" prefWidth="251.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                  <padding>
-                                                                     <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                  </padding>
-                                                               </Label>
-                                                            </graphic>
-                                                         </JFXToggleNode>
-                                                      </children>
-                                                   </FlowPane>
-                                                </children>
-                                             </VBox>
                                           </children>
                                        </VBox>
                                     </content>

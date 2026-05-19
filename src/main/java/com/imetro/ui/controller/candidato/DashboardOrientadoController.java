@@ -11,6 +11,8 @@ import java.util.ResourceBundle;
 
 import com.imetro.App;
 import com.imetro.domain.CacheService;
+import com.imetro.domain.dto.candidato.DashboardMelhoriaDia;
+import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.domain.model.Candidato;
@@ -19,7 +21,9 @@ import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
+import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
+import com.imetro.util.QuestaoUtil;
 import com.imetro.domain.dto.stats.Stats;
 
 
@@ -120,7 +124,8 @@ public class DashboardOrientadoController implements Initializable {
 
     private Timeline startupTimeline;
     private DiagnosticoService diagnosticoService;
-    private CandidatoService candidatoService=new CandidatoService();
+    private CandidatoService candidatoService = new CandidatoService();
+    private DashboardMelhoriaResumo dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
 
     private  double VELOCIDADE_TARGET = 0;
     private  double LOGICA_TARGET = 0;
@@ -159,6 +164,7 @@ public class DashboardOrientadoController implements Initializable {
 
     private void setup() {
         updateHeader();
+        dashboardMelhoriaResumo = candidatoService.calcularResumoMelhorias(candidato.getIdCandidato());
         setupAreaChart();
         setupRadar();
         setupDisciplineStatus();
@@ -198,6 +204,8 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void setupImprovementData() {
+        double mediaMelhoria = dashboardMelhoriaResumo.mediaMelhoriaPercentual();
+        double taxaSucesso = dashboardMelhoriaResumo.taxaSucessoPercentual();
     // Array de dados fictícios que mudam com o tempo
     String[] melhorias = {
         "85%", "Excelente! Você está acima da média",
@@ -210,17 +218,17 @@ public class DashboardOrientadoController implements Initializable {
     // Escolhe um aleatório
 
 
-    percentMelhoria.setText(null);
-    descMelhoRia.setText(null);
+    percentMelhoria.setText(QuestaoUtil.formatarPercentual(mediaMelhoria));
+    descMelhoRia.setText(descreverMelhoria(mediaMelhoria));
 
     // Cor dinâmica baseada na porcentagem
-    String percentText = "0".replace("%", "");
+    String percentText = Long.toString(Math.round(Math.max(0.0, mediaMelhoria)));
     int percentValue = Integer.parseInt(percentText);
 
-    if (percentValue >= 80) {
+    if (mediaMelhoria >= 10.0) {
         percentMelhoria.setStyle("-fx-text-fill: #059669;");
         descMelhoRia.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
-    } else if (percentValue >= 70) {
+    } else if (mediaMelhoria >= 0.0) {
         percentMelhoria.setStyle("-fx-text-fill: #d97706; ");
         descMelhoRia.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
     } else {
@@ -228,20 +236,21 @@ public class DashboardOrientadoController implements Initializable {
         descMelhoRia.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
     }
     CircleProgress circleProgress = new CircleProgress(30, 30);
+    melhoria.getChildren().clear();
     melhoria.getChildren().add(circleProgress);
     circleProgress.setValue(percentValue / 100.0);
 
     // Mesmo para sucesso
-    percentSucesso.setText(null);
-    descSucesso.setText(null);
+    percentSucesso.setText(QuestaoUtil.formatarPercentual(taxaSucesso));
+    descSucesso.setText(descreverSucesso(taxaSucesso));
 
-    String percentTextSucesso = "0".replace("%", "");
+    String percentTextSucesso = Long.toString(Math.round(Math.max(0.0, taxaSucesso)));
     int percentValueSucesso = Integer.parseInt(percentTextSucesso);
 
-    if (percentValueSucesso >= 80) {
+    if (taxaSucesso >= 80.0) {
         percentSucesso.setStyle("-fx-text-fill: #059669;");
         descSucesso.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
-    } else if (percentValueSucesso >= 70) {
+    } else if (taxaSucesso >= 60.0) {
         percentSucesso.setStyle("-fx-text-fill: #d97706; ");
         descSucesso.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
     } else {
@@ -249,6 +258,7 @@ public class DashboardOrientadoController implements Initializable {
         descSucesso.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
     }
     CircleProgress circleProgressSucesso = new CircleProgress(30, 30);
+    sucesso.getChildren().clear();
     sucesso.getChildren().add(circleProgressSucesso);
     circleProgressSucesso.setValue(percentValueSucesso / 100.0);
 }
@@ -319,7 +329,7 @@ public class DashboardOrientadoController implements Initializable {
             lastResult.getChildren().add(emptyState);
             return;
         }
-            
+
         for (ResultData data : resultados) {
             lastResult.getChildren().add(createResultCard(data));
         }
@@ -363,6 +373,20 @@ public class DashboardOrientadoController implements Initializable {
 
         card.getChildren().addAll(header, footer);
         return card;
+    }
+
+    public String descreverMelhoria(double taxa){
+        System.out.println(taxa);
+        if (taxa==0.7) {
+
+        }
+
+
+        return "(ajustar...)";
+    }
+
+    public String descreverSucesso(double taxa){
+        return "(ajustar...)";
     }
 
     private String getPillStyle(String type) {

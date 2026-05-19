@@ -252,7 +252,7 @@
                <Label styleClass="badge-new" text="4 novas" />
             </HBox>
             <Separator style="-fx-background-color: #f3f4f6;" />
-            <VBox fx:id="lastResult" spacing="8.0" />
+            <VBox fx:id="lastResult" prefHeight="342.0" prefWidth="271.0" spacing="8.0" />
          </children>
          <padding>
             <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
