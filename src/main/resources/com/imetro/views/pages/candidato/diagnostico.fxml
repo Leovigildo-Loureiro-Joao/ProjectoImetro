@@ -128,6 +128,8 @@
                                                                   </styleClass></Label>
                                                                <Label fx:id="bloco2" prefHeight="20.0" prefWidth="550.0" styleClass="h3-thin" text="" wrapText="true" />
                                                                
+                                                                           <Separator />
+                                                               
                                                                      <!-- ALTERNATIVAS -->
                                                                <VBox alignment="TOP_CENTER">
                                                                   <children>
@@ -254,8 +256,6 @@
                                                    </HBox>
                                                 </children>
                                              </VBox>
-                                             
-                                                   <Separator />
                                           </children>
                                        </VBox>
                                     </content>

@@ -75,7 +75,7 @@
                               </children>
                            </StackPane>
 
-                           <VBox fx:id="tela" spacing="15.0">
+                           <VBox fx:id="tela" prefWidth="956.0" spacing="15.0">
                               <children>
                                  <!-- HEADER DA QUESTAO -->
                                  <HBox alignment="CENTER_RIGHT" maxHeight="97.0" minHeight="97.0" prefHeight="97.0" prefWidth="778.0" spacing="20.0" translateX="10.0" translateY="-80.0">
