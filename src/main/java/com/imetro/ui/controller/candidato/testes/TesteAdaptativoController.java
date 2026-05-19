@@ -51,6 +51,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -385,21 +386,23 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             resumos=testeService.carregarResumoHistoricoDisciplinas(disciplinasDisponiveis, 4);
         })
         .whenComplete((t, u) -> {
-            for (String disciplina :  disciplinas ) {
-                List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
-                String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
-                TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
-                    chaveResumo,
-                    TesteService.ResumoHistoricoDisciplina.vazio()
-                );
-                TesteCard teste = new TesteCard(
-                    construirResumoDisciplina(disciplina, topicos, historico),
-                    topicos != null && !topicos.isEmpty(),
-                    () -> iniciarTestePadrao(disciplina, topicos),
-                    () -> abrirConfiguracaoInteligente(disciplina, topicos)
-                );
-                botoesDisciplinasBox.getChildren().add(teste);
-            }
+            Platform.runLater(() -> {
+                for (String disciplina :  disciplinas ) {
+                    List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
+                    String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
+                    TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
+                        chaveResumo,
+                        TesteService.ResumoHistoricoDisciplina.vazio()
+                    );
+                    TesteCard teste = new TesteCard(
+                        construirResumoDisciplina(disciplina, topicos, historico),
+                        topicos != null && !topicos.isEmpty(),
+                        () -> iniciarTestePadrao(disciplina, topicos),
+                        () -> abrirConfiguracaoInteligente(disciplina, topicos)
+                    );
+                    botoesDisciplinasBox.getChildren().add(teste);
+                }
+            });
         });
     }
 
