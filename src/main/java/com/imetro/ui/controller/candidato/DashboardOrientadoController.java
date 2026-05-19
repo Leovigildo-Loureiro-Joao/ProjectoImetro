@@ -11,6 +11,8 @@ import java.util.ResourceBundle;
 
 import com.imetro.App;
 import com.imetro.domain.CacheService;
+import com.imetro.domain.dto.candidato.DashboardDificuldadeDia;
+import com.imetro.domain.dto.candidato.DashboardDificuldadeResumo;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaDia;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
@@ -56,7 +58,7 @@ import javafx.util.Duration;
 public class DashboardOrientadoController implements Initializable {
 
     @FXML
-    private AreaChart<String,Integer> areaActivityChart;
+    private AreaChart<String, Number> areaActivityChart;
 
     @FXML
     private ProgressBar consistencia;
@@ -119,13 +121,14 @@ public class DashboardOrientadoController implements Initializable {
     @FXML
     private VBox tela;
 // Supondo que exista um serviço para obter dados reais
-    private XYChart.Series<String,Integer> dificuldadesSeries;
-    private XYChart.Series<String,Integer> evolucoesSeries;
+    private XYChart.Series<String, Number> dificuldadesSeries;
+    private XYChart.Series<String, Number> evolucoesSeries;
 
     private Timeline startupTimeline;
     private DiagnosticoService diagnosticoService;
     private CandidatoService candidatoService = new CandidatoService();
     private DashboardMelhoriaResumo dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
+    private DashboardDificuldadeResumo dashboardDificuldadeResumo = DashboardDificuldadeResumo.empty();
 
     private  double VELOCIDADE_TARGET = 0;
     private  double LOGICA_TARGET = 0;
@@ -165,6 +168,7 @@ public class DashboardOrientadoController implements Initializable {
     private void setup() {
         updateHeader();
         dashboardMelhoriaResumo = candidatoService.calcularResumoMelhorias(candidato.getIdCandidato());
+        dashboardDificuldadeResumo = candidatoService.calcularResumoDificuldades(candidato.getIdCandidato());
         setupAreaChart();
         setupRadar();
         setupDisciplineStatus();
@@ -281,26 +285,59 @@ public class DashboardOrientadoController implements Initializable {
 
         areaActivityChart.setLegendVisible(true);
         areaActivityChart.setAnimated(false);
-        areaActivityChart.setCreateSymbols(false);
+        areaActivityChart.setCreateSymbols(true);
         areaActivityChart.setOpacity(0);
+        if (areaActivityChart.getYAxis() instanceof javafx.scene.chart.NumberAxis eixoY) {
+            eixoY.setAutoRanging(false);
+            eixoY.setLowerBound(0);
+            eixoY.setUpperBound(100);
+            eixoY.setTickUnit(20);
+        }
 
         dificuldadesSeries = new XYChart.Series<>();
         dificuldadesSeries.setName("Dificuldades");
         evolucoesSeries = new XYChart.Series<>();
         evolucoesSeries.setName("Evoluções");
 
-        String[] monthLabels = {"Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dec"};
-        int startIndex = (LocalDate.now().getMonthValue() - 5 + 12) % 12;
-        for (int i = 0; i < 5; i++) {
-            String label = monthLabels[startIndex];
-            dificuldadesSeries.getData().add(new XYChart.Data<>(label, 0));
-            evolucoesSeries.getData().add(new XYChart.Data<>(label, 0));
-            startIndex = (startIndex + 1) % 12;
+        LocalDate inicio = LocalDate.now().minusDays(6);
+        DateTimeFormatter chartFormatter = DateTimeFormatter.ofPattern("dd/MM");
+        for (int i = 0; i < 7; i++) {
+            LocalDate data = inicio.plusDays(i);
+            String label = data.format(chartFormatter);
+            dificuldadesSeries.getData().add(new XYChart.Data<>(label, resolverDificuldadeDia(data)));
+            evolucoesSeries.getData().add(new XYChart.Data<>(label, resolverEvolucaoDia(data)));
         }
 
         areaActivityChart.getData().clear();
         areaActivityChart.getData().add(dificuldadesSeries);
         areaActivityChart.getData().add(evolucoesSeries);
+    }
+
+    private double resolverDificuldadeDia(LocalDate data) {
+        for (DashboardDificuldadeDia dia : dashboardDificuldadeResumo.semana()) {
+            if (data.equals(dia.data())) {
+                return limitarPercentualChart(dia.mediaDificuldadePercentual());
+            }
+        }
+        return 0d;
+    }
+
+    private double resolverEvolucaoDia(LocalDate data) {
+        for (DashboardMelhoriaDia dia : dashboardMelhoriaResumo.semana()) {
+            if (!data.equals(dia.data())) {
+                continue;
+            }
+            if (dia.melhorias() <= 0) {
+                return 0d;
+            }
+            double taxaSucesso = (dia.sucessos() * 100.0) / dia.melhorias();
+            return limitarPercentualChart(taxaSucesso);
+        }
+        return 0d;
+    }
+
+    private double limitarPercentualChart(double valor) {
+        return Math.max(0d, Math.min(100d, Math.round(valor)));
     }
 
     private void setupRadar() {
@@ -376,17 +413,35 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     public String descreverMelhoria(double taxa){
-        System.out.println(taxa);
-        if (taxa==0.7) {
-
+        if (taxa >= 20.0) {
+            return "Excelente ritmo de melhoria.";
         }
-
-
-        return "(ajustar...)";
+        if (taxa >= 10.0) {
+            return "Bom progresso nas ultimas tentativas.";
+        }
+        if (taxa >= 0.0) {
+            return "Evolução estavel, com margem para crescer.";
+        }
+        if (taxa >= -10.0) {
+            return "Houve oscilação, vale rever os topicos.";
+        }
+        return "Queda recente, precisa reforco dirigido.";
     }
 
     public String descreverSucesso(double taxa){
-        return "(ajustar...)";
+        if (taxa >= 85.0) {
+            return "Taxa de sucesso muito forte.";
+        }
+        if (taxa >= 70.0) {
+            return "Bom nivel de acerto e consistencia.";
+        }
+        if (taxa >= 50.0) {
+            return "Resultado razoavel, mas ainda instavel.";
+        }
+        if (taxa >= 30.0) {
+            return "Sucesso abaixo do esperado.";
+        }
+        return "Muitos erros recentes, retoma a base.";
     }
 
     private String getPillStyle(String type) {

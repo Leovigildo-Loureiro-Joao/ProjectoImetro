@@ -25,6 +25,7 @@ import com.imetro.domain.dto.test.ErrosComuns;
 import com.imetro.domain.dto.test.Melhorias;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.Teste_Pergunta;
+import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
@@ -521,6 +522,110 @@ public class TesteService {
         return itens;
     }
 
+    public List<TrilhaAdaptacaoSubtopico> carregarTrilhaAdaptacao(String disciplina) {
+        UUID candidatoId = Authentication.getCurrentUserId();
+        if (disciplina == null || disciplina.isBlank()) {
+            return List.of();
+        }
+        return carregarTrilhaAdaptacao(candidatoId, QuestaoUtil.resolverDisciplinaId(disciplina), disciplina);
+    }
+
+    public List<TrilhaAdaptacaoSubtopico> carregarTrilhaAdaptacao(
+        UUID candidatoId,
+        UUID disciplinaId,
+        String disciplinaNome
+    ) {
+        if (candidatoId == null || disciplinaId == null || disciplinaNome == null || disciplinaNome.isBlank()) {
+            return List.of();
+        }
+
+        LinkedHashMap<String, TrilhaHistoricoBuilder> historicoPorSubtopico = carregarHistoricoTrilha(candidatoId, disciplinaId);
+        LinkedHashMap<String, TrilhaProgressaoRow> progressoPorSubtopico = carregarProgressaoTrilha(candidatoId, disciplinaId);
+        LinkedHashSet<String> chaves = new LinkedHashSet<>();
+        chaves.addAll(progressoPorSubtopico.keySet());
+        chaves.addAll(historicoPorSubtopico.keySet());
+
+        ArrayList<TrilhaAdaptacaoSubtopico> itens = new ArrayList<>();
+        for (String chave : chaves) {
+            TrilhaProgressaoRow progresso = progressoPorSubtopico.get(chave);
+            TrilhaHistoricoBuilder historico = historicoPorSubtopico.get(chave);
+
+            String subtopico = firstNonBlank(
+                progresso == null ? null : progresso.subtopico(),
+                historico == null ? null : historico.displayName,
+                "Geral"
+            );
+            double rigorAtualPercentual = progresso == null
+                ? 0d
+                : QuestaoUtil.limitarPercentualFaixaCem(progresso.rigorAtual() * 100d);
+            double rigorAlvoPercentual = progresso == null
+                ? 0d
+                : QuestaoUtil.limitarPercentualFaixaCem(progresso.rigorAlvo() * 100d);
+            double progressoPercentual = progresso == null
+                ? resolverProgressoSemRigor(historico)
+                : calcularProgressoTrilha(progresso.rigorAtual(), progresso.rigorAlvo());
+            int avancos = historico == null ? 0 : historico.avancos;
+            int quedas = historico == null ? 0 : historico.quedas;
+            double dificuldadeMedia = historico == null ? 0d : historico.mediaDificuldade();
+            boolean precisaRevisao = progresso != null && progresso.precisaRevisao();
+            String observacao = construirObservacaoTrilha(subtopico, avancos, quedas, precisaRevisao, dificuldadeMedia);
+
+            itens.add(new TrilhaAdaptacaoSubtopico(
+                QuestaoUtil.formatarDisciplina(disciplinaNome),
+                subtopico,
+                progressoPercentual,
+                rigorAtualPercentual,
+                rigorAlvoPercentual,
+                avancos,
+                quedas,
+                dificuldadeMedia,
+                precisaRevisao,
+                progresso == null ? null : progresso.recomendacaoLivro(),
+                progresso == null ? null : progresso.recomendacaoPaginas(),
+                observacao
+            ));
+        }
+
+        itens.sort((left, right) -> {
+            int comparacaoRevisao = Boolean.compare(right.precisaRevisao(), left.precisaRevisao());
+            if (comparacaoRevisao != 0) {
+                return comparacaoRevisao;
+            }
+            int comparacaoQuedas = Integer.compare(right.quedasRecentes(), left.quedasRecentes());
+            if (comparacaoQuedas != 0) {
+                return comparacaoQuedas;
+            }
+            int comparacaoProgresso = Double.compare(right.progressoPercentual(), left.progressoPercentual());
+            if (comparacaoProgresso != 0) {
+                return comparacaoProgresso;
+            }
+            return String.CASE_INSENSITIVE_ORDER.compare(left.subtopico(), right.subtopico());
+        });
+        return List.copyOf(itens);
+    }
+
+    public String carregarUltimaObservacaoTeste(UUID candidatoId, UUID disciplinaId) {
+        if (candidatoId == null || disciplinaId == null) {
+            return null;
+        }
+
+        try {
+            for (Map<String, Object> row : testeStatsRepository.findByDisciplinaId(disciplinaId)) {
+                if (!Objects.equals(candidatoId, parseUuid(row.get("candidato_id")))) {
+                    continue;
+                }
+                String observacao = QuestaoUtil.safeText(row.get("observacoes"), "");
+                if (!observacao.isBlank()) {
+                    return observacao;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar observacoes do teste: " + e.getMessage());
+        }
+
+        return null;
+    }
+
     public List<ErrosComuns> parseErrosComunsJson(String json) {
         ArrayList<ErrosComuns> itens = new ArrayList<>();
         for (Map<String, String> valores : parseJsonObjectArray(json)) {
@@ -531,7 +636,8 @@ public class TesteService {
                     firstNonBlank(valores.get("marcada"), valores.get("resposta")),
                     valores.get("topico"),
                     valores.get("subtopico"),
-                    firstNonBlank(valores.get("resposta"), valores.get("correta"))
+                    firstNonBlank(valores.get("resposta"), valores.get("correta")),
+                    resolverPercentualDificuldadeErro(valores)
                 )
             );
         }
@@ -818,6 +924,131 @@ public class TesteService {
         return null;
     }
 
+    private LinkedHashMap<String, TrilhaHistoricoBuilder> carregarHistoricoTrilha(UUID candidatoId, UUID disciplinaId) {
+        LinkedHashMap<String, TrilhaHistoricoBuilder> historico = new LinkedHashMap<>();
+        try {
+            for (Map<String, Object> row : testeStatsRepository.findByDisciplinaId(disciplinaId)) {
+                if (!Objects.equals(candidatoId, parseUuid(row.get("candidato_id")))) {
+                    continue;
+                }
+
+                for (ErrosComuns erro : parseErrosComunsJson(QuestaoUtil.safeText(row.get("erros_comuns"), "[]"))) {
+                    String chave = normalizarChaveSubtopico(erro.subtopico());
+                    TrilhaHistoricoBuilder builder = historico.computeIfAbsent(chave, ignored -> new TrilhaHistoricoBuilder());
+                    builder.displayName = firstNonBlank(erro.subtopico(), erro.topico(), "Geral");
+                    builder.quedas++;
+                    builder.somaDificuldade += QuestaoUtil.limitarPercentualFaixaCem(erro.percentualDificuldade());
+                    builder.totalDificuldades++;
+                }
+
+                for (Melhorias melhoria : parseMelhoriasJson(QuestaoUtil.safeText(row.get("melhorias"), "[]"))) {
+                    String chave = normalizarChaveSubtopico(melhoria.subtopico());
+                    TrilhaHistoricoBuilder builder = historico.computeIfAbsent(chave, ignored -> new TrilhaHistoricoBuilder());
+                    builder.displayName = firstNonBlank(melhoria.subtopico(), melhoria.topico(), "Geral");
+                    if (melhoria.melhoriaPercentual() > 0d) {
+                        builder.avancos++;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar historico por subtopico: " + e.getMessage());
+            return new LinkedHashMap<>();
+        }
+        return historico;
+    }
+
+    private LinkedHashMap<String, TrilhaProgressaoRow> carregarProgressaoTrilha(UUID candidatoId, UUID disciplinaId) {
+        String sql = """
+            select
+              subtopico,
+              rigor_atual,
+              rigor_alvo,
+              acertos_consecutivos,
+              erros_consecutivos,
+              precisa_revisao,
+              recomendacao_livro,
+              recomendacao_paginas
+            from progressao_rigor
+            where aluno_id = ? and disciplina_id = ?
+            order by lower(coalesce(subtopico, '')) asc
+            """;
+
+        LinkedHashMap<String, TrilhaProgressaoRow> progresso = new LinkedHashMap<>();
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setObject(2, disciplinaId);
+
+            try (var rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String subtopico = firstNonBlank(rs.getString("subtopico"), "Geral");
+                    progresso.put(
+                        normalizarChaveSubtopico(subtopico),
+                        new TrilhaProgressaoRow(
+                            subtopico,
+                            limitarRigor(parseDouble(rs.getObject("rigor_atual"))),
+                            limitarRigor(parseDouble(rs.getObject("rigor_alvo"))),
+                            safeInt(rs.getObject("acertos_consecutivos")),
+                            safeInt(rs.getObject("erros_consecutivos")),
+                            parseBoolean(rs.getObject("precisa_revisao")) == Boolean.TRUE,
+                            firstNonBlank(rs.getString("recomendacao_livro"), null),
+                            firstNonBlank(rs.getString("recomendacao_paginas"), null)
+                        )
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar progressao por subtopico: " + e.getMessage());
+            return new LinkedHashMap<>();
+        }
+        return progresso;
+    }
+
+    private String normalizarChaveSubtopico(String subtopico) {
+        return QuestaoUtil.normalizar(firstNonBlank(subtopico, "Geral"));
+    }
+
+    private double limitarRigor(double valor) {
+        return Math.max(0d, Math.min(1d, valor));
+    }
+
+    private double calcularProgressoTrilha(double rigorAtual, double rigorAlvo) {
+        if (rigorAlvo <= 0d) {
+            return QuestaoUtil.limitarPercentualFaixaCem(rigorAtual * 100d);
+        }
+        return QuestaoUtil.limitarPercentualFaixaCem((rigorAtual / rigorAlvo) * 100d);
+    }
+
+    private double resolverProgressoSemRigor(TrilhaHistoricoBuilder historico) {
+        if (historico == null) {
+            return 0d;
+        }
+        int total = historico.avancos + historico.quedas;
+        if (total <= 0) {
+            return 0d;
+        }
+        return QuestaoUtil.limitarPercentualFaixaCem((historico.avancos * 100d) / total);
+    }
+
+    private String construirObservacaoTrilha(
+        String subtopico,
+        int avancos,
+        int quedas,
+        boolean precisaRevisao,
+        double dificuldadeMedia
+    ) {
+        if (precisaRevisao || quedas > avancos) {
+            return "Subtopico " + subtopico + " com mais quedas recentes. Vale retomar a leitura guiada.";
+        }
+        if (avancos > 0) {
+            return "Subtopico " + subtopico + " em subida, com sinais de consolidacao.";
+        }
+        if (dificuldadeMedia >= 60d) {
+            return "Subtopico " + subtopico + " ainda exige leitura em nivel alto de dificuldade.";
+        }
+        return "Sem oscilacoes recentes suficientes para fechar uma tendencia.";
+    }
+
     private List<Map<String, String>> parseJsonObjectArray(String json) {
         if (json == null || json.isBlank()) {
             return List.of();
@@ -1027,6 +1258,32 @@ public class TesteService {
         }
     }
 
+    private double resolverPercentualDificuldadeErro(Map<String, String> valores) {
+        String percentual = firstNonBlank(
+            valores.get("percentualDificuldade"),
+            valores.get("dificuldadePercentual"),
+            valores.get("percentual_dificuldade")
+        );
+        if (percentual != null) {
+            return QuestaoUtil.limitarPercentualFaixaCem(parseDouble(percentual));
+        }
+
+        String rigor = firstNonBlank(valores.get("rigor"), valores.get("rigorBase"));
+        if (rigor != null) {
+            double percentualPorRigor = parseDouble(rigor) * 100d;
+            if (percentualPorRigor > 0d) {
+                return QuestaoUtil.limitarPercentualFaixaCem(percentualPorRigor);
+            }
+        }
+
+        String nivel = firstNonBlank(valores.get("nivelDificuldade"), valores.get("nivel_dificuldade"));
+        if (nivel != null) {
+            return QuestaoUtil.calcularPercentualDificuldade(parseInteger(nivel), null);
+        }
+
+        return 0d;
+    }
+
     private int safeInt(long value) {
         if (value <= 0L) {
             return 0;
@@ -1110,6 +1367,33 @@ public class TesteService {
     }
 
     private record ParsedJsonToken(String value, int nextIndex) {
+    }
+
+    private static final class TrilhaHistoricoBuilder {
+        private String displayName;
+        private int avancos;
+        private int quedas;
+        private double somaDificuldade;
+        private int totalDificuldades;
+
+        private double mediaDificuldade() {
+            if (totalDificuldades <= 0) {
+                return 0d;
+            }
+            return QuestaoUtil.limitarPercentualFaixaCem(somaDificuldade / totalDificuldades);
+        }
+    }
+
+    private record TrilhaProgressaoRow(
+        String subtopico,
+        double rigorAtual,
+        double rigorAlvo,
+        int acertosConsecutivos,
+        int errosConsecutivos,
+        boolean precisaRevisao,
+        String recomendacaoLivro,
+        String recomendacaoPaginas
+    ) {
     }
 
     private String construirJsonResumoQuestoes(

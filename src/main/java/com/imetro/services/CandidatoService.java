@@ -14,12 +14,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.imetro.domain.dto.candidato.DashboardDificuldadeDia;
+import com.imetro.domain.dto.candidato.DashboardDificuldadeResumo;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaDia;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
 import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.domain.dto.stats.Teste_Stat;
+import com.imetro.domain.dto.test.ErrosComuns;
 import com.imetro.domain.dto.test.Melhorias;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.domain.interfaces.User;
@@ -183,15 +186,14 @@ public class CandidatoService implements User {
     }
 
 
-    public DashboardMelhoriaResumo calcularResumoDificuldades(UUID candidatoId) {
+    public DashboardDificuldadeResumo calcularResumoDificuldades(UUID candidatoId) {
         if (candidatoId == null) {
-            return DashboardMelhoriaResumo.empty();
+            return DashboardDificuldadeResumo.empty();
         }
 
-        LinkedHashMap<LocalDate, int[]> semana = inicializarSemanaAtual();
-        double somaMelhorias = 0.0;
-        int totalMelhorias = 0;
-        int totalSucessos = 0;
+        LinkedHashMap<LocalDate, double[]> semana = inicializarSemanaAtualDificuldades();
+        double somaDificuldades = 0.0;
+        int totalErros = 0;
 
         try {
             List<Map<String, Object>> rows = testeStatsRepository.findByCandidatoId(candidatoId);
@@ -201,37 +203,32 @@ public class CandidatoService implements User {
                     ? LocalDate.now()
                     : stats.criado_em().toLocalDate();
 
-                for (Melhorias melhoria : testeService.parseMelhoriasJson(stats.erros_comuns())) {
-                    somaMelhorias += melhoria.melhoriaPercentual();
-                    totalMelhorias++;
+                for (ErrosComuns erro : testeService.parseErrosComunsJson(stats.erros_comuns())) {
+                    double percentualDificuldade = normalizarPercentualFaixaCem(erro.percentualDificuldade());
+                    somaDificuldades += percentualDificuldade;
+                    totalErros++;
 
-                    boolean sucesso = melhoria.melhoriaPercentual() > 0.0;
-                    if (sucesso) {
-                        totalSucessos++;
-                    }
-
-                    int[] bucket = semana.get(dataReferencia);
+                    double[] bucket = semana.get(dataReferencia);
                     if (bucket != null) {
-                        bucket[0]++;
-                        if (sucesso) {
-                            bucket[1]++;
-                        }
+                        bucket[0] += 1d;
+                        bucket[1] += percentualDificuldade;
                     }
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao calcular melhorias do candidato: " + e.getMessage());
+            System.err.println("Erro ao calcular dificuldades do candidato: " + e.getMessage());
         }
 
-        ArrayList<DashboardMelhoriaDia> resumoSemanal = new ArrayList<>();
-        for (Map.Entry<LocalDate, int[]> entry : semana.entrySet()) {
-            int[] valores = entry.getValue();
-            resumoSemanal.add(new DashboardMelhoriaDia(entry.getKey(), valores[0], valores[1]));
+        ArrayList<DashboardDificuldadeDia> resumoSemanal = new ArrayList<>();
+        for (Map.Entry<LocalDate, double[]> entry : semana.entrySet()) {
+            double[] valores = entry.getValue();
+            int totalDia = (int) Math.round(valores[0]);
+            double mediaDia = totalDia == 0 ? 0.0 : valores[1] / totalDia;
+            resumoSemanal.add(new DashboardDificuldadeDia(entry.getKey(), totalDia, mediaDia));
         }
 
-        double mediaMelhoria = totalMelhorias == 0 ? 0.0 : somaMelhorias / totalMelhorias;
-        double taxaSucesso = totalMelhorias == 0 ? 0.0 : (totalSucessos * 100.0) / totalMelhorias;
-        return new DashboardMelhoriaResumo(mediaMelhoria, taxaSucesso, List.copyOf(resumoSemanal));
+        double mediaDificuldade = totalErros == 0 ? 0.0 : somaDificuldades / totalErros;
+        return new DashboardDificuldadeResumo(mediaDificuldade, List.copyOf(resumoSemanal));
     }
 
     public Stats CalcularStats(){
@@ -282,6 +279,15 @@ public class CandidatoService implements User {
         LocalDate inicio = LocalDate.now().minusDays(6);
         for (int i = 0; i < 7; i++) {
             dias.put(inicio.plusDays(i), new int[] {0, 0});
+        }
+        return dias;
+    }
+
+    private LinkedHashMap<LocalDate, double[]> inicializarSemanaAtualDificuldades() {
+        LinkedHashMap<LocalDate, double[]> dias = new LinkedHashMap<>();
+        LocalDate inicio = LocalDate.now().minusDays(6);
+        for (int i = 0; i < 7; i++) {
+            dias.put(inicio.plusDays(i), new double[] {0d, 0d});
         }
         return dias;
     }
@@ -341,6 +347,10 @@ public class CandidatoService implements User {
         } catch (NumberFormatException ignored) {
             return 0.0;
         }
+    }
+
+    private double normalizarPercentualFaixaCem(double valor) {
+        return Math.max(0.0, Math.min(100.0, valor));
     }
 
 

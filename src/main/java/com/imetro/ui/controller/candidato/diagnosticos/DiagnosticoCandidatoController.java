@@ -22,10 +22,13 @@ import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.ResultadoCelebracaoContext;
+import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
+import com.imetro.util.ResultadoCelebracaoSupport;
 import com.imetro.util.ResultadoPayload;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
@@ -522,13 +525,13 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             finalizarDiagnostico();
         }
     }
-
+    int acertos = 0;
     private void finalizarDiagnostico() {
         if (time != null) {
             time.stop();
         }
+        acertos = 0;
 
-        int acertos = 0;
         int limiteCorrecao = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
         for (int i = 0; i < limiteCorrecao; i++) {
             if (respostasUsuario.get(i) == questoes.get(i).getRespostaCorreta()) {
@@ -548,44 +551,38 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             tempo.getText()
         );
 
-        ResultadoAvaliacaoController.setResultado(
-            new ResultadoPayload(
-                "Diagnostico Academico",
-                resolverResumoDisciplinas(),
-                acertos,
-                totalQuestoes - acertos,
-                totalQuestoes,
-                porcentagem,
-                tempo.getText(),
-                nivelFinal,
-                "Diagnostico",
-                recomendacao,
-                "views/pages/candidato/diagnostico",
-                questoesResultado
-            )
+        ResultadoPayload payload = new ResultadoPayload(
+            "Diagnostico Academico",
+            resolverResumoDisciplinas(),
+            acertos,
+            totalQuestoes - acertos,
+            totalQuestoes,
+            porcentagem,
+            tempo.getText(),
+            nivelFinal,
+            "Diagnostico",
+            recomendacao,
+            "views/pages/candidato/diagnostico",
+            questoesResultado
         );
 
-        StackPane contentHost = diagnosticoField == null || diagnosticoField.getScene() == null
-            ? null
-            : (StackPane) diagnosticoField.getScene().lookup("#contentHost");
-        if (contentHost != null) {
-            App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
-            return;
-        }
-
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("Diagnostico concluido");
-        alert.setHeaderText("Resultado final");
-        alert.setContentText(String.format(
-            "Voce acertou %d de %d questoes\nPorcentagem: %.1f%%\nNivel: %s\n%s",
+        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = ResultadoCelebracaoSupport.criarResumo(
+            Authentication.getCurrentUserId(),
+            "Diagnostico Academico",
+            resolverResumoDisciplinas(),
             acertos,
             totalQuestoes,
             porcentagem,
-            nivelFinal,
-            recomendacao
-        ));
-        alert.showAndWait();
-        setDiagnosticMode(false);
+            tempo.getText(),
+            calcularTempoMedioSegundos(),
+            true
+        );
+
+        abrirCelebracaoResultado(
+            payload,
+            celebrationSummary,
+            () -> mostrarResultadoFallbackDiagnostico(acertos, porcentagem, nivelFinal, recomendacao)
+        );
     }
 
     private String resolverResumoDisciplinas() {
@@ -602,6 +599,27 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             itens.add(QuestaoResultado.fromQuestao(i + 1, questoes.get(i), respostasUsuario.get(i)));
         }
         return itens;
+    }
+
+    private double calcularTempoMedioSegundos() {
+        if (tempo == null || tempo.getText() == null || tempo.getText().isBlank() || totalQuestoes <= 0) {
+            return 0;
+        }
+
+        String[] partes = tempo.getText().trim().split(":");
+        if (partes.length != 3) {
+            return 0;
+        }
+
+        try {
+            int horas = Integer.parseInt(partes[0]);
+            int minutos = Integer.parseInt(partes[1]);
+            int segundos = Integer.parseInt(partes[2]);
+            int totalSegundos = (horas * 3600) + (minutos * 60) + segundos;
+            return totalSegundos / (double) totalQuestoes;
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     private String getNivelPorPorcentagem(double pct) {
@@ -642,6 +660,66 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         alert.setHeaderText(null);
         alert.setContentText(mensagem);
         alert.showAndWait();
+    }
+
+    private void abrirCelebracaoResultado(
+        ResultadoPayload payload,
+        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary,
+        Runnable fallback
+    ) {
+        StackPane contentHost = diagnosticoField == null || diagnosticoField.getScene() == null
+            ? null
+            : (StackPane) diagnosticoField.getScene().lookup("#contentHost");
+
+        Runnable onContinue = () -> {
+            ResultadoAvaliacaoController.setResultado(payload);
+            if (contentHost != null) {
+                App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
+            } else if (fallback != null) {
+                fallback.run();
+            }
+        };
+
+        if (modalPai == null) {
+            onContinue.run();
+            return;
+        }
+
+        try {
+            ResultadoCelebracaoContext.definir(
+                new ResultadoCelebracaoContext.CelebrationRequest(celebrationSummary, onContinue)
+            );
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("CelebracaoResultado");
+            Node modalNode = modFxml.load();
+            modalPai.getChildren().add(modalNode);
+            ResultadoCelebracaoModalController controller = modFxml.getController();
+            controller.init();
+        } catch (Exception ex) {
+            ResultadoCelebracaoContext.limpar();
+            onContinue.run();
+        }
+    }
+
+    private void mostrarResultadoFallbackDiagnostico(
+        int acertos,
+        double porcentagem,
+        String nivelFinal,
+        String recomendacao
+    ) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Diagnostico concluido");
+        alert.setHeaderText("Resultado final");
+        alert.setContentText(String.format(
+            "Voce acertou %d de %d questoes\nPorcentagem: %.1f%%\nNivel: %s\n%s",
+            acertos,
+            totalQuestoes,
+            porcentagem,
+            nivelFinal,
+            recomendacao
+        ));
+        alert.showAndWait();
+        setDiagnosticMode(false);
     }
 
     @Override

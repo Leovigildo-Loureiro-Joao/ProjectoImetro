@@ -952,3 +952,149 @@
 .plano-cartesiano-chart .axis-label {
     -fx-text-fill: -color-muted;
 }
+
+.adaptation-trail-card,
+.result-detail-panel,
+.result-trail-card {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.99),
+        rgba(248, 250, 252, 0.97)
+    );
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(226, 232, 240, 0.92);
+    -fx-border-radius: 18;
+}
+
+.result-detail-panel .titled-pane > .title {
+    -fx-background-color: rgba(241, 245, 249, 0.92);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(226, 232, 240, 0.96);
+    -fx-border-radius: 12;
+}
+
+.result-detail-panel .titled-pane > .title > .text {
+    -fx-fill: -color-text;
+}
+
+.result-detail-panel .titled-pane > *.content {
+    -fx-background-color: rgba(255, 255, 255, 0.98);
+    -fx-background-radius: 0 0 12 12;
+    -fx-padding: 12;
+}
+
+.result-trail-card {
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.result-trail-badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+.result-trail-badge-good {
+    -fx-background-color: rgba(220, 252, 231, 0.95);
+    -fx-text-fill: #15803d;
+}
+
+.result-trail-badge-warn {
+    -fx-background-color: rgba(254, 242, 242, 0.96);
+    -fx-text-fill: #b91c1c;
+}
+
+.result-trail-progress {
+    -fx-pref-height: 8px;
+}
+
+.result-trail-progress .bar {
+    -fx-background-color: linear-gradient(to right, #0f766e, #14b8a6);
+    -fx-background-radius: 999;
+}
+
+.result-trail-progress .track {
+    -fx-background-color: rgba(226, 232, 240, 0.94);
+    -fx-background-radius: 999;
+}
+
+.celebration-modal {
+    -fx-background-color: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0.995),
+        rgba(248, 250, 252, 0.985)
+    );
+    -fx-background-radius: 24;
+    -fx-border-color: rgba(191, 219, 254, 0.82);
+    -fx-border-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.18), 28, 0.18, 0, 12);
+}
+
+.celebration-badge {
+    -fx-background-color: rgba(219, 234, 254, 0.96);
+    -fx-text-fill: #1d4ed8;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+.celebration-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+    -fx-text-fill: -color-text;
+}
+
+.celebration-score-card,
+.celebration-track-card,
+.celebration-footer {
+    -fx-background-color: rgba(255, 255, 255, 0.96);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(226, 232, 240, 0.95);
+    -fx-border-radius: 18;
+}
+
+.celebration-score-card {
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.08), 18, 0.14, 0, 6);
+}
+
+.celebration-track-card {
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.05), 14, 0.12, 0, 4);
+}
+
+.celebration-footer {
+    -fx-padding: 16;
+    -fx-spacing: 10;
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(239, 246, 255, 0.92),
+        rgba(240, 253, 250, 0.92)
+    );
+}
+
+.celebration-note {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #0f172a;
+}
+
+.celebration-progress {
+    -fx-pref-height: 10px;
+}
+
+.celebration-progress .bar {
+    -fx-background-color: linear-gradient(to right, #2563eb, #38bdf8);
+    -fx-background-radius: 999;
+}
+
+.celebration-progress .track {
+    -fx-background-color: rgba(226, 232, 240, 0.94);
+    -fx-background-radius: 999;
+}
+
+.celebration-progress-alt .bar {
+    -fx-background-color: linear-gradient(to right, #0f766e, #22c55e);
+}

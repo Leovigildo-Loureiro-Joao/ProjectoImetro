@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.imetro.App;
@@ -17,10 +19,12 @@ import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
+import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
+import com.imetro.services.TesteService.ResumoHistoricoDisciplina;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.components.TesteCard;
@@ -29,14 +33,18 @@ import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.ResultadoCelebracaoContext;
+import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
+import com.imetro.util.ResultadoCelebracaoSupport;
 import com.imetro.util.QuestaoUtil;
 import com.imetro.util.ResultadoPayload;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXToggleNode;
 
 import javafx.animation.FadeTransition;
@@ -103,6 +111,20 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @FXML private VBox feedbackContainer;
     @FXML private Label feedbackIcon;
     @FXML private Label feedbackMessage;
+    @FXML private VBox trilhoAdaptacaoCard;
+    @FXML private JFXComboBox<String> trilhoDisciplinaCombo;
+    @FXML private JFXComboBox<String> trilhoSubtopicoCombo;
+    @FXML private Label trilhoStatusValue;
+    @FXML private Label trilhoResumoValue;
+    @FXML private Label trilhoLivroValue;
+    @FXML private Label trilhoPaginasValue;
+    @FXML private Label trilhoAvancosValue;
+    @FXML private Label trilhoQuedasValue;
+    @FXML private Label trilhoDificuldadeValue;
+    @FXML private Label trilhoProgressoValue;
+    @FXML private ProgressBar trilhoProgressoBar;
+    List<String> disciplinas = List.of();
+    Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
 
     private final VBox botoesDisciplinasBox = new VBox(12);
     private final List<Character> respostasUsuario = new ArrayList<>();
@@ -110,6 +132,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private final List<String> topicosSelecionados = new ArrayList<>();
     private final List<String> subtopicosSelecionados = new ArrayList<>();
     private final List<ReacaoTeste> reacao = new ArrayList<>();
+    private final Map<String, List<TrilhaAdaptacaoSubtopico>> trilhoAdaptacaoCache = new LinkedHashMap<>();
 
     private CircleProgress circleProgress;
     private List<Questao> questoes = new ArrayList<>();
@@ -146,6 +169,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         circleProgress = new CircleProgress(35, 35, 35, 0);
         circleProgressContainer.getChildren().add(circleProgress);
         configurarPainelApoioVisual();
+        configurarTrilhoAdaptacao();
 
         service = new TesteAdaptativoService();
         botoesDisciplinasBox.setFillWidth(false);
@@ -164,8 +188,146 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         atualizarIndicadoresNivel();
     }
 
+    private void configurarTrilhoAdaptacao() {
+        if (trilhoDisciplinaCombo == null || trilhoSubtopicoCombo == null) {
+            return;
+        }
+
+        trilhoDisciplinaCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarTrilhoSubtopicos(newValue));
+        trilhoSubtopicoCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarDetalheTrilho(
+            trilhoDisciplinaCombo.getValue(),
+            newValue
+        ));
+        configurarTrilhoAdaptacaoBloqueado("Disponivel depois do primeiro diagnostico real.");
+    }
+
+    private void atualizarTrilhoDisciplinas(List<String> disciplinas) {
+        if (trilhoDisciplinaCombo == null || trilhoSubtopicoCombo == null) {
+            return;
+        }
+
+        trilhoAdaptacaoCache.clear();
+        trilhoDisciplinaCombo.getItems().setAll(disciplinas == null ? List.of() : disciplinas);
+        trilhoDisciplinaCombo.setDisable(disciplinas == null || disciplinas.isEmpty());
+        trilhoSubtopicoCombo.setDisable(true);
+
+        if (disciplinas == null || disciplinas.isEmpty()) {
+            resetarTrilhoDetalhe("Sem trilho disponivel", "Ainda nao encontramos progresso adaptativo por subtópico.");
+            return;
+        }
+
+        trilhoDisciplinaCombo.getSelectionModel().selectFirst();
+        atualizarTrilhoSubtopicos(trilhoDisciplinaCombo.getValue());
+    }
+
+    private void atualizarTrilhoSubtopicos(String disciplina) {
+        if (trilhoSubtopicoCombo == null) {
+            return;
+        }
+        if (disciplina == null || disciplina.isBlank()) {
+            trilhoSubtopicoCombo.getItems().clear();
+            trilhoSubtopicoCombo.setDisable(true);
+            resetarTrilhoDetalhe("Sem selecao", "Escolha uma disciplina para abrir o trilho.");
+            return;
+        }
+
+        List<TrilhaAdaptacaoSubtopico> itens = trilhoAdaptacaoCache.computeIfAbsent(
+            disciplina,
+            testeService::carregarTrilhaAdaptacao
+        );
+
+        if (itens.isEmpty()) {
+            trilhoSubtopicoCombo.getItems().clear();
+            trilhoSubtopicoCombo.setDisable(true);
+            resetarTrilhoDetalhe("Sem dados", "Esta disciplina ainda nao tem trilho suficiente por subtópico.");
+            return;
+        }
+
+        trilhoSubtopicoCombo.getItems().setAll(itens.stream().map(TrilhaAdaptacaoSubtopico::subtopico).toList());
+        trilhoSubtopicoCombo.setDisable(false);
+        trilhoSubtopicoCombo.getSelectionModel().selectFirst();
+        atualizarDetalheTrilho(disciplina, trilhoSubtopicoCombo.getValue());
+    }
+
+    private void atualizarDetalheTrilho(String disciplina, String subtopico) {
+        if (disciplina == null || disciplina.isBlank() || subtopico == null || subtopico.isBlank()) {
+            resetarTrilhoDetalhe("Sem selecao", "Escolha um subtópico para ver a leitura guiada.");
+            return;
+        }
+
+        List<TrilhaAdaptacaoSubtopico> itens = trilhoAdaptacaoCache.getOrDefault(disciplina, List.of());
+        TrilhaAdaptacaoSubtopico item = itens.stream()
+            .filter(valor -> subtopico.equalsIgnoreCase(valor.subtopico()))
+            .findFirst()
+            .orElse(null);
+
+        if (item == null) {
+            resetarTrilhoDetalhe("Sem dados", "Nao encontramos detalhes para este subtópico.");
+            return;
+        }
+
+        trilhoStatusValue.setText(item.precisaRevisao() ? "Revisao recomendada" : "Em adaptacao");
+        trilhoResumoValue.setText(item.observacao());
+        trilhoLivroValue.setText("Livro: " + firstNonBlank(item.recomendacaoLivro(), "Sem livro definido"));
+        trilhoPaginasValue.setText("Paginas: " + firstNonBlank(item.recomendacaoPaginas(), "Paginas por definir"));
+        trilhoAvancosValue.setText("Avancos: " + item.avancosRecentes());
+        trilhoQuedasValue.setText("Quedas: " + item.quedasRecentes());
+        trilhoDificuldadeValue.setText("Dificuldade media: " + Math.round(item.dificuldadeMediaPercentual()) + "%");
+        trilhoProgressoBar.setProgress(QuestaoUtil.limitarPercentual(item.progressoPercentual()));
+        trilhoProgressoValue.setText(String.format(
+            java.util.Locale.ROOT,
+            "Progresso %.0f%% | Rigor atual %.0f%% de %.0f%%",
+            item.progressoPercentual(),
+            item.rigorAtualPercentual(),
+            item.rigorAlvoPercentual()
+        ));
+    }
+
+    private void configurarTrilhoAdaptacaoBloqueado(String mensagem) {
+        if (trilhoDisciplinaCombo != null) {
+            trilhoDisciplinaCombo.getItems().clear();
+            trilhoDisciplinaCombo.setDisable(true);
+        }
+        if (trilhoSubtopicoCombo != null) {
+            trilhoSubtopicoCombo.getItems().clear();
+            trilhoSubtopicoCombo.setDisable(true);
+        }
+        resetarTrilhoDetalhe("Trilho bloqueado", mensagem);
+    }
+
+    private void resetarTrilhoDetalhe(String status, String resumo) {
+        if (trilhoStatusValue != null) {
+            trilhoStatusValue.setText(status);
+        }
+        if (trilhoResumoValue != null) {
+            trilhoResumoValue.setText(resumo);
+        }
+        if (trilhoLivroValue != null) {
+            trilhoLivroValue.setText("Livro: -");
+        }
+        if (trilhoPaginasValue != null) {
+            trilhoPaginasValue.setText("Paginas: -");
+        }
+        if (trilhoAvancosValue != null) {
+            trilhoAvancosValue.setText("Avancos: 0");
+        }
+        if (trilhoQuedasValue != null) {
+            trilhoQuedasValue.setText("Quedas: 0");
+        }
+        if (trilhoDificuldadeValue != null) {
+            trilhoDificuldadeValue.setText("Dificuldade media: 0%");
+        }
+        if (trilhoProgressoBar != null) {
+            trilhoProgressoBar.setProgress(0);
+        }
+        if (trilhoProgressoValue != null) {
+            trilhoProgressoValue.setText("Progresso 0% | Rigor atual 0% de 0%");
+        }
+    }
+
     private void carregarBloqueioPrimeiroDiagnostico() {
         botoesDisciplinasBox.getChildren().clear();
+        configurarTrilhoAdaptacaoBloqueado("Fica disponivel depois do primeiro diagnostico concluido.");
 
         Label badge = new Label("Fluxo inicial");
         badge.getStyleClass().add("diagnostico-first-badge");
@@ -217,26 +379,28 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         titulo.setWrapText(true);
         titulo.setMaxWidth(720);
         botoesDisciplinasBox.getChildren().add(titulo);
-
-        List<String> disciplinas = service.carregarDisciplinasDisponiveis();
-        Map<String, TesteService.ResumoHistoricoDisciplina> resumos = testeService
-            .carregarResumoHistoricoDisciplinas(disciplinas, 4);
-
-        for (String disciplina : disciplinas) {
-            List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
-            String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
-            TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
-                chaveResumo,
-                TesteService.ResumoHistoricoDisciplina.vazio()
-            );
-            TesteCard teste = new TesteCard(
-                construirResumoDisciplina(disciplina, topicos, historico),
-                topicos != null && !topicos.isEmpty(),
-                () -> iniciarTestePadrao(disciplina, topicos),
-                () -> abrirConfiguracaoInteligente(disciplina, topicos)
-            );
-            botoesDisciplinasBox.getChildren().add(teste);
-        }
+        CompletableFuture.supplyAsync(() -> service.carregarDisciplinasDisponiveis())
+        .thenAcceptAsync(disciplinasDisponiveis -> {
+            disciplinas=disciplinasDisponiveis;
+            resumos=testeService.carregarResumoHistoricoDisciplinas(disciplinasDisponiveis, 4);
+        })
+        .whenComplete((t, u) -> {
+            for (String disciplina :  disciplinas ) {
+                List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
+                String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
+                TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
+                    chaveResumo,
+                    TesteService.ResumoHistoricoDisciplina.vazio()
+                );
+                TesteCard teste = new TesteCard(
+                    construirResumoDisciplina(disciplina, topicos, historico),
+                    topicos != null && !topicos.isEmpty(),
+                    () -> iniciarTestePadrao(disciplina, topicos),
+                    () -> abrirConfiguracaoInteligente(disciplina, topicos)
+                );
+                botoesDisciplinasBox.getChildren().add(teste);
+            }
+        });
     }
 
     private TesteDto construirResumoDisciplina(
@@ -779,45 +943,43 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             e.printStackTrace();
         }
 
-        ResultadoAvaliacaoController.setResultado(
-            new ResultadoPayload(
-                "Exame Adaptativo",
-                formatarDisciplina(disciplinaSelecionada),
-                acertos,
-                erros,
-                totalQuestoes,
-                porcentagemAcertos,
-                tempo.getText(),
-                nivelAtualAdaptativo.codigo(),
-                perfil,
-                recomendacao,
-                "views/pages/candidato/testes",
-                questoesResultado
-            )
+        ResultadoPayload payload = new ResultadoPayload(
+            "Exame Adaptativo",
+            formatarDisciplina(disciplinaSelecionada),
+            acertos,
+            erros,
+            totalQuestoes,
+            porcentagemAcertos,
+            tempo.getText(),
+            nivelAtualAdaptativo.codigo(),
+            perfil,
+            recomendacao,
+            "views/pages/candidato/testes",
+            questoesResultado
         );
 
-        StackPane contentHost = testeField == null || testeField.getScene() == null
-            ? null
-            : (StackPane) testeField.getScene().lookup("#contentHost");
-        if (contentHost != null) {
-            App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
-            return;
-        }
-
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("Teste Adaptativo Concluido");
-        alert.setHeaderText("Resultado Final Adaptativo");
-        alert.setContentText(String.format(
-            "RESULTADOS:\n- Acertos: %d/%d (%.1f%%)\n- Nivel alcancado: %s\n- Tempo medio por questao: %.1f segundos\n- Perfil: %s\n\nRecomendacao: %s",
+        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = ResultadoCelebracaoSupport.criarResumo(
+            candidatoID,
+            "Exame Adaptativo",
+            formatarDisciplina(disciplinaSelecionada),
             acertos,
             totalQuestoes,
             porcentagemAcertos,
-            nivelAtualAdaptativo.codigo(),
-            mediaTempo / 1000,
-            perfil,
-            recomendacao
-        ));
-        alert.showAndWait();
+            tempo.getText(),
+            mediaTempo / 1000d,
+            false
+        );
+
+        abrirCelebracaoResultado(
+            payload,
+            celebrationSummary,
+            () -> mostrarResultadoFallbackTeste(
+                porcentagemAcertos,
+                mediaTempo,
+                perfil,
+                recomendacao
+            )
+        );
     }
 
     private String determinarPerfil(double porcentagem, double tempoMedio) {
@@ -897,6 +1059,76 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private float limitarUnitario(float valor) {
         return Math.max(0f, Math.min(1f, valor));
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private void abrirCelebracaoResultado(
+        ResultadoPayload payload,
+        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary,
+        Runnable fallback
+    ) {
+        StackPane contentHost = testeField == null || testeField.getScene() == null
+            ? null
+            : (StackPane) testeField.getScene().lookup("#contentHost");
+
+        Runnable onContinue = () -> {
+            ResultadoAvaliacaoController.setResultado(payload);
+            if (contentHost != null) {
+                App.swapContent(contentHost, "views/pages/candidato/resultado-avaliacao");
+            } else if (fallback != null) {
+                fallback.run();
+            }
+        };
+
+        if (modalPai == null) {
+            onContinue.run();
+            return;
+        }
+
+        try {
+            ResultadoCelebracaoContext.definir(
+                new ResultadoCelebracaoContext.CelebrationRequest(celebrationSummary, onContinue)
+            );
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("CelebracaoResultado");
+            Node modal = modFxml.load();
+            modalPai.getChildren().add(modal);
+            ResultadoCelebracaoModalController controller = modFxml.getController();
+            controller.init();
+        } catch (Exception ex) {
+            ResultadoCelebracaoContext.limpar();
+            onContinue.run();
+        }
+    }
+
+    private void mostrarResultadoFallbackTeste(
+        double porcentagemAcertos,
+        double mediaTempo,
+        String perfil,
+        String recomendacao
+    ) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Teste Adaptativo Concluido");
+        alert.setHeaderText("Resultado Final Adaptativo");
+        alert.setContentText(String.format(
+            "RESULTADOS:\n- Acertos: %d/%d (%.1f%%)\n- Nivel alcancado: %s\n- Tempo medio por questao: %.1f segundos\n- Perfil: %s\n\nRecomendacao: %s",
+            acertos,
+            totalQuestoes,
+            porcentagemAcertos,
+            nivelAtualAdaptativo.codigo(),
+            mediaTempo / 1000,
+            perfil,
+            recomendacao
+        ));
+        alert.showAndWait();
     }
 
     @Override

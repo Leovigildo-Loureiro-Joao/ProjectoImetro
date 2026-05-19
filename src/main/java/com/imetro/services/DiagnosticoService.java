@@ -570,6 +570,27 @@ public class DiagnosticoService {
         return list;
     }
 
+    public String carregarUltimaObservacaoDiagnostico(UUID candidatoId, UUID disciplinaId, String disciplinaNome) {
+        if (candidatoId == null) {
+            return null;
+        }
+
+        try {
+            DiagnosticoDto diagnostico = diagnosticoRepository.buscarUltimoDiagnostico(
+                candidatoId,
+                disciplinaId,
+                disciplinaNome
+            );
+            if (diagnostico == null || diagnostico.observacoes() == null || diagnostico.observacoes().isBlank()) {
+                return null;
+            }
+            return diagnostico.observacoes();
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar observacoes do diagnostico: " + e.getMessage());
+            return null;
+        }
+    }
+
     private void atualizarProgressaoRigor(
         Connection conn,
         UUID diagnosticoId,

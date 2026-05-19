@@ -58,6 +58,27 @@ public class QuestaoUtil {
         return Math.max(0d, Math.min(1d, valor));
     }
 
+    public static double limitarPercentualFaixaCem(double valor) {
+        return Math.max(0d, Math.min(100d, valor));
+    }
+
+    public static double calcularPercentualDificuldade(Questao questao) {
+        if (questao == null) {
+            return 0d;
+        }
+        return calcularPercentualDificuldade(questao.getNivelDificuldade(), questao.getRigor());
+    }
+
+    public static double calcularPercentualDificuldade(Integer nivelDificuldade, Double rigor) {
+        if (rigor != null && Double.isFinite(rigor) && rigor > 0d) {
+            return limitarPercentualFaixaCem(rigor * 100d);
+        }
+        if (nivelDificuldade != null && nivelDificuldade > 0) {
+            return limitarPercentualFaixaCem((nivelDificuldade / 5d) * 100d);
+        }
+        return 0d;
+    }
+
     public static String safeText(Object value, String defaultValue) {
         return TextoUtil.safeText(value, defaultValue);
     }
@@ -174,6 +195,10 @@ public class QuestaoUtil {
             Questao questao = questoes.get(indice);
             char marcada = respostasUsuario.get(indice);
             boolean errou = marcada != questao.getRespostaCorreta();
+            double rigor = Double.isFinite(questao.getRigor())
+                ? limitarPercentualUnitario(questao.getRigor())
+                : 0d;
+            double percentualDificuldade = calcularPercentualDificuldade(questao);
 
             if (!errou) {
                 continue;
@@ -188,6 +213,9 @@ public class QuestaoUtil {
                 .append("\"topico\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getTopico(), ""))).append("\",")
                 .append("\"subtopico\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getSubtopico(), ""))).append("\",")
                 .append("\"marcada\":\"").append(marcada).append("\",")
+                .append("\"nivelDificuldade\":").append(Math.max(0, questao.getNivelDificuldade())).append(",")
+                .append("\"rigor\":").append(String.format(Locale.ROOT, "%.4f", rigor)).append(",")
+                .append("\"percentualDificuldade\":").append(String.format(Locale.ROOT, "%.2f", percentualDificuldade)).append(",")
                 .append("\"enuciado\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getEnunciado(), ""))).append("\",")
                 .append("\"resposta\":\"").append(questao.getRespostaCorreta()).append("\"")
                 .append("}");
