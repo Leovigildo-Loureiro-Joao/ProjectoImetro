@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -20,66 +21,76 @@
                <children>
                   <VBox spacing="6.0">
                      <children>
-                        <Label styleClass="big-h1" text="Bolsas &amp; Recomendacoes" />
-                        <Label fx:id="subtitleLabel" styleClass="muted" text="Radar de oportunidades" wrapText="true" />
+                        <Label styleClass="big-h1" text="Bolsas da Semana" />
+                        <Label fx:id="subtitleLabel" styleClass="compact-copy" text="Leitura rapida das bolsas mais alinhadas ao teu perfil." wrapText="true" />
                      </children>
                   </VBox>
                   <Region prefWidth="220.0" HBox.hgrow="ALWAYS" />
-                  <Label styleClass="pill-good" text="Radar ativo" />
+                  <Label styleClass="info-badge" text="i">
+                     <tooltip>
+                        <Tooltip text="Ves apenas o essencial nesta tela: match, cobertura, janela e estado da bolsa. O resto fica resumido para nao pesar a leitura." wrapText="true" />
+                     </tooltip>
+                  </Label>
+                  <Label styleClass="pill-good" text="Painel simplificado" />
                </children>
             </HBox>
 
-            <HBox spacing="18.0">
+            <HBox spacing="18.0" styleClass="card-blur shadow hero-gradient-card">
+               <padding>
+                  <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+               </padding>
                <children>
-                  <HBox prefHeight="228.0" prefWidth="724.0" spacing="22.0" styleClass="card-blur shadow hero-gradient-card">
-                     <padding>
-                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
-                     </padding>
+                  <VBox prefWidth="860.0" spacing="10.0">
                      <children>
-                        <VBox prefWidth="460.0" spacing="8.0">
+                        <Label styleClass="h3-bold" text="Resumo da semana" />
+                        <Label fx:id="readinessScoreLabel" styleClass="hero-score" text="76%" />
+                        <Label fx:id="radarSummaryLabel" styleClass="hero-copy" text="Resumo de bolsas" wrapText="true" />
+                        <FlowPane hgap="10.0" vgap="10.0">
                            <children>
-                              <Label styleClass="h3-thin" text="Indice de prontidao para candidatura" />
-                              <Label fx:id="readinessScoreLabel" styleClass="hero-score" text="76%" />
-                              <Label fx:id="radarSummaryLabel" styleClass="hero-copy" text="Resumo de bolsas" wrapText="true" />
                               <Label fx:id="janelaLabel" styleClass="timeline-pill" text="Melhor janela: proximos 30 dias" />
+                              <Label styleClass="timeline-pill" text="45 min" />
+                              <Label styleClass="timeline-pill" text="Ranking unico" />
                            </children>
-                        </VBox>
-                        <Region prefWidth="12.0" />
-                        <StackPane fx:id="matchRingHost" minHeight="138.0" minWidth="138.0" prefHeight="138.0" prefWidth="138.0" />
-                     </children>
-                  </HBox>
-
-                  <VBox prefHeight="228.0" prefWidth="338.0" spacing="12.0" styleClass="card-blur shadow">
-                     <padding>
-                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
-                     </padding>
-                     <children>
-                        <Label styleClass="h1-thin" text="Leitura rapida do radar" />
-                        <Label styleClass="muted" text="A tua narrativa academica esta forte, mas a documentacao ainda precisa ganhar velocidade." wrapText="true" />
-                        <VBox spacing="10.0" styleClass="report-note-card">
-                           <padding>
-                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
-                           </padding>
+                        </FlowPane>
+                        <HBox spacing="12.0">
                            <children>
-                              <Label styleClass="h3-thin" text="Melhor encaixe atual" />
-                              <Label styleClass="h3-thin-big" text="Bolsas de merito com foco quantitativo e melhoria continua." wrapText="true" />
+                              <VBox spacing="6.0" styleClass="report-note-card">
+                                 <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-bold" text="Entrada" />
+                                    <Label styleClass="compact-copy" text="Medalhas, desempenho, precisao e velocidade filtram quem entra." wrapText="true" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="6.0" styleClass="report-note-card">
+                                 <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                 </padding>
+                                 <children>
+                                    <Label styleClass="h3-bold" text="Prova" />
+                                    <Label styleClass="compact-copy" text="A simulacao e curta, cronometrada e decide o ranking da semana." wrapText="true" />
+                                 </children>
+                              </VBox>
                            </children>
-                        </VBox>
+                        </HBox>
                      </children>
                   </VBox>
+                  <Region prefWidth="12.0" />
+                  <StackPane fx:id="matchRingHost" minHeight="138.0" minWidth="138.0" prefHeight="138.0" prefWidth="138.0" />
                </children>
             </HBox>
 
-            <HBox maxHeight="121.0" minHeight="86.0" prefHeight="103.0" prefWidth="1084.0" spacing="14.0">
+            <HBox minHeight="96.0" prefHeight="112.0" prefWidth="1084.0" spacing="14.0">
                <children>
                   <VBox prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
                      <padding>
                         <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                      </padding>
                      <children>
-                        <Label styleClass="h3-thin" text="Prontidao geral" />
+                        <Label styleClass="h3-bold" text="Medalhas" />
                         <ProgressBar fx:id="prontidaoBar" prefWidth="220.0" progress="0.76" styleClass="report-progress" />
-                        <Label fx:id="prontidaoText" styleClass="muted" text="Prontidao" wrapText="true" />
+                        <Label fx:id="prontidaoText" styleClass="compact-copy" text="Prontidao" wrapText="true" />
                      </children>
                   </VBox>
                   <VBox prefHeight="102.0" prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
@@ -87,9 +98,9 @@
                         <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                      </padding>
                      <children>
-                        <Label styleClass="h3-thin" text="Alinhamento academico" />
+                        <Label styleClass="h3-bold" text="Desempenho" />
                         <ProgressBar fx:id="alinhamentoBar" prefWidth="220.0" progress="0.82" styleClass="report-progress" />
-                        <Label fx:id="alinhamentoText" styleClass="muted" text="Alinhamento" wrapText="true" />
+                        <Label fx:id="alinhamentoText" styleClass="compact-copy" text="Alinhamento" wrapText="true" />
                      </children>
                   </VBox>
                   <VBox prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
@@ -97,9 +108,9 @@
                         <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                      </padding>
                      <children>
-                        <Label styleClass="h3-thin" text="Documentacao" />
+                        <Label styleClass="h3-bold" text="Precisao" />
                         <ProgressBar fx:id="documentosBar" prefWidth="220.0" progress="0.58" styleClass="report-progress" />
-                        <Label fx:id="documentosText" styleClass="muted" text="Documentacao" wrapText="true" />
+                        <Label fx:id="documentosText" styleClass="compact-copy" text="Documentacao" wrapText="true" />
                      </children>
                   </VBox>
                   <VBox prefWidth="252.0" spacing="6.0" styleClass="metric-tile">
@@ -107,9 +118,9 @@
                         <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                      </padding>
                      <children>
-                        <Label styleClass="h3-thin" text="Competitividade" />
+                        <Label styleClass="h3-bold" text="Velocidade" />
                         <ProgressBar fx:id="competitividadeBar" prefWidth="220.0" progress="0.67" styleClass="report-progress" />
-                        <Label fx:id="competitividadeText" styleClass="muted" text="Competitividade" wrapText="true" />
+                        <Label fx:id="competitividadeText" styleClass="compact-copy" text="Competitividade" wrapText="true" />
                      </children>
                   </VBox>
                </children>
@@ -117,8 +128,8 @@
 
             <VBox spacing="10.0">
                <children>
-                  <Label styleClass="h1-thin" text="Oportunidades com mais encaixe" />
-                  <Label styleClass="muted" text="Cartoes iniciais para te ajudar a pensar candidatura, prioridade e narrativa." />
+                  <Label styleClass="h1-thin" text="Bolsas da semana" />
+                  <Label styleClass="compact-copy" text="Compara o match e entra rapido na melhor opcao." wrapText="true" />
                   <FlowPane fx:id="bolsasFlow" hgap="18.0" prefWrapLength="1060.0" vgap="18.0" />
                </children>
             </VBox>
@@ -130,7 +141,7 @@
                         <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
                      </padding>
                   </VBox>
-                  <VBox fx:id="passosBox" prefWidth="520.0" spacing="12.0" styleClass="card-blur shadow">
+                  <VBox fx:id="rankingBox" prefWidth="520.0" spacing="12.0" styleClass="card-blur shadow">
                      <padding>
                         <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
                      </padding>

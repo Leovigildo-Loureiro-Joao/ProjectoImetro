@@ -153,7 +153,7 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [x] Flyway `migrate()` no arranque com `baseline` em `V6`.
 - [x] Chaves de runtime: `TESTE`, `DB_ENABLED` e `DB_MIGRATE`.
 - [x] Documentacao para trabalhar sem BD local.
-- [ ] Validar `V7`, `V8`, `V9` e `V20` em Postgres real neste fluxo atual.
+- [x] Validar `V7`, `V8`, `V9` e `V20` em Postgres real neste fluxo atual.
 
 #### Repositorios/CRUD
 - [x] Base JDBC generica e repositorios baseados em tabela.
@@ -175,9 +175,9 @@ Para considerar o projeto "terminado" (MVP), o sistema deve permitir:
 - [ ] Automatizar atribuicao das medalhas a partir dos recordes reais do candidato.
 
 #### Configuracoes (BD)
-- [ ] Criar `ConfiguracaoRepository`.
-- [ ] "Salvar alteracoes" gravar em `configuracoes`.
-- [ ] "Reiniciar para o padrao" aplicar defaults reais.
+- [x] Criar `ConfiguracaoRepository`.
+- [x] "Salvar alteracoes" gravar em `configuracoes`.
+- [x] "Reiniciar para o padrao" aplicar defaults reais.
 
 #### Recomendacoes
 - [ ] Gerar recomendacoes sugeridas por topico/dificuldade/erros.

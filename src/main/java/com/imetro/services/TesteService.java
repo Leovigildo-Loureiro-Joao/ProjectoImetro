@@ -2,7 +2,10 @@ package com.imetro.services;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -15,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
+import com.imetro.domain.dto.bolsa.BolsaDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.stats.StatsProgress;
@@ -31,6 +35,7 @@ import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelReposit
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
+import com.imetro.persistence.repository.ScoreBolsaRepository;
 import com.imetro.persistence.repository.TestePerguntasRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.persistence.repository.TesteStatsRepository;
@@ -45,6 +50,7 @@ public class TesteService {
     private final TesteRepository testeRepository;
     private final TesteStatsRepository testeStatsRepository;
     private final TestePerguntasRepository testePerguntasRepository;
+    private final ScoreBolsaRepository scoreBolsaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
     private final ProgressoALunoDisciplinaRepository progressoALunoDisciplinaRepository;
     private final ConfiguracaoTesteAdaptativoNivelRepositorty configuracaoTesteAdaptativoNivelRepositorty;
@@ -53,6 +59,7 @@ public class TesteService {
         this.testeRepository = new TesteRepository();
         this.testeStatsRepository = new TesteStatsRepository();
         this.testePerguntasRepository = new TestePerguntasRepository();
+        this.scoreBolsaRepository = new ScoreBolsaRepository();
         this.diagnosticoRepository=new DiagnosticoRepository();
         this.progressoALunoDisciplinaRepository=new ProgressoALunoDisciplinaRepository();
         this.configuracaoTesteAdaptativoNivelRepositorty=new ConfiguracaoTesteAdaptativoNivelRepositorty();
@@ -491,11 +498,228 @@ public class TesteService {
         }
     }
 
+    public UUID registrarSimuladoBolsaConcluido(
+        BolsaDto bolsa,
+        UUID candidatoId,
+        List<Questao> questoes,
+        List<Character> respostasUsuario,
+        List<ReacaoTeste> questoesTest,
+        String tempoFormatado,
+        String recomendacao
+    ) {
+        if (bolsa == null || candidatoId == null || questoes == null || questoes.isEmpty() || respostasUsuario == null || respostasUsuario.isEmpty()) {
+            return null;
+        }
+
+        int limite = Math.min(questoes.size(), respostasUsuario.size());
+        if (limite <= 0) {
+            return null;
+        }
+
+        ArrayList<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < limite; i++) {
+            indices.add(i);
+        }
+
+        Questao questaoBase = questoes.getFirst();
+        String nomeDisciplina = firstNonBlank(
+            bolsa.disciplinaFoco(),
+            QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina()),
+            "Bolsa Semanal"
+        );
+        UUID disciplinaId = QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
+        String nivelInicial = resolverNivelAtualSeguro(candidatoId, disciplinaId);
+
+        List<ReacaoTeste> reacoesDisciplina = filtrarReacoesPorIndices(questoesTest, indices, questoes);
+        int totalQuestoes = limite;
+        int totalAcertos = 0;
+
+        for (Integer indice : indices) {
+            if (respostasUsuario.get(indice) == questoes.get(indice).getRespostaCorreta()) {
+                totalAcertos++;
+            }
+        }
+
+        int totalSeg = reacoesDisciplina.stream()
+            .mapToInt(reacao -> safeInt(reacao.tempoSegundos()))
+            .sum();
+        int totalErros = Math.max(0, totalQuestoes - totalAcertos);
+        double tempoMedioSegundos = totalQuestoes == 0 ? 0d : totalSeg / (double) totalQuestoes;
+        double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
+        String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+        double precisao = CalculoStats.calcularPrecisaoMediaRespostas(reacoesDisciplina);
+        double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina);
+        double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
+        double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina);
+        double velocidade = CalculoStats.calcularVelocidade(totalSeg, totalQuestoes);
+        String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
+        String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
+        String errosComunsJson = QuestaoUtil.construirJsonErrosComuns(indices, questoes, respostasUsuario);
+        String melhoriasJson = construirJsonMelhorias(
+            candidatoId,
+            disciplinaId,
+            indices,
+            questoes,
+            respostasUsuario,
+            questoesTest
+        );
+        String origem = "BOLSA_SEMANAL";
+        String observacoesStats = construirObservacoesStats(
+            indices,
+            questoes,
+            respostasUsuario,
+            tempoMedioSegundos,
+            recomendacao
+        );
+
+        LocalDateTime concluidoEm = LocalDateTime.now();
+
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                UUID testeId = testeRepository.inserir(
+                    conn,
+                    candidatoId,
+                    null,
+                    null,
+                    concluidoEm,
+                    percentualAcerto,
+                    concluidoEm,
+                    null,
+                    disciplinaId,
+                    nomeDisciplina,
+                    nivelInicial,
+                    nivelFinal,
+                    totalQuestoes,
+                    null,
+                    null,
+                    topicosJson,
+                    subtopicosJson,
+                    totalSeg,
+                    totalQuestoes,
+                    totalAcertos,
+                    totalErros,
+                    percentualAcerto,
+                    velocidade,
+                    precisao,
+                    consistencia,
+                    logica,
+                    resiliencia,
+                    recomendacao,
+                    concluidoEm,
+                    null
+                );
+
+                LinkedHashMap<String, Object> camposExtrasTeste = new LinkedHashMap<>();
+                camposExtrasTeste.put("origem", origem);
+                camposExtrasTeste.put("bolsa_id", bolsa.id());
+                testeRepository.updateById(testeId, camposExtrasTeste);
+
+                for (ReacaoTeste reacao : reacoesDisciplina) {
+                    testePerguntasRepository.inserir(Teste_Pergunta.fromQuestao(reacao), testeId);
+                }
+
+                testeStatsRepository.insert(
+                    conn,
+                    new Teste_Stat(
+                        UUID.randomUUID(),
+                        testeId,
+                        null,
+                        candidatoId,
+                        disciplinaId,
+                        nomeDisciplina,
+                        origem,
+                        totalSeg,
+                        tempoMedioSegundos,
+                        totalQuestoes,
+                        totalAcertos,
+                        totalErros,
+                        percentualAcerto,
+                        velocidade,
+                        precisao,
+                        consistencia,
+                        logica,
+                        resiliencia,
+                        errosComunsJson,
+                        melhoriasJson,
+                        observacoesStats,
+                        concluidoEm,
+                        concluidoEm
+                    )
+                );
+
+                scoreBolsaRepository.upsertWeeklyScore(
+                    conn,
+                    candidatoId,
+                    bolsa.id(),
+                    testeId,
+                    calcularScoreBolsa(percentualAcerto, precisao, velocidade),
+                    "Simulado de " + firstNonBlank(bolsa.nome(), "bolsa") + " com " + totalAcertos + "/" + totalQuestoes + " acertos.",
+                    totalQuestoes,
+                    totalAcertos,
+                    percentualAcerto,
+                    totalSeg,
+                    true,
+                    construirCriteriosBolsaJson(bolsa),
+                    LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                );
+
+                conn.commit();
+                return testeId;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao registrar simulado de bolsa: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public String NivelActual(UUID candidatoId,UUID disciplinaID) throws SQLException{
         List<ProgressoAlunoDisciplinaDto> lista=progressoALunoDisciplinaRepository.findAllByField("aluno_id", candidatoId)
         .stream().map(ProgressoAlunoDisciplinaDto::fromMap)
         .filter(t -> t.disciplinaId().equals(disciplinaID)).toList();
         return lista.get(0).nivelAtual().name();
+    }
+
+    private String resolverNivelAtualSeguro(UUID candidatoId, UUID disciplinaId) {
+        if (candidatoId == null || disciplinaId == null) {
+            return "INTERMEDIARIO";
+        }
+        try {
+            String nivel = NivelActual(candidatoId, disciplinaId);
+            return nivel == null || nivel.isBlank() ? "INTERMEDIARIO" : nivel.toUpperCase(Locale.ROOT);
+        } catch (Exception ignored) {
+            return "INTERMEDIARIO";
+        }
+    }
+
+    private double calcularScoreBolsa(double percentualAcerto, double precisao, double velocidade) {
+        double pesoAcerto = QuestaoUtil.limitarPercentualFaixaCem(percentualAcerto) * 0.65d;
+        double pesoPrecisao = QuestaoUtil.limitarPercentualFaixaCem(precisao * 100d) * 0.20d;
+        double pesoVelocidade = QuestaoUtil.limitarPercentualFaixaCem(velocidade * 100d) * 0.15d;
+        return QuestaoUtil.limitarPercentualFaixaCem(pesoAcerto + pesoPrecisao + pesoVelocidade);
+    }
+
+    private String construirCriteriosBolsaJson(BolsaDto bolsa) {
+        if (bolsa == null) {
+            return "{}";
+        }
+
+        return "{"
+            + "\"disciplinaFoco\":\"" + QuestaoUtil.escapeJson(firstNonBlank(bolsa.disciplinaFoco(), "")) + "\","
+            + "\"duracaoMinutos\":" + safeInt(bolsa.duracaoMinutos()) + ","
+            + "\"medalhasMin\":" + safeInt(bolsa.criterioMedalhasMin()) + ","
+            + "\"desempenhoMin\":" + safeInt(bolsa.criterioDesempenhoMin()) + ","
+            + "\"evolucaoMin\":" + safeInt(bolsa.criterioEvolucaoMin()) + ","
+            + "\"precisaoMin\":" + safeInt(bolsa.criterioPrecisaoMin()) + ","
+            + "\"velocidadeMin\":" + safeInt(bolsa.criterioVelocidadeMin()) + ","
+            + "\"modoResposta\":\"" + QuestaoUtil.escapeJson(firstNonBlank(bolsa.modoResposta(), "TEXTFIELD")) + "\""
+            + "}";
     }
 
     public List<ErrosComuns> buscarErrosComuns(UUID disciplinaId) {

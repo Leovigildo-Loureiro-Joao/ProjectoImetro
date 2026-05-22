@@ -3,6 +3,7 @@ package com.imetro.services;
 import com.imetro.App;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.diagnostico.HistoricoDiagnosticoResumo;
@@ -18,6 +19,7 @@ import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.perguntas.BootstrapResult;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.domain.dto.stats.Stats;
+import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
@@ -63,10 +65,11 @@ public class DiagnosticoService {
     private final RecomendacaoRepository recomendacaoRepository = new RecomendacaoRepository();
     private final ProgressaoRigorRepository progressaoRigorRepository = new ProgressaoRigorRepository();
     private final PerguntasBootstrapService perguntasBootstrapService;
-
+    private final ConfiguracaoTesteAdaptativoNivelRepositorty configTesteAdaptNiv;
     public DiagnosticoService() {
         this.perguntasRepository = new PerguntasRepository();
         this.perguntasBootstrapService = new PerguntasBootstrapService();
+        this.configTesteAdaptNiv=new ConfiguracaoTesteAdaptativoNivelRepositorty();
     }
 
     public DiagnosticoRepository getDiagnosticoRepository() {

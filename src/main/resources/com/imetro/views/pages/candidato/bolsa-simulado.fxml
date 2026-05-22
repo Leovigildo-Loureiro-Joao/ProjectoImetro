@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" prefHeight="980.0" prefWidth="1120.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.bolsas.BolsaSimuladoController">
+   <children>
+      <VBox maxWidth="1120.0" prefWidth="1120.0" spacing="18.0">
+         <padding>
+            <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+         </padding>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+               <children>
+                  <JFXButton onAction="#onBack" prefHeight="38.0" prefWidth="150.0" styleClass="btn-secondary" text="Voltar as bolsas" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label fx:id="heroStatusLabel" styleClass="pill-good" text="Elegivel" />
+               </children>
+            </HBox>
+
+            <VBox spacing="12.0" styleClass="card-blur shadow scholarship-exam-hero">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <Label fx:id="heroTitleLabel" styleClass="big-h1" text="Simulado de Bolsa" />
+                  <Label fx:id="heroSubtitleLabel" styleClass="hero-copy" text="Interface nova com resposta digitada e cronometro global." wrapText="true" />
+                  <HBox spacing="12.0">
+                     <children>
+                        <Label fx:id="heroDisciplineLabel" styleClass="timeline-pill" text="Disciplina foco: Matematica" />
+                        <Label fx:id="heroDurationLabel" styleClass="timeline-pill" text="Duracao: 45 min" />
+                        <Label fx:id="heroReadinessLabel" styleClass="timeline-pill" text="Prontidao atual: 78%" />
+                     </children>
+                  </HBox>
+                  <Label fx:id="heroCriteriaLabel" styleClass="muted" text="Criterios: 1 medalha, 68% desempenho, 64% evolucao, 70% precisao, 58% velocidade" wrapText="true" />
+               </children>
+            </VBox>
+
+            <VBox fx:id="introPane" spacing="18.0" styleClass="card-blur shadow scholarship-exam-shell">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <Label styleClass="h1-thin" text="Antes de comecar" />
+                  <Label styleClass="muted" text="Esta prova de bolsa troca os toggles do exame adaptativo por resposta digitada. Escreve a letra A-D ou o texto exato da resposta. O cronometro corre ate ao fim e a submissao e seca, sem mostrar a correta entre perguntas." wrapText="true" />
+                  <HBox spacing="18.0">
+                     <children>
+                        <VBox prefWidth="330.0" spacing="10.0" styleClass="weekly-mini-card">
+                           <padding>
+                              <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                           </padding>
+                           <children>
+                              <Label styleClass="h3-thin" text="Modo de resposta" />
+                              <Label styleClass="h3-thin-big" text="TextField + Enter" wrapText="true" />
+                              <Label styleClass="muted" text="Nada de Nao sei, Estou em duvida ou Prefiro pular visiveis na interface." wrapText="true" />
+                           </children>
+                        </VBox>
+                        <VBox prefWidth="330.0" spacing="10.0" styleClass="weekly-mini-card">
+                           <padding>
+                              <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                           </padding>
+                           <children>
+                              <Label styleClass="h3-thin" text="Como pontua" />
+                              <Label styleClass="h3-thin-big" text="Acerto + precisao + ritmo" wrapText="true" />
+                              <Label styleClass="muted" text="O score semanal mistura percentual de acerto, qualidade da resposta e velocidade da execucao." wrapText="true" />
+                           </children>
+                        </VBox>
+                        <VBox prefWidth="330.0" spacing="10.0" styleClass="weekly-mini-card">
+                           <padding>
+                              <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                           </padding>
+                           <children>
+                              <Label styleClass="h3-thin" text="Pressao" />
+                              <Label styleClass="h3-thin-big" text="Corte semanal realista" wrapText="true" />
+                              <Label styleClass="muted" text="Todos entram na mesma janela. A prova puxa questoes mais dificeis do banco ja montado." wrapText="true" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <JFXButton fx:id="startButton" onAction="#onStartExam" prefHeight="42.0" prefWidth="220.0" styleClass="btn-primary" text="Comecar simulado" />
+                        <Label styleClass="muted" text="O temporizador comeca assim que a primeira questao entra." wrapText="true" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+
+            <VBox fx:id="examPane" managed="false" spacing="18.0" styleClass="card-blur shadow scholarship-exam-shell" visible="false">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <Label fx:id="questionCounterLabel" styleClass="h1-thin" text="Questao 1 / 10" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label styleClass="timeline-pill" text="Tempo restante" />
+                        <Label fx:id="timerLabel" styleClass="scholarship-exam-timer" text="45:00" />
+                     </children>
+                  </HBox>
+                  <ProgressBar fx:id="examProgressBar" prefWidth="1040.0" progress="0.1" styleClass="report-progress" />
+                  <Label fx:id="progressLabel" styleClass="muted" text="1 de 10 respondidas nesta ronda" />
+
+                  <HBox spacing="18.0">
+                     <children>
+                        <VBox prefWidth="650.0" spacing="14.0" styleClass="scholarship-exam-question-card">
+                           <padding>
+                              <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                           </padding>
+                           <children>
+                              <HBox spacing="10.0">
+                                 <children>
+                                    <Label fx:id="topicoLabel" styleClass="timeline-pill" text="Topico: Funcoes" />
+                                    <Label fx:id="subtopicoLabel" styleClass="timeline-pill" text="Subtopico: Quadraticas" />
+                                 </children>
+                              </HBox>
+                              <Label fx:id="enunciadoLabel" styleClass="scholarship-exam-enunciado" text="Enunciado da questao" wrapText="true" />
+                              <Label fx:id="apoioLabel" styleClass="muted" text="Rigor 84% - dificuldade 5 - tempo sugerido 70s" wrapText="true" />
+                           </children>
+                        </VBox>
+
+                        <VBox prefWidth="370.0" spacing="14.0" styleClass="scholarship-exam-answer-card">
+                           <padding>
+                              <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                           </padding>
+                           <children>
+                              <Label styleClass="h1-thin" text="Escreve a resposta" />
+                              <Label fx:id="inputHintLabel" styleClass="muted" text="Escreve A-D ou o texto exato da resposta final." wrapText="true" />
+                              <VBox spacing="10.0">
+                                 <children>
+                                    <Label fx:id="optionALabel" styleClass="scholarship-option-card" text="A. Opcao A" wrapText="true" />
+                                    <Label fx:id="optionBLabel" styleClass="scholarship-option-card" text="B. Opcao B" wrapText="true" />
+                                    <Label fx:id="optionCLabel" styleClass="scholarship-option-card" text="C. Opcao C" wrapText="true" />
+                                    <Label fx:id="optionDLabel" styleClass="scholarship-option-card" text="D. Opcao D" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              <TextField fx:id="respostaField" promptText="Ex.: B ou texto final da resposta" styleClass="scholarship-answer-field" />
+                              <Label fx:id="statusLabel" styleClass="profile-feedback profile-feedback-info" text="Respostas validas: A, B, C, D ou o texto de uma das opcoes." wrapText="true" />
+                              <HBox spacing="10.0">
+                                 <children>
+                                    <JFXButton fx:id="submitButton" onAction="#onSubmitAnswer" prefHeight="42.0" prefWidth="180.0" styleClass="btn-primary" text="Confirmar e seguir" />
+                                    <JFXButton fx:id="finalizarButton" onAction="#onFinalizeExam" prefHeight="42.0" prefWidth="150.0" styleClass="btn-secondary" text="Fechar prova" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+
+            <VBox fx:id="emptyPane" managed="false" spacing="12.0" styleClass="card-blur shadow scholarship-exam-empty" visible="false">
+               <padding>
+                  <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+               </padding>
+               <children>
+                  <Label styleClass="h1-thin" text="Nenhuma bolsa selecionada" />
+                  <Label styleClass="muted" text="Abre a area de bolsas e entra por um cartao elegivel para carregar a prova semanal." wrapText="true" />
+                  <JFXButton onAction="#onBack" prefHeight="40.0" prefWidth="180.0" styleClass="btn-primary" text="Voltar as bolsas" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
+</StackPane>

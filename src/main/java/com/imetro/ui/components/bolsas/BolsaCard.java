@@ -1,59 +1,100 @@
 package com.imetro.ui.components.bolsas;
 
-import com.imetro.domain.dto.bolsa.BolsaDto;
 import com.imetro.domain.dto.bolsa.BolsaMock;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
-public class BolsaCard extends VBox{
-    public  BolsaCard(BolsaDto bolsa) {
+public class BolsaCard extends VBox {
+
+    public BolsaCard(BolsaMock bolsa, Runnable onAction) {
         Label tipoLabel = new Label(bolsa.tipo());
-        tipoLabel.getStyleClass().add("h3-thin");
+        tipoLabel.getStyleClass().add("timeline-pill");
+
+        Label statusLabel = new Label(bolsa.status());
+        statusLabel.getStyleClass().add(bolsa.disponivel() ? "pill-good" : "pill-warn");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox topRow = new HBox(10, tipoLabel, spacer, statusLabel);
 
         Label nomeLabel = new Label(bolsa.nome());
         nomeLabel.getStyleClass().add("h1");
         nomeLabel.setWrapText(true);
 
-        Label matchLabel = new Label(bolsa.match() + "% match");
-        matchLabel.getStyleClass().add("pill-good");
-
         Label coberturaLabel = new Label(bolsa.cobertura());
         coberturaLabel.getStyleClass().add("h3-thin-big");
         coberturaLabel.setWrapText(true);
 
-        Label prazoLabel = new Label(bolsa.vagas()+"");
-        prazoLabel.getStyleClass().add("timeline-pill");
+        Label janelaLabel = new Label(bolsa.janela());
+        janelaLabel.getStyleClass().add("timeline-pill");
+
+        Label vagasLabel = new Label(bolsa.vagas() + " vagas");
+        vagasLabel.getStyleClass().add("timeline-pill");
+
+        Label dificuldadeLabel = new Label(bolsa.dificuldade());
+        dificuldadeLabel.getStyleClass().add("timeline-pill");
+
+        FlowPane metaRow = new FlowPane(8, 8, janelaLabel, vagasLabel, dificuldadeLabel);
+        metaRow.getStyleClass().add("scholarship-meta-wrap");
+
+        Label matchLabel = new Label(bolsa.match() + "% pronto");
+        matchLabel.getStyleClass().add(bolsa.pillClass());
+
+        ProgressBar matchBar = new ProgressBar(bolsa.match() / 100.0);
+        matchBar.setPrefWidth(280);
+        matchBar.getStyleClass().add("report-progress");
 
         Label destaqueLabel = new Label(bolsa.destaque());
         destaqueLabel.getStyleClass().add("muted");
         destaqueLabel.setWrapText(true);
 
-        Label riscoLabel = new Label("Ponto de atencao: " + bolsa.risco());
+        Label criterioLabel = new Label("Entrada: " + bolsa.criterioResumo());
+        criterioLabel.getStyleClass().add("muted");
+        criterioLabel.setWrapText(true);
+
+        Label riscoLabel = new Label("Atencao: " + bolsa.risco());
         riscoLabel.getStyleClass().add("muted");
         riscoLabel.setWrapText(true);
 
-        ProgressBar matchBar = new ProgressBar(bolsa.match() / 100.0);
-        matchBar.setPrefWidth(260);
-        matchBar.getStyleClass().add("report-progress");
+        JFXButton bolsaButton = new JFXButton(bolsa.acaoLabel());
+        bolsaButton.getStyleClass().add(bolsa.disponivel() ? "btn-primary" : "btn-secondary");
+        bolsaButton.setDisable(!bolsa.disponivel());
+        bolsaButton.setOnAction(event -> {
+            if (onAction != null) {
+                onAction.run();
+            }
+        });
 
-        HBox topRow = new HBox(10, tipoLabel, matchLabel);
-        VBox.setVgrow(matchBar, Priority.NEVER);
-        JFXButton bolsaButton =new JFXButton("Candidatar a bolsa");
-        bolsaButton.getStyleClass().add("btn-primary");
-        this.getChildren().addAll(topRow, nomeLabel, coberturaLabel, prazoLabel, matchBar, destaqueLabel, riscoLabel,new JFXButton("Candidatar a bolsa"));
-        this.setSpacing(10);
-        this.getStyleClass().addAll("card-blur", "shadow", "scholarship-card");
-        if (bolsa.match() >= 85) {
-            this.getStyleClass().add("scholarship-card-strong");
+        getChildren().addAll(
+            topRow,
+            nomeLabel,
+            coberturaLabel,
+            metaRow,
+            matchLabel,
+            matchBar,
+            destaqueLabel,
+            criterioLabel,
+            riscoLabel,
+            bolsaButton
+        );
+        setSpacing(10);
+        getStyleClass().addAll("card-blur", "shadow", "scholarship-card");
+        if (bolsa.disponivel() && bolsa.match() >= 85) {
+            getStyleClass().add("scholarship-card-strong");
         }
-        this.setPadding(new Insets(16));
-        this.setPrefWidth(248);
-        this.setMinHeight(250);
+        if (!bolsa.disponivel()) {
+            getStyleClass().add("scholarship-card-locked");
+        }
+        setPadding(new Insets(16));
+        setPrefWidth(320);
+        setMinHeight(340);
     }
 }
