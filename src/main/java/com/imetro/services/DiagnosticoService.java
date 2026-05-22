@@ -101,6 +101,7 @@ public class DiagnosticoService {
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
+
         String disciplinaNormalizada =  QuestaoUtil.normalizar(disciplina);
         List<Questao> questoesDisciplina = carregarQuestoesReais().stream()
             .filter(questao -> disciplinaNormalizada.equals( QuestaoUtil.normalizar(questao.getDisciplina())))
@@ -115,7 +116,7 @@ public class DiagnosticoService {
         return construirTopicos(disciplinaId, nomeDisciplina, questoesDisciplina);
     }
 
-    public Map<String, Double> carregarProgressoSubtopicos(UUID candidatoId, Collection<Topico> topicos) {
+    public Map<String, Double> carregarProgressoSubtopicos(UUID candidatoId,String nivel, Collection<Topico> topicos) throws SQLException {
         if (candidatoId == null || topicos == null || topicos.isEmpty()) {
             return Map.of();
         }
@@ -230,7 +231,9 @@ public class DiagnosticoService {
                 progressoRigor,
                 progressoDiagnostico,
                 precisaRevisao,
-                precisaNovoDiagnostico
+                precisaNovoDiagnostico,
+                configTesteAdaptNiv.findByCodigo(nivel)
+
             );
             progressoFinal.put(chave, progresso);
         }
@@ -542,7 +545,8 @@ public class DiagnosticoService {
                         disciplinaId,
                         indices,
                         questoes,
-                        respostasUsuario
+                        respostasUsuario,
+                        nivel
                     );
                 }
 
@@ -601,7 +605,8 @@ public class DiagnosticoService {
         UUID disciplinaId,
         List<Integer> indices,
         List<Questao> questoes,
-        List<Character> respostasUsuario
+        List<Character> respostasUsuario,
+        String codigo
     ) throws SQLException {
         LinkedHashMap<String, ArrayList<QuestaoRigorResultado>> porTopico = new LinkedHashMap<>();
 
@@ -616,6 +621,8 @@ public class DiagnosticoService {
                 .add(new QuestaoRigorResultado(questao, acertou));
         }
 
+        ConfiguracaoTesteAdaptativoNivelDto config=configTesteAdaptNiv.findByCodigo(codigo);
+
         for (Map.Entry<String, ArrayList<QuestaoRigorResultado>> entry : porTopico.entrySet()) {
             String subtopico = entry.getKey();
             ArrayList<QuestaoRigorResultado> resultados = entry.getValue();
@@ -623,7 +630,7 @@ public class DiagnosticoService {
                 continue;
             }
 
-            ProgressaoRigorAtual atual = carregarProgressaoRigorAtual(conn, candidatoId, disciplinaId, subtopico);
+            ProgressaoRigorAtual atual = carregarProgressaoRigorAtual(conn, candidatoId, disciplinaId, config,subtopico);
 
             int total = resultados.size();
             int acertos = (int) resultados.stream().filter(QuestaoRigorResultado::acertou).count();
@@ -636,12 +643,12 @@ public class DiagnosticoService {
                 .orElse(atual.rigorAtual());
 
             double rigorAtualNovo = CalculoStats.calcularNovoRigor(atual.rigorAtual(), atual.rigorAlvo(), rigorMedioTentado, taxaAcerto);
-            int acertosConsecutivos = taxaAcerto >= 0.8 ? atual.acertosConsecutivos() + acertos : 0; // TODO CONFIG_ADAPTATIVA: limiar de acerto consecutivo ainda fixo em 0.8.
-            int errosConsecutivos = taxaAcerto < 0.5 ? atual.errosConsecutivos() + erros : 0; // TODO CONFIG_ADAPTATIVA: limiar de erro consecutivo ainda fixo em 0.5.
-            boolean precisaRevisao = taxaAcerto < 0.6 || errosConsecutivos >= 2; // TODO CONFIG_ADAPTATIVA: regra de revisao ainda fixa (0.6 / 2 erros).
+            int acertosConsecutivos = taxaAcerto >= config.limiar_acerto()? atual.acertosConsecutivos() + acertos : 0;
+            int errosConsecutivos = taxaAcerto < config.limiar_erro() ? atual.errosConsecutivos() + erros : 0;
+            boolean precisaRevisao = taxaAcerto < config.resumo_med() || errosConsecutivos >= config.tot_erro_revisao();
             double rigorRecomendado = precisaRevisao
-                ? Math.max(0.05d, rigorAtualNovo - 0.04d) // TODO CONFIG_ADAPTATIVA: ajuste de descida e piso minimo ainda fixos.
-                : Math.min(atual.rigorAlvo(), Math.max(rigorAtualNovo, rigorMedioTentado) + 0.06d); // TODO CONFIG_ADAPTATIVA: ajuste de subida ainda fixo.
+                ? Math.max(config.limiteSuperior(), rigorAtualNovo - 0.04d)
+                : Math.min(atual.rigorAlvo(), Math.max(rigorAtualNovo, rigorMedioTentado) + config.limiteInferior());
 
             String recomendacaoLivro = escolherReferenciaLivro(resultados);
             String recomendacaoPaginas = escolherIntervaloPaginas(resultados);
@@ -693,6 +700,7 @@ public class DiagnosticoService {
         Connection conn,
         UUID candidatoId,
         UUID disciplinaId,
+        ConfiguracaoTesteAdaptativoNivelDto config,
         String subtopico
     ) throws SQLException {
         String sql = """
@@ -716,7 +724,7 @@ public class DiagnosticoService {
                     return new ProgressaoRigorAtual(
                         rs.getObject("id", UUID.class),
                         rs.getObject("rigor_atual") instanceof Number number ? number.doubleValue() : 0.12d, // TODO CONFIG_ADAPTATIVA: fallback de rigor atual ainda fixo.
-                        rs.getObject("rigor_alvo") instanceof Number number ? number.doubleValue() : 0.7d, // TODO CONFIG_ADAPTATIVA: fallback de rigor alvo ainda fixo.
+                        rs.getObject("rigor_alvo") instanceof Number number ? number.doubleValue() :config.rigorBase(),
                         rs.getObject("tentativas_no_nivel") instanceof Number number ? number.intValue() : 0,
                         rs.getObject("acertos_consecutivos") instanceof Number number ? number.intValue() : 0,
                         rs.getObject("erros_consecutivos") instanceof Number number ? number.intValue() : 0
@@ -725,7 +733,7 @@ public class DiagnosticoService {
             }
         }
 
-        return new ProgressaoRigorAtual(null, 0.12d, 0.7d, 0, 0, 0); // TODO CONFIG_ADAPTATIVA: progresso inicial ainda nasce com rigores fixos.
+        return new ProgressaoRigorAtual(null, 0.12d, config.rigorBase(), 0, 0, 0); // TODO CONFIG_ADAPTATIVA: progresso inicial ainda nasce com rigores fixos.
     }
 
     private String escolherReferenciaLivro(List<QuestaoRigorResultado> resultados) {
@@ -901,7 +909,8 @@ public class DiagnosticoService {
         Double progressoRigor,
         Double progressoDiagnostico,
         boolean precisaRevisao,
-        boolean precisaNovoDiagnostico
+        boolean precisaNovoDiagnostico,
+        ConfiguracaoTesteAdaptativoNivelDto config
     ) {
         double progresso = 0d;
         boolean temRigor = progressoRigor != null;
@@ -917,7 +926,7 @@ public class DiagnosticoService {
         }
 
         if (precisaRevisao || precisaNovoDiagnostico) {
-            progresso = Math.min(progresso, 0.58d); // TODO CONFIG_ADAPTATIVA: teto de progresso em revisao ainda fixo.
+            progresso = Math.min(progresso, config.resumo_med());
         }
 
         return  QuestaoUtil.limitarPercentualUnitario(progresso);

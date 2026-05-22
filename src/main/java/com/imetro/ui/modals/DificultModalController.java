@@ -58,6 +58,7 @@ public class DificultModalController extends ModalController {
             Map<String, String> configuracao = Map.of("duracao", durac, "nivel", niv, "foco", foc);
             if (FluxoModalContext.isTesteAdaptativo()) {
                 TesteAdaptativoCoordinator.requestStartInteligente(configuracao);
+                
             } else {
                 DiagnosticoCoordinator.requestStartInteligente(configuracao);
             }

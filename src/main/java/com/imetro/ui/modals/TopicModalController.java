@@ -1,5 +1,6 @@
 package com.imetro.ui.modals;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,7 +54,12 @@ public class TopicModalController extends ModalController {
             iniciarButton.setText("Iniciar teste com os selecionados");
             usarTodosButton.setText("Usar todos os subtopicos do teste");
         }
-        montarTopicos();
+        try {
+            montarTopicos();
+        } catch (SQLException e) {
+            System.out.println("Erro ao montar topicos");
+            e.printStackTrace();
+        }
         atualizarResumo();
         super.init();
     }
@@ -95,7 +101,7 @@ public class TopicModalController extends ModalController {
         DiagnosticoCoordinator.requestStartSoRun();
     }
 
-    private void montarTopicos() {
+    private void montarTopicos() throws SQLException {
         topicosContainer.getChildren().clear();
         checkboxesPorTopico.clear();
 
@@ -104,6 +110,7 @@ public class TopicModalController extends ModalController {
             : DiagnosticoCoordinator.getTopicosSelecionados();
         progressoPorSubtopico = diagnosticoService.carregarProgressoSubtopicos(
             Authentication.getCurrentUserId(),
+            TesteAdaptativoCoordinator.getConfiguracaoAtual().nivel(),
             topicos
         );
 

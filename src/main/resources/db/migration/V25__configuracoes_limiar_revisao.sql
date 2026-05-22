@@ -1,14 +1,14 @@
 alter TABLE configuracoes_teste_adaptativo_niveis
-  ADD COLUMN limiar_acerto double precision not null  DEFAULT 0.8;
+  ADD COLUMN if not exists limiar_acerto double precision not null  DEFAULT 0.8;
 
 alter TABLE configuracoes_teste_adaptativo_niveis
-  ADD COLUMN limiar_erro double precision not null  DEFAULT 0.5;
+  ADD COLUMN if not exists limiar_erro double precision not null  DEFAULT 0.5;
 
 alter TABLE configuracoes_teste_adaptativo_niveis
-  ADD COLUMN revisao_med  double precision  not null  DEFAULT 0.6;
+  ADD COLUMN if not exists revisao_med  double precision  not null  DEFAULT 0.6;
 
 alter TABLE configuracoes_teste_adaptativo_niveis
-  ADD COLUMN tot_erro_revisao  INTEGER not null DEFAULT 2;
+  ADD COLUMN if not exists tot_erro_revisao  INTEGER not null DEFAULT 2;
 
 
 UPDATE configuracoes_teste_adaptativo_niveis

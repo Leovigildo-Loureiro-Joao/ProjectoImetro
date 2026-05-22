@@ -19,7 +19,7 @@ public record ConfiguracaoTesteAdaptativoNivelDto(
     double limiteSuperior,
     double limiar_erro,
     double limiar_acerto,
-    double resumo_med,
+    double resumo_med,// o nome deveria ser revisao med mas to com preguiça de mudar
     int tot_erro_revisao,
     LocalDateTime criadoEm,
     LocalDateTime atualizadoEm
