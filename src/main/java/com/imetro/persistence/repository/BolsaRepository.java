@@ -2,8 +2,11 @@ package com.imetro.persistence.repository;
 
 public class BolsaRepository extends JdbcBasicSqlRepository {
 
-    protected BolsaRepository() {
+    public BolsaRepository() {
         super("bolsas", "id");
     }
+
+
+
 
 }

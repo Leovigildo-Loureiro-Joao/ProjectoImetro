@@ -1,6 +1,7 @@
 package com.imetro.ui.components.bolsas;
 
-import com.imetro.domain.dto.BolsaMock;
+import com.imetro.domain.dto.bolsa.BolsaDto;
+import com.imetro.domain.dto.bolsa.BolsaMock;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -10,7 +11,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class BolsaCard extends VBox{
-    public  BolsaCard(BolsaMock bolsa) {
+    public  BolsaCard(BolsaDto bolsa) {
         Label tipoLabel = new Label(bolsa.tipo());
         tipoLabel.getStyleClass().add("h3-thin");
 
@@ -19,13 +20,13 @@ public class BolsaCard extends VBox{
         nomeLabel.setWrapText(true);
 
         Label matchLabel = new Label(bolsa.match() + "% match");
-        matchLabel.getStyleClass().add(bolsa.pillClass());
+        matchLabel.getStyleClass().add("pill-good");
 
         Label coberturaLabel = new Label(bolsa.cobertura());
         coberturaLabel.getStyleClass().add("h3-thin-big");
         coberturaLabel.setWrapText(true);
 
-        Label prazoLabel = new Label(bolsa.prazo());
+        Label prazoLabel = new Label(bolsa.vagas()+"");
         prazoLabel.getStyleClass().add("timeline-pill");
 
         Label destaqueLabel = new Label(bolsa.destaque());

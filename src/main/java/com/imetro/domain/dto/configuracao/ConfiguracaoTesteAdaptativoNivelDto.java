@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.imetro.util.DtoMapperSupport;
+
 public record ConfiguracaoTesteAdaptativoNivelDto(
     UUID id,
     UUID configuracaoId,
@@ -23,16 +25,16 @@ public record ConfiguracaoTesteAdaptativoNivelDto(
         Objects.requireNonNull(map, "map");
 
         return new ConfiguracaoTesteAdaptativoNivelDto(
-            ConfiguracaoDtoMapperSupport.parseUuid(map.get("id")),
-            ConfiguracaoDtoMapperSupport.parseUuid(map.get("configuracao_id")),
-            valueOrDefault(ConfiguracaoDtoMapperSupport.parseInteger(map.get("nivel")), 0),
-            ConfiguracaoDtoMapperSupport.parseText(map.get("codigo")),
-            valueOrDefault(ConfiguracaoDtoMapperSupport.parseDouble(map.get("tempo_sugerido_segundos")), 0d),
-            valueOrDefault(ConfiguracaoDtoMapperSupport.parseDouble(map.get("rigor_base")), 0d),
-            valueOrDefault(ConfiguracaoDtoMapperSupport.parseDouble(map.get("limite_inferior")), 0d),
-            valueOrDefault(ConfiguracaoDtoMapperSupport.parseDouble(map.get("limite_superior")), 0d),
-            ConfiguracaoDtoMapperSupport.parseDateTime(map.get("criado_em")),
-            ConfiguracaoDtoMapperSupport.parseDateTime(map.get("atualizado_em"))
+            DtoMapperSupport.parseUuid(map.get("id")),
+            DtoMapperSupport.parseUuid(map.get("configuracao_id")),
+            valueOrDefault(DtoMapperSupport.parseInteger(map.get("nivel")), 0),
+            DtoMapperSupport.parseText(map.get("codigo")),
+            valueOrDefault(DtoMapperSupport.parseDouble(map.get("tempo_sugerido_segundos")), 0d),
+            valueOrDefault(DtoMapperSupport.parseDouble(map.get("rigor_base")), 0d),
+            valueOrDefault(DtoMapperSupport.parseDouble(map.get("limite_inferior")), 0d),
+            valueOrDefault(DtoMapperSupport.parseDouble(map.get("limite_superior")), 0d),
+            DtoMapperSupport.parseDateTime(map.get("criado_em")),
+            DtoMapperSupport.parseDateTime(map.get("atualizado_em"))
         );
     }
 

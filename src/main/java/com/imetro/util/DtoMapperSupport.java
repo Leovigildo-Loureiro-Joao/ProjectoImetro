@@ -1,15 +1,9 @@
-package com.imetro.domain.dto.configuracao;
+package com.imetro.util;
 
 import java.util.UUID;
 
-import com.imetro.util.ParseTimeStampLocalDate;
-
-final class ConfiguracaoDtoMapperSupport {
-
-    private ConfiguracaoDtoMapperSupport() {
-    }
-
-    static String parseText(Object value) {
+public class DtoMapperSupport {
+     public static String parseText(Object value) {
         if (value == null) {
             return null;
         }
@@ -17,7 +11,7 @@ final class ConfiguracaoDtoMapperSupport {
         return text.isBlank() ? null : text;
     }
 
-    static UUID parseUuid(Object value) {
+    public static UUID parseUuid(Object value) {
         if (value == null) {
             return null;
         }
@@ -37,7 +31,7 @@ final class ConfiguracaoDtoMapperSupport {
         }
     }
 
-    static Integer parseInteger(Object value) {
+    public static Integer parseInteger(Object value) {
         if (value instanceof Number number) {
             return number.intValue();
         }
@@ -54,7 +48,7 @@ final class ConfiguracaoDtoMapperSupport {
         }
     }
 
-    static Double parseDouble(Object value) {
+    public static Double parseDouble(Object value) {
         if (value instanceof Number number) {
             return number.doubleValue();
         }
@@ -71,7 +65,7 @@ final class ConfiguracaoDtoMapperSupport {
         }
     }
 
-    static Boolean parseBoolean(Object value) {
+    public static Boolean parseBoolean(Object value) {
         if (value instanceof Boolean bool) {
             return bool;
         }
@@ -87,7 +81,7 @@ final class ConfiguracaoDtoMapperSupport {
         return Boolean.parseBoolean(text);
     }
 
-    static java.time.LocalDateTime parseDateTime(Object value) {
+    public static java.time.LocalDateTime parseDateTime(Object value) {
         return ParseTimeStampLocalDate.mapearDataHora(value);
     }
 

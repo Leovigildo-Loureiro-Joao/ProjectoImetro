@@ -1,6 +1,7 @@
 package com.imetro.ui.controller.candidato;
 
 import java.net.URL;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -8,7 +9,9 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.imetro.config.RuntimeConfig;
-import com.imetro.domain.dto.BolsaMock;
+import com.imetro.domain.dto.bolsa.BolsaDto;
+import com.imetro.domain.dto.bolsa.BolsaMock;
+import com.imetro.persistence.repository.BolsaRepository;
 import com.imetro.persistence.repository.UserRepository;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.bolsas.BolsaCard;
@@ -31,7 +34,7 @@ import javafx.scene.layout.VBox;
 
 public class BolsasController implements Initializable {
 
-   
+
 
     @FXML
     private Label subtitleLabel;
@@ -80,9 +83,11 @@ public class BolsasController implements Initializable {
 
     @FXML
     private VBox passosBox;
+    private BolsaRepository bolsaRepository;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        bolsaRepository=new BolsaRepository();
         String primeiroNome = resolvePrimeiroNome();
         String hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd 'de' MMMM", new Locale("pt", "AO")));
 
@@ -113,57 +118,23 @@ public class BolsasController implements Initializable {
         matchRingHost.getChildren().setAll(progress);
     }
 
-    private void setupScholarships() {
-        List<BolsaMock> bolsas = List.of(
-            new BolsaMock(
-                "Bolsa Merito Atlas",
-                "Propina + mentoria",
-                88,
-                "Cobertura quase total da propina",
-                "Fecha em 21 dias",
-                "Excelente para quem sustenta melhoria continua.",
-                "Precisa de carta pessoal forte.",
-                "pill-good"
-            ),
-            new BolsaMock(
-                "Programa Horizonte STEM",
-                "Parcial + laboratorio",
-                79,
-                "Apoio parcial e acesso a projetos",
-                "Fecha em 34 dias",
-                "Grande encaixe para Matematica e Fisica.",
-                "Alta concorrencia entre perfis tecnicos.",
-                "pill-good"
-            ),
-            new BolsaMock(
-                "Fundo Impulso Academico",
-                "Auxilio de mensalidade",
-                71,
-                "Apoio modular por semestre",
-                "Fecha em 16 dias",
-                "Boa opcao para ganhar tracao rapida.",
-                "Documentacao precisa estar impecavel.",
-                "pill-warn"
-            ),
-            new BolsaMock(
-                "Beca Impacto Local",
-                "Merito + projeto comunitario",
-                67,
-                "Cobertura media com bonus por impacto",
-                "Fecha em 40 dias",
-                "Diferencia-te se mostrares lideranca aplicada.",
-                "Exige narrativa social mais madura.",
-                "pill-warn"
-            )
-        );
 
-        bolsasFlow.getChildren().clear();
-        for (BolsaMock bolsa : bolsas) {
-            bolsasFlow.getChildren().add(new BolsaCard(bolsa));
+    private void setupScholarships() {
+        List<BolsaDto> bolsas;
+        try {
+            bolsas = bolsaRepository.findAll().stream()
+            .map(BolsaDto::fromMap).toList();
+            bolsasFlow.getChildren().clear();
+            for (BolsaDto bolsa : bolsas) {
+                bolsasFlow.getChildren().add(new BolsaCard(bolsa));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
+
     }
 
-    
 
     private void setupFactors() {
         fatoresBox.getChildren().setAll(
@@ -185,7 +156,7 @@ public class BolsasController implements Initializable {
         );
     }
 
-   
+
 
 
     private String resolvePrimeiroNome() {
