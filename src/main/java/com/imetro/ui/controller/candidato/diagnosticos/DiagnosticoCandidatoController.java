@@ -17,7 +17,7 @@ import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.PlanoCartesianoPane;
-import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
+import com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
@@ -874,9 +874,9 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     private void navigate(String key) {
         switch (key) {
-            case "mydiagnostic" -> App.swapContent(swcDiagnos, "views/components/DiagnosticoList");
-            case "statics" -> App.swapContent(swcDiagnos, "views/components/EstatisticasDiagnostic");
-            case "timeline" -> App.swapContent(swcDiagnos, "views/components/TimelineDiagnostic");
+            case "mydiagnostic" -> App.swapContent(swcDiagnos, "views/components/diagnostico/DiagnosticoList");
+            case "statics" -> App.swapContent(swcDiagnos, "views/components/diagnostico/EstatisticasDiagnostic");
+            case "timeline" -> App.swapContent(swcDiagnos, "views/components/diagnostico/TimelineDiagnostic");
             default -> {
             }
         }

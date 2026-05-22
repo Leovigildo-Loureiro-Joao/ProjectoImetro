@@ -2,18 +2,16 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXComboBox?>
-<?import com.jfoenix.controls.JFXRadioButton?>
 <?import com.jfoenix.controls.JFXToggleButton?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane prefHeight="1473.0" prefWidth="784.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.ConfiguracaoController">
-    <VBox alignment="TOP_LEFT" maxWidth="879.0" prefHeight="1473.0" prefWidth="879.0" spacing="20.0">
+<StackPane prefHeight="1139.0" prefWidth="784.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.ConfiguracaoController">
+    <VBox alignment="TOP_LEFT" maxWidth="879.0" prefHeight="1303.0" prefWidth="784.0" spacing="20.0">
         <padding>
             <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
         </padding>
@@ -92,55 +90,6 @@
                      <VBox.margin>
                         <Insets top="20.0" />
                      </VBox.margin>
-                  </VBox>
-               </children>
-               <VBox.margin>
-                  <Insets left="10.0" />
-               </VBox.margin>
-            </VBox>
-         </children>
-         <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-         </padding>
-      </VBox>
-      <VBox prefHeight="179.0" prefWidth="700.0" styleClass="card">
-         <children>
-            <JFXToggleButton fx:id="togNivelDif" disable="true" onAction="#alterarNivelDif" text="Nível de dificuldade" />
-            <VBox>
-               <children>
-                  <VBox spacing="5.0">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Respostas" />
-                        <VBox spacing="10.0">
-                           <children>
-                              <VBox spacing="10.0">
-                                 <children>
-                                    <HBox spacing="20.0">
-                                       <children>
-                                          <JFXRadioButton fx:id="radFac" disable="true" text="Fácil">
-                                             <toggleGroup>
-                                                <ToggleGroup fx:id="resposta" />
-                                             </toggleGroup></JFXRadioButton>
-                                          <JFXRadioButton fx:id="radMed" disable="true" text="Médio" toggleGroup="$resposta" />
-                                          <JFXRadioButton fx:id="radDesa" disable="true" text="Desafiante" toggleGroup="$resposta" />
-                                          <JFXRadioButton fx:id="radExtra" disable="true" text="Extra difícil" toggleGroup="$resposta" />
-                                       </children>
-                                    </HBox>
-                                    <VBox spacing="5.0">
-                                       <children>
-                                          <JFXToggleButton fx:id="nivDifTogNEsc" disable="true" text="Não permitir escolhas" />
-                                          <JFXToggleButton fx:id="nivDifTogAEsc" disable="true" text="Permitir escolhas ambíguas" />
-                                          <JFXToggleButton fx:id="nivDifTogDEsc" disable="true" text="Permitir escolhas diagnósticas" />
-                                       </children>
-                                    </VBox>
-                                 </children>
-                                 <VBox.margin>
-                                    <Insets left="10.0" top="20.0" />
-                                 </VBox.margin>
-                              </VBox>
-                           </children>
-                        </VBox>
-                     </children>
                   </VBox>
                </children>
                <VBox.margin>

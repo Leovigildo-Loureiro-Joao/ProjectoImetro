@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
 
+import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
+
 public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
 
     private static final int DEFAULT_TEMP_ADAPT_VAL = 20;
@@ -34,6 +36,19 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
 
         try (Connection conn = openRequiredConnection()) {
             return ensureDefaultsForUser(conn, userId);
+        }
+    }
+
+    public ConfiguracaoDto selectConfiguracao(UUID userUuid){
+        String sql="SELECT * FROM configuracoes where user_id = ? limit 1";
+        try (Connection connection=openRequiredConnection()) {
+            PreparedStatement rs = connection.prepareStatement(sql);
+            rs.setObject(1, userUuid);
+            rs.executeQuery();
+            return ConfiguracaoDto.fromMap(readAllRows(rs.executeQuery()).get(0));
+        } catch (Exception e) {
+            System.out.println("Erro ao buscar config do usuario");
+            return null;
         }
     }
 

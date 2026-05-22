@@ -28,7 +28,7 @@ import com.imetro.services.TesteService.ResumoHistoricoDisciplina;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.components.TesteCard;
-import com.imetro.ui.controller.candidato.ResultadoAvaliacaoController;
+import com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;

@@ -563,18 +563,9 @@ public class DashboardOrientadoController implements Initializable {
         RESILIENCIA_TARGET = stats.resiliencia();
         CONSISTENCIA_TARGET = stats.consistencia();
         PROGRESSO_TARGET = (VELOCIDADE_TARGET + LOGICA_TARGET + PRECISAO_TARGET + RESILIENCIA_TARGET + CONSISTENCIA_TARGET) / 5.0;
-        System.out.println(stats);
-        System.out.println("sdfsdfs sdfsd sdfsdf dfsdfsd sdf dsfs dfsdfsd df dfsdf sdfsd sd sdf d d dsf sdsd sdfsd sd dsfsdfsdf");
     }
 
-    private void setChartValue(eu.hansolo.tilesfx.chart.ChartData data, double value) {
-        try {
-            data.setValue(value);
-        } catch (Exception ignored) {
-            // TilesFX versions vary; fail gracefully without crashing a UI.
-        }
-    }
-
+  
 
     private static final class DisciplineStatusCell extends ListCell<ProgressoDisciplinaTeste> {
         private final Label name = new Label();

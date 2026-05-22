@@ -3,19 +3,14 @@
 <?import com.jfoenix.controls.JFXButton?>
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.ProgressBar?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TitledPane?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="18.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.ResultadoAvaliacaoController">
+<VBox spacing="18.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController">
    <styleClass>
       <String fx:value="page" />
       <String fx:value="placeholder-card" />
@@ -28,99 +23,16 @@
          <children>
             <Label fx:id="tituloAvaliacao" styleClass="big-h1" text="Resultado - Avaliacao" />
             <Label styleClass="muted" text="Resumo da sua performance final." />
-         </children>
-      </VBox>
-      <Separator />
-      <HBox spacing="32.0">
-         <children>
-            <VBox prefWidth="360.0" spacing="12.0">
-               <children>
-                  <Label styleClass="h3-thin" text="Disciplina" />
-                  <Label fx:id="disciplinaValue" styleClass="h1" text="-" />
-                  <Label styleClass="h3-thin" text="Acertos" />
-                  <Label fx:id="acertosValue" styleClass="h1" text="0 / 0" />
-                  <Label styleClass="h3-thin" text="Erros" />
-                  <Label fx:id="errosValue" styleClass="h1" text="0" />
-               </children>
-            </VBox>
-            <VBox prefWidth="450.0" spacing="12.0">
-               <children>
-                  <Label styleClass="h3-thin" text="Percentual de acerto" />
-                  <Label fx:id="percentualValue" styleClass="h1" text="0.0%" />
-                  <ProgressBar fx:id="percentualProgress" prefHeight="10.0" prefWidth="430.0" progress="0.0" />
-                  <Label styleClass="h3-thin" text="Tempo total" />
-                  <Label fx:id="tempoValue" styleClass="h1" text="00:00" />
-                  <Label styleClass="h3-thin" text="Nivel final" />
-                  <Label fx:id="nivelValue" styleClass="h1" text="-" />
-                  <Label styleClass="h3-thin" text="Perfil" />
-                  <Label fx:id="perfilValue" styleClass="h1" text="-" />
-               </children>
-            </VBox>
-         </children>
-      </HBox>
-      <VBox spacing="8.0">
-         <children>
-            <HBox alignment="CENTER_LEFT" spacing="12.0">
-               <children>
-                  <Label styleClass="h3-thin" text="Recomendacao" />
-                  <Region HBox.hgrow="ALWAYS" />
-                  <JFXButton fx:id="btnToggleRecomendacao" onAction="#togglePainelRecomendacao" prefHeight="34.0" prefWidth="170.0" styleClass="btn-secondary" text="Ver recomendacao" />
-               </children>
-            </HBox>
-            <Label fx:id="recomendacaoValue" styleClass="muted" text="-" wrapText="true" />
-            <VBox fx:id="painelRecomendacao" managed="false" spacing="10.0" styleClass="result-detail-panel" visible="false">
-               <children>
-                  <Accordion fx:id="recommendationAccordion">
-                     <panes>
-                        <TitledPane animated="false" text="Observacoes gerais">
-                           <content>
-                              <Label fx:id="observacoesDetalheValue" prefWidth="760.0" styleClass="question-side-copy" text="-" wrapText="true" />
-                           </content>
-                        </TitledPane>
-                        <TitledPane animated="false" text="Leitura guiada">
-                           <content>
-                              <Label fx:id="leituraDetalheValue" prefWidth="760.0" styleClass="question-side-copy" text="-" wrapText="true" />
-                           </content>
-                        </TitledPane>
-                        <TitledPane animated="false" text="Trilho por subtópico">
-                           <content>
-                              <VBox fx:id="trilhaDetalheBox" spacing="10.0" />
-                           </content>
-                        </TitledPane>
-                     </panes>
-                  </Accordion>
-               </children>
-               <padding>
-                  <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
-               </padding>
-            </VBox>
-         </children>
-      </VBox>
-      <Separator />
-      <VBox spacing="8.0" VBox.vgrow="ALWAYS">
-         <children>
-            <Label styleClass="h1-thin" text="Revisao de questoes" />
-            <ListView fx:id="questoesMenu" maxHeight="58.0" orientation="HORIZONTAL" prefHeight="58.0">
+            <ListView fx:id="sublist" minHeight="51.0" orientation="HORIZONTAL" prefHeight="51.0" prefWidth="1125.0">
                <styleClass>
                   <String fx:value="nav-bar" />
                   <String fx:value="sub" />
                </styleClass>
             </ListView>
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
-               <children>
-                  <JFXButton fx:id="btnPrevQuestao" onAction="#scrollQuestoesPrev" prefHeight="34.0" prefWidth="120.0" styleClass="btn-secondary" text="Anterior" />
-                  <JFXButton fx:id="btnNextQuestao" onAction="#scrollQuestoesNext" prefHeight="34.0" prefWidth="120.0" styleClass="btn-secondary" text="Proxima" />
-                  <Region HBox.hgrow="ALWAYS" />
-                  <Label fx:id="questoesResumoValue" styleClass="muted" text="Mostrando 0 de 0 questoes" />
-               </children>
-            </HBox>
-            <ScrollPane fx:id="questoesScroll" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" minHeight="501.0" prefHeight="501.0" prefWidth="842.0" styleClass="card-blur" vbarPolicy="ALWAYS" VBox.vgrow="ALWAYS">
-               <content>
-                  <FlowPane fx:id="questoesCarousel" hgap="14.0" vgap="14.0" />
-               </content>
-            </ScrollPane>
+            <Separator />
          </children>
       </VBox>
+      <StackPane fx:id="swcDiagnos" prefHeight="497.0" prefWidth="1125.0" />
       <HBox alignment="CENTER_RIGHT" spacing="12.0">
          <children>
             <JFXButton onAction="#abrirDashboard" prefHeight="38.0" prefWidth="170.0" styleClass="btn-secondary" text="Ir ao Dashboard" />

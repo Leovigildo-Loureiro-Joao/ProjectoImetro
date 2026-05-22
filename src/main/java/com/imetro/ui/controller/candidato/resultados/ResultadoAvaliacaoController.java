@@ -1,22 +1,18 @@
-package com.imetro.ui.controller.candidato;
+package com.imetro.ui.controller.candidato.resultados;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
-
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
+import org.kordamp.ikonli.remixicon.RemixiconMZ;
 
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteService;
-import com.imetro.ui.components.CardQuestao;
 import com.imetro.ui.components.Item_Cell;
-import com.imetro.util.Authentication;
+import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.QuestaoUtil;
 import com.imetro.util.ResultadoPayload;
@@ -25,94 +21,38 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-public class ResultadoAvaliacaoController {
 
-    private static ResultadoPayload ultimoResultado;
+
+public class ResultadoAvaliacaoController implements DisposableController,ResultadoCoordinator.ResultadoHost{
+
+    public static ResultadoPayload ultimoResultado;
+
+
 
     public static void setResultado(ResultadoPayload payload) {
         ultimoResultado = payload;
     }
 
     @FXML
-    private Label tituloAvaliacao;
-
-    @FXML
-    private Label disciplinaValue;
-
-    @FXML
-    private Label acertosValue;
-
-    @FXML
-    private Label errosValue;
-
-    @FXML
-    private Label percentualValue;
-
-    @FXML
-    private Label tempoValue;
-
-    @FXML
-    private Label nivelValue;
-
-    @FXML
-    private Label perfilValue;
-
-    @FXML
-    private Label recomendacaoValue;
-
-    @FXML
-    private Label observacoesDetalheValue;
-
-    @FXML
-    private Label leituraDetalheValue;
-
-    @FXML
-    private ProgressBar percentualProgress;
-
-    @FXML
     private JFXButton btnRefazer;
 
     @FXML
-    private JFXButton btnToggleRecomendacao;
+    private ListView<MenuEntry> sublist;
 
     @FXML
-    private ListView<MenuEntry> questoesMenu;
+    private StackPane swcDiagnos;
 
     @FXML
-    private FlowPane questoesCarousel;
-
-    @FXML
-    private ScrollPane questoesScroll;
-
-    @FXML
-    private Label questoesResumoValue;
-
-    @FXML
-    private JFXButton btnPrevQuestao;
-
-    @FXML
-    private JFXButton btnNextQuestao;
-
-    @FXML
-    private VBox painelRecomendacao;
-
-    @FXML
-    private Accordion recommendationAccordion;
-
-    @FXML
-    private VBox trilhaDetalheBox;
+    private Label tituloAvaliacao;
 
     private final TesteService testeService = new TesteService();
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
@@ -123,42 +63,38 @@ public class ResultadoAvaliacaoController {
     @FXML
     private void initialize() {
         ResultadoPayload payload = ultimoResultado;
-        if (payload == null) {
-            payload = new ResultadoPayload(
-                "Avaliacao",
-                "-",
-                0,
-                0,
-                0,
-                0,
-                "00:00",
-                "-",
-                "-",
-                "Conclua uma avaliacao para ver os resultados aqui.",
-                "views/pages/candidato/dashboard",
-                List.of()
-            );
-        }
+
+        sublist.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(MenuEntry item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                setGraphic(empty || item == null ? null : new Item_Cell(item.title(), item.icon()));
+            }
+        });
+
+        sublist.getItems().setAll(
+            new MenuEntry("statics", "Estatisticas", FontAwesomeSolid.DATABASE),
+            new MenuEntry("revisao", "Revisão das respostas", RemixiconMZ.QUESTION_ANSWER_FILL),
+            new MenuEntry("recomendacao", "Recomendação", FontAwesomeSolid.INFO_CIRCLE)
+        );
+
+        sublist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null) {
+                navigate(newValue.key());
+            }
+        });
+        System.out.println("Cheguei");
+        sublist.getSelectionModel().selectFirst();
+        System.out.println("Passou");
+
 
         tituloAvaliacao.setText("Resultado - " + payload.getTipoAvaliacao());
-        disciplinaValue.setText(payload.getDisciplina());
-        acertosValue.setText(payload.getAcertos() + " / " + payload.getTotalQuestoes());
-        errosValue.setText(String.valueOf(payload.getErros()));
-        percentualValue.setText(String.format("%.1f%%", payload.getPercentual()));
-        percentualProgress.setProgress(Math.max(0, Math.min(payload.getPercentual() / 100.0, 1)));
-        tempoValue.setText(payload.getTempo());
-        nivelValue.setText(payload.getNivel());
-        perfilValue.setText(payload.getPerfil());
-        recomendacaoValue.setText(payload.getRecomendacao());
+
         btnRefazer.setUserData(payload.getRetryPath());
 
         questoesResultado = payload.getQuestoesResultado();
-        configurarPainelRecomendacao(payload);
-        configurarMenuQuestoes();
-        if (questoesScroll != null) {
-            questoesScroll.hvalueProperty().addListener((obs, oldVal, newVal) -> atualizarNavegacaoCarrossel());
-        }
-        Platform.runLater(this::atualizarNavegacaoCarrossel);
+
     }
 
     @FXML
@@ -175,7 +111,7 @@ public class ResultadoAvaliacaoController {
         }
         navegarPara("views/pages/candidato/dashboard");
     }
-
+/*
     @FXML
     private void scrollQuestoesPrev() {
         ajustarScrollCarrossel(-0.33);
@@ -188,7 +124,7 @@ public class ResultadoAvaliacaoController {
 
     @FXML
     private void togglePainelRecomendacao() {
-        if (painelRecomendacao == null || btnToggleRecomendacao == null || btnToggleRecomendacao.isDisable()) {
+        /*if (painelRecomendacao == null || btnToggleRecomendacao == null || btnToggleRecomendacao.isDisable()) {
             return;
         }
 
@@ -200,7 +136,7 @@ public class ResultadoAvaliacaoController {
         if (painelRecomendacaoVisivel && recommendationAccordion != null && !recommendationAccordion.getPanes().isEmpty()) {
             recommendationAccordion.setExpandedPane(recommendationAccordion.getPanes().get(0));
         }
-    }
+    }*/
 
     private void navegarPara(String fxmlPath) {
         if (tituloAvaliacao == null || tituloAvaliacao.getScene() == null) {
@@ -211,9 +147,9 @@ public class ResultadoAvaliacaoController {
             App.swapContent(contentHost, fxmlPath);
         }
     }
-
+/*
     private void configurarPainelRecomendacao(ResultadoPayload payload) {
-        if (painelRecomendacao == null || btnToggleRecomendacao == null) {
+       /*  if (painelRecomendacao == null || btnToggleRecomendacao == null) {
             return;
         }
 
@@ -317,7 +253,7 @@ public class ResultadoAvaliacaoController {
     }
 
     private void renderizarTrilhaDetalhe(List<TrilhaAdaptacaoSubtopico> trilhas) {
-        if (trilhaDetalheBox == null) {
+       /*  if (trilhaDetalheBox == null) {
             return;
         }
 
@@ -400,7 +336,7 @@ public class ResultadoAvaliacaoController {
     }
 
     private void configurarMenuQuestoes() {
-        if (questoesMenu == null) {
+       /*  if (questoesMenu == null) {
             return;
         }
 
@@ -429,7 +365,7 @@ public class ResultadoAvaliacaoController {
     }
 
     private void renderizarCarrossel(String filtro) {
-        if (questoesCarousel == null) {
+       /*  if (questoesCarousel == null) {
             return;
         }
 
@@ -471,7 +407,7 @@ public class ResultadoAvaliacaoController {
     }
 
     private void ajustarScrollCarrossel(double delta) {
-        if (questoesScroll == null) {
+        /*  if (questoesScroll == null) {
             return;
         }
         double novoValor = Math.max(0, Math.min(1, questoesScroll.getHvalue() + delta));
@@ -480,7 +416,7 @@ public class ResultadoAvaliacaoController {
     }
 
     private void atualizarNavegacaoCarrossel() {
-        if (btnPrevQuestao == null || btnNextQuestao == null || questoesScroll == null || questoesCarousel == null) {
+      /* if (btnPrevQuestao == null || btnNextQuestao == null || questoesScroll == null || questoesCarousel == null) {
             return;
         }
 
@@ -497,5 +433,21 @@ public class ResultadoAvaliacaoController {
             }
         }
         return "";
+    }*/
+
+    private void navigate(String key) {
+        switch (key) {
+            case "statics" -> App.swapContent(swcDiagnos, "views/components/resultado/Stats");
+            case "revisao" -> App.swapContent(swcDiagnos, "views/components/resultado/Revisao");
+            case "recomendacao" -> App.swapContent(swcDiagnos, "views/components/resultado/Recomendacao");
+            default -> {
+            }
+        }
+    }
+
+    @Override
+    public void dispose() {
+        ResultadoCoordinator.clearHost(this);
+
     }
 }

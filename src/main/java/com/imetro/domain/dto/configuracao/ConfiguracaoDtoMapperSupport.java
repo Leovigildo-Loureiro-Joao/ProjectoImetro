@@ -90,4 +90,16 @@ final class ConfiguracaoDtoMapperSupport {
     static java.time.LocalDateTime parseDateTime(Object value) {
         return ParseTimeStampLocalDate.mapearDataHora(value);
     }
+
+    public static boolean valueOrDefault(Boolean value, boolean fallback) {
+        return value == null ? fallback : value;
+    }
+
+    public static int valueOrDefault(Integer value, int fallback) {
+        return value == null ? fallback : value;
+    }
+
+    public static double valueOrDefault(Double value, double fallback) {
+        return value == null ? fallback : value;
+    }
 }

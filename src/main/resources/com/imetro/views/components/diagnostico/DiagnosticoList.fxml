@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoListController">
+<StackPane stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoListController">
    <children>
       <VBox>
          <children>
