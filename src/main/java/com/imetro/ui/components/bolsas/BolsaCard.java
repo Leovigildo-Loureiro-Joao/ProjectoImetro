@@ -2,6 +2,7 @@ package com.imetro.ui.components.bolsas;
 
 import com.imetro.domain.dto.bolsa.BolsaDto;
 import com.imetro.domain.dto.bolsa.BolsaMock;
+import com.jfoenix.controls.JFXButton;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -43,8 +44,9 @@ public class BolsaCard extends VBox{
 
         HBox topRow = new HBox(10, tipoLabel, matchLabel);
         VBox.setVgrow(matchBar, Priority.NEVER);
-
-        this.getChildren().addAll(topRow, nomeLabel, coberturaLabel, prazoLabel, matchBar, destaqueLabel, riscoLabel);
+        JFXButton bolsaButton =new JFXButton("Candidatar a bolsa");
+        bolsaButton.getStyleClass().add("btn-primary");
+        this.getChildren().addAll(topRow, nomeLabel, coberturaLabel, prazoLabel, matchBar, destaqueLabel, riscoLabel,new JFXButton("Candidatar a bolsa"));
         this.setSpacing(10);
         this.getStyleClass().addAll("card-blur", "shadow", "scholarship-card");
         if (bolsa.match() >= 85) {
