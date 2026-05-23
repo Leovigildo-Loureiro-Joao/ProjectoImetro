@@ -110,7 +110,9 @@ public class TopicModalController extends ModalController {
             : DiagnosticoCoordinator.getTopicosSelecionados();
         progressoPorSubtopico = diagnosticoService.carregarProgressoSubtopicos(
             Authentication.getCurrentUserId(),
-            TesteAdaptativoCoordinator.getConfiguracaoAtual().nivel(),
+            FluxoModalContext.isTesteAdaptativo()
+            ? TesteAdaptativoCoordinator.getConfiguracaoAtual().nivel()
+            : DiagnosticoCoordinator.getConfiguracaoAtual().nivel(),
             topicos
         );
 

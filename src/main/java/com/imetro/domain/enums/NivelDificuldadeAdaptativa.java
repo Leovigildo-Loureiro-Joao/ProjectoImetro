@@ -18,6 +18,7 @@ public enum NivelDificuldadeAdaptativa {
         "fácil",
         "easy",
         "basico",
+        "INICIANTE",
         "básico",
         "leve"
     ),
@@ -31,6 +32,7 @@ public enum NivelDificuldadeAdaptativa {
         55d,
         "médio",
         "normal",
+        "Normal",
         "padrao",
         "padrão",
         "medium",

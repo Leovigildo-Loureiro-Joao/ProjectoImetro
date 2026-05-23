@@ -77,11 +77,15 @@ public class DiagnosticoService {
     }
 
     public List<Questao> carregarQuestoesReais() {
+        
         try {
             return perguntasRepository.findAll().stream()
                 .map(this::mapearQuestao)
                 .filter(questao -> questao.getEnunciado() != null && !questao.getEnunciado().isBlank())
                 .collect(Collectors.toCollection(ArrayList::new));
+
+
+
         } catch (Exception e) {
             System.err.println("Erro ao carregar questoes reais para o diagnostico: " + e.getMessage());
             return new ArrayList<>();
@@ -120,6 +124,8 @@ public class DiagnosticoService {
         if (candidatoId == null || topicos == null || topicos.isEmpty()) {
             return Map.of();
         }
+
+
 
         LinkedHashSet<String> chavesSelecionadas = new LinkedHashSet<>();
         for (Topico topico : topicos) {
@@ -232,7 +238,7 @@ public class DiagnosticoService {
                 progressoDiagnostico,
                 precisaRevisao,
                 precisaNovoDiagnostico,
-                configTesteAdaptNiv.findByCodigo(nivel)
+                configTesteAdaptNiv.findByCodigo(NivelDificuldadeAdaptativa.fromTexto(nivel).codigo())
 
             );
             progressoFinal.put(chave, progresso);

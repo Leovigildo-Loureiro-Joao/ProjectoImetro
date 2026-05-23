@@ -79,7 +79,6 @@ public final class TesteAdaptativoCoordinator {
             )
         );
 
-        System.out.println("sdfsd dfs dfsdf df dfsd fdfsdfsdfdsfsdfsdf df sdsfdf sdfsdfsdfsdf");
         TesteHost host = HOST.get();
         if (host != null) {
             host.StartInteligente();

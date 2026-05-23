@@ -111,6 +111,70 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
         }
         return null;
     }
-   
-}
 
+
+    public  ProgressoAlunoDisciplinaDto getDto(UUID candidatoId, String disciplinaNome) throws SQLException {
+        String sql = """
+            select p.*, d.nome as disciplina_nome
+            from progresso_aluno_disciplina p
+            left join disciplinas d on d.id = p.disciplina_id
+            where p.aluno_id = ? and d.nome = ?
+            """;
+            System.out.println(disciplinaNome);
+            System.out.println(sql);
+        try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setString(2, disciplinaNome);
+            try (var rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    UUID id = (UUID) rs.getObject("id");
+                    String disciplina = rs.getString("disciplina_nome");
+                    UUID disciplinaId =(UUID) rs.getObject("disciplina_id");
+                    NivelDisciplina nivelAtual=NivelDisciplina.fromDescricao(rs.getString("nivel_atual"));
+                    NivelDisciplina nivelAnterior=NivelDisciplina.fromDescricao(rs.getString("nivel_anterior"));
+                    LocalDate dataMudancaNivel = rs.getDate("data_mudanca_nivel") != null ? rs.getDate("data_mudanca_nivel").toLocalDate() : null;
+                    Double pesoAtual = rs.getDouble("peso_atual");
+                    Integer totalQuestoesResolvidas = rs.getInt("total_questoes_resolvidas");
+                    Integer totalAcertos = rs.getInt("total_acertos");
+                    Integer totalErros = rs.getInt("total_erros");
+                    Double taxaAcertoGeral = rs.getDouble("taxa_acerto_geral");
+                    float progresso = taxaAcertoGeral == null ? 0f : taxaAcertoGeral.floatValue();
+                    Integer[] ultimos3DiagnosticosAcertos =
+                        ProgressoAlunoDisciplinaDto.ConvertIntegerVector(rs.getArray("ultimos_3_diagnosticos_acertos"));
+                    Integer[] ultimos3DiagnosticosTotal =
+                        ProgressoAlunoDisciplinaDto.ConvertIntegerVector(rs.getArray("ultimos_3_diagnosticos_total"));
+                    LocalDateTime ultimoEstudo = rs.getTimestamp("ultimo_estudo") != null ? rs.getTimestamp("ultimo_estudo").toLocalDateTime() : null;
+                    Integer diasSemEstudo = rs.getInt("dias_sem_estudo");
+                    Integer streakDiasConsecutivos = rs.getInt("streak_dias_consecutivos");
+                    LocalDateTime criadoEm = rs.getTimestamp("criado_em") != null ? rs.getTimestamp("criado_em").toLocalDateTime() : null;
+                    LocalDateTime atualizadoEm = rs.getTimestamp("atualizado_em") != null ? rs.getTimestamp("atualizado_em").toLocalDateTime() : null;
+                    return new ProgressoAlunoDisciplinaDto(
+                        id,
+                        candidatoId,
+                        disciplinaId,
+                        disciplina,
+                        progresso,
+                        nivelAtual,
+                        nivelAnterior,
+                        dataMudancaNivel,
+                        pesoAtual,
+                        totalQuestoesResolvidas,
+                        totalAcertos,
+                        totalErros,
+                        taxaAcertoGeral,
+                        ultimos3DiagnosticosAcertos,
+                        ultimos3DiagnosticosTotal,
+                        ultimoEstudo,
+                        diasSemEstudo,
+                        streakDiasConsecutivos,
+                        criadoEm,
+                        atualizadoEm
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+}

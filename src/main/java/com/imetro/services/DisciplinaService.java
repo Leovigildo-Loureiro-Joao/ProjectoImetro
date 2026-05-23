@@ -131,4 +131,9 @@ public class DisciplinaService {
         return progressoRepository.getDto(candidatoId, disciplinaId);
     }
 
+    public static ProgressoAlunoDisciplinaDto getDisciplinaCandidato(String disciplinaNNome) throws SQLException {
+        UUID candidatoId = Authentication.getCurrentUserId();        return progressoRepository.getDto(candidatoId, disciplinaNNome);
+    }
+
+
 }

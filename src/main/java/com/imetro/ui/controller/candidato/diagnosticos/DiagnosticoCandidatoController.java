@@ -1,6 +1,7 @@
 package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,10 @@ import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
+import com.imetro.domain.enums.NivelDisciplina;
+import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoDuracaoRepository;
 import com.imetro.services.DiagnosticoService;
+import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.PlanoCartesianoPane;
@@ -203,7 +207,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
-
+    private final DisciplinaService disciplinaService=new DisciplinaService();
+    private final ConfiguracaoTesteAdaptativoDuracaoRepository confAdapt=new ConfiguracaoTesteAdaptativoDuracaoRepository();
     @FXML
     public void initialize() throws IOException {
         DiagnosticoCoordinator.setHost(this);
@@ -756,20 +761,25 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         if (config == null) {
             return base;
         }
+        List<Questao> filtradas = List.of();
+        int limite=0;
+        try {
+            filtradas = filtrarPorNivel(base, config.nivel());
+            if (filtradas.isEmpty()) {
+                filtradas = base;
+            }
 
-        List<Questao> filtradas = filtrarPorNivel(base, config.nivel());
-        if (filtradas.isEmpty()) {
-            filtradas = base;
+            limite = confAdapt.findByCodigo(config.duracao().toUpperCase()).limiteQuestoes();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        int limite = switch (TextoUtil.normalizarMinusculo(config.duracao())) {
-            case "curto" -> 5;
-            case "medio" -> 7;
-            default -> filtradas.size();
-        };
 
         return new ArrayList<>(filtradas.subList(0, Math.min(limite, filtradas.size())));
     }
+
+
+
 
     private List<Questao> filtrarPorEscopoSelecionado(List<Questao> origem) {
         List<Topico> topicosSelecionados = DiagnosticoCoordinator.getTopicosSelecionados();
@@ -802,15 +812,18 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private List<Questao> filtrarPorNivel(List<Questao> origem, String nivelConfigurado) {
+    private List<Questao> filtrarPorNivel(List<Questao> origem, String nivelConfigurado) throws SQLException {
         NivelDificuldadeAdaptativa nivel = NivelDificuldadeAdaptativa.fromTexto(nivelConfigurado);
         List<Questao> filtradas = new ArrayList<>();
 
         for (Questao questao : origem) {
-            if (nivel.incluiQuestaoNoFiltroDiagnostico(questao.getNivelDificuldade())) {
+            NivelDisciplina nivelActual=DisciplinaService.getDisciplinaCandidato(questao.getDisciplina()).nivelAtual();
+            if (nivel.incluiQuestaoNoFiltroDiagnostico(questao.getNivelDificuldade())||nivel.incluiQuestaoNoFiltroDiagnostico(nivelActual.ordinal())) {
                 filtradas.add(questao);
             }
         }
+
+
 
         return filtradas;
     }
