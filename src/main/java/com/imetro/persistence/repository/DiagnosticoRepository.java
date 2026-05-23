@@ -98,7 +98,7 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
             System.err.println("Erro ao carregar disciplinas ativas do candidato: " + e.getMessage());
         }
 
-        return List.copyOf(disciplinas);
+        return DisciplinaService.filtrarDisciplinasSuportadas(disciplinas);
     }
 
     public UUID inserir(

@@ -81,6 +81,7 @@ public class DiagnosticoService {
         try {
             return perguntasRepository.findAll().stream()
                 .map(this::mapearQuestao)
+                .filter(questao -> DisciplinaService.isDisciplinaSuportada(questao.getDisciplina()))
                 .filter(questao -> questao.getEnunciado() != null && !questao.getEnunciado().isBlank())
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -319,7 +320,7 @@ public class DiagnosticoService {
             ? "Escolha os topicos que quer diagnosticar e arranque agora mesmo. Depois deste primeiro passo, os cards normais passam a aparecer com historico real."
             : processamentoEmCurso
                 ? "Ainda estamos a ler os teus livros em segundo plano. Podes navegar noutras abas enquanto a barra no topo acompanha a geracao das perguntas."
-                : "Ainda nao encontramos questoes reais suficientes para o teu primeiro diagnostico. Os PDFs ficam em `uploads/disciplinas/<uuid>`, os topicos saem em `topicos-extraidos.json` e as disciplinas sem orientacao tentam gerar perguntas automaticamente.";
+                : "Ainda nao encontramos questoes reais suficientes para o teu primeiro diagnostico. Os PDFs ficam em `uploads/disciplinas/<uuid>` e os topicos saem em `topicos-extraidos.json` enquanto a base automatica gera perguntas de Matematica e Fisica.";
 
         return new PrimeiroDiagnosticoResumo(
             totalDisciplinas,

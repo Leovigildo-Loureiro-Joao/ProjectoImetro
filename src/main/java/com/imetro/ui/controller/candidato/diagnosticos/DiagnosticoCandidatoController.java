@@ -3,8 +3,10 @@ package com.imetro.ui.controller.candidato.diagnosticos;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -744,10 +746,27 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         if (bancoQuestoes.isEmpty()) {
             bancoQuestoes = diagnosticoService.carregarQuestoesReais();
         }
-
-        questoes = aplicarConfiguracaoAoBanco(bancoQuestoes);
+        questoes = aplicarConfiguracaoAoBanco(Reorganizar(bancoQuestoes));
         totalQuestoes = questoes.size();
         resetarEstadoDiagnostico();
+    }
+
+    private List<Questao> Reorganizar(List<Questao> base){
+
+        Set<String> subtopicos = base.stream().map(a -> a.getSubtopico()).collect(Collectors.toSet());
+        List<Questao> result=new ArrayList<>();
+
+        for (String subtop : subtopicos) {
+            List<Questao>  resultTemp=base.stream().filter(q -> q.getSubtopico().equals(subtop)).toList();
+            Set<Integer> valueSet=new HashSet<>();
+            while (valueSet.size()<2) {
+                valueSet.add(new Random().nextInt(0, resultTemp.size()));
+            }
+            for (Integer res : valueSet) {
+                result.add(resultTemp.get(res));
+            }
+        }
+        return result;
     }
 
     private List<Questao> aplicarConfiguracaoAoBanco(List<Questao> origem) {

@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
@@ -17,10 +19,12 @@ import com.imetro.persistence.repository.DisciplinaRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.util.Authentication;
+import com.imetro.util.TextoUtil;
 
 public class DisciplinaService {
     private static final DisciplinaRepository disciplinaRepository=new DisciplinaRepository();
     private static final ProgressoALunoDisciplinaRepository progressoRepository=new ProgressoALunoDisciplinaRepository();
+    private static final Set<String> DISCIPLINAS_SUPORTADAS = Set.of("matematica", "fisica");
 
     public static ArrayList<DisciplinaDto> discCategoria(){
         ArrayList<DisciplinaDto> disc=new ArrayList<>();
@@ -34,11 +38,31 @@ public class DisciplinaService {
         } catch (Exception e) {
              System.err.println("Erro ao buscar disciplinas: " + e.getMessage());
         };
-        return disc;
+        return disc.stream()
+            .filter(disciplina -> isDisciplinaSuportada(disciplina.nome()))
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static String findByNomeIdSearch(UUID id){
-        return discCategoria().stream().map(t -> t.nome()).toList().get(0);
+        return discCategoria().stream()
+            .filter(disciplina -> disciplina.id() != null && disciplina.id().equals(id))
+            .map(DisciplinaDto::nome)
+            .findFirst()
+            .orElse("Disciplina");
+    }
+
+    public static boolean isDisciplinaSuportada(String nome) {
+        return DISCIPLINAS_SUPORTADAS.contains(TextoUtil.normalizarMinusculo(nome));
+    }
+
+    public static List<DisciplinaDto> filtrarDisciplinasSuportadas(List<DisciplinaDto> disciplinas) {
+        if (disciplinas == null || disciplinas.isEmpty()) {
+            return List.of();
+        }
+
+        return disciplinas.stream()
+            .filter(disciplina -> disciplina != null && isDisciplinaSuportada(disciplina.nome()))
+            .toList();
     }
 
     @SuppressWarnings("unchecked")
