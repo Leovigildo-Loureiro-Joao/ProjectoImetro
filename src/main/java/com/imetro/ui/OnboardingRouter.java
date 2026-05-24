@@ -1,6 +1,5 @@
 package com.imetro.ui;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -92,10 +91,6 @@ public final class OnboardingRouter {
             }
 
             contentHost.getChildren().setAll(new Label("Este perfil ja nao e suportado. Usa uma conta de candidato."));
-        } catch (IOException e) {
-            System.err.println("Falha ao navegar apos autenticacao.");
-            e.printStackTrace();
-            contentHost.getChildren().setAll(new Label("Erro ao abrir a proxima tela."));
         } catch (RuntimeException e) {
             e.printStackTrace();
             contentHost.getChildren().setAll(new Label("Erro inesperado ao continuar."));

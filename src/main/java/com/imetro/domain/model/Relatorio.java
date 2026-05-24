@@ -13,7 +13,6 @@ public class Relatorio {
     private final UUID id;
 
     private UUID candidatoId;
-    private UUID orientadorId;
 
     private LocalDateTime geradoEm;
     private String titulo;
@@ -31,12 +30,6 @@ public class Relatorio {
 
     private List<String> recomendacoesSugeridas;
     private List<String> recomendacoesValidadas;
-
-    /**
-     * Campo opcional para observações do orientador.
-     * O candidato pode ver o relatório sem este campo, caso a UI decida ocultar.
-     */
-    private String notaOrientador;
 
     public Relatorio() {
         this.id = UUID.randomUUID();
@@ -60,14 +53,6 @@ public class Relatorio {
 
     public void setCandidatoId(UUID candidatoId) {
         this.candidatoId = candidatoId;
-    }
-
-    public UUID getOrientadorId() {
-        return orientadorId;
-    }
-
-    public void setOrientadorId(UUID orientadorId) {
-        this.orientadorId = orientadorId;
     }
 
     public LocalDateTime getGeradoEm() {
@@ -164,14 +149,6 @@ public class Relatorio {
 
     public void setRecomendacoesValidadas(List<String> recomendacoesValidadas) {
         this.recomendacoesValidadas = recomendacoesValidadas;
-    }
-
-    public String getNotaOrientador() {
-        return notaOrientador;
-    }
-
-    public void setNotaOrientador(String notaOrientador) {
-        this.notaOrientador = notaOrientador;
     }
 
     public static class EvolucaoSemanalItem {

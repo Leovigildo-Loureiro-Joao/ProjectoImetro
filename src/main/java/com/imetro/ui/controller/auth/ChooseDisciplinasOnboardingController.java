@@ -86,7 +86,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
                     "Disciplinas prontas. Pastas dos livros em uploads/disciplinas (" + totalPastas + "). "
                         + "Depois de selecionar as tuas disciplinas, Matematica e Fisica comecam a gerar topicos e perguntas automaticamente em segundo plano. "
                         + "Podes entrar no sistema e continuar a navegar enquanto a barra de progresso acompanha a leitura dos livros. "
-                        + "Nao existe mais dependencia de orientador neste fluxo."
+                        + "Este fluxo agora depende apenas da tua base de questoes."
                 );
             }
         } catch (Exception e) {

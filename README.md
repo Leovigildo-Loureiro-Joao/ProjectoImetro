@@ -1,262 +1,67 @@
 # Projecto Imetro
 
-Aplicacao desktop em JavaFX para apoio academico de candidatos e orientadores, com onboarding por perfil, diagnosticos por disciplina, exame adaptativo guiado por foco, relatorios visuais de desempenho e persistencia em PostgreSQL.
+Aplicacao desktop em JavaFX para estudo individual de candidatos, com foco atual em Matematica e Fisica. O produto usa um banco de perguntas reais, uploads de PDFs por disciplina e geracao assistida pelo Gemini para montar a base inicial quando necessario.
 
-## Estado atual
+## Escopo atual
 
-- navegacao base entre autenticacao, area do candidato e area do orientador
-- onboarding com escolha de avatar predefinido, fallback por iniciais e selecao visual de disciplinas
-- modulo de diagnostico no candidato com lista, timeline, estatisticas, perguntas e resultado final
-- exame adaptativo com configuracao por modal, foco por disciplina/topico/subtopico e arranque alinhado ao fluxo de diagnostico
-- motor adaptativo com niveis canonicos `FACIL`, `MEDIO`, `DIFICIL` e `EXPERT`, com aliases normalizados no codigo
-- calculo de precisao parcial por resposta, melhoria por questao e historico detalhado por tentativa
-- geracao de perguntas por IA com pesos por alternativa e retrocompatibilidade para perguntas antigas sem pesos
-- tela de relatorios do candidato com resumo, graficos e insights iniciais
-- tela de bolsas do candidato com prontidao, match visual e proximos passos
-- perfil do candidato com troca de avatar por modal e mural inicial de 20 medalhas do sistema
-- persistencia JDBC para `users`, `disciplinas`, `perguntas`, `testes`, `teste_perguntas`, `stats`, `progresso_aluno_disciplina` e `relatorios`
-- schema SQL versionado em `src/main/resources/db/migration`
+- apenas contas `CANDIDATO` estao suportadas no runtime atual
+- o fluxo antigo de `orientador` saiu do codigo ativo, das views e do schema corrente
+- as disciplinas suportadas neste momento sao `Matematica` e `Fisica`
+- o sistema filtra disciplinas fora desse escopo no onboarding, no diagnostico e no bootstrap
+- perguntas podem vir da base existente ou ser geradas a partir dos PDFs em `uploads/disciplinas/<uuid>`
 
-## Atualizacoes recentes
+## O que ja existe no produto
 
-- O consumo de vetores `integer[]` do PostgreSQL no progresso do aluno foi reforcado para aceitar `java.sql.Array`, `Object[]`, `List<?>` e texto no formato `"{1,2,3}"`.
-- O nivel atual do exame adaptativo foi padronizado num enum proprio, evitando variantes soltas como `normal`, `medio`, `desafiante` ou `extra dificil`.
-- Cada resposta passou a carregar uma precisao propria, usada no calculo de `teste_perguntas.precisao`, `stats.precisao` e na comparacao de melhoria por questao.
-- Perguntas novas geradas por IA podem definir `pesosAlternativas`, persistidos em `perguntas.pesos_resposta`, sem remover `respostas` ou `resposta_correta`.
-- O comportamento antigo foi mantido como fallback para perguntas legadas que ainda nao tenham pesos de resposta.
+- autenticacao e registo com fluxo centrado no candidato
+- onboarding com escolha de avatar e selecao de disciplinas suportadas
+- preparacao automatica das pastas de upload por disciplina
+- extracao de topicos e geracao de perguntas reais com Gemini
+- diagnostico com historico real por disciplina
+- progresso por subtopico em `progressao_rigor`
+- recomendacoes por subtopico em `recomendacoes_rigor`
+- teste adaptativo com foco por disciplina, topico e subtopico
+- persistencia de `testes`, `stats` e `teste_perguntas`
+- telas de relatorios, bolsas e perfil do candidato
+- suporte a perguntas com pesos por alternativa e campos de grafico para Matematica/Fisica
+
+## Documentos do repositorio
+
+- [uploads/README.md](uploads/README.md): estrutura dos PDFs, arquivos gerados e bootstrap automatico
+- [planner/VISAO_FLUXO_ADAPTATIVO.md](planner/VISAO_FLUXO_ADAPTATIVO.md): contrato do ciclo diagnostico -> teste -> progresso
+- [planner/PROGRESS.md](planner/PROGRESS.md): fotografia do estado atual e prioridades
+- [CHECKLIST_CONFIG_ADAPTATIVA.md](CHECKLIST_CONFIG_ADAPTATIVA.md): trilho para remover hardcodes do motor
+- [CHECKLIST_TESTES.md](CHECKLIST_TESTES.md): endurecimento do fluxo de salvamento dos testes
+- [ANALISE_THREADS_BLOQUEIOS_RECOMENDACOES.md](ANALISE_THREADS_BLOQUEIOS_RECOMENDACOES.md): leitura tecnica dos gargalos de UI, BD e concorrencia
 
 ## Stack
 
 - Java 21
-- JavaFX 23
+- JavaFX
 - Maven
-- JFoenix, ControlsFX, Ikonli e TilesFX
 - PostgreSQL
-- MyBatis
 - Flyway
-
-## Formulas oficiais do motor adaptativo
-
-Estas formulas passam a ser a referencia oficial do projecto para calculo de metricas. Elas substituem as simplificacoes temporarias que ainda existam no codigo.
-
-### Convencoes
-
-- Todas as metricas de desempenho devem trabalhar, por padrao, na escala `[0, 1]`, exceto quando explicitamente marcadas como `raw`.
-- Para qualquer divisao com risco de denominador zero, usar `epsilon > 0` na implementacao pratica.
-- `i` representa um subtopico.
-- `n` representa a ordem cronologica do teste dentro de uma sequencia.
-
-### Precisao por resposta
-
-`p_resposta_j in [0, 1]`
-
-Regra de uso:
-
-- se a questao tiver pesos explicitos por alternativa, usar o peso alinhado com a alternativa escolhida
-- se a questao for legada, aplicar o fallback operacional do projeto
-
-Fallback atual:
-
-- resposta correta: `1.00`
-- alternativa objetiva errada: `0.25`
-- opcao `E`: `0.10`
-- opcao `F`: `0.20`
-- opcao `G`: `0.00`
-
-Esta precisao parcial alimenta `teste_perguntas.precisao`, `stats.precisao` e os calculos de melhoria por questao.
-
-### Precisao por subtopico
-
-`P_i = (sum p_resposta_j) / totais_i`
-
-Onde:
-
-- `p_resposta_j`: precisao da resposta `j` no subtopico `i`
-- `totais_i`: quantidade total de questoes respondidas no subtopico `i`
-
-### Precisao geral
-
-Media simples entre subtopicos:
-
-`P_geral = (P_1 + P_2 + ... + P_n) / n`
-
-Media ponderada por volume real de questoes:
-
-`P_ponderada = (sum acertos_i) / (sum totais_i)`
-
-Regra de uso:
-
-- `P_geral` serve para comparar equilibrio entre subtopicos.
-- `P_ponderada` serve para decisao global, porque respeita o peso real do volume resolvido.
-
-### Logica
-
-`L = acertos_baixa_estruturacao / total_baixa_estruturacao`
-
-Onde:
-
-- `baixa_estruturacao` representa questoes com menor apoio de padrao direto, maior exigencia de inferencia ou maior liberdade de raciocinio.
-- `L` mede a capacidade de resolver questoes menos mecanicas.
-
-### Resiliencia
-
-`R = ((P_2 + P_3) / 2) / P_1`
-
-Leitura:
-
-- `P_1`: desempenho inicial de referencia
-- `P_2` e `P_3`: desempenhos seguintes no mesmo foco de recuperacao
-- `R > 1`: houve recuperacao acima da linha de base
-- `R = 1`: recuperacao neutra
-- `R < 1`: recuperacao incompleta
-
-Versao operacional segura:
-
-`R = ((P_2 + P_3) / 2) / max(epsilon, P_1)`
-
-### Velocidade
-
-Medida bruta:
-
-`V_raw = tempo_medio_por_acerto`
-
-Se `tempo_total` estiver em segundos:
-
-`V_raw = tempo_total / max(1, total_acertos)`
-
-Forma relativa contra uma referencia:
-
-`V_rel = T_base / T_usuario`
-
-Forma inversa:
-
-`V_inv = 1 / V_raw`
-
-Regra de uso:
-
-- `V_raw` e a medida operacional principal.
-- `V_rel` e a forma recomendada para score comparavel entre candidatos, disciplinas ou fases.
-- `V_inv` e util quando o modelo precisar tratar velocidade como taxa em vez de tempo.
-
-### Consistencia
-
-Ganhos entre testes consecutivos:
-
-`Delta_P_n = P_(n+1) - P_n`
-
-Coeficiente de variacao dos ganhos:
-
-`CV_ganhos = stddev(Delta_P) / media(Delta_P)`
-
-Correlacao positiva entre ordem do teste e desempenho:
-
-`corr+(n, P_n) = max(0, corr_Pearson(n, P_n))`
-
-Formula conceitual:
-
-`C = corr+(n, P_n) * (1 - CV_ganhos)`
-
-Versao operacional recomendada:
-
-`CV_ganhos = stddev(Delta_P) / max(epsilon, abs(media(Delta_P)))`
-
-`C = corr+(n, P_n) * (1 - min(1, CV_ganhos))`
-
-Interpretacao:
-
-- `C` proximo de `1`: evolucao suave, progressiva e estavel
-- `C` baixo: evolucao erratica, com oscilacoes ou quedas
-
-### Ganho normalizado
-
-`G = (P_atual - P_anterior) / (1 - P_anterior)`
-
-Versao operacional segura:
-
-`G = (P_atual - P_anterior) / max(epsilon, 1 - P_anterior)`
-
-Interpretacao:
-
-- `G = 0`: nao houve ganho real
-- `G > 0`: houve crescimento
-- `G < 0`: houve regressao
-
-### Melhoria por questao
-
-`M_q = precisao_atual_q - precisao_anterior_q`
-
-Forma percentual:
-
-`M_q_percentual = 100 * M_q`
-
-Onde:
-
-- `precisao_anterior_q`: media historica da precisao do aluno para a mesma questao
-- `precisao_atual_q`: precisao da resposta atual nessa questao
-
-Uso pratico:
-
-- valores positivos indicam melhoria
-- valores negativos indicam regressao
-- `0` indica repeticao do mesmo nivel de desempenho naquela questao
-
-### Uso esperado no produto
-
-- `P_i` deve ser a base do progresso por subtopico.
-- `P_ponderada` deve ser a metrica global preferencial para decidir evolucao real.
-- `G` deve medir quanto o aluno subiu em relacao ao ponto anterior, sem premiar artificialmente quem ja estava alto.
-- `R` deve mostrar capacidade de recuperacao apos falhas ou repeticoes.
-- `C` deve separar crescimento real de crescimento instavel.
-- `L` deve medir raciocinio em questoes menos estruturadas.
-- `V_rel` deve ser a forma principal de velocidade usada em score.
-
-## Cenario atual sem PostgreSQL local
-
-Se neste PC ainda nao tens PostgreSQL disponivel, o caminho recomendado e trabalhar em `modo navegacao`.
-
-Nesse modo, a app:
-
-- nao tenta abrir ligacao JDBC
-- permite navegar e validar a UI
-- deixa o registo real desligado para evitar erros
-- continua util para evoluir controllers, FXML, CSS, payloads e regras em memoria
-
-Isto significa que, neste PC, o trabalho seguro e:
-
-- evoluir UI e UX
-- refinar diagnostico e exame adaptativo
-- manter migrations e documentacao alinhadas
-- preparar DTOs, repositorios e contratos de persistencia
-
-Sem um Postgres real, o que depende de JDBC ou Flyway fica apenas preparado e documentado, mas nao validado ponta a ponta.
+- Gemini API
+- JDBC com repositorios proprios
 
 ## Como executar
 
-```bash
-mvn clean javafx:run
+### 1. Configurar ambiente
+
+Cria o `.env` a partir do exemplo:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-### Modo BD vs modo navegacao
+### 2. Escolher o modo de arranque
 
-A app pode rodar em 2 modos:
-
-- **BD ligada**: usa Postgres para login, onboarding persistente, historico e dados reais.
-- **Modo navegacao**: nao tenta conectar na BD e serve para navegar e validar a interface.
-
-### Como ligar ou desligar
-
-O projeto le variaveis de ambiente e tambem `.env.local` / `.env`.
-
-- `DB_ENABLED=true|false`: se existir, tem prioridade
-- `TESTE=true|false`: alias simples; `true` liga BD e `false` entra em modo navegacao
-
-Exemplo recomendado para este PC:
+Modo navegacao, sem BD:
 
 ```env
 TESTE=false
 ```
 
-Exemplo quando o Postgres estiver pronto:
+Modo com BD:
 
 ```env
 TESTE=true
@@ -264,136 +69,108 @@ DB_URL=jdbc:postgresql://localhost:5432/simulatorbolsastudy
 DB_USER=simulator
 DB_PASSWORD=simulator
 DB_MIGRATE=true
+GEMINI_API_KEY=coloca_aqui
 ```
 
-Observacao pratica:
+Notas:
 
-- no modo navegacao, usa credenciais nao vazias apenas para entrar na interface
-- o login nesse modo nao valida utilizador real na BD
+- `DB_ENABLED=true|false` tambem e suportado
+- `DB_MIGRATE=false` desliga o `Flyway.migrate()` no arranque
+- sem `GEMINI_API_KEY`, o bootstrap de livros nao gera topicos nem perguntas reais
 
-## `.env.example`
-
-O ficheiro `.env.example` foi ajustado para um arranque mais seguro em maquinas sem PostgreSQL local.
-
-Passos:
+### 3. Arrancar a app
 
 ```bash
-Copy-Item .env.example .env
+mvn clean javafx:run
 ```
-
-Depois confirma que estas a usar:
-
-```env
-TESTE=false
-```
-
-## Maven sem instalacao local
-
-Para PCs sem Maven instalado, o projeto inclui uma imagem propria em `docker/maven/Dockerfile` e um servico `maven` no `docker-compose.yml`.
-
-### Construir a imagem
-
-```bash
-docker compose --profile tools build maven
-```
-
-### Executar Maven via Docker
-
-```bash
-docker compose --profile tools run --rm maven clean compile
-docker compose --profile tools run --rm maven clean package -DskipTests
-```
-
-Nota: a execucao da interface JavaFX desktop a partir do container nao esta configurada neste momento.
 
 ## Base de dados
 
-### Quando o Postgres estiver disponivel
+### Schema novo
 
-```bash
-docker compose up -d
-```
+Para ambientes novos, o schema base esta em:
 
-Na primeira criacao do volume, o container executa automaticamente `scripts/db/001_schema.sql`.
+- `scripts/db/001_schema.sql`
 
-### Migrations
+Esse ficheiro ja nasce alinhado com o escopo atual:
 
-- schema inicial do Docker: `scripts/db/001_schema.sql`
-- migrations versionadas: `src/main/resources/db/migration`
-- estado atual das migrations: `V1` ate `V20`
+- role unica `CANDIDATO`
+- sem colunas nem tabelas ativas de `orientador`
+- disciplinas seedadas apenas para `Matematica` e `Fisica`
+- suporte a pesos por resposta, progresso por subtopico, bolsas e graficos
 
-Resumo das mais recentes:
+### Migrations Flyway
 
-- `V5__diagnosticos.sql`: tabela `diagnosticos`
-- `V6__configuracoes.sql`: tabela `configuracoes`
-- `V7__perguntas_topico_subtopico.sql`: normalizacao minima de `disciplina` e `subtopico` em `perguntas`
-- `V8__progresso_aluno_disciplina.sql`: historico de progresso do aluno por disciplina
-- `V9__medalhas.sql`: catalogo de medalhas e conquistas por utilizador
-- `V10__seed_disciplinas.sql`: seed inicial de disciplinas
-- `V11__rigor_adaptativo.sql`: base do rigor adaptativo e recomendacoes por foco
-- `V12__testes_stats.sql`: extensao de `testes`, `teste_perguntas` e tabela `stats`
-- `V13__rigor_adaptativo.sql`: migracao de `topico` para `subtopico` no fluxo adaptativo
-- `V14__schema_cleanup_guardrails.sql`: limpeza defensiva de legado e guardrails de schema
-- `V15__recalcular_metricas_historicas.sql`: recalculo defensivo de metricas historicas
-- `V16__update_test_perguntas.sql`: extensao do detalhe por pergunta nos testes
-- `V17__configuracoes_teste_adaptativo.sql`: configuracao central do motor adaptativo, por nivel e por duracao
-- `V18__teste_perguntas_respondido_em.sql`: ajuste versionado do timestamp de resposta por pergunta
-- `V19__seed_configuracoes_por_utilizador.sql`: seed inicial das configuracoes por utilizador existente
-- `V20__perguntas_pesos_resposta.sql`: adiciona `pesos_resposta` em `perguntas` para suportar precisao parcial por alternativa
+As migrations versionadas estao em:
 
-### Compatibilidade das perguntas
+- `src/main/resources/db/migration`
 
-- `V20` adiciona apenas a coluna `pesos_resposta`; nao remove `respostas` nem `resposta_correta`
-- perguntas antigas continuam validas e usam o fallback de precisao quando ainda nao tiverem pesos
+Estado atual:
 
-### Observacao importante sobre ambiente
+- `V1` ate `V26`
 
-Nesta maquina, em `2026-04-26`, as migrations foram alinhadas no repositorio, mas nao foram validadas contra um PostgreSQL real neste proprio PC.
+Migrations recentes mais importantes:
 
-Em outras palavras:
+- `V20__perguntas_pesos_resposta.sql`: adiciona `pesos_resposta`
+- `V21__perguntas_graficos_matfisica.sql`: adiciona campos de grafico
+- `V22__stats_erros_comuns_dificuldade_percentual.sql`: recalcula `erros_comuns` em `stats`
+- `V23__create_table_bolsas_and_score_bolsas.sql`: cria `bolsas` e `score_bolsas`
+- `V24__bolsas_semanais_simulados.sql`: amplia regras das bolsas
+- `V25__configuracoes_limiar_revisao.sql`: adiciona limiares de revisao por nivel adaptativo
+- `V26__remove_orientador.sql`: remove colunas, indices e tabela legado de `orientador`
 
-- o historico SQL ficou mais consistente
-- a documentacao ficou preparada para desenvolvimento sem BD local
-- a validacao JDBC e Flyway real continua pendente ate haver Postgres disponivel
+### Nota sobre migrations historicas
 
-### Flyway no arranque
+As migrations `V1`, `V2` e `V4` ainda mencionam `orientador` porque fazem parte do historico do projeto. Isso e esperado. O estado final suportado hoje e dado pelo conjunto completo das migrations, em especial pela `V26`.
 
-A app chama `Flyway.migrate()` no arranque quando a BD estiver ligada.
+## Uploads e bootstrap de perguntas
 
-Para compatibilidade com bases criadas a partir de `scripts/db/001_schema.sql`, o projeto usa `baseline` em `V6` e deixa as migrations incrementais acima disso correrem de forma idempotente.
+O fluxo de livros funciona por disciplina:
 
-Se precisares desligar migrations automaticas:
+1. o sistema prepara `uploads/disciplinas/<uuid>`
+2. os PDFs da disciplina sao colocados nessa pasta
+3. o Gemini extrai topicos para `topicos-extraidos.json`
+4. o Gemini gera perguntas para `questoes-geradas.json`
+5. as perguntas entram na tabela `perguntas`
 
-```env
-DB_MIGRATE=false
-```
+O bootstrap real esta limitado a `Matematica` e `Fisica`.
 
-## Estrutura principal
+Detalhes operacionais: [uploads/README.md](uploads/README.md)
 
-- `src/main/java/com/imetro/App.java`: arranque da aplicacao JavaFX
-- `src/main/java/com/imetro/persistence`: conexao e repositorios JDBC
-- `src/main/java/com/imetro/services`: regras de negocio
-- `src/main/java/com/imetro/ui/controller`: controllers JavaFX
-- `src/main/resources/com/imetro/views`: layouts, paginas e componentes FXML
-- `src/main/resources/db/migration`: migrations SQL versionadas
-- `scripts/db`: schema usado pelo container Postgres no primeiro boot
+## Fluxo adaptativo
 
-## O que faz sentido focar sem BD
+Resumo do ciclo atual:
 
-- fechar telas e navegacao do candidato
-- criar a futura tela de revisao do diagnostico
-- ligar relatorios e bolsas a dados em memoria mais proximos do comportamento real
-- reforcar a regra de negocio entre diagnostico, exame adaptativo e recomendacoes
-- manter `001_schema.sql`, migrations e README sempre alinhados
+1. o candidato escolhe disciplinas suportadas
+2. a base real e preparada a partir da BD e dos PDFs
+3. o diagnostico mede o estado inicial por disciplina/subtopico
+4. o sistema atualiza `progressao_rigor` e `recomendacoes_rigor`
+5. o teste adaptativo trabalha em cima desse estado
+6. os resultados entram em `testes`, `stats` e `teste_perguntas`
 
-## O que fica para quando houver Postgres
+Contrato tecnico completo: [planner/VISAO_FLUXO_ADAPTATIVO.md](planner/VISAO_FLUXO_ADAPTATIVO.md)
 
-- validar `V7` e `V8` em base real
-- persistir o resultado real do diagnostico
-- alimentar timeline, estatisticas, relatorios e bolsas com queries reais
-- validar a persistencia real do onboarding de avatar e disciplinas do candidato
-- usar o ultimo diagnostico persistido como entrada forte do exame adaptativo
-- ligar relatorios e recomendacoes ao orientador
+## Estado tecnico atual
+
+Pontos ja consolidados:
+
+- o runtime ja esta alinhado para candidato unico
+- o bootstrap de perguntas reais ja trabalha com Matematica/Fisica
+- o schema manual e as migrations ja refletem a remocao do fluxo antigo
+- o caminho de leitura do diagnostico ja foi separado do bootstrap pesado
+
+Pontos ainda em endurecimento:
+
+- parte das regras do motor adaptativo ainda esta hardcoded em `TesteAdaptativoController` e `CalculoStats`
+- o fecho de diagnostico e teste ainda passa por gravacoes sincrona em fluxo de UI
+- o detalhe de `teste_perguntas` ainda precisa usar a mesma `Connection` da transacao principal para fechar atomicidade total
+
+## Prioridade recomendada
+
+- consolidar a leitura de configuracao adaptativa a partir do banco
+- mover os salvamentos finais pesados para background
+- endurecer a transacao completa de `testes`, `stats` e `teste_perguntas`
+- continuar a melhorar relatorios e bolsas a partir de dados reais
 
 ## Licenca
 

@@ -1,135 +1,152 @@
-# Analise de Desempenho: Threads e Bloqueios
+# Analise de desempenho: threads, UI e bloqueios
 
-Data: 2026-05-17  
-Escopo: avaliacao estatica do codigo JavaFX/JDBC/Gemini para identificar gargalos de concorrencia, bloqueios de UI e pontos de contencao.
+Data de atualizacao: `2026-05-24`
 
-## 1) Mapa atual de threads
+Escopo: leitura estatica do codigo JavaFX, JDBC, bootstrap de perguntas e fecho dos fluxos de diagnostico/teste.
 
-### JavaFX Application Thread (UI)
-- Responsavel por renderizacao e eventos de interface.
-- Hoje esta executando operacoes pesadas de BD/rede em varios fluxos.
+## 1. O que mudou desde a analise antiga
 
-### `imetro-app-executor` (pool global da app)
-- Definido como single-thread em `src/main/java/com/imetro/App.java:40`.
-- Usado pelo `PerguntasBootstrapAsyncService` para `Task` de bootstrap em `src/main/java/com/imetro/services/PerguntasBootstrapAsyncService.java:101`.
+Melhorias ja introduzidas:
+
+- `DiagnosticoService.carregarQuestoesReais()` deixou de disparar bootstrap pesado
+- o bootstrap automatico passou a ser agendado por `agendarSincronizacaoSeNecessario(...)`
+- `DiagnosticoListController` ja carrega a lista em background com `CompletableFuture`
+- o runtime foi simplificado para candidato unico, reduzindo um fluxo inteiro de UI e BD
+
+Conclusao:
+
+- o principal gargalo antigo de "leitura que dispara processamento pesado" foi reduzido
+- ainda existem pontos importantes de bloqueio de UI e de atomicidade incompleta
+
+## 2. Mapa atual de threads
+
+### JavaFX Application Thread
+
+- renderizacao
+- eventos da interface
+- ainda recebe trabalho sincrono em pontos de diagnostico e teste
+
+### `imetro-app-executor`
+
+- executor global single-thread definido em `App`
+- bom para serializar tarefas simples
+- pode virar fila unica quando muito fluxo concorre no mesmo executor
+
+### `EXECUTOR_DIAGNOSTICO`
+
+- executor dedicado do diagnostico, tambem single-thread
+- usado para cargas async do diagnostico e para agendar bootstrap automatico
 
 ### Workers de lotes Gemini
-- `newFixedThreadPool(MAX_GEMINI_WORKERS)` em `src/main/java/com/imetro/services/PerguntasBootstrapService.java:438`.
-- Espera bloqueante por `Future` em `src/main/java/com/imetro/services/PerguntasBootstrapService.java:377` e `:426`.
 
-### Thread manual de cadastro
-- `new Thread(registerTask)` em `src/main/java/com/imetro/ui/controller/auth/RegisterController.java:191`.
+- `PerguntasBootstrapService` cria pool fixo para lotes Gemini
+- o numero de workers esta limitado e o comportamento e previsivel
 
-## 2) Principais bloqueios encontrados
+### Common pool do `CompletableFuture`
+
+- `TesteAdaptativoController` ainda usa `CompletableFuture.supplyAsync(...)` sem executor explicito em alguns pontos
+- isso deixa parte do comportamento dependente do common pool da JVM
+
+## 3. Bloqueios e riscos atuais
 
 ## Critico
 
-### C1) Bootstrap sincronizado disparado em caminho de leitura
-- `carregarQuestoesReais(UUID)` chama `sincronizarDisciplinasAutomaticas` quando *nao* esta rodando (`!isRunningFor`) em:
-  - `src/main/java/com/imetro/services/DiagnosticoService.java:86-90`
-  - `src/main/java/com/imetro/services/DiagnosticoService.java:255-263`
-- Esse bootstrap percorre disciplinas, I/O de ficheiros, BD e pode chamar Gemini (rede + retries + polling):
-  - `src/main/java/com/imetro/services/PerguntasBootstrapService.java:73-191`
-  - `src/main/java/com/imetro/services/PerguntasBootstrapService.java:193-317`
-  - `src/main/java/com/imetro/services/GeminiService.java:449`
-  - `src/main/java/com/imetro/services/GeminiService.java:650`
-- Impacto: travamento perceptivel da UI ao abrir telas/acoes que so deveriam ler dados.
+### C1) Fecho de diagnostico ainda roda em fluxo sincrono de UI
 
-### C2) Chamadas de UI acionam esse caminho pesado repetidamente
-- Diagnostico carrega banco no `Platform.runLater` (continua UI thread):
-  - `src/main/java/com/imetro/ui/controller/candidato/diagnosticos/DiagnosticoCandidatoController.java:230-237`
-- Teste adaptativo chama multiplas cargas sincronas na montagem de cards:
-  - `src/main/java/com/imetro/ui/controller/candidato/testes/TesteAdaptativoController.java:216-224`
-  - `src/main/java/com/imetro/ui/controller/candidato/testes/TesteAdaptativoController.java:227-270`
-- Service adaptativo reforca chamadas repetidas:
-  - `src/main/java/com/imetro/services/TesteAdaptativoService.java:30-42`
-  - `src/main/java/com/imetro/services/TesteAdaptativoService.java:228-236`
+- `DiagnosticoCandidatoController.finalizarDiagnostico()` chama `diagnosticoService.registrarDiagnosticoConcluido(...)` diretamente
+- `DiagnosticoService.registrarDiagnosticoConcluido(...)` abre conexao, inicia transacao e grava tudo no banco
+
+Impacto:
+
+- risco de congelamento perceptivel ao concluir diagnostico
+
+### C2) Fecho de teste ainda roda em fluxo sincrono de UI
+
+- `TesteAdaptativoController` chama `testeService.registrarTesteConcluido(...)` diretamente antes de navegar
+- `TesteService` abre conexao, grava `testes`, `stats` e `teste_perguntas`
+
+Impacto:
+
+- risco de freeze no fim do teste
+- o utilizador espera gravacao e troca de tela no mesmo handler
+
+### C3) `TestePerguntasRepository` ainda quebra a transacao unica
+
+- `TesteService` abre transacao principal com `Connection`
+- `TesteStatsRepository` ja aceita `Connection`
+- `TestePerguntasRepository.inserir(...)` ainda usa o caminho que abre ligacao propria
+
+Impacto:
+
+- atomicidade incompleta
+- latencia extra por abertura de conexoes adicionais
+- possibilidade de ficar `testes`/`stats` gravados sem todo o detalhe de `teste_perguntas`
 
 ## Alto
 
-### A1) Persistencia final de diagnostico/teste ocorre na UI thread
-- Diagnostico finaliza e grava tudo de forma sincrona:
-  - `src/main/java/com/imetro/ui/controller/candidato/diagnosticos/DiagnosticoCandidatoController.java:562-567`
-  - transacao em `src/main/java/com/imetro/services/DiagnosticoService.java:460-545`
-- Teste adaptativo finaliza e grava de forma sincrona:
-  - `src/main/java/com/imetro/ui/controller/candidato/testes/TesteAdaptativoController.java:793-802`
-  - transacao em `src/main/java/com/imetro/services/TesteService.java:180-312`
-- Impacto: freeze na transicao final e maior janela de lock no banco.
+### A1) Carregamento inicial do diagnostico ainda faz leitura pesada na UI
 
-### A2) Consultas amplas e repetidas (full scan + filtro em memoria)
-- `findAll()` em repositorio base:
-  - `src/main/java/com/imetro/persistence/repository/JdbcBasicSqlRepository.java:96-103`
-- `listDiagnotico()` puxa tudo e depois filtra:
-  - `src/main/java/com/imetro/services/DiagnosticoService.java:551-563`
-- Metricas chamam `listDiagnotico()` varias vezes:
-  - `src/main/java/com/imetro/services/DiagnosticoService.java:773-859`
-  - `src/main/java/com/imetro/ui/controller/candidato/diagnosticos/DiagnosticoStatics.java:109-112`
-- Timeline idem:
-  - `src/main/java/com/imetro/ui/controller/candidato/diagnosticos/DiagnosticoTimeline.java:93-102`
+- `DiagnosticoCandidatoController` ainda chama `diagnosticoService.carregarQuestoesReais()` no fluxo de inicializacao/preparacao
+- embora hoje seja leitura pura, continua a ser I/O de BD na thread de interface
 
-### A3) Sem pool de conexoes JDBC
-- Cada operacao abre conexao via `DriverManager`:
-  - `src/main/java/com/imetro/persistence/connection/Database.java:13-21`
-- Impacto: overhead de handshake/latencia, piora sob carga e em loops.
+### A2) Executores single-thread podem acumular fila
+
+- `EXECUTOR`
+- `EXECUTOR_DIAGNOSTICO`
+
+Impacto:
+
+- previsibilidade boa
+- throughput limitado quando houver varias acoes concorrentes
+
+### A3) Ainda nao ha pool de conexoes JDBC
+
+- o projeto continua a usar abertura direta de conexao
+
+Impacto:
+
+- overhead extra
+- maior custo em fluxos que fazem varias escritas ou leituras em sequencia
 
 ## Medio
 
-### M1) Executor global unico para tarefas da app
-- `newSingleThreadScheduledExecutor`:
-  - `src/main/java/com/imetro/App.java:40-48`
-- Bom para serializar, mas cria fila unica para tudo que usar esse executor.
+### M1) `TesteAdaptativoController` mistura UI, carga async e salvamento
 
-### M2) Trabalho de setup em `initialize` na UI
-- Pastas/uploads no onboarding:
-  - `src/main/java/com/imetro/ui/controller/auth/ChooseDisciplinasOnboardingController.java:69`
-  - `src/main/java/com/imetro/ui/controller/auth/ChooseDisciplinasOnboardingController.java:94-98`
-- Checagens de historico em inicializacao:
-  - `src/main/java/com/imetro/ui/controller/candidato/CandidatoLayoutController.java:115-119`
-  - `src/main/java/com/imetro/ui/controller/candidato/diagnosticos/DiagnosticoListController.java:77-87`
+- a tela carrega disciplinas de forma async
+- mas ainda conclui o teste de forma sincrona
+- isso deixa o fluxo inconsistente do ponto de vista de responsividade
 
-### M3) Cache global nao thread-safe
-- `HashMap` estatico sem sincronizacao:
-  - `src/main/java/com/imetro/domain/CacheService.java:6`
-- Risco: comportamento indefinido se acessado por mais de uma thread.
+### M2) Bootstrap e diagnostico partilham um executor single-thread
 
-## 3) Recomendacoes priorizadas
+- bom para evitar concorrencia excessiva
+- ruim se o bootstrap demorar e atrasar cargas do diagnostico
 
-## Fase 1 (rapida, alto impacto)
-1. Remover efeitos colaterais de bootstrap do caminho de leitura.
-   - `DiagnosticoService.carregarQuestoesReais(UUID)` deve apenas ler.
-   - Bootstrap automatico fica em trigger explicito (onboarding/botao/worker dedicado).
-2. Mover gravacao final de diagnostico/teste para `Task` em background.
-   - UI mostra overlay "A guardar resultado..." e so navega quando concluir.
-3. Evitar recargas repetidas no `TesteAdaptativoController`.
-   - Carregar banco uma vez por disciplina e reutilizar em memoria da tela.
-4. Substituir `listDiagnotico()->filtrar em memoria` por query ja filtrada por candidato.
+## 4. Recomendacoes priorizadas
 
-## Fase 2 (estrutura)
-1. Introduzir pool JDBC (ex.: HikariCP) no lugar de `DriverManager` direto.
-2. Separar executores por tipo de carga:
-   - `uiIoExecutor` (DB/rede), `bootstrapExecutor`, `geminiLoteExecutor`.
-3. Reusar executor de lotes Gemini em vez de criar/destruir por disciplina.
-4. Adicionar cache de leitura por sessao (TTL curto + invalidacao por escrita).
+### Fase 1
 
-## Fase 3 (observabilidade e governanca)
-1. Instrumentar tempos:
-   - tempo de query, tempo de bootstrap por disciplina, tempo de render por tela.
-2. Logar alertas de UI lenta (>200ms em handlers de evento).
-3. Definir SLO interno:
-   - troca de tela < 300ms sem rede,
-   - finalizacao de teste/diagnostico sem congelar UI.
+1. mover `registrarDiagnosticoConcluido(...)` para `Task` ou `CompletableFuture` com overlay de "A guardar"
+2. mover `registrarTesteConcluido(...)` para background antes da troca de tela
+3. criar `TestePerguntasRepository.inserir(Connection, ...)` e usar a mesma transacao principal
+4. escolher executor explicito para os `CompletableFuture` do teste
 
-## 4) Plano sugerido de implementacao (ordem segura)
+### Fase 2
 
-1. Refatorar `carregarQuestoesReais(UUID)` para leitura pura e criar metodo explicito `agendarSincronizacaoSeNecessario(UUID)`.
-2. Atualizar controllers (`DiagnosticoCandidatoController`, `TesteAdaptativoController`, `DiagnosticoListController`) para usar somente carregamento async.
-3. Trocar metricas/timeline para repositorios com SQL filtrado por candidato.
-4. Introduzir pool de conexoes e medir ganho.
+1. retirar `carregarQuestoesReais()` da inicializacao sincrona do diagnostico
+2. separar melhor executores de UI, diagnostico e bootstrap
+3. introduzir pool de conexoes JDBC
 
-## 5) Resultado esperado apos aplicar
+### Fase 3
 
-- Menos travamentos na abertura das telas de diagnostico/teste.
-- Queda relevante no tempo de resposta percebido na UI.
-- Menos contencao de BD por reduzir transacoes longas no thread de interface.
-- Comportamento de concorrencia mais previsivel e escalavel.
+1. medir tempos de bootstrap por disciplina
+2. medir tempos de finalizacao de diagnostico/teste
+3. alertar quando handlers de UI passarem de uma janela razoavel
 
+## 5. Resultado esperado
+
+Se estes pontos forem fechados:
+
+- menos congelamentos no fim de diagnosticos e testes
+- gravacao de teste realmente atomica
+- menor acoplamento entre UI e persistencia
+- comportamento mais previsivel quando a base real e o Gemini estiverem em uso

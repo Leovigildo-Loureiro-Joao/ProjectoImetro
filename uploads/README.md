@@ -1,22 +1,12 @@
 # Uploads de disciplinas
 
-Estrutura base para os livros e PDFs usados pelo Gemini.
+Esta pasta guarda os PDFs-base usados para extrair topicos e gerar perguntas reais com o Gemini.
 
-## O que acontece automaticamente
+## Escopo atual
 
-Quando o onboarding de disciplinas abre:
-
-- o sistema carrega as disciplinas cadastradas no banco;
-- cria automaticamente as pastas em `uploads/disciplinas/<uuid-da-disciplina>`;
-- mostra no `statusLabel` que as pastas dos livros foram preparadas.
-
-Quando o candidato conclui a escolha de disciplinas:
-
-- as disciplinas sem orientacao tentam processar automaticamente os PDFs;
-- o sistema gera `topicos-extraidos.json`;
-- o sistema gera `questoes-geradas.json`;
-- as perguntas reais entram na tabela `perguntas`;
-- se a disciplina ja tiver orientador cadastrado, esse processamento automatico fica em espera.
+- o bootstrap automatico so atende `Matematica` e `Fisica`
+- cada disciplina usa a sua pasta em `uploads/disciplinas/<uuid-da-disciplina>`
+- o produto nao depende mais de `orientador` para liberar processamento
 
 ## Estrutura esperada
 
@@ -30,55 +20,87 @@ uploads/
       questoes-geradas.json
 ```
 
-## Regras
+## O que o sistema faz
 
-- Cada pasta filha de `uploads/disciplinas` deve usar o `UUID` da disciplina cadastrada no banco.
-- Coloque nessa pasta apenas os PDFs-base daquela disciplina.
-- `topicos-extraidos.json` guarda os topicos e subtopicos devolvidos pelo Gemini.
-- `questoes-geradas.json` guarda o JSON bruto das perguntas geradas.
-- Nao existe mais fallback para seed mockada no fluxo principal.
+### Preparacao das pastas
+
+Quando o onboarding ou o bootstrap prepara as disciplinas:
+
+- o sistema le as disciplinas cadastradas
+- cria as pastas em `uploads/disciplinas/<uuid>`
+- deixa a estrutura pronta para receber os PDFs
+
+### Extracao de topicos
+
+Quando ha PDFs validos e o Gemini esta configurado:
+
+- o sistema le os livros da disciplina
+- extrai topicos e subtopicos reais
+- grava o resultado em `topicos-extraidos.json`
+
+### Geracao de perguntas
+
+Depois da extracao:
+
+- o sistema reparte a geracao em lotes
+- gera `questoes-geradas.json`
+- insere as perguntas resultantes na tabela `perguntas`
+
+## Quando o bootstrap pode arrancar
+
+O processamento automatico pode ser disparado por mais de um ponto do fluxo:
+
+- onboarding de disciplinas
+- entrada no fluxo de primeiro diagnostico, quando ainda nao ha base real suficiente
+- chamadas explicitas do bootstrap em services/controladores
+
+## Regras praticas
+
+- coloca apenas PDFs validos da disciplina correspondente
+- usa o `UUID` real da disciplina no nome da pasta
+- nao mistures livros de disciplinas diferentes na mesma pasta
+- `topicos-extraidos.json` e `questoes-geradas.json` sao artefactos do processo e podem ser regenerados
+- disciplinas fora de `Matematica` e `Fisica` nao entram no bootstrap atual
+
+## Estados comuns do processamento
+
+- `JA_EXISTENTE`: a disciplina ja tem perguntas reais na base
+- `SEM_PDFS`: a pasta existe, mas nao ha PDFs para ler
+- `GEMINI_NAO_CONFIGURADO`: falta `GEMINI_API_KEY`
+- `PROCESSADO_AUTOMATICAMENTE`: topicos e perguntas foram gerados
+- `ERRO`: o fluxo falhou em algum ponto e precisa de nova tentativa
 
 ## Fluxo simples de uso
 
-1. Abre o onboarding.
-2. Deixa o sistema criar as pastas automaticamente.
-3. Coloca os livros PDF dentro da pasta da disciplina.
-4. Se a disciplina nao tiver orientador, o sistema tenta processar os livros automaticamente.
-5. O sistema grava os JSONs e insere perguntas reais na tabela `perguntas`.
+1. Abre o onboarding ou prepara a disciplina pela app.
+2. Deixa o sistema criar `uploads/disciplinas/<uuid>`.
+3. Coloca os PDFs de Matematica ou Fisica nessa pasta.
+4. Garante que `GEMINI_API_KEY` esta configurada.
+5. Entra no diagnostico ou dispara o bootstrap.
+6. Confirma a geracao de `topicos-extraidos.json`.
+7. Confirma a geracao de `questoes-geradas.json`.
+8. Verifica se a tabela `perguntas` recebeu os registos.
 
 ## Services envolvidos
 
-- `GeminiService`
-  - `extrairTopicosJson(...)`: le um ou mais PDFs e devolve topicos e subtopicos em JSON.
-  - `gerarSimuladoJson(...)`: gera perguntas em JSON a partir dos PDFs.
 - `DisciplinaUploadBootstrapService`
-  - `prepararPastasUploads()`: cria as pastas `uploads/disciplinas/<uuid>`.
-  - `processarCargaInicial()`: gera `topicos-extraidos.json`.
-  - `processarCargaInicial(UUID disciplinaId)`: processa apenas uma disciplina.
+  - prepara as pastas de upload
+  - extrai topicos e grava `topicos-extraidos.json`
 - `PerguntasBootstrapService`
-  - `processarDisciplinasAutomaticasDoCandidato(...)`: gera perguntas reais para disciplinas sem orientacao.
-
-## Exemplo rapido
-
-```java
-DisciplinaUploadBootstrapService bootstrap = new DisciplinaUploadBootstrapService();
-bootstrap.prepararPastasUploads();
-bootstrap.processarCargaInicial();
-```
-
-## Exemplo por disciplina
-
-```java
-UUID disciplinaId = UUID.fromString("coloca-aqui-o-uuid-da-disciplina");
-
-DisciplinaUploadBootstrapService bootstrap = new DisciplinaUploadBootstrapService();
-bootstrap.prepararPastasUploads();
-bootstrap.processarCargaInicial(disciplinaId, true);
-```
+  - gera perguntas em lotes
+  - insere perguntas na BD
+- `PerguntasBootstrapAsyncService`
+  - acompanha o estado de processamento em background
+- `GeminiService`
+  - comunica com a API Gemini
 
 ## Requisitos
 
 - `DB_ENABLED=true` ou `TESTE=true`
-- disciplinas cadastradas no banco
-- `GEMINI_API_KEY` ou `GEMENI_API_KEY` configurada no `.env`
-- PDFs validos dentro das pastas de disciplina
+- disciplinas existentes na tabela `disciplinas`
+- `GEMINI_API_KEY` ou `GEMENI_API_KEY`
+- PDFs validos nas pastas corretas
+
+## Observacao
+
+O produto ja nao usa fallback principal para seeds mockadas nesse fluxo. Se o objetivo for produzir base real, o caminho esperado e sempre BD + PDFs + Gemini.

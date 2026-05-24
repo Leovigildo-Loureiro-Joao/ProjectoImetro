@@ -39,7 +39,7 @@
                            </padding>
                         
                            <Label styleClass="h1" text="Entrar" />
-                           <Label styleClass="muted" text="Escolhe o teu perfil e entra no sistema." wrapText="true" />
+                           <Label styleClass="muted" text="Entra no sistema e continua o teu plano em Matemática e Física." wrapText="true" />
                         
                            <TextField fx:id="usernameField" prefHeight="41.0" prefWidth="364.0" promptText="Email ou utilizador" />
                            <PasswordField fx:id="passwordField" prefHeight="44.0" prefWidth="364.0" promptText="Palavra-passe" />
@@ -77,11 +77,11 @@
                                              <children>
                                                 <ImageView fitHeight="470.0" fitWidth="512.0">
                                                    <image>
-                                                      <Image url="@../../../assets/imgs/orientador.png" />
+                                                      <Image url="@../../../assets/imgs/register2.png" />
                                                    </image>
                                                 </ImageView>
                                                 <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
-                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Oriente com insights e resultados." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
+                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Banco real de questões focado em Matemática e Física." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
                                                    <font>
                                                       <Font size="18.0" />
                                                    </font>

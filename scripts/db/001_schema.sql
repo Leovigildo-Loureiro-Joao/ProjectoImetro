@@ -3,7 +3,7 @@
 
   create extension if not exists "uuid-ossp";
 
-  -- Unifica candidatos/orientadores em uma única tabela `users` com coluna `role`.
+  -- Contas unificadas do produto, centradas no candidato.
   create table if not exists users (
     id uuid primary key default uuid_generate_v4(),
     nome text not null,
@@ -11,7 +11,7 @@
     senha_hash text null,
     role text not null,
     avatar_url text null,
-    constraint users_role_chk check (role in ('CANDIDATO', 'ORIENTADOR')),
+    constraint users_role_chk check (role in ('CANDIDATO')),
     criado_em timestamptz not null default now()
   );
 
@@ -19,7 +19,6 @@
   create table if not exists relatorios (
     id uuid primary key default uuid_generate_v4(),
     candidato_id uuid null references users(id) on delete set null,
-    orientador_id uuid null references users(id) on delete set null,
     gerado_em timestamptz not null default now(),
     titulo text null,
     resumo text null,
@@ -31,12 +30,10 @@
     skills_boas jsonb not null default '[]'::jsonb,
     skills_fracas jsonb not null default '[]'::jsonb,
     recomendacoes_sugeridas jsonb not null default '[]'::jsonb,
-    recomendacoes_validadas jsonb not null default '[]'::jsonb,
-    nota_orientador text null
+    recomendacoes_validadas jsonb not null default '[]'::jsonb
   );
 
   create index if not exists idx_relatorios_candidato_id on relatorios (candidato_id);
-  create index if not exists idx_relatorios_orientador_id on relatorios (orientador_id);
 
   -- Banco de questões (MVP)
   create table if not exists perguntas (
@@ -81,7 +78,6 @@
   create table if not exists testes (
     id uuid primary key default uuid_generate_v4(),
     candidato_id uuid null references users(id) on delete set null,
-    orientador_id uuid null references users(id) on delete set null,
     relatorio_id uuid null references relatorios(id) on delete set null,
     data_teste timestamptz null,
     resultado real null,
@@ -89,7 +85,6 @@
   );
 
   create index if not exists idx_testes_candidato_id on testes (candidato_id);
-  create index if not exists idx_testes_orientador_id on testes (orientador_id);
   create index if not exists idx_testes_relatorio_id on testes (relatorio_id);
 
   -- Perguntas de um teste (com ordem e resposta do candidato)
@@ -106,7 +101,7 @@
 
   create index if not exists idx_teste_perguntas_pergunta_id on teste_perguntas (pergunta_id);
 
-  -- Disciplinas + preferências do onboarding (MVP).
+  -- Disciplinas suportadas no onboarding (Matematica/Fisica).
   create table if not exists disciplinas (
     id uuid primary key default uuid_generate_v4(),
     nome text not null unique,
@@ -121,14 +116,7 @@
     primary key (candidato_id, disciplina_id)
   );
 
-  create table if not exists orientador_disciplinas (
-    orientador_id uuid not null references users(id) on delete cascade,
-    disciplina_id uuid not null references disciplinas(id) on delete cascade,
-    primary key (orientador_id, disciplina_id)
-  );
-
   create index if not exists idx_candidato_disciplinas_candidato_id on candidato_disciplinas (candidato_id);
-  create index if not exists idx_orientador_disciplinas_orientador_id on orientador_disciplinas (orientador_id);
 
   -- Historico de diagnosticos academicos por candidato.
   create table if not exists diagnosticos (
@@ -409,9 +397,7 @@ set
 --- ====================================================
 insert into disciplinas (id, nome, peso, nivel, objectivo) values
   (uuid_generate_v4(), 'Matemática', 1.5, 'INICIANTE', 'Desenvolver raciocínio lógico-matemático e capacidade de resolução de problemas'),
-  (uuid_generate_v4(), 'Português', 1.5, 'INICIANTE', 'Aprimorar compreensão textual, gramática e expressão escrita'),
-  (uuid_generate_v4(), 'Física', 1.2, 'INICIANTE', 'Desenvolver raciocínio científico e aplicação de conceitos físicos'),
-  (uuid_generate_v4(), 'Raciocínio Lógico', 1.3, 'INICIANTE', 'Aprimorar capacidade de análise, dedução e resolução de problemas lógicos');
+  (uuid_generate_v4(), 'Física', 1.2, 'INICIANTE', 'Desenvolver raciocínio científico e aplicação de conceitos físicos');
 
 
 -- =====================================================
@@ -569,160 +555,6 @@ insert into perguntas (id, questao, respostas, resposta_correta, topico, dificul
 );
 
 -- =====================================================
--- SEEDS PARA PERGUNTAS - PORTUGUÊS (15 questões)
--- =====================================================
-
--- 1. Fácil - Acentuação
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual das palavras abaixo está corretamente acentuada?',
-  '["A) Ideia", "B) Assembléia", "C) Pôr (verbo)", "D) Heroíco", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) Pôr (verbo)',
-  'Acentuação',
-  'FACIL'
-);
-
--- 2. Fácil - Ortografia
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Assinale a palavra escrita corretamente:',
-  '["A) Xerox", "B) Excesso", "C) Exceção", "D) Todas estão corretas", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'D) Todas estão corretas',
-  'Ortografia',
-  'FACIL'
-);
-
--- 3. Fácil - Sinônimos
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual é o sinônimo de "Íntegro"?',
-  '["A) Corrupto", "B) Honesto", "C) Incompleto", "D) Fraco", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) Honesto',
-  'Semântica',
-  'FACIL'
-);
-
--- 4. Fácil - Separação Silábica
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Como se separa a palavra "PSICOLOGIA"?',
-  '["A) Psi-co-lo-gi-a", "B) Ps-i-co-lo-gi-a", "C) P-s-i-c-o-l-o-g-i-a", "D) Não se separa", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'A) Psi-co-lo-gi-a',
-  'Separação Silábica',
-  'FACIL'
-);
-
--- 5. Fácil - Substantivos
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual é o coletivo de "ABELHAS"?',
-  '["A) Cardume", "B) Manada", "C) Enxame", "D) Alcateia", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) Enxame',
-  'Substantivos Coletivos',
-  'FACIL'
-);
-
--- 6. Médio - Concordância Verbal
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Assinale a alternativa correta quanto à concordância verbal:',
-  '["A) Fazem dois anos que não o vejo", "B) Haviam muitos candidatos na sala", "C) Mais de um aluno faltaram", "D) Faz dois anos que não o vejo", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'D) Faz dois anos que não o vejo',
-  'Concordância Verbal',
-  'MEDIO'
-);
-
--- 7. Médio - Regência Verbal
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Assinale a alternativa em que a regência verbal está correta:',
-  '["A) Ele assistiu o filme", "B) Eu obedeço o regulamento", "C) Ela namora com ele", "D) Prefiro estudar do que trabalhar", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) Ela namora com ele',
-  'Regência Verbal',
-  'MEDIO'
-);
-
--- 8. Médio - Colocação Pronominal
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Assinale a alternativa com próclise correta:',
-  '["A) Me empreste o livro", "B) Não se esqueça de mim", "C) O livro me foi dado", "D) Dir-se-ia que é verdade", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) Não se esqueça de mim',
-  'Colocação Pronominal',
-  'MEDIO'
-);
-
--- 9. Médio - Período Composto
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Identifique a oração subordinada adjetiva: "O aluno que estudou passou na prova."',
-  '["A) O aluno", "B) que estudou", "C) passou na prova", "D) estudou passou", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) que estudou',
-  'Período Composto',
-  'MEDIO'
-);
-
--- 10. Médio - Vozes Verbais
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Na frase "O muro foi pintado pelos alunos", a voz verbal é:',
-  '["A) Ativa", "B) Passiva analítica", "C) Passiva sintética", "D) Reflexiva", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) Passiva analítica',
-  'Vozes Verbais',
-  'MEDIO'
-);
-
--- 11. Desafiante - Figuras de Linguagem
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Identifique a figura de linguagem presente em: "O vento beijava as flores do campo."',
-  '["A) Metáfora", "B) Comparação", "C) Personificação", "D) Hipérbole", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) Personificação',
-  'Figuras de Linguagem',
-  'DESAFIANTE'
-);
-
--- 12. Desafiante - Funções da Linguagem
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Uma propaganda que foca nas qualidades do produto predomina qual função da linguagem?',
-  '["A) Emotiva", "B) Conativa", "C) Referencial", "D) Poética", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) Conativa',
-  'Funções da Linguagem',
-  'DESAFIANTE'
-);
-
--- 13. Desafiante - Morfossintaxe
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Na frase "Preciso de que você me ajude", a expressão "de que" exerce função de:',
-  '["A) Conjunção integrante", "B) Preposição + conjunção integrante", "C) Pronome relativo", "D) Conjunção causal", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) Preposição + conjunção integrante',
-  'Morfossintaxe',
-  'DESAFIANTE'
-);
-
--- 14. Extra - Literatura Brasileira
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual obra é considerada o marco inicial do Modernismo no Brasil?',
-  '["A) O Cortiço", "B) Iracema", "C) Macunaíma", "D) Semana de Arte Moderna de 1922", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'D) Semana de Arte Moderna de 1922',
-  'Literatura Brasileira',
-  'EXTRA'
-);
-
--- 15. Extra - Estilística
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'A expressão "Estou morrendo de sede" é um exemplo de:',
-  '["A) Eufemismo", "B) Ironia", "C) Hipérbole", "D) Prosopopeia", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) Hipérbole',
-  'Estilística',
-  'EXTRA'
-);
-
--- =====================================================
 -- SEEDS PARA PERGUNTAS - FÍSICA (15 questões)
 -- =====================================================
 
@@ -876,156 +708,3 @@ insert into perguntas (id, questao, respostas, resposta_correta, topico, dificul
   'EXTRA'
 );
 
--- =====================================================
--- SEEDS PARA PERGUNTAS - RACIOCÍNIO LÓGICO (15 questões)
--- =====================================================
-
--- 1. Fácil - Sequências
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Complete a sequência: 2, 4, 8, 16, __',
-  '["A) 18", "B) 20", "C) 24", "D) 32", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'D) 32',
-  'Sequências',
-  'FACIL'
-);
-
--- 2. Fácil - Padrões
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual é o próximo número? 1, 4, 9, 16, __',
-  '["A) 20", "B) 24", "C) 25", "D) 30", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) 25',
-  'Padrões Numéricos',
-  'FACIL'
-);
-
--- 3. Fácil - Sequência Alternada
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Complete: 3, 6, 5, 10, 9, 18, __',
-  '["A) 15", "B) 16", "C) 17", "D) 20", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) 17',
-  'Sequências Lógicas',
-  'FACIL'
-);
-
--- 4. Fácil - Anagramas
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual palavra NÃO é um anagrama de "AMOR"?',
-  '["A) ROMA", "B) RAMO", "C) OMAR", "D) MORA", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'D) MORA',
-  'Anagramas',
-  'FACIL'
-);
-
--- 5. Fácil - Verdadeiro/Falso
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Se hoje é quarta-feira, que dia será daqui a 10 dias?',
-  '["A) Sábado", "B) Domingo", 'C) Segunda-feira", "D) Terça-feira", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'A) Sábado',
-  'Raciocínio Temporal',
-  'FACIL'
-);
-
--- 6. Médio - Lógica de Argumentação
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Se todos os A são B, e alguns B são C, então podemos afirmar que:',
-  '["A) Todos os A são C", "B) Alguns A são C", "C) Nenhum A é C", "D) Nada se pode concluir com certeza", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'D) Nada se pode concluir com certeza',
-  'Lógica de Argumentação',
-  'MEDIO'
-);
-
--- 7. Médio - Operadores Lógicos
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Dado que P é verdadeiro e Q é falso, qual o valor de (P ∧ Q) → (P ∨ Q)?',
-  '["A) Verdadeiro", "B) Falso", "C) Não pode determinar", "D) Contradição", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'A) Verdadeiro',
-  'Lógica Proposicional',
-  'MEDIO'
-);
-
--- 8. Médio - Sequência de Figuras
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Em uma sequência de figuras, cada figura tem um triângulo a mais que a anterior. Se a 1ª tem 1 triângulo, quantos terá a 5ª?',
-  '["A) 3", "B) 4", "C) 5", "D) 6", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) 5',
-  'Raciocínio Espacial',
-  'MEDIO'
-);
-
--- 9. Médio - Problemas de Idade
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Hoje, João tem o dobro da idade de Maria. Há 5 anos, a soma das idades era 20. Qual a idade de João hoje?',
-  '["A) 15", "B) 20", "C) 25", "D) 30", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) 20',
-  'Raciocínio Matemático',
-  'MEDIO'
-);
-
--- 10. Médio - Diagramas Lógicos
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Em uma sala, 30 pessoas gostam de café, 20 gostam de chá e 10 gostam de ambos. Quantas pessoas gostam de café ou chá?',
-  '["A) 30", "B) 40", "C) 50", "D) 60", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) 40',
-  'Conjuntos',
-  'MEDIO'
-);
-
--- 11. Desafiante - Raciocínio Matemático
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Um relógio digital marca 12:34. Quantas vezes os algarismos se repetirão em 24 horas?',
-  '["A) 2 vezes", "B) 4 vezes", "C) 6 vezes", "D) 8 vezes", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) 6 vezes',
-  'Raciocínio Matemático',
-  'DESAFIANTE'
-);
-
--- 12. Desafiante - Problemas de Lógica
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Ana, Bia e Carla são médica, engenheira e advogada, não respectivamente. Sabe-se que: (1) A médica é amiga de Ana. (2) Carla é engenheira. (3) Bia é mais velha que a advogada. Quem é médica?',
-  '["A) Ana", "B) Bia", "C) Carla", "D) Não se pode determinar", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'B) Bia',
-  'Lógica Dedutiva',
-  'DESAFIANTE'
-);
-
--- 13. Desafiante - Sequência Complexa
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Qual é o próximo termo da sequência: 1, 3, 7, 15, 31, __',
-  '["A) 47", "B) 55", "C) 63", "D) 71", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) 63',
-  'Sequências Avançadas',
-  'DESAFIANTE'
-);
-
--- 14. Extra - Combinatória
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Em uma sala, há 5 pessoas. Cada uma cumprimenta as outras apenas uma vez. Quantos cumprimentos ocorrem?',
-  '["A) 5", "B) 8", "C) 10", "D) 15", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'C) 10',
-  'Combinatória',
-  'EXTRA'
-);
-
--- 15. Extra - Problema de Lógica Complexo
-insert into perguntas (id, questao, respostas, resposta_correta, topico, dificuldade) values (
-  uuid_generate_v4(),
-  'Três caixas, uma com maçãs, uma com laranjas e uma com ambas, estão todas etiquetadas incorretamente. Você pode tirar uma fruta de uma caixa sem ver o conteúdo. Qual a menor quantidade de frutas para determinar o conteúdo de todas?',
-  '["A) 1", "B) 2", "C) 3", "D) 4", "E) Não sei", "F) Me esqueci", "G) Não entendi como se faz"]'::jsonb,
-  'A) 1',
-  'Lógica Clássica',
-  'EXTRA'
-);

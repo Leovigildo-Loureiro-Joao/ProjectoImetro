@@ -418,7 +418,6 @@ public class TesteService {
                     UUID id =testeRepository.inserir(
                         candidatoId,
                        null,
-                       null,
                         concluidoEm,
                         percentualAcerto,
                         concluidoEm,
@@ -580,7 +579,6 @@ public class TesteService {
                 UUID testeId = testeRepository.inserir(
                     conn,
                     candidatoId,
-                    null,
                     null,
                     concluidoEm,
                     percentualAcerto,

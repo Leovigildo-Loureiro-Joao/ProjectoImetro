@@ -213,7 +213,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
         Label descricao = new Label(
             processamentoLivros
                 ? "Os livros continuam a ser processados em segundo plano. Podes navegar noutras abas e acompanhar a barra de progresso no topo enquanto a tabela `perguntas` e preenchida."
-                : "Ainda nao surgiram perguntas reais na tabela `perguntas`. Confirma os PDFs em `uploads/disciplinas/<uuid>`, a chave do Gemini e se a disciplina esta sem orientacao para o processamento automatico."
+                : "Ainda nao surgiram perguntas reais na tabela `perguntas`. Confirma os PDFs em `uploads/disciplinas/<uuid>`, a chave do Gemini e se a disciplina e Matematica ou Fisica para o processamento automatico."
         );
         descricao.getStyleClass().add("muted");
         descricao.setWrapText(true);

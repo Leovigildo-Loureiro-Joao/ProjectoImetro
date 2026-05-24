@@ -14,7 +14,7 @@
          <Label styleClass="brand-title" text="Simulator Bolsa Study" />
 
                         <StackPane fx:id="contentHost" maxWidth="460" />
-         <Label maxWidth="600.0" styleClass="brand-subtitle" text="Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com análise adaptativa e feedback orientado a dados para Estudante e Orientador." textAlignment="CENTER" wrapText="true" />
+         <Label maxWidth="600.0" styleClass="brand-subtitle" text="Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com banco real de questões, análise adaptativa e foco em Matemática e Física." textAlignment="CENTER" wrapText="true" />
         </VBox>
    </children>
 </StackPane>

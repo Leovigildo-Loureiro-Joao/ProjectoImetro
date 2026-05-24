@@ -40,14 +40,14 @@
                            </padding>
 
                            <Label styleClass="h1" text="Registar" />
-                           <Label styleClass="muted" text="Cria uma conta (MVP: ainda sem persistência)." wrapText="true" />
+                           <Label styleClass="muted" text="Cria a tua conta de candidato e entra no banco de questões." wrapText="true" />
 
                            <VBox fx:id="formBox" spacing="12.0">
                               <children>
                                  <TextField fx:id="nomeField" prefHeight="41.0" prefWidth="364.0" promptText="Nome completo" />
                                  <TextField fx:id="emailField" prefHeight="41.0" prefWidth="364.0" promptText="Email" />
                                  <PasswordField fx:id="passwordField" prefHeight="44.0" prefWidth="364.0" promptText="Palavra-passe" />
-                                 <JFXComboBox fx:id="roleCombo" prefHeight="26.0" prefWidth="362.0" promptText="Perfil (Candidato/Orientador)" />
+                                 <JFXComboBox fx:id="roleCombo" prefHeight="26.0" prefWidth="362.0" promptText="Perfil do candidato" />
 
                                  <Label fx:id="statusLabel" styleClass="muted" text="" />
                                  <JFXButton fx:id="registerButton" onAction="#onRegisterUser" prefHeight="44.0" prefWidth="364.0" styleClass="btn-primary" text="Registar" />

@@ -77,7 +77,6 @@ public class TesteRepository extends JdbcBasicSqlRepository {
 
     public UUID inserir(
         UUID candidatoId,
-        UUID orientadorId,
         UUID relatorioId,
         LocalDateTime dataTeste,
         Double resultado,
@@ -110,7 +109,6 @@ public class TesteRepository extends JdbcBasicSqlRepository {
             return inserir(
                 conn,
                 candidatoId,
-                orientadorId,
                 relatorioId,
                 dataTeste,
                 resultado,
@@ -145,7 +143,6 @@ public class TesteRepository extends JdbcBasicSqlRepository {
     public UUID inserir(
         Connection conn,
         UUID candidatoId,
-        UUID orientadorId,
         UUID relatorioId,
         LocalDateTime dataTeste,
         Double resultado,
@@ -198,7 +195,6 @@ public class TesteRepository extends JdbcBasicSqlRepository {
             insert into testes (
               id,
               candidato_id,
-              orientador_id,
               relatorio_id,
               data_teste,
               resultado,
@@ -227,41 +223,40 @@ public class TesteRepository extends JdbcBasicSqlRepository {
               atualizado_em,
               configuracao_teste_adaptativo_id
             ) values (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), cast(? as jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb), cast(? as jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, id);
             stmt.setObject(2, candidatoId);
-            stmt.setObject(3, orientadorId);
-            stmt.setObject(4, relatorioId);
-            stmt.setTimestamp(5, toTimestamp(dataTeste));
-            stmt.setObject(6, toNullableFloat(resultadoPersistido));
-            stmt.setTimestamp(7, toTimestamp(criadoEmPersistido));
-            stmt.setObject(8, diagnosticoId);
-            stmt.setObject(9, disciplinaId);
-            stmt.setString(10, disciplinaNome);
-            stmt.setString(11, nivelInicial);
-            stmt.setString(12, nivelFinal);
-            stmt.setObject(13, limiteQuestoes);
-            stmt.setObject(14, limiteInferiorPersistido);
-            stmt.setObject(15, limiteSuperiorPersistido);
-            stmt.setString(16, topicosPersistidos);
-            stmt.setString(17, subtopicosPersistidos);
-            stmt.setInt(18, Math.max(0, duracaoSegundos));
-            stmt.setInt(19, totalQuestoesPersistido);
-            stmt.setInt(20, totalAcertosPersistido);
-            stmt.setInt(21, totalErrosPersistido);
-            stmt.setObject(22, percentualPersistido);
-            stmt.setObject(23, toNullableFloat(limitarUnitario(velocidade)));
-            stmt.setObject(24, toNullableFloat(limitarUnitario(precisao)));
-            stmt.setObject(25, toNullableFloat(limitarUnitario(consistencia)));
-            stmt.setObject(26, toNullableFloat(limitarUnitario(logica)));
-            stmt.setObject(27, toNullableFloat(limitarUnitario(resiliencia)));
-            stmt.setString(28, observacoes);
-            stmt.setTimestamp(29, toTimestamp(atualizadoEmPersistido));
-            stmt.setObject(30, configuracaoID);
+            stmt.setObject(3, relatorioId);
+            stmt.setTimestamp(4, toTimestamp(dataTeste));
+            stmt.setObject(5, toNullableFloat(resultadoPersistido));
+            stmt.setTimestamp(6, toTimestamp(criadoEmPersistido));
+            stmt.setObject(7, diagnosticoId);
+            stmt.setObject(8, disciplinaId);
+            stmt.setString(9, disciplinaNome);
+            stmt.setString(10, nivelInicial);
+            stmt.setString(11, nivelFinal);
+            stmt.setObject(12, limiteQuestoes);
+            stmt.setObject(13, limiteInferiorPersistido);
+            stmt.setObject(14, limiteSuperiorPersistido);
+            stmt.setString(15, topicosPersistidos);
+            stmt.setString(16, subtopicosPersistidos);
+            stmt.setInt(17, Math.max(0, duracaoSegundos));
+            stmt.setInt(18, totalQuestoesPersistido);
+            stmt.setInt(19, totalAcertosPersistido);
+            stmt.setInt(20, totalErrosPersistido);
+            stmt.setObject(21, percentualPersistido);
+            stmt.setObject(22, toNullableFloat(limitarUnitario(velocidade)));
+            stmt.setObject(23, toNullableFloat(limitarUnitario(precisao)));
+            stmt.setObject(24, toNullableFloat(limitarUnitario(consistencia)));
+            stmt.setObject(25, toNullableFloat(limitarUnitario(logica)));
+            stmt.setObject(26, toNullableFloat(limitarUnitario(resiliencia)));
+            stmt.setString(27, observacoes);
+            stmt.setTimestamp(28, toTimestamp(atualizadoEmPersistido));
+            stmt.setObject(29, configuracaoID);
             stmt.executeUpdate();
         }
         return id;

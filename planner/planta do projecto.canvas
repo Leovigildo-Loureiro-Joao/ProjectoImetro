@@ -1,7 +1,7 @@
 {
 	"nodes":[
-		{"id":"f7bbe8a7ea6975b1","x":-735.1185280266926,"y":-767.2197974578988,"width":250,"height":240,"type":"text","text":"### Teste\n- perguntas\n- respostas\n- data\n- orientador\n- candidato\n- relatorio\n"},
-		{"id":"0b4937ae74eb4458","x":-680,"y":-1202.6168643384829,"width":250,"height":220,"type":"text","text":"### Orientador\n- nome\n- email\n- idOrientador\n- candidatos\n- relatórios"},
+		{"id":"f7bbe8a7ea6975b1","x":-735.1185280266926,"y":-767.2197974578988,"width":250,"height":240,"type":"text","text":"### Teste\n- perguntas\n- respostas\n- data\n- candidato\n- relatorio\n"},
+		{"id":"0b4937ae74eb4458","x":-680,"y":-1202.6168643384829,"width":250,"height":220,"type":"text","text":"### Utilizador\n- nome\n- email\n- idUser\n- avatar\n- relatórios"},
 		{"id":"ada072ddeb8a76ca","x":-1120,"y":-943,"width":250,"height":220,"type":"text","text":"### Candidato\n- nome\n- email\n- idCandidato\n- senha\n- disciplinas estudo"},
 		{"id":"6d07ab63fcd6aeea","x":-360,"y":-790,"width":250,"height":300,"type":"text","text":"### Relatório\n- dificuldades\n- melhorias\n- ponto forte\n- velocidade\n- duvidas\n- falhas\n- progresso"},
 		{"id":"92346c78680af3e1","x":-1175.420487407655,"y":-498.0022644182326,"width":250,"height":220,"type":"text","text":"### Disciplina\n- nome\n- peso\n- nível\n- objectivo"},
