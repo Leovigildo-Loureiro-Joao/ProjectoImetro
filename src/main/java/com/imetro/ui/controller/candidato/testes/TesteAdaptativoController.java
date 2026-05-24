@@ -1054,9 +1054,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         return switch (disciplina) {
             case "MATEMATICA" -> "Matematica";
             case "FISICA" -> "Fisica";
-            case "QUIMICA" -> "Quimica";
-            case "BIOLOGIA" -> "Biologia";
-            case "PORTUGUES" -> "Portugues";
             default -> disciplina;
         };
     }

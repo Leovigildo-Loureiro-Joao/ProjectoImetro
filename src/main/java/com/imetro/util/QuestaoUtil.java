@@ -14,11 +14,7 @@ public class QuestaoUtil {
     public static String formatarDisciplina(String valor) {
         return switch (normalizar(valor)) {
             case "matematica" -> "Matematica";
-            case "portugues" -> "Portugues";
             case "fisica" -> "Fisica";
-            case "quimica" -> "Quimica";
-            case "biologia" -> "Biologia";
-            case "raciocinio logico" -> "Raciocinio Logico";
             default -> toTitleCase(valor);
         };
     }

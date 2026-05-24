@@ -9,7 +9,6 @@ import java.util.ResourceBundle;
 
 import com.imetro.App;
 import com.imetro.app.CandidatoController;
-import com.imetro.app.OrientadorController;
 import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.ui.OnboardingRouter;
@@ -89,14 +88,14 @@ public class RegisterController implements Initializable {
     private int extendedPageCount = 0;
 
     private CandidatoController candidatoController;
-    private OrientadorController orientadorController;
     private volatile boolean registrationInProgress = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        roleCombo.setItems(FXCollections.observableArrayList("CANDIDATO", "ORIENTADOR"));
+        roleCombo.setItems(FXCollections.observableArrayList("CANDIDATO"));
+        roleCombo.getSelectionModel().selectFirst();
+        roleCombo.setDisable(true);
         candidatoController=new CandidatoController();
-        orientadorController = new OrientadorController();
         setupCarousel();
 
         if (!RuntimeConfig.isDbEnabled()) {
@@ -121,12 +120,7 @@ public class RegisterController implements Initializable {
         String nome = nomeField == null ? null : nomeField.getText();
         String email = emailField == null ? null : emailField.getText();
         String password = passwordField == null ? null : passwordField.getText();
-        String role = roleCombo == null ? null : roleCombo.getValue();
-
-        if (role == null || role.isBlank()) {
-            statusLabel.setText("Selecione o perfil (Candidato/Orientador).");
-            return;
-        }
+        String role = "CANDIDATO";
 
         if (nome == null || nome.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
             statusLabel.setText("Preencha nome, email e palavra-passe.");
@@ -149,12 +143,7 @@ public class RegisterController implements Initializable {
         Task<Boolean> registerTask = new Task<>() {
             @Override
             protected Boolean call() {
-                boolean created;
-                if ("ORIENTADOR".equalsIgnoreCase(register.role())) {
-                    created = orientadorController.RegistrarOrientador(register);
-                } else {
-                    created = candidatoController.RegistrarCandidato(register);
-                }
+                boolean created = candidatoController.RegistrarCandidato(register);
 
                 if (!created) {
                     return false;

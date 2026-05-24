@@ -15,7 +15,7 @@ public record UserRegister(String nome, String email, String senha_hash, String 
               && senha_hash != null
               && !senha_hash.isBlank()
               && role != null
-              && ("CANDIDATO".equalsIgnoreCase(role) || "ORIENTADOR".equalsIgnoreCase(role));
+              && "CANDIDATO".equalsIgnoreCase(role);
     }
     public Map<String,?> toMap(){
         return Map.of(

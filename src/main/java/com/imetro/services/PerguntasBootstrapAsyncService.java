@@ -216,7 +216,6 @@ public final class PerguntasBootstrapAsyncService {
             .anyMatch(result ->
                 result.status() == BootstrapStatus.SEM_PDFS
                     || result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO
-                    || result.status() == BootstrapStatus.AGUARDANDO_ORIENTACAO
             );
 
         if (hasErrors) {
@@ -246,9 +245,6 @@ public final class PerguntasBootstrapAsyncService {
         long processadas = results.stream()
             .filter(result -> result.status() == BootstrapStatus.PROCESSADO_AUTOMATICAMENTE)
             .count();
-        long aguardando = results.stream()
-            .filter(result -> result.status() == BootstrapStatus.AGUARDANDO_ORIENTACAO)
-            .count();
         long semPdfs = results.stream()
             .filter(result -> result.status() == BootstrapStatus.SEM_PDFS)
             .count();
@@ -274,9 +270,6 @@ public final class PerguntasBootstrapAsyncService {
         }
         resumo.append(".");
 
-        if (aguardando > 0) {
-            resumo.append(" ").append(aguardando).append(" aguardam orientacao.");
-        }
         if (semPdfs > 0) {
             resumo.append(" ").append(semPdfs).append(" ainda sem PDFs.");
         }

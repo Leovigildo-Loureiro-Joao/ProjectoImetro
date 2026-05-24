@@ -8,7 +8,6 @@ import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.model.Candidato;
-import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.UserRepository;
 import com.imetro.services.CandidatoService;
@@ -21,11 +20,10 @@ public final class OnboardingRouter {
 
     public static final String FXML_ADD_IMAGE = "views/pages/auth/onboarding/add-image";
     public static final String FXML_CHOOSE_DISCIPLINAS = "views/pages/auth/onboarding/choose-disciplinas";
-    public static final String FXML_ORIENTADOR_DISCIPLINA = "views/pages/auth/onboarding/orientador-disciplina";
     private static final CandidatoService CANDIDATO_SERVICE = new CandidatoService();
 
-
-   
+    private OnboardingRouter() {
+    }
 
     public static void CandidatoRoute(StackPane contentHost) {
         try {
@@ -50,22 +48,15 @@ public final class OnboardingRouter {
         }
     }
 
-        public static void OrientadorRoute(StackPane contentHost) {
-        try {
-           App.setRoot("views/layouts/OrientadorLayout");
-        } catch (Exception e) {
-        }
-    }
-
     public static void routeAfterAuth(StackPane contentHost) {
         if (contentHost == null) {
             return;
         }
         if (!RuntimeConfig.isDbEnabled()) {
-            OrientadorRoute(contentHost);
+            CandidatoRoute(contentHost);
             return;
         }
-        
+
         String role = Authentication.getCurrentUserRole();
         String email = Authentication.getCurrentUserEmail();
         UUID userId = Authentication.getCurrentUserId();
@@ -95,25 +86,16 @@ public final class OnboardingRouter {
                     App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
                     return;
                 }
-              
-               CandidatoRoute(contentHost);
-            }
 
-            if ("ORIENTADOR".equalsIgnoreCase(role)) {
-                boolean hasDisciplina = userId != null && new OrientadorDisciplinaRepository().hasAny(userId);
-                if (!hasDisciplina) {
-                    App.swapContent(contentHost, FXML_ORIENTADOR_DISCIPLINA);
-                    return;
-                }
-                App.setRoot("views/layouts/OrientadorLayout");
+                CandidatoRoute(contentHost);
                 return;
             }
 
-            contentHost.getChildren().setAll(new Label("Perfil inválido. Faça login novamente."));
+            contentHost.getChildren().setAll(new Label("Este perfil ja nao e suportado. Usa uma conta de candidato."));
         } catch (IOException e) {
-            System.err.println("Falha ao navegar após autenticação.");
+            System.err.println("Falha ao navegar apos autenticacao.");
             e.printStackTrace();
-            contentHost.getChildren().setAll(new Label("Erro ao abrir a próxima tela."));
+            contentHost.getChildren().setAll(new Label("Erro ao abrir a proxima tela."));
         } catch (RuntimeException e) {
             e.printStackTrace();
             contentHost.getChildren().setAll(new Label("Erro inesperado ao continuar."));
@@ -125,16 +107,5 @@ public final class OnboardingRouter {
             return;
         }
         App.swapContent(contentHost, FXML_CHOOSE_DISCIPLINAS);
-    }
-
-    private static UUID parseUuid(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return UUID.fromString(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 }

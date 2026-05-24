@@ -10,7 +10,6 @@ import com.imetro.domain.dto.perguntas.GeracaoQuestoesEmLotes;
 import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
-import com.imetro.persistence.repository.OrientadorDisciplinaRepository;
 import com.imetro.util.AppLogger;
 import com.imetro.util.QuestaoUtil;
 
@@ -54,12 +53,10 @@ public class PerguntasBootstrapService {
 
     private final GeminiService geminiService;
     private final DisciplinaUploadBootstrapService uploadBootstrapService;
-    private final OrientadorDisciplinaRepository orientadorDisciplinaRepository;
 
     public PerguntasBootstrapService() {
         this.geminiService = new GeminiService();
         this.uploadBootstrapService = new DisciplinaUploadBootstrapService();
-        this.orientadorDisciplinaRepository = new OrientadorDisciplinaRepository();
     }
 
     public List<BootstrapResult> processarDisciplinasAutomaticasDoCandidato(UUID candidatoId) {
@@ -116,10 +113,6 @@ public class PerguntasBootstrapService {
             ));
         }
 
-        List<String> nomes = disciplinas.stream().map(DisciplinaDto::nome).toList();
-        Map<String, Integer> orientadoresPorDisciplina = orientadorDisciplinaRepository
-            .countOrientadoresByDisciplinaNames(nomes);
-
         ArrayList<BootstrapResult> resultados = new ArrayList<>();
         int totalDisciplinas = disciplinas.size();
         for (int indice = 0; indice < totalDisciplinas; indice++) {
@@ -153,23 +146,7 @@ public class PerguntasBootstrapService {
                 continue;
             }
 
-            int totalOrientadores = orientadoresPorDisciplina.getOrDefault(disciplina.nome(), 0);
-            if (totalOrientadores > 0) {
-                LOGGER.info("A disciplina " + disciplina.nome() + " ficou em espera por orientacao.");
-                BootstrapResult result = new BootstrapResult(
-                    disciplina.id(),
-                    disciplina.nome(),
-                    BootstrapStatus.AGUARDANDO_ORIENTACAO,
-                    contarPdfsDaDisciplina(disciplina.id()),
-                    0,
-                    "Existe orientacao cadastrada para esta disciplina; o processamento automatico ficou em espera."
-                );
-                resultados.add(result);
-                emitirConclusaoDisciplina(progressListener, indice, totalDisciplinas, result);
-                continue;
-            }
-
-            BootstrapResult result = processarDisciplinaSemOrientacao(
+            BootstrapResult result = processarDisciplinaAutomaticamente(
                 disciplina,
                 sobrescreverTopicos,
                 progressListener,
@@ -190,7 +167,7 @@ public class PerguntasBootstrapService {
         return List.copyOf(resultados);
     }
 
-    private BootstrapResult processarDisciplinaSemOrientacao(
+    private BootstrapResult processarDisciplinaAutomaticamente(
         DisciplinaDto disciplina,
         boolean sobrescreverTopicos,
         BootstrapProgressListener progressListener,
@@ -862,7 +839,7 @@ public class PerguntasBootstrapService {
             LOGGER.log(Level.SEVERE, "Erro ao carregar disciplinas do candidato para o bootstrap real.", e);
         }
 
-        return List.copyOf(disciplinas);
+        return DisciplinaService.filtrarDisciplinasSuportadas(disciplinas);
     }
 
     private int inserirPerguntasGeradas(DisciplinaDto disciplina, String jsonQuestoes) throws Exception {

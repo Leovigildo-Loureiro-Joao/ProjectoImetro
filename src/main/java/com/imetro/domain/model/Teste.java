@@ -10,7 +10,6 @@ public class Teste {
     private ArrayList<Pergunta> perguntas;
     private LocalDateTime dataTeste;
     private float resultado;
-    private Orientador orientador;
     private Candidato candidato;
     private Relatorio relatorio;
     
@@ -28,14 +27,6 @@ public class Teste {
 
     public void setDataTeste(LocalDateTime dataTeste) {
         this.dataTeste = dataTeste;
-    }
-
-    public Orientador getOrientador() {
-        return orientador;
-    }
-
-    public void setOrientador(Orientador orientador) {
-        this.orientador = orientador;
     }
 
     public Candidato getCandidato() {
