@@ -44,10 +44,29 @@ public final class PerguntasBootstrapAsyncService {
         return INSTANCE;
     }
 
-    public synchronized void start(UUID candidatoId) {
+    public synchronized boolean startIfNeeded(UUID candidatoId) {
+        if (candidatoId == null) {
+            return false;
+        }
+
+        if (currentTask != null && currentTask.isRunning()) {
+            if (candidatoId.equals(activeCandidateId)) {
+                showBanner.set(true);
+            }
+            return false;
+        }
+
+        if (!bootstrapService.hasDisciplinasPendentes(candidatoId)) {
+            return false;
+        }
+
+        return start(candidatoId);
+    }
+
+    public synchronized boolean start(UUID candidatoId) {
         if (candidatoId == null) {
             LOGGER.warning("Tentativa de iniciar o bootstrap automatico sem candidatoId.");
-            return;
+            return false;
         }
 
         if (currentTask != null && currentTask.isRunning()) {
@@ -55,7 +74,7 @@ public final class PerguntasBootstrapAsyncService {
                 showBanner.set(true);
                 LOGGER.info("Bootstrap automatico ja estava em curso para o candidato " + candidatoId + ".");
             }
-            return;
+            return false;
         }
 
         LOGGER.info("A iniciar o bootstrap automatico de perguntas para o candidato " + candidatoId + ".");
@@ -99,6 +118,79 @@ public final class PerguntasBootstrapAsyncService {
         task.setOnCancelled(event -> finishCancelled());
 
         App.getExecutorService().execute(task);
+        return true;
+    }
+
+    public synchronized boolean startDisciplina(
+        UUID candidatoId,
+        UUID disciplinaId,
+        boolean sobrescreverTopicos,
+        boolean ignorarPerguntasExistentes
+    ) {
+        if (candidatoId == null || disciplinaId == null) {
+            LOGGER.warning("Tentativa de iniciar o processamento de livro sem candidatoId ou disciplinaId.");
+            return false;
+        }
+
+        if (currentTask != null && currentTask.isRunning()) {
+            if (candidatoId.equals(activeCandidateId)) {
+                showBanner.set(true);
+                LOGGER.info("Ja existe um processamento de livros em curso para o candidato " + candidatoId + ".");
+            }
+            return false;
+        }
+
+        LOGGER.info(
+            "A iniciar o processamento do livro para a disciplina "
+                + disciplinaId
+                + " do candidato "
+                + candidatoId
+                + "."
+        );
+        activeCandidateId = candidatoId;
+        title.set("A preparar o livro da disciplina");
+        detail.set("O PDF sera lido em segundo plano e a base de perguntas sera atualizada.");
+        summary.set("");
+        progress.set(0.0);
+        state.set(BootstrapUiState.RUNNING);
+        running.set(true);
+        showBanner.set(true);
+
+        Task<List<BootstrapResult>> task = new Task<>() {
+            @Override
+            protected List<BootstrapResult> call() {
+                updateTitle("A preparar o livro da disciplina");
+                updateMessage("O PDF sera lido em segundo plano e a base de perguntas sera atualizada.");
+                updateProgress(0, 1);
+
+                BootstrapResult result = bootstrapService.processarDisciplinaDoCandidato(
+                    candidatoId,
+                    disciplinaId,
+                    sobrescreverTopicos,
+                    ignorarPerguntasExistentes,
+                    snapshot -> {
+                        updateTitle(snapshot.titulo());
+                        updateMessage(snapshot.detalhe());
+                        if (snapshot.indeterminate()) {
+                            updateProgress(-1, 1);
+                        } else {
+                            updateProgress(snapshot.progress(), 1);
+                        }
+                    }
+                );
+                return result == null ? List.of() : List.of(result);
+            }
+        };
+
+        bindToTask(task);
+        currentTask = task;
+
+        task.setOnSucceeded(event -> finishSuccessfully(task.getValue()));
+        task.setOnFailed(event -> finishWithFailure(task.getException()));
+        task.setOnCancelled(event -> finishCancelled());
+
+        App.getExecutorService().execute(task);
+        return true;
     }
 
     public synchronized boolean isRunningFor(UUID candidatoId) {
@@ -210,6 +302,8 @@ public final class PerguntasBootstrapAsyncService {
 
         boolean hasProcessed = results.stream()
             .anyMatch(result -> result.status() == BootstrapStatus.PROCESSADO_AUTOMATICAMENTE);
+        boolean hasExisting = results.stream()
+            .anyMatch(result -> result.status() == BootstrapStatus.JA_EXISTENTE);
         boolean hasErrors = results.stream()
             .anyMatch(result -> result.status() == BootstrapStatus.ERRO);
         boolean hasWarnings = results.stream()
@@ -224,7 +318,7 @@ public final class PerguntasBootstrapAsyncService {
         if (hasWarnings) {
             return hasProcessed ? BootstrapUiState.SUCCESS : BootstrapUiState.WARNING;
         }
-        return hasProcessed ? BootstrapUiState.SUCCESS : BootstrapUiState.WARNING;
+        return hasProcessed || hasExisting ? BootstrapUiState.SUCCESS : BootstrapUiState.WARNING;
     }
 
     private String resolveTitle(BootstrapUiState state) {
@@ -254,6 +348,9 @@ public final class PerguntasBootstrapAsyncService {
         long semGemini = results.stream()
             .filter(result -> result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO)
             .count();
+        long jaExistentes = results.stream()
+            .filter(result -> result.status() == BootstrapStatus.JA_EXISTENTE)
+            .count();
 
         int totalPerguntas = results.stream()
             .filter(result ->
@@ -264,20 +361,30 @@ public final class PerguntasBootstrapAsyncService {
             .sum();
 
         StringBuilder resumo = new StringBuilder();
-        resumo.append(processadas).append(" disciplinas processadas automaticamente");
+        resumo.append(processadas).append(' ')
+            .append(processadas == 1 ? "disciplina processada automaticamente" : "disciplinas processadas automaticamente");
         if (totalPerguntas > 0) {
             resumo.append(" e ").append(totalPerguntas).append(" perguntas reais disponiveis");
         }
         resumo.append(".");
 
+        if (jaExistentes > 0) {
+            resumo.append(" ").append(jaExistentes).append(' ')
+                .append(jaExistentes == 1 ? "ja tinha base pronta." : "ja tinham base pronta.");
+        }
+
         if (semPdfs > 0) {
             resumo.append(" ").append(semPdfs).append(" ainda sem PDFs.");
         }
         if (semGemini > 0) {
-            resumo.append(" ").append(semGemini).append(" precisam da chave do Gemini.");
+            resumo.append(" ").append(semGemini).append(' ')
+                .append(semGemini == 1 ? "precisa da chave do Gemini." : "precisam da chave do Gemini.");
         }
         if (erros > 0) {
-            resumo.append(" ").append(erros).append(" ficaram com falha e podem ser tentadas novamente.");
+            resumo.append(" ").append(erros).append(' ')
+                .append(erros == 1
+                    ? "ficou com falha e pode ser tentada novamente."
+                    : "ficaram com falha e podem ser tentadas novamente.");
         }
 
         return resumo.toString();

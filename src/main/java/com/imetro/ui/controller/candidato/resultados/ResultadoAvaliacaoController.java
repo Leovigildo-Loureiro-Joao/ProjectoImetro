@@ -1,34 +1,20 @@
 package com.imetro.ui.controller.candidato.resultados;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import org.kordamp.ikonli.remixicon.RemixiconMZ;
 
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
-import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
-import com.imetro.services.DiagnosticoService;
-import com.imetro.services.TesteService;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.controller.lifecycle.DisposableController;
-import com.imetro.util.QuestaoResultado;
-import com.imetro.util.QuestaoUtil;
 import com.imetro.util.ResultadoPayload;
 import com.jfoenix.controls.JFXButton;
 
-import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 
 
@@ -53,12 +39,6 @@ public class ResultadoAvaliacaoController implements DisposableController,Result
 
     @FXML
     private Label tituloAvaliacao;
-
-    private final TesteService testeService = new TesteService();
-    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
-
-    private List<QuestaoResultado> questoesResultado = List.of();
-    private boolean painelRecomendacaoVisivel;
 
     @FXML
     private void initialize() {
@@ -93,7 +73,6 @@ public class ResultadoAvaliacaoController implements DisposableController,Result
 
         btnRefazer.setUserData(payload.getRetryPath());
 
-        questoesResultado = payload.getQuestoesResultado();
 
     }
 
@@ -112,15 +91,7 @@ public class ResultadoAvaliacaoController implements DisposableController,Result
         navegarPara("views/pages/candidato/dashboard");
     }
 /*
-    @FXML
-    private void scrollQuestoesPrev() {
-        ajustarScrollCarrossel(-0.33);
-    }
 
-    @FXML
-    private void scrollQuestoesNext() {
-        ajustarScrollCarrossel(0.33);
-    }
 
     @FXML
     private void togglePainelRecomendacao() {
@@ -335,96 +306,7 @@ public class ResultadoAvaliacaoController implements DisposableController,Result
             && payload.getTipoAvaliacao().toLowerCase(Locale.ROOT).contains("diagnostico");
     }
 
-    private void configurarMenuQuestoes() {
-       /*  if (questoesMenu == null) {
-            return;
-        }
 
-        questoesMenu.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(MenuEntry item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(null);
-                setGraphic(empty || item == null ? null : new Item_Cell(item.title(), item.icon()));
-            }
-        });
-
-        questoesMenu.getItems().setAll(
-            new MenuEntry("todas", "Todas", FontAwesomeSolid.LIST_UL),
-            new MenuEntry("acertos", "Acertos", FontAwesomeSolid.CHECK_CIRCLE),
-            new MenuEntry("erros", "Erros", FontAwesomeSolid.TIMES_CIRCLE)
-        );
-
-        questoesMenu.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                renderizarCarrossel(newVal.key());
-            }
-        });
-
-        questoesMenu.getSelectionModel().selectFirst();
-    }
-
-    private void renderizarCarrossel(String filtro) {
-       /*  if (questoesCarousel == null) {
-            return;
-        }
-
-        questoesCarousel.getChildren().clear();
-        List<QuestaoResultado> filtradas = filtrarQuestoes(filtro);
-
-        if (questoesResumoValue != null) {
-            questoesResumoValue.setText(String.format(
-                "Mostrando %d de %d questoes",
-                filtradas.size(),
-                questoesResultado.size()
-            ));
-        }
-
-        if (filtradas.isEmpty()) {
-            Label vazio = new Label("Nenhuma questao encontrada neste filtro.");
-            vazio.getStyleClass().add("muted");
-            questoesCarousel.getChildren().add(vazio);
-        } else {
-            for (QuestaoResultado questao : filtradas) {
-                questoesCarousel.getChildren().add(new CardQuestao(questao));
-            }
-        }
-
-        if (questoesScroll != null) {
-            questoesScroll.setHvalue(0);
-        }
-        Platform.runLater(this::atualizarNavegacaoCarrossel);
-    }
-
-    private List<QuestaoResultado> filtrarQuestoes(String filtro) {
-        if ("acertos".equals(filtro)) {
-            return questoesResultado.stream().filter(QuestaoResultado::isAcertou).toList();
-        }
-        if ("erros".equals(filtro)) {
-            return questoesResultado.stream().filter(q -> !q.isAcertou()).toList();
-        }
-        return questoesResultado;
-    }
-
-    private void ajustarScrollCarrossel(double delta) {
-        /*  if (questoesScroll == null) {
-            return;
-        }
-        double novoValor = Math.max(0, Math.min(1, questoesScroll.getHvalue() + delta));
-        questoesScroll.setHvalue(novoValor);
-        atualizarNavegacaoCarrossel();
-    }
-
-    private void atualizarNavegacaoCarrossel() {
-      /* if (btnPrevQuestao == null || btnNextQuestao == null || questoesScroll == null || questoesCarousel == null) {
-            return;
-        }
-
-        boolean semConteudo = questoesCarousel.getChildren().isEmpty();
-        double scrollAtual = questoesScroll.getHvalue();
-        btnPrevQuestao.setDisable(semConteudo || scrollAtual <= 0.01);
-        btnNextQuestao.setDisable(semConteudo || scrollAtual >= 0.99);
-    }
 
     private String firstNonBlank(String... values) {
         for (String value : values) {

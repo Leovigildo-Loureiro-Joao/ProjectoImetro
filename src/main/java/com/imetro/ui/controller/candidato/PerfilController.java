@@ -1,10 +1,8 @@
 package com.imetro.ui.controller.candidato;
 
 import java.net.URL;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -25,20 +23,14 @@ import com.jfoenix.controls.JFXButton;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
 public class PerfilController implements Initializable {
@@ -344,8 +336,8 @@ public class PerfilController implements Initializable {
             .toList();
     }
 
-    
-    
+
+
 
     private void setEditingEnabled(boolean enabled) {
         editingEnabled = enabled;
@@ -465,5 +457,5 @@ public class PerfilController implements Initializable {
         }
     }
 
-   
+
 }

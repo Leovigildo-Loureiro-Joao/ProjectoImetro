@@ -1,6 +1,5 @@
 package com.imetro.services;
 
-import com.imetro.App;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
@@ -49,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -83,6 +81,7 @@ public class DiagnosticoService {
                 .map(this::mapearQuestao)
                 .filter(questao -> DisciplinaService.isDisciplinaSuportada(questao.getDisciplina()))
                 .filter(questao -> questao.getEnunciado() != null && !questao.getEnunciado().isBlank())
+                .filter(this::questaoTemReferenciaDeLeitura)
                 .collect(Collectors.toCollection(ArrayList::new));
 
 
@@ -97,12 +96,7 @@ public class DiagnosticoService {
         if (candidatoId == null) {
             return false;
         }
-        if (PerguntasBootstrapAsyncService.getInstance().isRunningFor(candidatoId)) {
-            return false;
-        }
-
-        CompletableFuture.runAsync(() -> sincronizarDisciplinasAutomaticas(candidatoId), App.EXECUTOR_DIAGNOSTICO);
-        return true;
+        return PerguntasBootstrapAsyncService.getInstance().startIfNeeded(candidatoId);
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
@@ -1021,6 +1015,22 @@ public class DiagnosticoService {
         questao.setGraficoXMax(mapearDoubleNullable(row.get("grafico_x_max")));
         questao.setGraficoXTickUnit(mapearDoubleNullable(row.get("grafico_x_tick_unit")));
         return questao;
+    }
+
+    private boolean questaoTemReferenciaDeLeitura(Questao questao) {
+        if (questao == null) {
+            return false;
+        }
+
+        String referenciaLivro = QuestaoUtil.safeText(questao.getReferenciaLivro(), "");
+        Integer paginaInicio = questao.getPaginaInicio();
+        Integer paginaFim = questao.getPaginaFim();
+
+        return !referenciaLivro.isBlank()
+            && paginaInicio != null
+            && paginaFim != null
+            && paginaInicio > 0
+            && paginaFim >= paginaInicio;
     }
 
     private List<AlternativaComPeso> embaralharAlternativas(List<AlternativaComPeso> alternativas) {

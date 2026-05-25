@@ -3,7 +3,6 @@ package com.imetro.ui.controller.candidato;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -19,14 +18,10 @@ import com.imetro.util.ProfileSessionState;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -74,6 +69,7 @@ public class RelatoriosController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         String primeiroNome = resolvePrimeiroNome();
+        @SuppressWarnings("deprecation")
         String hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd 'de' MMMM", new Locale("pt", "AO")));
 
         periodLabel.setText("Panorama semanal de " + primeiroNome + " atualizado em " + hoje + ".");
@@ -97,6 +93,7 @@ public class RelatoriosController implements Initializable {
         confiancaRingHost.getChildren().setAll(progress);
     }
 
+    @SuppressWarnings("unchecked")
     private void setupCharts() {
         evolucaoChart.setAnimated(false);
         evolucaoChart.setLegendVisible(false);

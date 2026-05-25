@@ -108,7 +108,7 @@
                </VBox>
 
                <!-- TELA DO TESTE ADAPTATIVO -->
-               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <StackPane>
                         <children>
@@ -352,13 +352,18 @@
                                                    </HBox>
 
                                                    <!-- FEEDBACK ADAPTATIVO -->
-                                                   <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card" visible="false">
+                                                   <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card">
                                                       <padding>
                                                          <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
                                                       </padding>
                                                       <children>
-                                                         <Label fx:id="feedbackIcon" styleClass="h1" text="OK" />
-                                                         <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h3-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
+                                                         <Label fx:id="feedbackIcon" styleClass="h1" text="OK" visible="false" />
+                                                         <ImageView fx:id="feedbackImg" fitHeight="91.0" fitWidth="89.0" pickOnBounds="true" preserveRatio="true">
+                                                            <image>
+                                                               <Image url="@../../../assets/imgs/corret.png" />
+                                                            </image>
+                                                         </ImageView>
+                                                         <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h2-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
                                                       </children>
                                                    </VBox>
                                                 </children>

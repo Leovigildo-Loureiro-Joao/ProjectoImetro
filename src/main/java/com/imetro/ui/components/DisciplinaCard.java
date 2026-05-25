@@ -6,14 +6,13 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class DisciplinaCard extends HBox {
-    
+
     private final DisciplinaDto disciplina;
     private JFXRadioButton radioSelecionado;
     private JFXCheckBox nomeLabel;
@@ -21,18 +20,18 @@ public class DisciplinaCard extends HBox {
     private VBox radiBox;
     private boolean isExpanded;
     public final ToggleGroup toggleGroup = new ToggleGroup();
-    
+
     public DisciplinaCard(DisciplinaDto disciplina) {
         super();
         this.disciplina = disciplina;
         nomeLabel = new JFXCheckBox(disciplina.nome());
         nomeLabel.getStyleClass().add("muted");
         nomeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
+
         Label objetivoLabel = new Label(disciplina.objectivo());
         objetivoLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-        
-        
+
+
         radiBox=new VBox(5);
         for (NivelDisciplina nivel : NivelDisciplina.values()) {
             JFXRadioButton rb = new JFXRadioButton(nivel.getDescricao());
@@ -40,16 +39,16 @@ public class DisciplinaCard extends HBox {
             rb.getStyleClass().add("muted");
             rb.setToggleGroup(toggleGroup);
             rb.setUserData(nivel);
-            
+
 
             if (disciplina.nivel() == nivel) {
                 rb.setSelected(true);
                 radioSelecionado = rb;
             }
-            
+
             radiBox.getChildren().add(rb);
         }
-        
+
         if (radioSelecionado == null && left.getChildren().size() > 1) {
             for (var node : radiBox.getChildren()) {
                 if (node instanceof JFXRadioButton) {
@@ -62,8 +61,8 @@ public class DisciplinaCard extends HBox {
         left = new VBox(4, nomeLabel, objetivoLabel,radiBox);
         left.setPrefWidth(300);
         left.setSpacing(5);
-        
-        
+
+
         this.getChildren().add(left);
         this.setSpacing(10);
         this.setAlignment(Pos.TOP_LEFT);
@@ -72,8 +71,8 @@ public class DisciplinaCard extends HBox {
         this.setMaxHeight(BASELINE_OFFSET_SAME_AS_HEIGHT);
         toggleExpand() ;
     }
-    
-    
+
+
     private void toggleExpand() {
         isExpanded = nomeLabel.isSelected();
 
@@ -89,7 +88,7 @@ public class DisciplinaCard extends HBox {
             radiBox.setVisible(true);
             radiBox.setManaged(true);
             radiBox.setOpacity(0);
-            
+
             javafx.animation.Timeline timeline = new javafx.animation.Timeline();
             javafx.animation.KeyValue kv = new javafx.animation.KeyValue(
                 radiBox.opacityProperty(), 1
@@ -105,11 +104,11 @@ public class DisciplinaCard extends HBox {
                 radiBox.opacityProperty(), 0
             );
             javafx.animation.KeyFrame kf = new javafx.animation.KeyFrame(
-                javafx.util.Duration.millis(200), 
+                javafx.util.Duration.millis(200),
                 e -> {
                     radiBox.setVisible(false);
                     radiBox.setManaged(false);
-                }, 
+                },
                 kv
             );
             timeline.getKeyFrames().add(kf);
@@ -123,7 +122,7 @@ public class DisciplinaCard extends HBox {
         }
         return disciplina.nivel(); // Retorna o nível original se nada foi selecionado
     }
-    
+
     public DisciplinaDto getDisciplina() {
         return disciplina;
     }
@@ -177,5 +176,5 @@ public class DisciplinaCard extends HBox {
     public void setExpanded(boolean isExpanded) {
         this.isExpanded = isExpanded;
     }
-    
+
 }

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.diagnostico.StatsDiagnotico;
 import com.imetro.domain.dto.diagnostico.StatsQuestaoQtd;
 import com.imetro.domain.dto.diagnostico.TempoStatsDiagnostico;
@@ -14,12 +13,10 @@ import com.imetro.services.DiagnosticoService;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class DiagnosticoStatics implements Initializable {

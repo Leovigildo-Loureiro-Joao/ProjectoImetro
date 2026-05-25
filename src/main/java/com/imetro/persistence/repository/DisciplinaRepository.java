@@ -49,6 +49,7 @@ public  class DisciplinaRepository extends JdbcBasicSqlRepository{
 
     public DisciplinaDto getDto(UUID id) throws SQLException{
         Object p=findById(id);
+        @SuppressWarnings("unchecked")
         LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) p;
         String nome = (String) map.get("nome");
         Float peso = ((Number) map.get("peso")).floatValue();

@@ -44,6 +44,7 @@ import javafx.scene.layout.VBox;
 
 public class BolsasController implements Initializable {
 
+    @SuppressWarnings("deprecation")
     private static final Locale LOCALE_PT_AO = new Locale("pt", "AO");
     private static final int DIFFICULT_TEST_DURATION_MINUTES = 45;
 

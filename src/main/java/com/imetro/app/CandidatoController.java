@@ -1,6 +1,5 @@
 package com.imetro.app;
 
-import com.imetro.domain.dto.candidato.CandidatoRegister;
 import com.imetro.domain.dto.candidato.UserRegister;
 import com.imetro.services.CandidatoService;
 
@@ -12,7 +11,7 @@ public class CandidatoController {
     }
 
     public boolean RegistrarCandidato(UserRegister candidatoRegister){
-        
+
         return candidatoService.CriarConta(candidatoRegister);
     }
 

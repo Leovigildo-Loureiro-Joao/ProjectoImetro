@@ -518,11 +518,11 @@ public class GeminiService {
         prompt.append("- Gera base suficiente para testes curtos, medios e longos.\n");
         prompt.append("- Para cada questao, define um campo rigor entre 0.0 e 1.0 conforme a profundidade exigida.\n");
         prompt.append("- Usa topicoPrincipal para resumir o eixo principal do conhecimento cobrado.\n");
-        prompt.append("- Quando o material permitir inferir a fonte, preenche referenciaLivro, paginaInicio e paginaFim.\n");
         prompt.append("- Se houver multiplos PDFs, consolida os topicos em um unico simulado.\n");
         prompt.append("- No campo fonteResumo, resume em poucas linhas os assuntos-base dos PDFs.\n");
         prompt.append("- No campo explicacao, justifica a resposta correta de forma curta e objetiva.\n");
         prompt.append("- Antes de responder, verifica que respostaCorreta coincide exatamente com a alternativa cujo peso e 1.0.\n");
+        appendContratoLeituraAncorada(prompt);
         appendContratoGrafico(prompt, request.disciplina());
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
 
@@ -556,10 +556,10 @@ public class GeminiService {
         prompt.append("- Sempre que houver cobertura suficiente, distribui varias questoes por subtopico em niveis FACIL, MEDIO, DESAFIANTE e EXTRA.\n");
         prompt.append("- Para cada questao, define um campo rigor entre 0.0 e 1.0 conforme a profundidade exigida.\n");
         prompt.append("- Usa topicoPrincipal para resumir o eixo principal do conhecimento cobrado.\n");
-        prompt.append("- Quando o JSON ou o contexto permitir, preenche referenciaLivro, paginaInicio e paginaFim.\n");
         prompt.append("- No campo fonteResumo, resume a cobertura indicada no JSON.\n");
         prompt.append("- No campo explicacao, justifica a resposta correta de forma curta e objetiva.\n");
         prompt.append("- Antes de responder, verifica que respostaCorreta coincide exatamente com a alternativa cujo peso e 1.0.\n");
+        appendContratoLeituraAncorada(prompt);
         appendContratoGrafico(prompt, request.disciplina());
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
         prompt.append("JSON de topicos:\n");
@@ -571,6 +571,15 @@ public class GeminiService {
         }
 
         return prompt.toString();
+    }
+
+    private void appendContratoLeituraAncorada(StringBuilder prompt) {
+        prompt.append("- Gera apenas questoes que o aluno consegue revisar diretamente no material fornecido.\n");
+        prompt.append("- Toda questao deve ter referenciaLivro, paginaInicio e paginaFim preenchidos.\n");
+        prompt.append("- paginaInicio e paginaFim devem apontar para paginas reais onde o conceito aparece de forma suficiente para revisao.\n");
+        prompt.append("- Se existir CATALOGO_LIVROS_DA_DISCIPLINA nas instrucoes extra, usa referenciaLivro exatamente com um dos nomes listados.\n");
+        prompt.append("- Se nao conseguires provar a questao com um livro real e paginas reais do material, nao geres essa questao.\n");
+        prompt.append("- Nunca inventes livro, pagina, capitulo ou detalhe fora do material.\n");
     }
 
     private void appendContratoGrafico(StringBuilder prompt, String disciplina) {

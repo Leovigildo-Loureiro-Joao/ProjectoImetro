@@ -18,13 +18,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -39,9 +38,10 @@ import java.util.logging.Logger;
 
 public class PerguntasBootstrapService {
 
-    private static final int DEFAULT_QUESTOES_INICIAIS = 120;
-    private static final int QUESTOES_POR_SUBTOPICO = 40;
-    private static final int MAX_QUESTOES_INICIAIS = 160;
+    private static final int QUESTOES_POR_NIVEL_E_SUBTOPICO = 5;
+    private static final int TOTAL_NIVEIS_PADRAO = 4;
+    private static final int QUESTOES_POR_SUBTOPICO = QUESTOES_POR_NIVEL_E_SUBTOPICO * TOTAL_NIVEIS_PADRAO;
+    private static final int DEFAULT_QUESTOES_INICIAIS = QUESTOES_POR_SUBTOPICO * 2;
     private static final int MAX_GEMINI_WORKERS = 2;
     private static final int MAX_LOTES_POR_DISCIPLINA = 8;
     private static final int MIN_SUBTOPICOS_POR_LOTE = 4;
@@ -65,6 +65,24 @@ public class PerguntasBootstrapService {
 
     public List<BootstrapResult> processarDisciplinasAutomaticasDoCandidato(UUID candidatoId, boolean sobrescreverTopicos) {
         return processarDisciplinasAutomaticasDoCandidato(candidatoId, sobrescreverTopicos, null);
+    }
+
+    public boolean hasDisciplinasPendentes(UUID candidatoId) {
+        if (candidatoId == null) {
+            return false;
+        }
+
+        for (DisciplinaDto disciplina : carregarDisciplinasDoCandidato(candidatoId)) {
+            if (disciplina == null || disciplina.id() == null) {
+                continue;
+            }
+
+            int perguntasExistentes = contarPerguntasPorDisciplina(disciplina.nome());
+            if (precisaReprocessarAutomaticamente(disciplina, perguntasExistentes)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<BootstrapResult> processarDisciplinasAutomaticasDoCandidato(
@@ -127,11 +145,11 @@ public class PerguntasBootstrapService {
                 calcularProgresso(indice, totalDisciplinas, 0.12),
                 false,
                 "A verificar " + disciplina.nome(),
-                "A confirmar se a disciplina ja tem perguntas ou se precisa de ler os livros."
+                "A confirmar se ha livros novos, alterados ou ainda nao sincronizados."
             );
 
             int perguntasExistentes = contarPerguntasPorDisciplina(disciplina.nome());
-            if (perguntasExistentes > 0) {
+            if (perguntasExistentes > 0 && !precisaReprocessarAutomaticamente(disciplina, perguntasExistentes)) {
 
                 BootstrapResult result = new BootstrapResult(
                     disciplina.id(),
@@ -139,7 +157,7 @@ public class PerguntasBootstrapService {
                     BootstrapStatus.JA_EXISTENTE,
                     contarPdfsDaDisciplina(disciplina.id()),
                     perguntasExistentes,
-                    "A disciplina ja tem perguntas reais na base."
+                    "A disciplina ja tem perguntas reais na base e nao ha livros novos pendentes."
                 );
                 resultados.add(result);
                 emitirConclusaoDisciplina(progressListener, indice, totalDisciplinas, result);
@@ -167,6 +185,101 @@ public class PerguntasBootstrapService {
         return List.copyOf(resultados);
     }
 
+    public BootstrapResult processarDisciplinaDoCandidato(
+        UUID candidatoId,
+        UUID disciplinaId,
+        boolean sobrescreverTopicos,
+        boolean ignorarPerguntasExistentes,
+        BootstrapProgressListener progressListener
+    ) {
+        if (candidatoId == null || disciplinaId == null) {
+            return new BootstrapResult(
+                disciplinaId,
+                "Disciplina",
+                BootstrapStatus.ERRO,
+                0,
+                0,
+                "Nao foi possivel iniciar a leitura do livro sem candidato e disciplina validos."
+            );
+        }
+
+        emitirProgresso(
+            progressListener,
+            0.04,
+            false,
+            "A preparar a disciplina",
+            "A validar a disciplina selecionada e a pasta dos livros."
+        );
+
+        List<DisciplinaDto> disciplinas = carregarDisciplinasDoCandidato(candidatoId);
+        DisciplinaDto disciplina = disciplinas.stream()
+            .filter(item -> item != null && disciplinaId.equals(item.id()))
+            .findFirst()
+            .orElse(null);
+
+        if (disciplina == null) {
+            return new BootstrapResult(
+                disciplinaId,
+                "Disciplina",
+                BootstrapStatus.ERRO,
+                0,
+                0,
+                "A disciplina selecionada nao esta ativa para este candidato."
+            );
+        }
+
+        try {
+            uploadBootstrapService.prepararPastasUploads();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Falha ao preparar uploads para a disciplina " + disciplina.nome() + ".", e);
+            return new BootstrapResult(
+                disciplina.id(),
+                disciplina.nome(),
+                BootstrapStatus.ERRO,
+                0,
+                contarPerguntasPorDisciplina(disciplina.nome()),
+                "Nao foi possivel preparar a pasta dos livros: " + e.getMessage()
+            );
+        }
+
+        int perguntasExistentes = contarPerguntasPorDisciplina(disciplina.nome());
+        boolean precisaReprocessar = precisaReprocessarAutomaticamente(disciplina, perguntasExistentes);
+        if (perguntasExistentes > 0 && !ignorarPerguntasExistentes && !precisaReprocessar) {
+            return new BootstrapResult(
+                disciplina.id(),
+                disciplina.nome(),
+                BootstrapStatus.JA_EXISTENTE,
+                contarPdfsDaDisciplina(disciplina.id()),
+                perguntasExistentes,
+                "A disciplina ja tem perguntas reais na base e nao ha livros novos pendentes."
+            );
+        }
+
+        BootstrapResult result = processarDisciplinaAutomaticamente(
+            disciplina,
+            sobrescreverTopicos,
+            progressListener,
+            0,
+            1
+        );
+
+        if (!ignorarPerguntasExistentes || perguntasExistentes <= 0) {
+            return result;
+        }
+
+        return new BootstrapResult(
+            result.disciplinaId(),
+            result.nomeDisciplina(),
+            result.status(),
+            result.totalPdfs(),
+            result.totalPerguntas(),
+            result.detalhe()
+                + " A disciplina ja tinha "
+                + perguntasExistentes
+                + " perguntas antes desta nova leitura."
+        );
+    }
+
     private BootstrapResult processarDisciplinaAutomaticamente(
         DisciplinaDto disciplina,
         boolean sobrescreverTopicos,
@@ -176,6 +289,7 @@ public class PerguntasBootstrapService {
     ) {
         try {
             LOGGER.info("A processar automaticamente a disciplina " + disciplina.nome() + " (" + disciplina.id() + ").");
+            int totalAntes = contarPerguntasPorDisciplina(disciplina.nome());
             emitirProgresso(
                 progressListener,
                 calcularProgresso(indiceDisciplina, totalDisciplinas, 0.24),
@@ -237,6 +351,7 @@ public class PerguntasBootstrapService {
             int quantidadeInicial = calcularQuantidadeInicial(totalSubtopicos);
             GeracaoQuestoesEmLotes geracao = gerarQuestoesEmLotes(
                 disciplina,
+                pdfs,
                 jsonTopicos,
                 totalSubtopicos,
                 quantidadeInicial,
@@ -267,7 +382,7 @@ public class PerguntasBootstrapService {
 
             int inseridas = 0;
             for (String jsonLote : geracao.jsonLotesComSucesso()) {
-                inseridas += inserirPerguntasGeradas(disciplina, jsonLote);
+                inseridas += inserirPerguntasGeradas(disciplina, pdfs, jsonLote);
             }
             int totalPerguntas = contarPerguntasPorDisciplina(disciplina.nome());
             LOGGER.info(
@@ -275,22 +390,36 @@ public class PerguntasBootstrapService {
                     + " novas perguntas. Total atual: " + totalPerguntas + "."
             );
 
-            return new BootstrapResult(
-                disciplina.id(),
-                disciplina.nome(),
-                inseridas > 0 ? BootstrapStatus.PROCESSADO_AUTOMATICAMENTE : BootstrapStatus.ERRO,
-                pdfs.size(),
-                totalPerguntas,
-                inseridas > 0
-                    ? "Livros processados automaticamente. "
+            BootstrapStatus status = inseridas > 0
+                ? BootstrapStatus.PROCESSADO_AUTOMATICAMENTE
+                : (totalAntes > 0 || totalPerguntas > 0 ? BootstrapStatus.JA_EXISTENTE : BootstrapStatus.ERRO);
+            String detalhe = inseridas > 0
+                ? "Livros processados automaticamente. "
+                    + topicosResult.detalhe()
+                    + " "
+                    + construirResumoGeracaoEmLotes(geracao)
+                    + " E a base recebeu "
+                    + inseridas
+                    + " perguntas reais."
+                : totalPerguntas > 0
+                    ? "Os livros foram relidos, mas as perguntas geradas ja estavam cobertas na base atual. "
                         + topicosResult.detalhe()
                         + " "
                         + construirResumoGeracaoEmLotes(geracao)
-                        + " E a base recebeu "
-                        + inseridas
-                        + " perguntas reais."
                     : "Os livros foram lidos, mas nenhuma pergunta nova foi inserida. "
-                        + construirResumoGeracaoEmLotes(geracao)
+                        + construirResumoGeracaoEmLotes(geracao);
+
+            if (status == BootstrapStatus.PROCESSADO_AUTOMATICAMENTE || status == BootstrapStatus.JA_EXISTENTE) {
+                registrarEstadoProcessadoComTolerancia(disciplina, pdfs);
+            }
+
+            return new BootstrapResult(
+                disciplina.id(),
+                disciplina.nome(),
+                status,
+                pdfs.size(),
+                totalPerguntas,
+                detalhe
             );
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -326,6 +455,7 @@ public class PerguntasBootstrapService {
 
     private GeracaoQuestoesEmLotes gerarQuestoesEmLotes(
         DisciplinaDto disciplina,
+        List<Path> pdfs,
         String jsonTopicos,
         int totalSubtopicos,
         int quantidadeInicial,
@@ -347,7 +477,7 @@ public class PerguntasBootstrapService {
 
         try {
             for (GeracaoLote lote : lotes) {
-                completionService.submit(() -> executarGeracaoLote(disciplina, jsonTopicos, lote, totalSubtopicos));
+                completionService.submit(() -> executarGeracaoLote(disciplina, pdfs, jsonTopicos, lote, totalSubtopicos));
             }
 
             while (concluidos < lotes.size()) {
@@ -425,6 +555,7 @@ public class PerguntasBootstrapService {
 
     private GeracaoLoteResultado executarGeracaoLote(
         DisciplinaDto disciplina,
+        List<Path> pdfs,
         String jsonTopicos,
         GeracaoLote lote,
         int totalSubtopicos
@@ -434,14 +565,16 @@ public class PerguntasBootstrapService {
                 throw new InterruptedException("Lote interrompido antes de iniciar.");
             }
 
-            String jsonQuestoes = geminiService.gerarSimuladoJsonAPartirDeTopicosEmLote(
-                jsonTopicos,
+            String jsonQuestoes = geminiService.gerarSimuladoJson(
+                pdfs,
                 new GeracaoSimuladoRequest(
                     disciplina.nome(),
                     "pt-AO",
                     lote.quantidadeQuestoes(),
                     "MISTO",
                     construirInstrucaoBaseInicial(totalSubtopicos, lote.quantidadeQuestoes())
+                        + construirInstrucaoCatalogoLivros(pdfs)
+                        + construirInstrucaoTopicosValidados(jsonTopicos)
                         + construirInstrucaoFocoDoLote(lote)
                 )
             );
@@ -686,7 +819,7 @@ public class PerguntasBootstrapService {
             return """
 
                 Este lote nao recebeu uma lista explicita de subtopicos.
-                Usa os topicos e subtopicos do JSON completo, mantendo variedade e sem repetir enunciados.
+                Usa os topicos e subtopicos do JSON completo, mantendo variedade, referencias de pagina e sem repetir enunciados.
                 """;
         }
 
@@ -694,13 +827,21 @@ public class PerguntasBootstrapService {
         instrucao.append('\n');
         instrucao.append("Este e o lote ").append(lote.indice()).append(" de ").append(lote.totalLotes()).append(".\n");
         instrucao.append("Gera aproximadamente ").append(lote.quantidadeQuestoes()).append(" questoes.\n");
+        instrucao.append("Para cada subtopico listado abaixo, segue o mesmo padrao: ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" FACIL, ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" MEDIO, ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" DESAFIANTE e ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" EXTRA.\n");
         instrucao.append("Foca o lote apenas nestes pares topico/subtopico:\n");
         for (TopicoSubtopico foco : lote.focos()) {
             instrucao.append("- ").append(foco.topico()).append(" -> ").append(foco.subtopico()).append('\n');
         }
-        instrucao.append("Nao saias desta lista, exceto se precisares de contexto imediato do mesmo topico.\n");
-        instrucao.append("Evita repetir enunciados de outros lotes e reparte as questoes por mais de um item quando houver base suficiente.\n");
-        instrucao.append("Se um subtopico tiver pouca base, redistribui dentro desta mesma lista sem inventar conteudo.\n");
+        instrucao.append("Nao saias desta lista. Se precisares de contexto, usa apenas contexto imediato do mesmo topico e continua ancorado nas paginas citadas.\n");
+        instrucao.append("Evita repetir enunciados de outros lotes e mantem a distribuicao equilibrada entre todos os itens desta lista.\n");
         return instrucao.toString();
     }
 
@@ -842,10 +983,56 @@ public class PerguntasBootstrapService {
         return DisciplinaService.filtrarDisciplinasSuportadas(disciplinas);
     }
 
-    private int inserirPerguntasGeradas(DisciplinaDto disciplina, String jsonQuestoes) throws Exception {
+    private boolean precisaReprocessarAutomaticamente(DisciplinaDto disciplina, int perguntasExistentes) {
+        if (disciplina == null || disciplina.id() == null) {
+            return false;
+        }
+
+        try {
+            List<Path> pdfs = uploadBootstrapService.listarPdfs(disciplina.id());
+            if (pdfs.isEmpty()) {
+                return false;
+            }
+            if (perguntasExistentes <= 0) {
+                return true;
+            }
+            if (uploadBootstrapService.possuiPdfsPendentes(disciplina.id())) {
+                return true;
+            }
+
+            Path arquivoTopicos = uploadBootstrapService.arquivoTopicos(disciplina.id());
+            Path arquivoQuestoes = uploadBootstrapService.pastaDisciplina(disciplina.id()).resolve(GENERATED_QUESTIONS_FILE);
+            return Files.notExists(arquivoTopicos) || Files.notExists(arquivoQuestoes);
+        } catch (Exception e) {
+            LOGGER.log(
+                Level.WARNING,
+                "Nao foi possivel verificar pendencias de livros para a disciplina " + disciplina.nome() + ".",
+                e
+            );
+            return perguntasExistentes <= 0;
+        }
+    }
+
+    private void registrarEstadoProcessadoComTolerancia(DisciplinaDto disciplina, List<Path> pdfs) {
+        try {
+            uploadBootstrapService.registrarEstadoProcessado(disciplina.id(), pdfs);
+        } catch (IOException e) {
+            LOGGER.log(
+                Level.WARNING,
+                "Nao foi possivel atualizar o snapshot dos livros processados para a disciplina " + disciplina.nome() + ".",
+                e
+            );
+        }
+    }
+
+    private int inserirPerguntasGeradas(DisciplinaDto disciplina, List<Path> pdfs, String jsonQuestoes) throws Exception {
         String sql = """
             with payload as (
               select cast(? as jsonb) as doc
+            ),
+            catalogo as (
+              select lower(btrim(nome_livro)) as nome_livro
+              from unnest(cast(? as text[])) as nome_livro
             )
             insert into perguntas (
               id,
@@ -970,15 +1157,38 @@ public class PerguntasBootstrapService {
             from payload
             cross join jsonb_array_elements(coalesce(payload.doc->'questoes', '[]'::jsonb)) as q
             where coalesce(nullif(q->>'enunciado', ''), '') <> ''
+              and coalesce(nullif(q->>'referenciaLivro', ''), '') <> ''
+              and exists (
+                select 1
+                from catalogo c
+                where c.nome_livro = lower(btrim(coalesce(q->>'referenciaLivro', '')))
+              )
+              and coalesce(nullif(q->>'paginaInicio', ''), '') ~ '^[0-9]+$'
+              and coalesce(nullif(q->>'paginaFim', ''), '') ~ '^[0-9]+$'
+              and (q->>'paginaInicio')::integer > 0
+              and (q->>'paginaFim')::integer >= (q->>'paginaInicio')::integer
             on conflict (id) do nothing
             """;
 
         try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, jsonQuestoes);
-            stmt.setString(2, disciplina.nome());
-            stmt.setString(3, disciplina.nome());
-            return Math.max(stmt.executeUpdate(), 0);
+            String[] nomesLivros = pdfs == null
+                ? new String[0]
+                : pdfs.stream()
+                    .filter(path -> path != null && path.getFileName() != null)
+                    .map(path -> path.getFileName().toString())
+                    .distinct()
+                    .toArray(String[]::new);
+            Array catalogoLivros = conn.createArrayOf("text", nomesLivros);
+            try {
+                stmt.setString(1, jsonQuestoes);
+                stmt.setArray(2, catalogoLivros);
+                stmt.setString(3, disciplina.nome());
+                stmt.setString(4, disciplina.nome());
+                return Math.max(stmt.executeUpdate(), 0);
+            } finally {
+                catalogoLivros.free();
+            }
         }
     }
 
@@ -1028,8 +1238,7 @@ public class PerguntasBootstrapService {
             return DEFAULT_QUESTOES_INICIAIS;
         }
 
-        int quantidade = totalSubtopicos * QUESTOES_POR_SUBTOPICO;
-        return Math.max(QUESTOES_POR_SUBTOPICO, Math.min(MAX_QUESTOES_INICIAIS, quantidade));
+        return Math.max(QUESTOES_POR_SUBTOPICO, totalSubtopicos * QUESTOES_POR_SUBTOPICO);
     }
 
     private String construirInstrucaoDistribuicao(int totalSubtopicos, int quantidadeInicial) {
@@ -1038,13 +1247,54 @@ public class PerguntasBootstrapService {
         instrucao.append("Meta de cobertura desta geracao: ").append(quantidadeInicial).append(" questoes.\n");
         if (totalSubtopicos > 0) {
             instrucao.append("O JSON atual trouxe cerca de ").append(totalSubtopicos).append(" subtopicos.\n");
-            instrucao.append("Tenta cobrir cada subtopico com cerca de ")
+            instrucao.append("Padrao obrigatorio por subtopico: ")
                 .append(QUESTOES_POR_SUBTOPICO)
-                .append(" questoes no total, repartidas entre FACIL, MEDIO, DESAFIANTE e EXTRA quando houver base suficiente.\n");
-            instrucao.append("Quando nao houver cobertura suficiente para 40 no mesmo subtopico, usa o maximo sustentado pelo material sem inventar conteudo.\n");
+                .append(" questoes no total.\n");
+            instrucao.append("- FACIL: ").append(QUESTOES_POR_NIVEL_E_SUBTOPICO).append(" questoes com rigor entre 0.10 e 0.25.\n");
+            instrucao.append("- MEDIO: ").append(QUESTOES_POR_NIVEL_E_SUBTOPICO).append(" questoes com rigor entre 0.26 e 0.45.\n");
+            instrucao.append("- DESAFIANTE: ").append(QUESTOES_POR_NIVEL_E_SUBTOPICO).append(" questoes com rigor entre 0.46 e 0.65.\n");
+            instrucao.append("- EXTRA: ").append(QUESTOES_POR_NIVEL_E_SUBTOPICO).append(" questoes com rigor entre 0.66 e 0.90.\n");
+            instrucao.append("Mantem a mesma contagem para todos os subtopicos do lote; nao deixes um subtopico com 1 pergunta e outro com um numero muito maior.\n");
         }
-        instrucao.append("Mantem variedade de dificuldade e nao concentres quase tudo num unico topico.\n");
+        instrucao.append("Mantem variedade de dificuldade sem inventar conteudo fora dos livros.\n");
         return instrucao.toString();
+    }
+
+    private String construirInstrucaoCatalogoLivros(List<Path> pdfs) {
+        if (pdfs == null || pdfs.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder instrucao = new StringBuilder();
+        instrucao.append('\n');
+        instrucao.append("CATALOGO_LIVROS_DA_DISCIPLINA:\n");
+        for (Path pdf : pdfs) {
+            if (pdf == null || pdf.getFileName() == null) {
+                continue;
+            }
+            instrucao.append("- Nome exato: ")
+                .append(pdf.getFileName())
+                .append(" | Link local: ")
+                .append(pdf.toUri())
+                .append('\n');
+        }
+        instrucao.append("No campo referenciaLivro usa apenas o Nome exato desta lista.\n");
+        instrucao.append("Cada questao tem de citar paginaInicio e paginaFim reais do mesmo livro.\n");
+        instrucao.append("Se nao conseguires apontar para livro e paginas reais desta lista, nao geres a questao.\n");
+        return instrucao.toString();
+    }
+
+    private String construirInstrucaoTopicosValidados(String jsonTopicos) {
+        if (jsonTopicos == null || jsonTopicos.isBlank()) {
+            return "";
+        }
+
+        return """
+
+            JSON_BASE_DE_TOPICOS_VALIDADA:
+            """
+            + jsonTopicos
+            + "\nUsa este JSON apenas como guia de foco e nao saias destes topicos/subtopicos.\n";
     }
 
     @FunctionalInterface

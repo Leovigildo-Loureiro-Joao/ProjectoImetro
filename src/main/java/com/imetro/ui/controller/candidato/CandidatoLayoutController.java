@@ -2,23 +2,21 @@ package com.imetro.ui.controller.candidato;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
-import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import org.kordamp.ikonli.remixicon.RemixiconAL;
-
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.model.Candidato;
-import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.components.Item_Cell;
+import com.imetro.util.Authentication;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -64,9 +62,9 @@ public class CandidatoLayoutController implements Initializable {
     @FXML
     private ProgressBar bootstrapProgressBar;
 
-    @FXML 
+    @FXML
     private ListView<MenuEntry> menu;
-    @FXML 
+    @FXML
     private VBox sidebar;
 
     private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
@@ -93,8 +91,9 @@ public class CandidatoLayoutController implements Initializable {
 
         menu.getItems().setAll(
             new MenuEntry("dashboard", "Dashboard", RemixiconAL.LAYOUT_GRID_FILL),
+            new MenuEntry("add_livro", "Add Livro", FontAwesomeSolid.FILE_ALT),
             new MenuEntry("diagnostico", "Diagnóstico", FontAwesomeSolid.BOLT),
-            new MenuEntry("exame_adaptativo", "Exame Adaptativo", FontAwesomeSolid.FILE_ALT),
+            new MenuEntry("exame_adaptativo", "Exame Adaptativo", RemixiconAL.FILE_WORD_FILL),
             new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
             new MenuEntry("bolsas", "Recomendações", FontAwesomeSolid.HAND_HOLDING_USD),
             new MenuEntry("perfil", "Perfil", FontAwesomeSolid.USER),
@@ -109,6 +108,10 @@ public class CandidatoLayoutController implements Initializable {
         });
 
         menu.getSelectionModel().selectFirst();
+        UUID candidatoId = Authentication.getCurrentUserId();
+        if (candidatoId != null) {
+            perguntasBootstrapAsyncService.startIfNeeded(candidatoId);
+        }
         FirstDiagnostic();
     }
 
@@ -198,27 +201,38 @@ public class CandidatoLayoutController implements Initializable {
         Platform.runLater(() ->   {
             if (menu.getStyleClass().contains("min")) {
                 menu.getStyleClass().remove("min");
-            
+
                 Timeline p = new Timeline(
                     new KeyFrame(Duration.seconds(.3), new KeyValue(sidebar.prefWidthProperty(),69),new KeyValue(sidebar.prefWidthProperty(),240)));
                     p.play();
-            
+
             }else{
                 menu.getStyleClass().add("min");
                 Timeline p = new Timeline(
                     new KeyFrame(Duration.seconds(.3), new KeyValue(sidebar.prefWidthProperty(),240),new KeyValue(sidebar.prefWidthProperty(),69)));
                     p.play();
-                
+
             }
         });
     }
 
     private void navigate(String key) {
-        List<String> keys= List.of("dashboard","diagnostico","exame_adaptativo","relatorios","bolsas","perfil","configuracao","logout");
+        List<String> keys= List.of(
+            "dashboard",
+            "add_livro",
+            "diagnostico",
+            "exame_adaptativo",
+            "relatorios",
+            "bolsas",
+            "perfil",
+            "configuracao",
+            "logout"
+        );
         menu.getSelectionModel().select(keys.indexOf(key));
         try {
             switch (key) {
                 case "dashboard" -> openDashboard();
+                case "add_livro" -> App.swapContent(contentHost, "views/pages/candidato/add-livro");
                 case "diagnostico" -> App.swapContent(contentHost, "views/pages/candidato/diagnostico");
                 case "exame_adaptativo" -> openTestes();
                 case "relatorios" -> App.swapContent(contentHost, "views/pages/candidato/relatorios");

@@ -39,7 +39,7 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
         }
     }
 
-    public ConfiguracaoDto selectConfiguracao(UUID userUuid){
+    public ConfiguracaoDto findByCandidato(UUID userUuid){
         String sql="SELECT * FROM configuracoes where user_id = ? limit 1";
         try (Connection connection=openRequiredConnection()) {
             PreparedStatement rs = connection.prepareStatement(sql);
@@ -51,6 +51,8 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
             return null;
         }
     }
+
+
 
     public int ensureDefaultsForUser(Connection conn, UUID userId) throws SQLException {
         if (conn == null || userId == null) {
@@ -66,8 +68,7 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
               speed_temp_unit,
               long_test_q,
               norm_test_q,
-              desaf_test_q,
-              extra_test_q,
+              curto_test_q,
               nivel_dificuldade_padrao,
               modo_escolhas,
               velocidade_segundos_por_percent,

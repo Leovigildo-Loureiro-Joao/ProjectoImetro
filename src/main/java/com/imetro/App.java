@@ -15,6 +15,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -94,6 +95,7 @@ public class App extends Application {
     }
 
     private static void loadFontResource(String resourcePath) {
+
         try (InputStream in = App.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
                 LOGGER.warning("Font resource not found: " + resourcePath);

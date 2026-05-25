@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXComboBox?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane prefHeight="900.0" prefWidth="980.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.AddLivroController">
+    <VBox maxWidth="1160.0" prefWidth="980.0" spacing="20.0">
+        <padding>
+            <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+        </padding>
+
+        <HBox spacing="20.0">
+            <VBox prefHeight="337.0" prefWidth="599.0" spacing="8.0" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets bottom="18.0" left="20.0" right="20.0" top="20.0" />
+                </padding>
+                <styleClass>
+                    <String fx:value="card" />
+                    <String fx:value="hero-gradient-card" />
+                    <String fx:value="upload-hero-card" />
+                </styleClass>
+                <children>
+                    <Label styleClass="timeline-pill" text="Biblioteca da disciplina" />
+                    <Label styleClass="big-h1" text="Add Livro" />
+                    <Label styleClass="hero-copy" text="Carrega livros em PDF de Matematica ou Fisica, guarda-os na biblioteca da disciplina e lanca a geracao automatica de perguntas reais." wrapText="true" />
+                    <HBox spacing="14.0">
+                        <children>
+                            <VBox spacing="4.0" styleClass="metric-tile">
+                                <padding>
+                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                </padding>
+                                <children>
+                                    <Label styleClass="h3-thin" text="Foco atual" />
+                                    <Label styleClass="stat-emphasis" text="Matematica e Fisica" wrapText="true" />
+                                </children>
+                            </VBox>
+                        </children>
+                    </HBox>
+                </children>
+            </VBox>
+
+            <VBox prefWidth="300.0" spacing="12.0">
+                <padding>
+                    <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                </padding>
+                <styleClass>
+                    <String fx:value="card" />
+                    <String fx:value="upload-side-card" />
+                </styleClass>
+                <children>
+                    <Label styleClass="h2" text="Como funciona" />
+                    <VBox spacing="10.0" styleClass="timeline-step">
+                        <padding>
+                            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                        </padding>
+                        <children>
+                            <Label styleClass="info-badge" text="1" />
+                            <Label styleClass="compact-copy" text="Escolhes a disciplina ativa do candidato." wrapText="true" />
+                        </children>
+                    </VBox>
+                    <VBox spacing="10.0" styleClass="timeline-step">
+                        <padding>
+                            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                        </padding>
+                        <children>
+                            <Label styleClass="info-badge" text="2" />
+                            <Label prefHeight="83.0" prefWidth="236.0" styleClass="compact-copy" text="Selecionas um ou mais PDFs e eles entram na biblioteca da disciplina." wrapText="true" />
+                        </children>
+                    </VBox>
+                    <VBox spacing="10.0" styleClass="timeline-step">
+                        <padding>
+                            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                        </padding>
+                        <children>
+                            <Label styleClass="info-badge" text="3" />
+                            <Label prefHeight="104.0" prefWidth="236.0" styleClass="compact-copy" text="O Gemini recalcula topicos e atualiza a tabela perguntas sem bloquear a navegacao." wrapText="true" />
+                        </children>
+                    </VBox>
+                </children>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="20.0" VBox.vgrow="ALWAYS">
+            <VBox prefHeight="454.0" prefWidth="457.0" spacing="18.0" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                </padding>
+                <styleClass>
+                    <String fx:value="card" />
+                    <String fx:value="upload-main-card" />
+                </styleClass>
+                <children>
+                    <VBox prefHeight="103.0" prefWidth="401.0" spacing="8.0">
+                        <children>
+                            <Label styleClass="h2" text="Enviar novo livro" />
+                            <Label prefHeight="50.0" prefWidth="424.0" styleClass="muted" text="Escolhe a disciplina, aponta os PDFs e depois lanca a leitura automatica." wrapText="true" />
+                        </children>
+                    </VBox>
+
+                    <HBox spacing="16.0">
+                        <children>
+                            <VBox prefHeight="38.0" prefWidth="424.0" spacing="6.0" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label styleClass="h3-thin-big" text="Disciplina" />
+                                    <JFXComboBox fx:id="disciplinaCombo" maxWidth="1.7976931348623157E308" prefHeight="42.0" promptText="Seleciona a disciplina" />
+                                </children>
+                            </VBox>
+                        </children>
+                    </HBox>
+
+                    <VBox prefHeight="202.0" prefWidth="405.0" spacing="12.0">
+                        <padding>
+                            <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+                        </padding>
+                        <styleClass>
+                            <String fx:value="sub-card" />
+                            <String fx:value="upload-picker-card" />
+                        </styleClass>
+                        <children>
+                            <Label styleClass="h3-thin-big" text="Livro em PDF" />
+                            <TextField fx:id="selectedFilesField" editable="false" prefHeight="42.0" promptText="Nenhum PDF selecionado" />
+                            <HBox spacing="12.0">
+                                <children>
+                                    <JFXButton fx:id="selecionarArquivosButton" onAction="#selecionarArquivos" prefHeight="40.0" styleClass="btn-primary" text="Selecionar PDF(s)" />
+                                    <JFXButton fx:id="limparSelecaoButton" onAction="#limparSelecao" prefHeight="40.0" styleClass="btn-secondary" text="Limpar" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <JFXButton fx:id="lancarButton" onAction="#lancarGeracao" prefHeight="40.0" styleClass="btn-primary-two" text="Lancar" />
+                                </children>
+                            </HBox>
+                            <Label fx:id="selectionSummaryLabel" styleClass="compact-copy" text="Seleciona um ou mais PDFs." wrapText="true" />
+                            <Label fx:id="launchHintLabel" styleClass="muted" text="Ao lancar, a geracao corre em segundo plano." wrapText="true" />
+                        </children>
+                    </VBox>
+
+                    <Label fx:id="feedbackLabel" text="Feedback do carregamento." wrapText="true">
+                        <styleClass>
+                            <String fx:value="profile-feedback" />
+                            <String fx:value="profile-feedback-info" />
+                        </styleClass>
+                    </Label>
+                </children>
+            </VBox>
+
+            <VBox prefHeight="441.0" prefWidth="462.0" spacing="12.0">
+                <padding>
+                    <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                </padding>
+                <styleClass>
+                    <String fx:value="card" />
+                    <String fx:value="upload-table-card" />
+                </styleClass>
+                <children>
+                    <VBox spacing="6.0">
+                        <children>
+                            <Label styleClass="h2" text="Tabela de livros" />
+                            <Label fx:id="bibliotecaResumoLabel" styleClass="muted" text="A biblioteca da disciplina aparece aqui." wrapText="true" />
+                        </children>
+                    </VBox>
+                    <TableView fx:id="livrosTable" prefHeight="460.0" prefWidth="400.0" styleClass="upload-table" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="nomeColumn" prefWidth="156.0" text="Livro" />
+                            <TableColumn fx:id="tamanhoColumn" prefWidth="74.0" text="Tamanho" />
+                            <TableColumn fx:id="atualizadoColumn" prefWidth="108.0" text="Atualizado" />
+                            <TableColumn fx:id="estadoColumn" prefWidth="96.0" text="Estado" />
+                            <TableColumn fx:id="abrirColumn" prefWidth="82.0" text="Abrir" />
+                        </columns>
+                    </TableView>
+                </children>
+            </VBox>
+        </HBox>
+    </VBox>
+</StackPane>

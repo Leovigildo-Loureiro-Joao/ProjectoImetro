@@ -15,12 +15,16 @@ import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
+import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoDuracaoRepository;
+import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
+import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
@@ -62,6 +66,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -124,10 +129,13 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @FXML private Label trilhoQuedasValue;
     @FXML private Label trilhoDificuldadeValue;
     @FXML private Label trilhoProgressoValue;
+    @FXML private ImageView feedbackImg;
     @FXML private ProgressBar trilhoProgressoBar;
-    List<String> disciplinas = List.of();
-    Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
-
+    private ConfiguracaoDto configCandidato;
+    private List<String> disciplinas = List.of();
+    private Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
+    private ConfiguracaoTesteAdaptativoNivelRepositorty configTestNivelAdaptRepo= new ConfiguracaoTesteAdaptativoNivelRepositorty();
+    private ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
     private final VBox botoesDisciplinasBox = new VBox(12);
     private final List<Character> respostasUsuario = new ArrayList<>();
     private final List<Long> temposResposta = new ArrayList<>();
@@ -535,14 +543,17 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private int resolverLimiteQuestoes(TesteAdaptativoCoordinator.TesteConfig config, int totalDisponivel) {
+        configCandidato=getConfigCadidato();
+
         if (config == null || config.duracao() == null) {
-            return Math.min(7, totalDisponivel); // TODO CONFIG_ADAPTATIVA: fallback MEDIO = 7 questoes ainda fixo.
+
+            return Math.min(configCandidato.norm_test_q(), totalDisponivel);
         }
 
         return switch (TextoUtil.normalizarMinusculo(config.duracao())) {
-            case "curto" -> 5; // TODO CONFIG_ADAPTATIVA: `CURTO = 5` ainda fixo; alinhar com `configuracoes_teste_adaptativo_duracoes`.
-            case "medio" -> 7; // TODO CONFIG_ADAPTATIVA: `MEDIO = 7` ainda fixo; alinhar com `configuracoes_teste_adaptativo_duracoes`.
-            default -> Math.min(10, totalDisponivel); // TODO CONFIG_ADAPTATIVA: `LONGO = 10` ainda fixo; alinhar com `configuracoes_teste_adaptativo_duracoes`.
+            case "curto" -> configCandidato.curto_test_q();
+            case "medio" -> configCandidato.norm_test_q();
+            default -> Math.min(configCandidato.long_test_q(), totalDisponivel);
         };
     }
 
@@ -796,24 +807,29 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void mostrarFeedbackAdaptativo(boolean acertou, long tempoResposta) {
-        boolean foiRapido = tempoResposta < 30000; // TODO CONFIG_ADAPTATIVA: limite de "rapido" ainda fixo em 30s.
+        configCandidato=getConfigCadidato();
+        boolean foiRapido = tempoResposta < configCandidato.velocidade_segundos_por_percent()*100*0.1;
         feedbackContainer.setVisible(true);
         feedbackContainer.setOpacity(1);
 
         if (acertou && foiRapido) {
             feedbackIcon.setText("OK");
+            feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/incredible.png")));
             feedbackMessage.setText("Excelente! Rapido e preciso. Vamos subir a exigencia.");
             feedbackContainer.setStyle("-fx-background-color: #ecfdf5; -fx-border-color: #10b981;");
         } else if (acertou) {
             feedbackIcon.setText("OK");
+            feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/corret.png")));
             feedbackMessage.setText("Correta! O foco continua nos mesmos subtopicos.");
             feedbackContainer.setStyle("-fx-background-color: #ecfdf5; -fx-border-color: #10b981;");
-        } else if (tempoResposta > 60000) { // TODO CONFIG_ADAPTATIVA: limite de "muito lento" ainda fixo em 60s.
+        } else if (tempoResposta > configCandidato.velocidade_segundos_por_percent()*100*0.5) {
             feedbackIcon.setText("!");
+            feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/info.png")));
             feedbackMessage.setText("Demorou bastante. Vou manter o foco e reduzir a pressao.");
             feedbackContainer.setStyle("-fx-background-color: #fef2f2; -fx-border-color: #ef4444;");
         } else {
             feedbackIcon.setText("X");
+            feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/error.png")));
             feedbackMessage.setText("Errada. A resposta correta e " + questoes.get(questaoAtual).getRespostaCorreta() + ".");
             feedbackContainer.setStyle("-fx-background-color: #fef2f2; -fx-border-color: #ef4444;");
         }
@@ -1185,5 +1201,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             loadingTimeline.stop();
             loadingTimeline = null;
         }
+    }
+
+    private ConfiguracaoDto getConfigCadidato(){
+        if (configCandidato==null) {
+            this.configCandidato= configuracoesRepository.findByCandidato(Authentication.getCurrentUserId());
+        }
+        return configCandidato;
     }
 }

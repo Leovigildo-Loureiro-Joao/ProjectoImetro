@@ -3,7 +3,6 @@ package com.imetro.ui.components.diagnostico;
 import java.util.ArrayList;
 
 import com.imetro.domain.dto.diagnostico.PrimeiroDiagnosticoResumo;
-import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 import com.jfoenix.controls.JFXButton;
 

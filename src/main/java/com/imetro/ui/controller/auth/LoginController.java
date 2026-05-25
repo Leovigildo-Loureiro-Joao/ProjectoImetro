@@ -64,6 +64,7 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
+        
         setupCarousel();
         if (!RuntimeConfig.isDbEnabled() && statusLabel != null) {
             statusLabel.setText("Modo navegação: BD desligada.");
@@ -85,7 +86,7 @@ public class LoginController implements Initializable {
             statusLabel.setText("Credenciais inválidas.");
             return;
         }
-        
+
         StackPane contentHost = (StackPane) telaLogin.getParent();
         OnboardingRouter.routeAfterAuth(contentHost);
     }
@@ -300,5 +301,5 @@ public class LoginController implements Initializable {
         StackPane contentHost =(StackPane) telaLogin.getParent();
         App.swapContent(contentHost, "views/pages/auth/register");
     }
-    
+
 }

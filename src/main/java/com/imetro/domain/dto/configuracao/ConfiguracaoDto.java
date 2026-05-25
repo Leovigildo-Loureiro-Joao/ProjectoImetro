@@ -16,8 +16,7 @@ public record ConfiguracaoDto(UUID id,
     String speed_temp_unit,
     Integer long_test_q,
     Integer norm_test_q,
-    Integer desaf_test_q ,
-    Integer extra_test_q ,
+    Integer curto_test_q ,
     String nivel_dificuldade_padrao,
     String modo_escolhas,
     Integer velocidade_segundos_por_percent ,
@@ -41,8 +40,7 @@ public record ConfiguracaoDto(UUID id,
         values.put("speed_temp_unit", speed_temp_unit());
         values.put("long_test_q", long_test_q());
         values.put("norm_test_q", norm_test_q());
-        values.put("desaf_test_q", desaf_test_q());
-        values.put("extra_test_q", extra_test_q());
+        values.put("curto_test_q", curto_test_q());
         values.put("nivel_dificuldade_padrao", nivel_dificuldade_padrao());
         values.put("modo_escolhas", modo_escolhas());
         values.put("velocidade_segundos_por_percent", velocidade_segundos_por_percent());
@@ -64,8 +62,7 @@ public record ConfiguracaoDto(UUID id,
         values.put("speed_temp_unit", speed_temp_unit());
         values.put("long_test_q", long_test_q());
         values.put("norm_test_q", norm_test_q());
-        values.put("desaf_test_q", desaf_test_q());
-        values.put("extra_test_q", extra_test_q());
+        values.put("curto_test_q", curto_test_q());
         values.put("nivel_dificuldade_padrao", nivel_dificuldade_padrao());
         values.put("modo_escolhas", modo_escolhas());
         values.put("velocidade_segundos_por_percent", velocidade_segundos_por_percent());
@@ -91,8 +88,7 @@ public record ConfiguracaoDto(UUID id,
             DtoMapperSupport.parseText(map.get("speed_temp_unit")),
             DtoMapperSupport.parseInteger(map.get("long_test_q")),
             DtoMapperSupport.parseInteger(map.get("norm_test_q")),
-            DtoMapperSupport.parseInteger(map.get("desaf_test_q")),
-            DtoMapperSupport.parseInteger(map.get("extra_test_q")),
+            DtoMapperSupport.parseInteger(map.get("curto_test_q")),
             DtoMapperSupport.parseText(map.get("nivel_dificuldade_padrao")),
             DtoMapperSupport.parseText(map.get("modo_escolhas")),
             DtoMapperSupport.parseInteger(map.get("velocidade_segundos_por_percent")),

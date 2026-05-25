@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoRevisao">
+   <styleClass>
+      <String fx:value="page" />
+      <String fx:value="placeholder-card" />
+   </styleClass>
+   <padding>
+      <Insets bottom="24.0" left="24.0" right="24.0" top="24.0" />
+   </padding>
+   <children>
+      <VBox spacing="8.0" VBox.vgrow="ALWAYS">
+         <children>
+            <Label styleClass="h1-thin" text="Revisao de questoes" />
+            <ListView fx:id="questoesMenu" maxHeight="58.0" orientation="HORIZONTAL" prefHeight="58.0">
+               <styleClass>
+                  <String fx:value="nav-bar" />
+                  <String fx:value="sub" />
+               </styleClass>
+            </ListView>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <JFXButton fx:id="btnPrevQuestao" onAction="#scrollQuestoesPrev" prefHeight="34.0" prefWidth="120.0" styleClass="btn-secondary" text="Anterior" />
+                  <JFXButton fx:id="btnNextQuestao" onAction="#scrollQuestoesNext" prefHeight="34.0" prefWidth="120.0" styleClass="btn-secondary" text="Proxima" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label fx:id="questoesResumoValue" styleClass="muted" text="Mostrando 0 de 0 questoes" />
+               </children>
+            </HBox>
+            <ScrollPane fx:id="questoesScroll" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" minHeight="501.0" prefHeight="501.0" prefWidth="842.0" styleClass="card-blur" vbarPolicy="ALWAYS" VBox.vgrow="ALWAYS">
+               <content>
+                  <FlowPane fx:id="questoesCarousel" hgap="14.0" vgap="14.0" />
+               </content>
+            </ScrollPane>
+         </children>
+      </VBox>
+   </children>
+</VBox>

@@ -209,7 +209,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
-    private final DisciplinaService disciplinaService=new DisciplinaService();
     private final ConfiguracaoTesteAdaptativoDuracaoRepository confAdapt=new ConfiguracaoTesteAdaptativoDuracaoRepository();
     @FXML
     public void initialize() throws IOException {

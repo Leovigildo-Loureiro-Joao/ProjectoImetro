@@ -74,14 +74,8 @@
                               </VBox>
                               <VBox spacing="5.0">
                                  <children>
-                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes desafiantes" />
+                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes curtos" />
                                     <TextField fx:id="desafTest" disable="true" maxWidth="313.0" promptText="Q" />
-                                 </children>
-                              </VBox>
-                              <VBox spacing="5.0">
-                                 <children>
-                                    <Label styleClass="h3-thin" text="Quantas perguntas terão em testes extra difíceis" />
-                                    <TextField fx:id="extraTest" disable="true" maxWidth="313.0" promptText="Q" />
                                  </children>
                               </VBox>
                            </children>

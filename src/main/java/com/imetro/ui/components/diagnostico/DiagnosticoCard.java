@@ -2,7 +2,6 @@ package com.imetro.ui.components.diagnostico;
 
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
-import com.imetro.services.DiagnosticoService;
 import com.imetro.ui.components.CircleProgress;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;

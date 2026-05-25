@@ -1,6 +1,5 @@
 package com.imetro.ui.controller.auth;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -34,7 +33,6 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
     private StackPane telaChooseDisciplinas;
 
     private CandidatoService candidatoService;
-    private DisciplinaService disciplinaService;
 
 
     @Override
@@ -47,8 +45,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
         }
         disciplinasBox.getChildren().clear();
         candidatoService = new CandidatoService();
-        disciplinaService = new DisciplinaService();
-        for (DisciplinaDto seed : disciplinaService.discCategoria()) {
+        for (DisciplinaDto seed : DisciplinaService.discCategoria()) {
             disciplinasBox.getChildren().add(new DisciplinaCard(seed));
         }
 
@@ -71,7 +68,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
 
         StackPane contentHost = (StackPane) telaChooseDisciplinas.getParent();
         if (candidatoId != null) {
-            PerguntasBootstrapAsyncService.getInstance().start(candidatoId);
+            PerguntasBootstrapAsyncService.getInstance().startIfNeeded(candidatoId);
         }
         OnboardingRouter.CandidatoRoute(contentHost);
 

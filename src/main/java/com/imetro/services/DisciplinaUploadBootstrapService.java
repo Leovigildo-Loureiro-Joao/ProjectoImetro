@@ -8,18 +8,20 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 public class DisciplinaUploadBootstrapService {
 
     private static final String DEFAULT_OUTPUT_FILE = "topicos-extraidos.json";
-
-    private final DisciplinaService disciplinaService;
+    private static final String PROCESSED_STATE_FILE = ".livros-processados.snapshot";
     private final GeminiService geminiService;
     private final Path uploadRoot;
 
@@ -32,7 +34,6 @@ public class DisciplinaUploadBootstrapService {
         GeminiService geminiService,
         Path uploadRoot
     ) {
-        this.disciplinaService = disciplinaService;
         this.geminiService = geminiService;
         this.uploadRoot = uploadRoot.toAbsolutePath().normalize();
     }
@@ -80,7 +81,7 @@ public class DisciplinaUploadBootstrapService {
         throws IOException, InterruptedException {
         DisciplinaDto disciplina = localizarDisciplina(disciplinaId);
         Path pasta = pastaDisciplina(disciplina.id());
-        Path arquivoTopicos = pasta.resolve(DEFAULT_OUTPUT_FILE);
+        Path arquivoTopicos = arquivoTopicos(disciplina.id());
 
         Files.createDirectories(pasta);
 
@@ -153,11 +154,131 @@ public class DisciplinaUploadBootstrapService {
         }
     }
 
+    public Path arquivoTopicos(UUID disciplinaId) {
+        return pastaDisciplina(disciplinaId).resolve(DEFAULT_OUTPUT_FILE);
+    }
+
+    public Path arquivoEstadoProcessado(UUID disciplinaId) {
+        return pastaDisciplina(disciplinaId).resolve(PROCESSED_STATE_FILE);
+    }
+
+    public boolean possuiPdfsPendentes(UUID disciplinaId) throws IOException {
+        List<String> estadoAtual = construirEstadoPdfs(listarPdfs(disciplinaId));
+        if (estadoAtual.isEmpty()) {
+            return false;
+        }
+
+        Path arquivoEstado = arquivoEstadoProcessado(disciplinaId);
+        if (Files.notExists(arquivoEstado)) {
+            return true;
+        }
+
+        List<String> estadoProcessado = Files.readAllLines(arquivoEstado, StandardCharsets.UTF_8).stream()
+            .map(String::trim)
+            .filter(linha -> !linha.isBlank())
+            .toList();
+        return !estadoAtual.equals(estadoProcessado);
+    }
+
+    public void registrarEstadoProcessado(UUID disciplinaId, List<Path> pdfs) throws IOException {
+        Path arquivoEstado = arquivoEstadoProcessado(disciplinaId);
+        Files.createDirectories(arquivoEstado.getParent());
+        Files.write(
+            arquivoEstado,
+            construirEstadoPdfs(pdfs),
+            StandardCharsets.UTF_8,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING,
+            StandardOpenOption.WRITE
+        );
+    }
+
+    public List<Path> adicionarPdfs(UUID disciplinaId, List<Path> arquivosOrigem) throws IOException {
+        DisciplinaDto disciplina = localizarDisciplina(disciplinaId);
+        if (arquivosOrigem == null || arquivosOrigem.isEmpty()) {
+            throw new IllegalArgumentException("Indica pelo menos um PDF para carregar.");
+        }
+
+        Path pasta = pastaDisciplina(disciplina.id());
+        Files.createDirectories(pasta);
+
+        ArrayList<Path> copiados = new ArrayList<>();
+        for (Path origem : arquivosOrigem) {
+            if (origem == null) {
+                continue;
+            }
+
+            Path normalizado = origem.toAbsolutePath().normalize();
+            if (!Files.exists(normalizado) || !Files.isRegularFile(normalizado)) {
+                throw new IOException("PDF nao encontrado: " + normalizado);
+            }
+
+            String nomeArquivo = normalizado.getFileName().toString();
+            if (!nomeArquivo.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+                throw new IllegalArgumentException("Apenas ficheiros PDF sao suportados: " + normalizado);
+            }
+
+            Path destino = resolverDestinoPdf(pasta, nomeArquivo);
+            Files.copy(normalizado, destino, StandardCopyOption.COPY_ATTRIBUTES);
+            copiados.add(destino);
+        }
+
+        if (copiados.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum PDF valido foi selecionado.");
+        }
+
+        return List.copyOf(copiados);
+    }
+
     public Path pastaDisciplina(UUID disciplinaId) {
         if (disciplinaId == null) {
             throw new IllegalArgumentException("disciplinaId nao pode ser nulo.");
         }
         return uploadRoot.resolve(disciplinaId.toString());
+    }
+
+    private List<String> construirEstadoPdfs(List<Path> pdfs) throws IOException {
+        if (pdfs == null || pdfs.isEmpty()) {
+            return List.of();
+        }
+
+        ArrayList<String> estado = new ArrayList<>();
+        for (Path pdf : pdfs) {
+            if (pdf == null || Files.notExists(pdf) || !Files.isRegularFile(pdf) || pdf.getFileName() == null) {
+                continue;
+            }
+
+            String nomeCodificado = Base64.getEncoder()
+                .encodeToString(pdf.getFileName().toString().getBytes(StandardCharsets.UTF_8));
+            estado.add(
+                nomeCodificado
+                    + "|"
+                    + Files.size(pdf)
+                    + "|"
+                    + Files.getLastModifiedTime(pdf).toMillis()
+            );
+        }
+        return List.copyOf(estado);
+    }
+
+    private Path resolverDestinoPdf(Path pasta, String nomeOriginal) {
+        int ponto = nomeOriginal.lastIndexOf('.');
+        String base = ponto > 0 ? nomeOriginal.substring(0, ponto) : nomeOriginal;
+        String extensao = ponto > 0 ? nomeOriginal.substring(ponto) : ".pdf";
+
+        Path destino = pasta.resolve(nomeOriginal);
+        if (Files.notExists(destino)) {
+            return destino;
+        }
+
+        int sequencia = 2;
+        while (true) {
+            Path candidato = pasta.resolve(base + "-" + sequencia + extensao);
+            if (Files.notExists(candidato)) {
+                return candidato;
+            }
+            sequencia++;
+        }
     }
 
     private DisciplinaDto localizarDisciplina(UUID disciplinaId) {
@@ -172,7 +293,7 @@ public class DisciplinaUploadBootstrapService {
     }
 
     private List<DisciplinaDto> carregarDisciplinas() {
-        List<DisciplinaDto> disciplinas = disciplinaService.discCategoria().stream()
+        List<DisciplinaDto> disciplinas = DisciplinaService.discCategoria().stream()
             .filter(disciplina -> disciplina.id() != null)
             .toList();
 

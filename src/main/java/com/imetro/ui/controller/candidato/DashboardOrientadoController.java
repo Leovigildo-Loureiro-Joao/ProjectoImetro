@@ -16,14 +16,11 @@ import com.imetro.domain.dto.candidato.DashboardDificuldadeResumo;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaDia;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
 import com.imetro.domain.dto.progresso.ProgressoDisciplinaTeste;
-import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.domain.model.Candidato;
-import com.imetro.services.DiagnosticoService;
 import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.ResultData;
-import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoUtil;
 import com.imetro.domain.dto.stats.Stats;
@@ -38,7 +35,6 @@ import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.XYChart;
@@ -51,8 +47,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 public class DashboardOrientadoController implements Initializable {
@@ -125,7 +119,6 @@ public class DashboardOrientadoController implements Initializable {
     private XYChart.Series<String, Number> evolucoesSeries;
 
     private Timeline startupTimeline;
-    private DiagnosticoService diagnosticoService;
     private CandidatoService candidatoService = new CandidatoService();
     private DashboardMelhoriaResumo dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
     private DashboardDificuldadeResumo dashboardDificuldadeResumo = DashboardDificuldadeResumo.empty();
@@ -210,62 +203,50 @@ public class DashboardOrientadoController implements Initializable {
     private void setupImprovementData() {
         double mediaMelhoria = dashboardMelhoriaResumo.mediaMelhoriaPercentual();
         double taxaSucesso = dashboardMelhoriaResumo.taxaSucessoPercentual();
-    // Array de dados fictícios que mudam com o tempo
-    String[] melhorias = {
-        "85%", "Excelente! Você está acima da média",
-        "72%", "Bom progresso, continue assim!",
-        "91%", "Incrível! Melhor performance do mês",
-        "64%", "Foco! Você pode melhorar ainda mais",
-        "78%", "Consistente! Mantenha o ritmo"
-    };
+        percentMelhoria.setText(QuestaoUtil.formatarPercentual(mediaMelhoria));
+        descMelhoRia.setText(descreverMelhoria(mediaMelhoria));
 
-    // Escolhe um aleatório
+        // Cor dinâmica baseada na porcentagem
+        String percentText = Long.toString(Math.round(Math.max(0.0, mediaMelhoria)));
+        int percentValue = Integer.parseInt(percentText);
 
+        if (mediaMelhoria >= 10.0) {
+            percentMelhoria.setStyle("-fx-text-fill: #059669;");
+            descMelhoRia.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
+        } else if (mediaMelhoria >= 0.0) {
+            percentMelhoria.setStyle("-fx-text-fill: #d97706; ");
+            descMelhoRia.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
+        } else {
+            percentMelhoria.setStyle("-fx-text-fill: #dc2626; ");
+            descMelhoRia.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
+        }
+        CircleProgress circleProgress = new CircleProgress(30, 30);
+        melhoria.getChildren().clear();
+        melhoria.getChildren().add(circleProgress);
+        circleProgress.setValue(percentValue / 100.0);
 
-    percentMelhoria.setText(QuestaoUtil.formatarPercentual(mediaMelhoria));
-    descMelhoRia.setText(descreverMelhoria(mediaMelhoria));
+        // Mesmo para sucesso
+        percentSucesso.setText(QuestaoUtil.formatarPercentual(taxaSucesso));
+        descSucesso.setText(descreverSucesso(taxaSucesso));
 
-    // Cor dinâmica baseada na porcentagem
-    String percentText = Long.toString(Math.round(Math.max(0.0, mediaMelhoria)));
-    int percentValue = Integer.parseInt(percentText);
+        String percentTextSucesso = Long.toString(Math.round(Math.max(0.0, taxaSucesso)));
+        int percentValueSucesso = Integer.parseInt(percentTextSucesso);
 
-    if (mediaMelhoria >= 10.0) {
-        percentMelhoria.setStyle("-fx-text-fill: #059669;");
-        descMelhoRia.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
-    } else if (mediaMelhoria >= 0.0) {
-        percentMelhoria.setStyle("-fx-text-fill: #d97706; ");
-        descMelhoRia.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
-    } else {
-        percentMelhoria.setStyle("-fx-text-fill: #dc2626; ");
-        descMelhoRia.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
+        if (taxaSucesso >= 80.0) {
+            percentSucesso.setStyle("-fx-text-fill: #059669;");
+            descSucesso.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
+        } else if (taxaSucesso >= 60.0) {
+            percentSucesso.setStyle("-fx-text-fill: #d97706; ");
+            descSucesso.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
+        } else {
+            percentSucesso.setStyle("-fx-text-fill: #dc2626; ");
+            descSucesso.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
+        }
+        CircleProgress circleProgressSucesso = new CircleProgress(30, 30);
+        sucesso.getChildren().clear();
+        sucesso.getChildren().add(circleProgressSucesso);
+        circleProgressSucesso.setValue(percentValueSucesso / 100.0);
     }
-    CircleProgress circleProgress = new CircleProgress(30, 30);
-    melhoria.getChildren().clear();
-    melhoria.getChildren().add(circleProgress);
-    circleProgress.setValue(percentValue / 100.0);
-
-    // Mesmo para sucesso
-    percentSucesso.setText(QuestaoUtil.formatarPercentual(taxaSucesso));
-    descSucesso.setText(descreverSucesso(taxaSucesso));
-
-    String percentTextSucesso = Long.toString(Math.round(Math.max(0.0, taxaSucesso)));
-    int percentValueSucesso = Integer.parseInt(percentTextSucesso);
-
-    if (taxaSucesso >= 80.0) {
-        percentSucesso.setStyle("-fx-text-fill: #059669;");
-        descSucesso.setStyle("-fx-background-color: #d1fae5; -fx-text-fill: #059669;");
-    } else if (taxaSucesso >= 60.0) {
-        percentSucesso.setStyle("-fx-text-fill: #d97706; ");
-        descSucesso.setStyle("-fx-background-color: #fed7aa; -fx-text-fill: #c2410c;");
-    } else {
-        percentSucesso.setStyle("-fx-text-fill: #dc2626; ");
-        descSucesso.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;");
-    }
-    CircleProgress circleProgressSucesso = new CircleProgress(30, 30);
-    sucesso.getChildren().clear();
-    sucesso.getChildren().add(circleProgressSucesso);
-    circleProgressSucesso.setValue(percentValueSucesso / 100.0);
-}
 
     private void updateHeader() {
         if (welcome != null) {

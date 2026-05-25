@@ -107,6 +107,7 @@ public class PlanoCartesianoPane extends VBox {
         getChildren().addAll(topo, tituloLabel, subtituloLabel, planoBox, dicaLabel);
     }
 
+    @SuppressWarnings("unchecked")
     public void aplicarConfig(PlanoCartesianoConfig config) {
         if (config == null) {
             return;
