@@ -15,8 +15,7 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
     private static final String DEFAULT_SPEED_TEMP_UNIT = "SEGUNDOS";
     private static final int DEFAULT_LONG_TEST_Q = 10;
     private static final int DEFAULT_NORM_TEST_Q = 7;
-    private static final int DEFAULT_DESAF_TEST_Q = 7;
-    private static final int DEFAULT_EXTRA_TEST_Q = 5;
+    private static final int DEFAULT_CURTO_TEST_Q = 5;
     private static final String DEFAULT_NIVEL_DIFICULDADE = "MEDIO";
     private static final String DEFAULT_MODO_ESCOLHAS = "DIAGNOSTICAS";
     private static final int DEFAULT_VELOCIDADE_SEGUNDOS_POR_PERCENT = 120;
@@ -41,11 +40,21 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
 
     public ConfiguracaoDto findByCandidato(UUID userUuid){
         String sql="SELECT * FROM configuracoes where user_id = ? limit 1";
+        if (userUuid == null) {
+            return null;
+        }
+
         try (Connection connection=openRequiredConnection()) {
-            PreparedStatement rs = connection.prepareStatement(sql);
-            rs.setObject(1, userUuid);
-            rs.executeQuery();
-            return ConfiguracaoDto.fromMap(readAllRows(rs.executeQuery()).get(0));
+            ensureDefaultsForUser(connection, userUuid);
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setObject(1, userUuid);
+                try (var rs = stmt.executeQuery()) {
+                    return readAllRows(rs).stream()
+                        .findFirst()
+                        .map(ConfiguracaoDto::fromMap)
+                        .orElse(null);
+                }
+            }
         } catch (Exception e) {
             System.out.println("Erro ao buscar config do usuario");
             return null;
@@ -76,7 +85,7 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
               precisao_consecutivas,
               logica_qtd_desafiante_extra,
               consistencia_percentual_min
-            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             on conflict (user_id) do nothing
             """;
 
@@ -88,15 +97,14 @@ public final class ConfiguracoesRepository extends JdbcBasicSqlRepository {
             stmt.setString(5, DEFAULT_SPEED_TEMP_UNIT);
             stmt.setInt(6, DEFAULT_LONG_TEST_Q);
             stmt.setInt(7, DEFAULT_NORM_TEST_Q);
-            stmt.setInt(8, DEFAULT_DESAF_TEST_Q);
-            stmt.setInt(9, DEFAULT_EXTRA_TEST_Q);
-            stmt.setString(10, DEFAULT_NIVEL_DIFICULDADE);
-            stmt.setString(11, DEFAULT_MODO_ESCOLHAS);
-            stmt.setInt(12, DEFAULT_VELOCIDADE_SEGUNDOS_POR_PERCENT);
-            stmt.setInt(13, DEFAULT_RESILIENCIA_REPETICOES_POR_DIA);
-            stmt.setInt(14, DEFAULT_PRECISAO_CONSECUTIVAS);
-            stmt.setInt(15, DEFAULT_LOGICA_QTD_DESAFIANTE_EXTRA);
-            stmt.setDouble(16, DEFAULT_CONSISTENCIA_PERCENTUAL_MIN);
+            stmt.setInt(8, DEFAULT_CURTO_TEST_Q);
+            stmt.setString(9, DEFAULT_NIVEL_DIFICULDADE);
+            stmt.setString(10, DEFAULT_MODO_ESCOLHAS);
+            stmt.setInt(11, DEFAULT_VELOCIDADE_SEGUNDOS_POR_PERCENT);
+            stmt.setInt(12, DEFAULT_RESILIENCIA_REPETICOES_POR_DIA);
+            stmt.setInt(13, DEFAULT_PRECISAO_CONSECUTIVAS);
+            stmt.setInt(14, DEFAULT_LOGICA_QTD_DESAFIANTE_EXTRA);
+            stmt.setDouble(15, DEFAULT_CONSISTENCIA_PERCENTUAL_MIN);
             return stmt.executeUpdate();
         }
     }

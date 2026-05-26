@@ -15,9 +15,10 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.domain.enums.NivelDisciplina;
-import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoDuracaoRepository;
+import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.CircleProgress;
@@ -33,6 +34,7 @@ import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoGraficoSupport;
+import com.imetro.util.QuestaoUtil;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoCelebracaoSupport;
 import com.imetro.util.ResultadoPayload;
@@ -209,7 +211,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
-    private final ConfiguracaoTesteAdaptativoDuracaoRepository confAdapt=new ConfiguracaoTesteAdaptativoDuracaoRepository();
+    private final ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
     @FXML
     public void initialize() throws IOException {
         DiagnosticoCoordinator.setHost(this);
@@ -787,12 +789,14 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
                 filtradas = base;
             }
 
-            limite = confAdapt.findByCodigo(config.duracao().toUpperCase()).limiteQuestoes();
+            limite = resolverLimiteQuestoes(config.duracao(), filtradas.size());
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-
+        if (limite <= 0) {
+            limite = filtradas.size();
+        }
         return new ArrayList<>(filtradas.subList(0, Math.min(limite, filtradas.size())));
     }
 
@@ -835,8 +839,10 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         List<Questao> filtradas = new ArrayList<>();
 
         for (Questao questao : origem) {
-            NivelDisciplina nivelActual=DisciplinaService.getDisciplinaCandidato(questao.getDisciplina()).nivelAtual();
-            if (nivel.incluiQuestaoNoFiltroDiagnostico(questao.getNivelDificuldade())||nivel.incluiQuestaoNoFiltroDiagnostico(nivelActual.ordinal())) {
+            NivelDisciplina nivelActual = resolverNivelAtualDisciplina(questao);
+            int nivelDisciplinaComoDificuldade = mapearNivelDisciplinaParaDificuldade(nivelActual);
+            if (nivel.incluiQuestaoNoFiltroDiagnostico(questao.getNivelDificuldade())
+                || nivel.incluiQuestaoNoFiltroDiagnostico(nivelDisciplinaComoDificuldade)) {
                 filtradas.add(questao);
             }
         }
@@ -844,6 +850,46 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
 
         return filtradas;
+    }
+
+    private int resolverLimiteQuestoes(String codigoDuracao, int totalDisponivel) {
+        ConfiguracaoDto config = configuracoesRepository.findByCandidato(Authentication.getCurrentUserId());
+        if (config == null || codigoDuracao == null || codigoDuracao.isBlank()) {
+            return totalDisponivel;
+        }
+
+        return switch (TextoUtil.normalizarMinusculo(codigoDuracao)) {
+            case "curto" -> limitarFaixaQuestoes(config.curto_test_q(), totalDisponivel);
+            case "medio" -> limitarFaixaQuestoes(config.norm_test_q(), totalDisponivel);
+            default -> limitarFaixaQuestoes(config.long_test_q(), totalDisponivel);
+        };
+    }
+
+    private int limitarFaixaQuestoes(Integer limiteConfigurado, int totalDisponivel) {
+        if (limiteConfigurado == null || limiteConfigurado <= 0) {
+            return totalDisponivel;
+        }
+        return Math.min(limiteConfigurado, totalDisponivel);
+    }
+
+    private NivelDisciplina resolverNivelAtualDisciplina(Questao questao) throws SQLException {
+        if (questao == null || questao.getDisciplina() == null || questao.getDisciplina().isBlank()) {
+            return NivelDisciplina.INICIANTE;
+        }
+
+        var progresso = DisciplinaService.getDisciplinaCandidato(QuestaoUtil.resolverDisciplinaId(questao.getDisciplina()));
+        if (progresso == null || progresso.nivelAtual() == null) {
+            return NivelDisciplina.INICIANTE;
+        }
+        return progresso.nivelAtual();
+    }
+
+    private int mapearNivelDisciplinaParaDificuldade(NivelDisciplina nivelDisciplina) {
+        return switch (nivelDisciplina == null ? NivelDisciplina.INICIANTE : nivelDisciplina) {
+            case INICIANTE -> NivelDificuldadeAdaptativa.FACIL.nivel();
+            case INTERMEDIARIO -> NivelDificuldadeAdaptativa.MEDIO.nivel();
+            case AVANCADO -> NivelDificuldadeAdaptativa.DIFICIL.nivel();
+        };
     }
 
     private void resetarEstadoDiagnostico() {

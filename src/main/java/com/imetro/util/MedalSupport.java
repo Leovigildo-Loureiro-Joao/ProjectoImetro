@@ -97,7 +97,8 @@ public final class MedalSupport {
         String medalCode,
         int progressValue,
         Integer recordValue,
-        LocalDateTime earnedAt
+        LocalDateTime earnedAt,
+        LocalDateTime actualizadaAt
     ) {
     }
 

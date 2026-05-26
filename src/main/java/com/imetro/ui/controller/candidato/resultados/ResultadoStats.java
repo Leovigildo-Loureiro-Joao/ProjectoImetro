@@ -1,14 +1,24 @@
 package com.imetro.ui.controller.candidato.resultados;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
+import com.imetro.config.RuntimeConfig;
+import com.imetro.persistence.repository.MedalhaRepository;
+import com.imetro.ui.components.bolsas.BolsaCard;
+import com.imetro.ui.components.perfil.MedalCard;
 import com.imetro.ui.controller.lifecycle.DisposableController;
+import com.imetro.util.Authentication;
+import com.imetro.util.MedalSupport;
 import com.imetro.util.ResultadoPayload;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.FlowPane;
@@ -53,6 +63,7 @@ public class ResultadoStats implements Initializable, DisposableController{
 
     @FXML
     private Label tempoValue;
+    MedalhaRepository medalhaRepository = new MedalhaRepository();
 
     @Override
     public void dispose() {
@@ -88,9 +99,37 @@ public class ResultadoStats implements Initializable, DisposableController{
             nivelValue.setText(payload.getNivel());
             perfilValue.setText(payload.getPerfil());
 
+            List<MedalSupport.MedalViewModel> list= AwardsGoal();
+            for (MedalSupport.MedalViewModel medal : list) {
+                medalhasFlow.getChildren().add(new MedalCard(medal));
+            }
+
 
     }
 
-    
+    private List<MedalSupport.MedalViewModel> AwardsGoal(){
+        List<MedalSupport.MedalAward> awards=medalhaRepository.findAwardsByUserIdUpdates(Authentication.getCurrentUserId());
+        Map<MedalSupport.MedalSkill, Integer> previewProgress = RuntimeConfig.isDbEnabled()
+        ? Map.of()
+        : MedalSupport.navigationPreviewProgress();
+        return awards.stream().map(award -> {
+            int progressValue = 0;
+            boolean unlocked = false;
+            Integer recordValue = null;
+            java.time.LocalDateTime earnedAt = null;
+            MedalSupport.MedalDefinition definition=MedalSupport.catalog().stream().filter(def -> def.code().equals(award.medalCode())).toList().get(0);
+            if (award != null) {
+                progressValue = Math.max(award.progressValue(), definition.targetValue());
+                unlocked = true;
+                recordValue = award.recordValue();
+                earnedAt = award.earnedAt();
+            } else if (!RuntimeConfig.isDbEnabled()) {
+                progressValue = previewProgress.getOrDefault(definition.skill(), 0);
+                unlocked = progressValue >= definition.targetValue();
+            }
+
+            return new MedalSupport.MedalViewModel(definition, unlocked, progressValue, recordValue, earnedAt);
+        }).toList();
+    }
 
 }

@@ -7,7 +7,7 @@ import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoDuracaoDto;
 public class ConfiguracaoTesteAdaptativoDuracaoRepository extends JdbcBasicSqlRepository {
 
     public ConfiguracaoTesteAdaptativoDuracaoRepository() {
-        super("configuracoes_teste_adaptativo_duracao", "id");
+        super("configuracoes_teste_adaptativo_duracoes", "id");
     }
 
     public int inserirDuracao(ConfiguracaoTesteAdaptativoDuracaoDto duracao) {

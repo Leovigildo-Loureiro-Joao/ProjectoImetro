@@ -156,7 +156,24 @@ public class DisciplinaService {
     }
 
     public static ProgressoAlunoDisciplinaDto getDisciplinaCandidato(String disciplinaNNome) throws SQLException {
-        UUID candidatoId = Authentication.getCurrentUserId();        return progressoRepository.getDto(candidatoId, disciplinaNNome);
+        if (disciplinaNNome == null || disciplinaNNome.isBlank()) {
+            return null;
+        }
+
+        String disciplinaNormalizada = TextoUtil.normalizarMinusculo(disciplinaNNome);
+        UUID disciplinaId = discCategoria().stream()
+            .filter(disciplina -> disciplina != null && disciplina.id() != null)
+            .filter(disciplina -> TextoUtil.normalizarMinusculo(disciplina.nome()).equals(disciplinaNormalizada))
+            .map(DisciplinaDto::id)
+            .findFirst()
+            .orElse(null);
+
+        if (disciplinaId != null) {
+            return getDisciplinaCandidato(disciplinaId);
+        }
+
+        UUID candidatoId = Authentication.getCurrentUserId();
+        return progressoRepository.getDto(candidatoId, disciplinaNNome);
     }
 
 

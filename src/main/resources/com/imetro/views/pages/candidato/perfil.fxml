@@ -23,7 +23,7 @@
             <Label styleClass="h1" text="Perfil" />
             <HBox spacing="20.0">
                <children>
-                  <HBox HBox.hgrow="ALWAYS" spacing="20.0">
+                  <HBox spacing="20.0" HBox.hgrow="ALWAYS">
                      <styleClass>
                         <String fx:value="card" />
                         <String fx:value="hero-gradient-card" />
@@ -74,7 +74,7 @@
             </HBox>
             <HBox spacing="20.0">
                <children>
-                  <VBox HBox.hgrow="ALWAYS" spacing="14.0">
+                  <VBox spacing="14.0" HBox.hgrow="ALWAYS">
                      <styleClass>
                         <String fx:value="card" />
                         <String fx:value="profile-form-card" />

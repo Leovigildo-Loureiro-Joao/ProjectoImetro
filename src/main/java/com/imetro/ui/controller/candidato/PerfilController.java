@@ -176,6 +176,7 @@ public class PerfilController implements Initializable {
             AvatarPickerModalController controller = loader.getController();
             controller.configure(currentUserName, currentUserEmail, currentAvatarRef, this::persistAvatarSelection);
             modalPai.getChildren().add(modal);
+            modalPai.getChildren().get(0).setTranslateY(-1100);
             controller.init();
         } catch (Exception e) {
             e.printStackTrace();

@@ -9,16 +9,16 @@ import java.util.UUID;
 
 import com.imetro.util.DtoMapperSupport;
 
-public record ConfiguracaoTesteAdaptativoDto(
+public record AdaptacaoDto(
     UUID id,
-    String codigo,
+    UUID user_id,
     String descricao,
-    boolean ativo,
     double tempoLentoFator,
     double tempoRecuperacaoFator,
     int acertosSubirRapido,
     int acertosSubirLento,
     int errosDescer,
+    int tempAdapt,
     int janelaConsistencia,
     int janelaRecuperacao,
     double pesoConsistenciaAcerto,
@@ -31,24 +31,24 @@ public record ConfiguracaoTesteAdaptativoDto(
     List<ConfiguracaoTesteAdaptativoDuracaoDto> duracoes
 ) {
 
-    public ConfiguracaoTesteAdaptativoDto {
+    public AdaptacaoDto {
         niveis = niveis == null ? List.of() : List.copyOf(niveis);
         duracoes = duracoes == null ? List.of() : List.copyOf(duracoes);
     }
 
-    public static ConfiguracaoTesteAdaptativoDto fromMap(Map<String, ?> map) {
+    public static AdaptacaoDto fromMap(Map<String, ?> map) {
         Objects.requireNonNull(map, "map");
 
-        return new ConfiguracaoTesteAdaptativoDto(
+        return new AdaptacaoDto(
             DtoMapperSupport.parseUuid(map.get("id")),
-            DtoMapperSupport.parseText(map.get("codigo")),
+            DtoMapperSupport.parseUuid(map.get("user_id")),
             DtoMapperSupport.parseText(map.get("descricao")),
-            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseBoolean(map.get("ativo")), false),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("tempo_lento_fator")), 1.25d),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("tempo_recuperacao_fator")), 1.10d),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseInteger(map.get("acertos_subir_rapido")), 2),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseInteger(map.get("acertos_subir_lento")), 3),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseInteger(map.get("erros_descer")), 2),
+            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseInteger(map.get("tempo_adapt")), 30),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseInteger(map.get("janela_consistencia")), 3),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseInteger(map.get("janela_recuperacao")), 2),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("peso_consistencia_acerto")), 0.70d),
@@ -62,20 +62,44 @@ public record ConfiguracaoTesteAdaptativoDto(
         );
     }
 
-    public ConfiguracaoTesteAdaptativoDto withRelacionamentos(
+    public static AdaptacaoDto padrao(UUID userId) {
+        return new AdaptacaoDto(
+            null,
+            userId,
+            "Perfil adaptativo padrao do candidato.",
+            1.25d,
+            1.10d,
+            2,
+            3,
+            2,
+            30,
+            3,
+            2,
+            0.70d,
+            0.30d,
+            0.70d,
+            0.30d,
+            null,
+            null,
+            List.of(),
+            List.of()
+        );
+    }
+
+    public AdaptacaoDto withRelacionamentos(
         List<ConfiguracaoTesteAdaptativoNivelDto> novosNiveis,
         List<ConfiguracaoTesteAdaptativoDuracaoDto> novasDuracoes
     ) {
-        return new ConfiguracaoTesteAdaptativoDto(
+        return new AdaptacaoDto(
             id,
-            codigo,
+            user_id,
             descricao,
-            ativo,
             tempoLentoFator,
             tempoRecuperacaoFator,
             acertosSubirRapido,
             acertosSubirLento,
             errosDescer,
+            tempAdapt,
             janelaConsistencia,
             janelaRecuperacao,
             pesoConsistenciaAcerto,
@@ -110,14 +134,14 @@ public record ConfiguracaoTesteAdaptativoDto(
     public Map<String, ?> toMap() {
         Map<String, Object> values = new LinkedHashMap<>();
         values.put("id", id());
-        values.put("codigo", codigo());
+        values.put("user_id", user_id());
         values.put("descricao", descricao());
-        values.put("ativo", ativo());
         values.put("tempo_lento_fator", tempoLentoFator());
         values.put("tempo_recuperacao_fator", tempoRecuperacaoFator());
         values.put("acertos_subir_rapido", acertosSubirRapido());
         values.put("acertos_subir_lento", acertosSubirLento());
         values.put("erros_descer", errosDescer());
+        values.put("tempo_adapt", tempAdapt());
         values.put("janela_consistencia", janelaConsistencia());
         values.put("janela_recuperacao", janelaRecuperacao());
         values.put("peso_consistencia_acerto", pesoConsistenciaAcerto());
@@ -129,5 +153,5 @@ public record ConfiguracaoTesteAdaptativoDto(
         return values;
     }
 
-   
+
 }

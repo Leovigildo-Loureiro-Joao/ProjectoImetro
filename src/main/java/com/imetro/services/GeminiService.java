@@ -506,6 +506,7 @@ public class GeminiService {
         prompt.append("Quantidade minima de questoes: ").append(request.quantidadeQuestoes()).append(".\n");
         prompt.append("Nivel desejado: ").append(request.nivel()).append(".\n");
         prompt.append("Regras obrigatorias:\n");
+        prompt.append("- Usa o nome da disciplina exatamente como foi recebido, incluindo acentos.\n");
         prompt.append("- Usa somente conteudo suportado pelos documentos.\n");
         prompt.append("- Cria exatamente 4 alternativas objetivas e apenas uma resposta correta.\n");
         prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
@@ -543,6 +544,7 @@ public class GeminiService {
         prompt.append("Quantidade minima de questoes: ").append(request.quantidadeQuestoes()).append(".\n");
         prompt.append("Nivel desejado: ").append(request.nivel()).append(".\n");
         prompt.append("Regras obrigatorias:\n");
+        prompt.append("- Usa o nome da disciplina exatamente como foi recebido, incluindo acentos.\n");
         prompt.append("- Usa somente os topicos e subtopicos presentes no JSON informado.\n");
         prompt.append("- Cria exatamente 4 alternativas objetivas e apenas uma resposta correta.\n");
         prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
@@ -626,6 +628,7 @@ public class GeminiService {
         prompt.append("Disciplina alvo: ").append(request.disciplina()).append(".\n");
         prompt.append("Idioma de resposta: ").append(request.idioma()).append(".\n");
         prompt.append("Regras obrigatorias:\n");
+        prompt.append("- Mantem o nome oficial da disciplina exatamente como recebido, incluindo acentos.\n");
         prompt.append("- Nao geres perguntas, exercicios ou respostas.\n");
         prompt.append("- Nao inventes topicos que nao estejam sustentados pelos documentos.\n");
         prompt.append("- Junta topicos repetidos e organiza os subtopicos sem duplicacao.\n");

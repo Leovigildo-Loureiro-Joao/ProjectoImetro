@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.configuracao.AdaptacaoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.test.Percent;
@@ -22,8 +23,7 @@ import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
-import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoDuracaoRepository;
-import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
+import com.imetro.persistence.repository.AdaptacaoRepository;
 import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.TesteAdaptativoService;
@@ -134,8 +134,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private ConfiguracaoDto configCandidato;
     private List<String> disciplinas = List.of();
     private Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
-    private ConfiguracaoTesteAdaptativoNivelRepositorty configTestNivelAdaptRepo= new ConfiguracaoTesteAdaptativoNivelRepositorty();
     private ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
+    private AdaptacaoDto adaptacaoDto;
+    private AdaptacaoRepository adaptacaoRepository = new AdaptacaoRepository();
     private final VBox botoesDisciplinasBox = new VBox(12);
     private final List<Character> respostasUsuario = new ArrayList<>();
     private final List<Long> temposResposta = new ArrayList<>();
@@ -807,8 +808,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void mostrarFeedbackAdaptativo(boolean acertou, long tempoResposta) {
-        configCandidato=getConfigCadidato();
-        boolean foiRapido = tempoResposta < configCandidato.velocidade_segundos_por_percent()*100*0.1;
+        boolean foiRapido = tempoResposta <= resolverLimiteRapidoMs();
+        boolean foiMuitoLento = tempoResposta >= resolverLimiteLentoMs();
         feedbackContainer.setVisible(true);
         feedbackContainer.setOpacity(1);
 
@@ -822,7 +823,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/corret.png")));
             feedbackMessage.setText("Correta! O foco continua nos mesmos subtopicos.");
             feedbackContainer.setStyle("-fx-background-color: #ecfdf5; -fx-border-color: #10b981;");
-        } else if (tempoResposta > configCandidato.velocidade_segundos_por_percent()*100*0.5) {
+        } else if (foiMuitoLento) {
             feedbackIcon.setText("!");
             feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/info.png")));
             feedbackMessage.setText("Demorou bastante. Vou manter o foco e reduzir a pressao.");
@@ -845,20 +846,22 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void ajustarNivelAdaptativo(boolean acertou, long tempoResposta) {
-        boolean foiRapido = tempoResposta < 30000; // TODO CONFIG_ADAPTATIVA: tempo rapido ainda fixo em 30s.
+        AdaptacaoDto adaptacao = getAdaptacaoDto();
+        boolean foiRapido = tempoResposta <= resolverLimiteRapidoMs();
+        boolean foiMuitoLento = tempoResposta >= resolverLimiteLentoMs();
 
         if (acertou && foiRapido) {
-            if (sequenciaAcertos >= 2) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_rapido = 2` ainda fixo.
+            if (sequenciaAcertos >= adaptacao.acertosSubirRapido()) {
                 nivelAtualAdaptativo = nivelAtualAdaptativo.subir();
             }
         } else if (acertou) {
-            if (sequenciaAcertos >= 3) { // TODO CONFIG_ADAPTATIVA: `acertos_subir_lento = 3` ainda fixo.
+            if (sequenciaAcertos >= adaptacao.acertosSubirLento()) {
                 nivelAtualAdaptativo = nivelAtualAdaptativo.subir();
             }
-        } else if (tempoResposta > 60000) { // TODO CONFIG_ADAPTATIVA: tempo lento ainda fixo em 60s.
+        } else if (foiMuitoLento) {
             nivelAtualAdaptativo = nivelAtualAdaptativo.descer();
             sequenciaErros = 0;
-        } else if (sequenciaErros >= 2) { // TODO CONFIG_ADAPTATIVA: `erros_descer = 2` ainda fixo.
+        } else if (sequenciaErros >= adaptacao.errosDescer()) {
             nivelAtualAdaptativo = nivelAtualAdaptativo.descer();
             sequenciaErros = 0;
         }
@@ -1003,11 +1006,13 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private String determinarPerfil(double porcentagem, double tempoMedio) {
-        if (porcentagem >= 80 && tempoMedio < 30000) return "Rapido e preciso"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (80% / 30s).
-        if (porcentagem >= 80) return "Preciso mas lento"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (80%).
-        if (porcentagem >= 60 && tempoMedio < 30000) return "Seguro e agil"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (60% / 30s).
-        if (porcentagem >= 60) return "Cauteloso"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (60%).
-        if (porcentagem >= 40) return "Intermediario"; // TODO CONFIG_ADAPTATIVA: faixa fixa de leitura do resultado (40%).
+        AdaptacaoDto adaptacao = getAdaptacaoDto();
+        double tempoMedioSegundos = tempoMedio / 1000d;
+        if (porcentagem >= 80 && tempoMedioSegundos <= adaptacao.tempAdapt()) return "Estas mais rapido e preciso";
+        if (porcentagem >= 80) return "Reduziste a tua velocidade normal porem ainda preciso mas lento";
+        if (porcentagem >= 60 && tempoMedioSegundos <= adaptacao.tempAdapt() * 1.15d) return "Seguro e agil";
+        if (porcentagem >= 60) return "Cauteloso como sempre";
+        if (porcentagem >= 40) return "Intermediario se dedica mais";
         return "Em consolidacao";
     }
 
@@ -1063,15 +1068,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private String formatarDisciplina(String disciplina) {
-        if (disciplina == null) {
-            return "-";
-        }
-
-        return switch (disciplina) {
-            case "MATEMATICA" -> "Matematica";
-            case "FISICA" -> "Fisica";
-            default -> disciplina;
-        };
+        return disciplina == null ? "-" : QuestaoUtil.formatarDisciplina(disciplina);
     }
 
     private float limitarUnitario(float valor) {
@@ -1208,5 +1205,31 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             this.configCandidato= configuracoesRepository.findByCandidato(Authentication.getCurrentUserId());
         }
         return configCandidato;
+    }
+
+    private AdaptacaoDto getAdaptacaoDto(){
+        if (adaptacaoDto==null) {
+            try {
+                this.adaptacaoDto= adaptacaoRepository.findOrCreateByUserId(Authentication.getCurrentUserId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (adaptacaoDto == null) {
+            adaptacaoDto = AdaptacaoDto.padrao(Authentication.getCurrentUserId());
+        }
+        return adaptacaoDto;
+    }
+
+    private long resolverLimiteRapidoMs() {
+        return Math.max(1000L, Math.round(getAdaptacaoDto().tempAdapt() * 1000d));
+    }
+
+    private long resolverLimiteLentoMs() {
+        AdaptacaoDto adaptacao = getAdaptacaoDto();
+        return Math.max(
+            resolverLimiteRapidoMs() + 1000L,
+            Math.round(adaptacao.tempAdapt() * adaptacao.tempoLentoFator() * 1000d)
+        );
     }
 }

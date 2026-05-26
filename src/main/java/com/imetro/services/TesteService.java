@@ -34,6 +34,7 @@ import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
+import com.imetro.persistence.repository.MedalhaRepository;
 import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.ScoreBolsaRepository;
 import com.imetro.persistence.repository.TestePerguntasRepository;
@@ -54,6 +55,7 @@ public class TesteService {
     private final DiagnosticoRepository diagnosticoRepository;
     private final ProgressoALunoDisciplinaRepository progressoALunoDisciplinaRepository;
     private final ConfiguracaoTesteAdaptativoNivelRepositorty configuracaoTesteAdaptativoNivelRepositorty;
+    private final MedalhaRepository medalhaRepository;
 
     public TesteService() {
         this.testeRepository = new TesteRepository();
@@ -63,6 +65,7 @@ public class TesteService {
         this.diagnosticoRepository=new DiagnosticoRepository();
         this.progressoALunoDisciplinaRepository=new ProgressoALunoDisciplinaRepository();
         this.configuracaoTesteAdaptativoNivelRepositorty=new ConfiguracaoTesteAdaptativoNivelRepositorty();
+        this.medalhaRepository = new MedalhaRepository();
 
     }
 
@@ -491,6 +494,8 @@ public class TesteService {
             } finally {
                 conn.setAutoCommit(true);
             }
+
+            sincronizarMedalhasSemQuebrarFluxo(candidatoId);
         } catch (Exception e) {
             System.err.println("Erro ao registrar teste concluido: " + e.getMessage());
             e.printStackTrace();
@@ -663,6 +668,7 @@ public class TesteService {
                 );
 
                 conn.commit();
+                sincronizarMedalhasSemQuebrarFluxo(candidatoId);
                 return testeId;
             } catch (Exception e) {
                 conn.rollback();
@@ -701,6 +707,18 @@ public class TesteService {
         double pesoPrecisao = QuestaoUtil.limitarPercentualFaixaCem(precisao * 100d) * 0.20d;
         double pesoVelocidade = QuestaoUtil.limitarPercentualFaixaCem(velocidade * 100d) * 0.15d;
         return QuestaoUtil.limitarPercentualFaixaCem(pesoAcerto + pesoPrecisao + pesoVelocidade);
+    }
+
+    private void sincronizarMedalhasSemQuebrarFluxo(UUID candidatoId) {
+        if (candidatoId == null) {
+            return;
+        }
+
+        try {
+            medalhaRepository.sincronizarMedalhasPorUserId(candidatoId);
+        } catch (Exception e) {
+            System.err.println("Falha ao sincronizar medalhas do candidato: " + e.getMessage());
+        }
     }
 
     private String construirCriteriosBolsaJson(BolsaDto bolsa) {
