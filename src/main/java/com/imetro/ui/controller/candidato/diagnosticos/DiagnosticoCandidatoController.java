@@ -479,12 +479,13 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         respostasUsuario.add(respostaSelecionada);
 
         Questao q = questoes.get(questaoAtual);
-        boolean acertou = respostaSelecionada == q.getRespostaCorreta();
+        char alternativaCorreta = QuestaoUtil.resolverAlternativaCorreta(q);
+        boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaSelecionada);
         if (acertou) {
             selected.getStyleClass().add("sucess");
         } else {
             selected.getStyleClass().add("error");
-            destacarRespostaCorreta(q.getRespostaCorreta());
+            destacarRespostaCorreta(alternativaCorreta);
         }
 
         btnProximo.setDisable(false);
@@ -542,7 +543,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         int limiteCorrecao = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
         for (int i = 0; i < limiteCorrecao; i++) {
-            if (respostasUsuario.get(i) == questoes.get(i).getRespostaCorreta()) {
+            if (QuestaoUtil.respostaEstaCorreta(questoes.get(i), respostasUsuario.get(i))) {
                 acertos++;
             }
         }

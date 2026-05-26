@@ -43,7 +43,8 @@ public  class QuestaoResultado {
 
     public static QuestaoResultado fromQuestao(int ordem, Questao questao, char respostaUsuario) {
         char usuario = Character.toUpperCase(respostaUsuario);
-        char correta = Character.toUpperCase(questao.getRespostaCorreta());
+        char correta = QuestaoUtil.resolverAlternativaCorreta(questao);
+        boolean acertou = QuestaoUtil.respostaEstaCorreta(questao, usuario);
         return new QuestaoResultado(
             ordem,
             valueOrDash(questao.getDisciplina()),
@@ -55,7 +56,7 @@ public  class QuestaoResultado {
             correta == '\0' ? '-' : correta,
             resolveTextoOpcao(questao, usuario),
             resolveTextoOpcao(questao, correta),
-            usuario == correta
+            acertou
         );
     }
 

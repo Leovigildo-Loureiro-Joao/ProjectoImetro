@@ -485,7 +485,7 @@ public class DiagnosticoService {
                     int totalQuestoes = indices.size();
                     int totalAcertos = 0;
                     for (Integer indice : indices) {
-                        if (respostasUsuario.get(indice) == questoes.get(indice).getRespostaCorreta()) {
+                        if (QuestaoUtil.respostaEstaCorreta(questoes.get(indice), respostasUsuario.get(indice))) {
                             totalAcertos++;
                         }
                     }
@@ -617,7 +617,7 @@ public class DiagnosticoService {
                 continue;
             }
 
-            boolean acertou = respostasUsuario.get(indice) == questao.getRespostaCorreta();
+            boolean acertou = QuestaoUtil.respostaEstaCorreta(questao, respostasUsuario.get(indice));
             porTopico.computeIfAbsent(questao.getSubtopico(), ignored -> new ArrayList<>())
                 .add(new QuestaoRigorResultado(questao, acertou));
         }
@@ -1266,16 +1266,21 @@ public class DiagnosticoService {
             return "";
         }
 
-        String respostaNormalizada = QuestaoUtil.normalizarTextoLivre(respostaCorreta);
+        String respostaNormalizada = QuestaoUtil.normalizarTextoLivre(
+            QuestaoUtil.removerPrefixoAlternativa(respostaCorreta)
+        );
         if (!respostaNormalizada.isBlank()) {
-            char primeiraLetra = Character.toUpperCase(respostaCorreta.trim().charAt(0));
-            int indice = primeiraLetra - 'A';
-            if (indice >= 0 && indice < respostas.size()) {
-                return respostas.get(indice);
+            Character alternativaExplicita = QuestaoUtil.extrairAlternativaExplicita(respostaCorreta);
+            if (alternativaExplicita != null) {
+                int indice = alternativaExplicita - 'A';
+                if (indice >= 0 && indice < respostas.size()) {
+                    return respostas.get(indice);
+                }
             }
 
             for (String resposta : respostas) {
-                if (QuestaoUtil.normalizarTextoLivre(resposta).equals(respostaNormalizada)) {
+                if (QuestaoUtil.normalizarTextoLivre(QuestaoUtil.removerPrefixoAlternativa(resposta))
+                    .equals(respostaNormalizada)) {
                     return resposta;
                 }
             }

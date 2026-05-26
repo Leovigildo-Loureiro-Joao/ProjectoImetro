@@ -46,7 +46,7 @@ public class CalculoStats {
             }
 
             totalDesafiantes++;
-            if (respostasUsuario.get(indice) == questao.getRespostaCorreta()) {
+            if (QuestaoUtil.respostaEstaCorreta(questao, respostasUsuario.get(indice))) {
                 acertosDesafiantes++;
             }
         }
@@ -76,7 +76,7 @@ public class CalculoStats {
     }
 
     private static double calcularPrecisaoRespostaFallback(Questao questao, char respostaNormalizada) {
-        char respostaCorreta = Character.toUpperCase(questao.getRespostaCorreta());
+        char respostaCorreta = QuestaoUtil.resolverAlternativaCorreta(questao);
         if (respostaNormalizada == respostaCorreta) {
             return PRECISAO_RESPOSTA_CORRETA;
         }

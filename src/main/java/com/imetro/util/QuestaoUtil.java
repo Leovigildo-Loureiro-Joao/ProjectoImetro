@@ -157,7 +157,7 @@ public class QuestaoUtil {
             int indice = indices.get(i);
             Questao questao = questoes.get(indice);
             char marcada = respostasUsuario.get(indice);
-            boolean acertou = marcada == questao.getRespostaCorreta();
+            boolean acertou = respostaEstaCorreta(questao, marcada);
             double precisaoResposta = CalculoStats.calcularPrecisaoResposta(questao, marcada);
 
             if (i > 0) {
@@ -192,7 +192,7 @@ public class QuestaoUtil {
             int indice = indices.get(i);
             Questao questao = questoes.get(indice);
             char marcada = respostasUsuario.get(indice);
-            boolean errou = marcada != questao.getRespostaCorreta();
+            boolean errou = !respostaEstaCorreta(questao, marcada);
             double rigor = Double.isFinite(questao.getRigor())
                 ? limitarPercentualUnitario(questao.getRigor())
                 : 0d;
@@ -273,19 +273,109 @@ public class QuestaoUtil {
 
     public static char resolverRespostaCorreta(String respostaCorreta, List<String> respostas) {
         if (respostaCorreta != null && !respostaCorreta.isBlank()) {
-            char primeiraLetra = Character.toUpperCase(respostaCorreta.trim().charAt(0));
-            if (primeiraLetra >= 'A' && primeiraLetra <= 'G') {
-                return primeiraLetra;
+            Character alternativaExplicita = extrairAlternativaExplicita(respostaCorreta);
+            if (alternativaExplicita != null) {
+                return alternativaExplicita;
             }
 
-            String normalizada =  QuestaoUtil.normalizarTextoLivre(respostaCorreta);
+            String normalizada = QuestaoUtil.normalizarTextoLivre(removerPrefixoAlternativa(respostaCorreta));
             for (int i = 0; i < respostas.size(); i++) {
-                if ( QuestaoUtil.normalizarTextoLivre(respostas.get(i)).equals(normalizada)) {
+                if (QuestaoUtil.normalizarTextoLivre(removerPrefixoAlternativa(respostas.get(i))).equals(normalizada)) {
                     return (char) ('A' + i);
                 }
             }
         }
         return 'A';
+    }
+
+    public static boolean respostaEstaCorreta(Questao questao, char respostaUsuario) {
+        if (questao == null) {
+            return false;
+        }
+
+        char respostaNormalizada = Character.toUpperCase(respostaUsuario);
+        char respostaCorreta = resolverAlternativaCorreta(questao);
+        return respostaNormalizada != '\0' && respostaCorreta != '\0' && respostaNormalizada == respostaCorreta;
+    }
+
+    public static char resolverAlternativaCorreta(Questao questao) {
+        if (questao == null) {
+            return '\0';
+        }
+
+        int indiceCorretoPorPeso = -1;
+        for (int i = 0; i < 7; i++) {
+            Double peso = questao.getPesoResposta((char) ('A' + i));
+            if (peso == null || peso < 0.999d) {
+                continue;
+            }
+            if (indiceCorretoPorPeso >= 0) {
+                indiceCorretoPorPeso = -1;
+                break;
+            }
+            indiceCorretoPorPeso = i;
+        }
+
+        if (indiceCorretoPorPeso >= 0) {
+            return (char) ('A' + indiceCorretoPorPeso);
+        }
+
+        return Character.toUpperCase(questao.getRespostaCorreta());
+    }
+
+    public static Character extrairAlternativaExplicita(String valor) {
+        String texto = safeText(valor, "").trim();
+        if (texto.isEmpty()) {
+            return null;
+        }
+
+        char letra = Character.toUpperCase(texto.charAt(0));
+        if (letra < 'A' || letra > 'G') {
+            return null;
+        }
+
+        if (texto.length() == 1) {
+            return letra;
+        }
+
+        String restante = texto.substring(1).trim();
+        if (restante.length() == 1 && isDelimitadorAlternativa(restante.charAt(0))) {
+            return letra;
+        }
+
+        return null;
+    }
+
+    public static String removerPrefixoAlternativa(String valor) {
+        String texto = safeText(valor, "").trim();
+        if (texto.length() < 2) {
+            return texto;
+        }
+
+        char letra = Character.toUpperCase(texto.charAt(0));
+        if (letra < 'A' || letra > 'G') {
+            return texto;
+        }
+
+        int indice = 1;
+        while (indice < texto.length() && Character.isWhitespace(texto.charAt(indice))) {
+            indice++;
+        }
+
+        if (indice >= texto.length() || !isDelimitadorAlternativa(texto.charAt(indice))) {
+            return texto;
+        }
+
+        indice++;
+        while (indice < texto.length() && Character.isWhitespace(texto.charAt(indice))) {
+            indice++;
+        }
+
+        return indice >= texto.length() ? texto : texto.substring(indice);
+    }
+
+    private static boolean isDelimitadorAlternativa(char valor) {
+        return valor == ')' || valor == ']' || valor == '.' || valor == ':' || valor == '-';
     }
 
 

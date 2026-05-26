@@ -224,7 +224,7 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
             LocalDateTime.now()
         ));
 
-        if (respostaMapeada == questao.getRespostaCorreta()) {
+        if (QuestaoUtil.respostaEstaCorreta(questao, respostaMapeada)) {
             totalAcertos++;
         } else {
             totalErros++;

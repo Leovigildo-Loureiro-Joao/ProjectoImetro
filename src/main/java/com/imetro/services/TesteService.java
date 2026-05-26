@@ -380,7 +380,7 @@ public class TesteService {
                     int totalAcertos = 0;
 
                     for (Integer indice : indices) {
-                        if (respostasUsuario.get(indice) == questoes.get(indice).getRespostaCorreta()) {
+                        if (QuestaoUtil.respostaEstaCorreta(questoes.get(indice), respostasUsuario.get(indice))) {
                             totalAcertos++;
                         }
                     }
@@ -539,7 +539,7 @@ public class TesteService {
         int totalAcertos = 0;
 
         for (Integer indice : indices) {
-            if (respostasUsuario.get(indice) == questoes.get(indice).getRespostaCorreta()) {
+            if (QuestaoUtil.respostaEstaCorreta(questoes.get(indice), respostasUsuario.get(indice))) {
                 totalAcertos++;
             }
         }
@@ -929,7 +929,7 @@ public class TesteService {
             }
 
             char marcada = respostasUsuario.get(indice);
-            boolean acertou = Character.toUpperCase(marcada) == Character.toUpperCase(questao.getRespostaCorreta());
+            boolean acertou = QuestaoUtil.respostaEstaCorreta(questao, marcada);
 
             UUID questaoId = parseUuid(questao.getId());
             HistoricoQuestao historico = historicoPorQuestao.getOrDefault(
@@ -1093,7 +1093,7 @@ public class TesteService {
                 continue;
             }
 
-            if (Character.toUpperCase(respostasUsuario.get(indice)) == Character.toUpperCase(questao.getRespostaCorreta())) {
+            if (QuestaoUtil.respostaEstaCorreta(questao, respostasUsuario.get(indice))) {
                 continue;
             }
 

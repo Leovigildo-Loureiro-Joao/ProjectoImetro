@@ -774,7 +774,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         respostasUsuario.add(respostaSelecionada);
 
         Questao q = questoes.get(questaoAtual);
-        boolean acertou = respostaSelecionada == q.getRespostaCorreta();
+        char alternativaCorreta = QuestaoUtil.resolverAlternativaCorreta(q);
+        boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaSelecionada);
         reacao.add(
             new ReacaoTeste(
                 q,
@@ -790,14 +791,14 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             sequenciaAcertos++;
             sequenciaErros = 0;
             selected.setStyle("-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;");
-            mostrarFeedbackAdaptativo(true, tempoResposta);
+            mostrarFeedbackAdaptativo(true, tempoResposta, alternativaCorreta);
         } else {
             erros++;
             sequenciaErros++;
             sequenciaAcertos = 0;
             selected.setStyle("-fx-background-color: #ef4444; -fx-border-color: #ef4444; -fx-text-fill: white;");
-            mostrarFeedbackAdaptativo(false, tempoResposta);
-            destacarRespostaCorreta(q.getRespostaCorreta());
+            mostrarFeedbackAdaptativo(false, tempoResposta, alternativaCorreta);
+            destacarRespostaCorreta(alternativaCorreta);
         }
 
         ajustarNivelAdaptativo(acertou, tempoResposta);
@@ -807,7 +808,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         btnConfirmar.setDisable(true);
     }
 
-    private void mostrarFeedbackAdaptativo(boolean acertou, long tempoResposta) {
+    private void mostrarFeedbackAdaptativo(boolean acertou, long tempoResposta, char alternativaCorreta) {
         boolean foiRapido = tempoResposta <= resolverLimiteRapidoMs();
         boolean foiMuitoLento = tempoResposta >= resolverLimiteLentoMs();
         feedbackContainer.setVisible(true);
@@ -831,7 +832,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         } else {
             feedbackIcon.setText("X");
             feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/error.png")));
-            feedbackMessage.setText("Errada. A resposta correta e " + questoes.get(questaoAtual).getRespostaCorreta() + ".");
+            feedbackMessage.setText("Errada. A resposta correta e " + alternativaCorreta + ".");
             feedbackContainer.setStyle("-fx-background-color: #fef2f2; -fx-border-color: #ef4444;");
         }
 
