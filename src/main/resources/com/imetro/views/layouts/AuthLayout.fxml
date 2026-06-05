@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane stylesheets="@../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.AuthLayoutController">
+<StackPane stylesheets="@../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.AuthLayoutController">
    <children>
         <VBox alignment="CENTER" prefHeight="283.0" prefWidth="540.0" spacing="10.0" styleClass="auth-shell" StackPane.alignment="CENTER">
             <padding>

@@ -40,6 +40,23 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
         }
     }
 
+    public int deleteByAlunoId(UUID candidatoId) throws SQLException {
+        if (candidatoId == null) {
+            return 0;
+        }
+
+        String sql = """
+            delete from progresso_aluno_disciplina
+            where aluno_id = ?
+            """;
+
+        try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            return stmt.executeUpdate();
+        }
+    }
+
     public void atualizarProgresso(UUID candidatoId, UUID disciplinaId, float progresso) throws SQLException {
         String sql = "UPDATE progresso_aluno_disciplina SET progresso = ? WHERE aluno_id = ? AND disciplina_id = ?";
         try (var conn = JdbcBasicSqlRepository.openRequiredConnection();

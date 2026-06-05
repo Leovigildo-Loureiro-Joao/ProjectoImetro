@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 
 import com.imetro.App;
+import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
@@ -21,7 +22,7 @@ import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.DisciplinaService;
-import com.imetro.ui.components.CircleProgress;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController;
@@ -32,8 +33,10 @@ import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.ResultadoCelebracaoContext;
 import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
+import com.imetro.ui.support.PlaneamentoEstudoBannerSupport;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoGraficoSupport;
+import com.imetro.util.QuestaoExercicioSupport;
 import com.imetro.util.QuestaoUtil;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoCelebracaoSupport;
@@ -60,6 +63,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -69,6 +73,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 public class DiagnosticoCandidatoController implements DisposableController, DiagnosticoCoordinator.DiagnosticoHost {
+
+    private static final String SESSAO_PAUSA_CACHE_PREFIX = "diagnostico.pause.";
 
     @FXML
     private Label ResA;
@@ -98,31 +104,37 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private Label bloco1;
 
     @FXML
-    private Label bloco2;
+    private Label bloco21;
+
+    @FXML
+    private VBox exercicioContainer;
+
+    @FXML
+    private ImageView exercicioImageView;
 
     @FXML
     private JFXButton btnConfirmar;
 
     @FXML
-    private ListView<MenuEntry> sublist;
-
-    @FXML
-    private StackPane swcDiagnos;
-
-    @FXML
     private JFXButton btnProximo;
 
     @FXML
-    private StackPane circleProgressContainer;
+    private AnchorPane diagnosticoField;
 
     @FXML
     private VBox end;
 
     @FXML
-    private VBox estatisticasPane;
+    private VBox feedbackContainer;
 
     @FXML
-    private ImageView imgBloco2;
+    private Label feedbackIcon;
+
+    @FXML
+    private ImageView feedbackImg;
+
+    @FXML
+    private Label feedbackMessage;
 
     @FXML
     private Label loadingMessage;
@@ -134,22 +146,46 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private ProgressBar loadingProgress;
 
     @FXML
+    private StackPane modalPai;
+
+    @FXML
     private Label nPergunta;
+
+    @FXML
+    private Label nivelAtual12;
+
+    @FXML
+    private Label nivelAtual2;
+
+    @FXML
+    private Label nivelAtual21;
+
+    @FXML
+    private Label nivelAtual23;
+
+    @FXML
+    private Label nivelAtual231;
+
+    @FXML
+    private Label nivelAtual232;
 
     @FXML
     private Label nomeDisc;
 
     @FXML
-    private ProgressBar progressMediaGeral;
-
-    @FXML
-    private ProgressBar progressTaxaAcerto;
+    private ProgressBar questionProgressBar;
 
     @FXML
     private ScrollPane scroll;
 
     @FXML
     private VBox start;
+
+    @FXML
+    private ListView<MenuEntry> sublist;
+
+    @FXML
+    private StackPane swcDiagnos;
 
     @FXML
     private VBox tela;
@@ -178,12 +214,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     @FXML
     private JFXToggleNode toggleG;
 
-    @FXML
-    public StackPane modalPai;
-
-    @FXML
-    public AnchorPane diagnosticoField;
-
     private int h = 0;
     private int m = 0;
     private int s = 0;
@@ -192,7 +222,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private JFXToggleNode selected;
     private char corretaLetra;
     private Timeline time;
-    private CircleProgress circleProgress;
     private List<Questao> questoes = new ArrayList<>();
     private List<Questao> bancoQuestoes = new ArrayList<>();
     private int questaoAtual = 0;
@@ -210,8 +239,10 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private Separator apoioVisualSeparator;
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
+    private boolean sessaoAtiva;
     @FXML
     public void initialize() throws IOException {
         DiagnosticoCoordinator.setHost(this);
@@ -227,8 +258,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         sublist.getItems().setAll(
             new MenuEntry("mydiagnostic", "Meus diagnosticos", FontAwesomeSolid.BOLT),
-            new MenuEntry("timeline", "Linha do tempo", FontAwesomeSolid.CALENDAR_TIMES),
-            new MenuEntry("statics", "Estatisticas", FontAwesomeSolid.DATABASE)
+            new MenuEntry("plan", "Plano personalizado", FontAwesomeSolid.BOOK_OPEN),
+            new MenuEntry("timeline", "Historico", FontAwesomeSolid.CALENDAR_TIMES)
         );
 
         sublist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
@@ -238,11 +269,14 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         });
 
         sublist.getSelectionModel().selectFirst();
+        configurarListenerAlternativas();
 
         Platform.runLater(() -> {
-            circleProgress = new CircleProgress(35, 35, 35, 0);
-            circleProgressContainer.getChildren().add(circleProgress);
             configurarPainelApoioVisual();
+
+            if (restaurarSessaoPausada()) {
+                return;
+            }
 
             bancoQuestoes = diagnosticoService.carregarQuestoesReais();
             questoes = new ArrayList<>(bancoQuestoes);
@@ -251,8 +285,21 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             end.setVisible(false);
             start.setVisible(true);
             tela.setVisible(true);
+            loadingOverlay.setVisible(false);
             btnProximo.setDisable(true);
         });
+    }
+
+    private void iniciarCronometroDiagnostico(int horas, int minutos, int segundos) {
+        if (time != null) {
+            time.stop();
+        }
+
+        h = Math.max(0, horas);
+        m = Math.max(0, minutos);
+        s = Math.max(0, segundos);
+        tempo.setText(String.format("%02d:%02d:%02d", h, m, s));
+        TimerDiagnostic();
     }
 
     private void TimerDiagnostic() {
@@ -351,7 +398,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             fadeOut.setOnFinished(e -> {
                 loadingOverlay.setVisible(false);
                 tela.setVisible(true);
-                TimerDiagnostic();
+                sessaoAtiva = true;
+                iniciarCronometroDiagnostico(0, 0, 0);
                 carregarQuestao(0);
             });
             fadeOut.play();
@@ -374,8 +422,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         nPergunta.setText("Questao " + (index + 1) + " / " + totalQuestoes);
 
         bloco1.setText(q.getEnunciado());
-        bloco2.setText(montarBlocoSecundarioQuestao(q));
-
+        atualizarExercicioVisual(q);
         ResA.setText(q.getOpcaoA());
         ResB.setText(q.getOpcaoB());
         ResC.setText(q.getOpcaoC());
@@ -391,10 +438,22 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         selected = null;
 
         double progresso = totalQuestoes == 0 ? 0 : (double) (index + 1) / totalQuestoes;
-        circleProgress.setValue(progresso);
+        if (questionProgressBar != null) {
+            questionProgressBar.setProgress(progresso);
+        }
 
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
+    }
+
+    private void atualizarExercicioVisual(Questao questao) {
+        if (exercicioContainer == null || exercicioImageView == null) {
+            return;
+        }
+
+        Image imagem = QuestaoExercicioSupport.render(questao == null ? null : questao.getExercicio()).orElse(null);
+        exercicioImageView.setImage(imagem);
+        setNodeVisivel(exercicioContainer, imagem != null);
     }
 
     private String montarBlocoSecundarioQuestao(Questao questao) {
@@ -422,7 +481,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         textoQuestaoPane.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(textoQuestaoPane, Priority.ALWAYS);
         bloco1.setMaxWidth(Double.MAX_VALUE);
-        bloco2.setMaxWidth(Double.MAX_VALUE);
 
         planoCartesianoPane = new PlanoCartesianoPane();
         planoCartesianoContainer = new StackPane(planoCartesianoPane);
@@ -439,9 +497,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         apoioVisualBox.setVisible(false);
         apoioVisualBox.setManaged(false);
         HBox.setHgrow(apoioVisualBox, Priority.ALWAYS);
-        imgBloco2.setImage(null);
-        imgBloco2.setVisible(false);
-        imgBloco2.setManaged(false);
 
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
@@ -465,6 +520,18 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         }
         node.setVisible(visivel);
         node.setManaged(visivel);
+    }
+
+    private void configurarListenerAlternativas() {
+        alternativas.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle instanceof JFXToggleNode toggle) {
+                respostaSelecionada = toggle.getText() == null || toggle.getText().isBlank()
+                    ? '\0'
+                    : toggle.getText().charAt(0);
+            } else {
+                respostaSelecionada = '\0';
+            }
+        });
     }
 
     @FXML
@@ -536,6 +603,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     }
     int acertos = 0;
     private void finalizarDiagnostico() {
+        sessaoAtiva = false;
+        limparSessaoPausada();
         if (time != null) {
             time.stop();
         }
@@ -558,6 +627,10 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             questoes,
             respostasUsuario,
             tempo.getText()
+        );
+        PlaneamentoEstudoBannerSupport.aplicar(
+            diagnosticoField == null ? null : diagnosticoField.getScene(),
+            planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId())
         );
 
         ResultadoPayload payload = new ResultadoPayload(
@@ -733,6 +806,15 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     @Override
     public void startDiagnostico() {
+        if (!planeamentoService.podeIniciarDiagnostico(Authentication.getCurrentUserId())) {
+            mostrarAlerta(
+                "Planeamento em falta",
+                "Nao existe um planeamento ativo para continuar este diagnostico. Se quiseres recomecar do zero, limpa os diagnosticos primeiro."
+            );
+            return;
+        }
+
+        limparSessaoPausada();
         prepararDiagnostico();
         if (questoes == null || questoes.isEmpty()) {
             mostrarAlerta(
@@ -848,8 +930,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             }
         }
 
-
-
         return filtradas;
     }
 
@@ -894,6 +974,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     }
 
     private void resetarEstadoDiagnostico() {
+        sessaoAtiva = false;
         if (time != null) {
             time.stop();
             time = null;
@@ -918,9 +999,148 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         btnProximo.setDisable(true);
         alternativas.selectToggle(null);
 
-        if (circleProgress != null) {
-            circleProgress.setValue(0);
+        if (questionProgressBar != null) {
+            questionProgressBar.setProgress(0);
         }
+    }
+
+    private void limparSessaoPausada() {
+        String chave = resolverChaveSessaoPausa();
+        if (chave != null) {
+            CacheService.remove(chave);
+        }
+    }
+
+    private void salvarSessaoPausada() {
+        String chave = resolverChaveSessaoPausa();
+        if (chave == null || questoes == null || questoes.isEmpty()) {
+            return;
+        }
+
+        CacheService.put(
+            chave,
+            new SessaoDiagnosticoPausada(
+                new ArrayList<>(questoes),
+                questaoAtual,
+                new ArrayList<>(respostasUsuario),
+                h,
+                m,
+                s,
+                respostaSelecionada,
+                System.currentTimeMillis()
+            )
+        );
+    }
+
+    private boolean restaurarSessaoPausada() {
+        String chave = resolverChaveSessaoPausa();
+        if (chave == null) {
+            return false;
+        }
+
+        Object estadoBruto = CacheService.get(chave);
+        if (!(estadoBruto instanceof SessaoDiagnosticoPausada estado)) {
+            return false;
+        }
+
+        CacheService.remove(chave);
+        if (estado.questoes() == null || estado.questoes().isEmpty()) {
+            return false;
+        }
+
+        questoes = new ArrayList<>(estado.questoes());
+        totalQuestoes = questoes.size();
+        questaoAtual = Math.max(0, Math.min(estado.questaoAtual(), Math.max(0, totalQuestoes - 1)));
+        respostasUsuario.clear();
+        respostasUsuario.addAll(estado.respostasUsuario());
+
+        h = Math.max(0, estado.h());
+        m = Math.max(0, estado.m());
+        s = Math.max(0, estado.s());
+        char respostaSalva = estado.respostaSelecionada();
+        respostaSelecionada = respostaSalva;
+        selected = null;
+
+        end.setVisible(true);
+        start.setVisible(false);
+        tela.setVisible(true);
+        loadingOverlay.setVisible(false);
+
+        if (questionProgressBar != null) {
+            questionProgressBar.setProgress(totalQuestoes == 0 ? 0 : (double) (questaoAtual + 1) / totalQuestoes);
+        }
+
+        if (!questoes.isEmpty()) {
+            atualizarConteudoQuestao(questaoAtual);
+            restaurarRespostaQuestaoAtual(respostaSalva);
+        }
+
+        sessaoAtiva = true;
+        iniciarCronometroDiagnostico(h, m, s);
+        return true;
+    }
+
+    private void restaurarRespostaQuestaoAtual(char respostaSalva) {
+        if (questaoAtual < 0 || questaoAtual >= questoes.size()) {
+            return;
+        }
+
+        char respostaRestaurada = questaoAtual < respostasUsuario.size()
+            ? respostasUsuario.get(questaoAtual)
+            : respostaSalva;
+
+        if (respostaRestaurada == '\0') {
+            btnConfirmar.setDisable(false);
+            btnProximo.setDisable(true);
+            return;
+        }
+
+        JFXToggleNode toggle = getToggleByLetra(respostaRestaurada);
+        if (toggle != null) {
+            alternativas.selectToggle(toggle);
+        }
+
+        selected = toggle;
+        respostaSelecionada = respostaRestaurada;
+
+        if (questaoAtual < respostasUsuario.size()) {
+            Questao q = questoes.get(questaoAtual);
+            char alternativaCorreta = QuestaoUtil.resolverAlternativaCorreta(q);
+            boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaRestaurada);
+
+            limparEstilosAlternativas();
+            if (toggle != null) {
+                toggle.getStyleClass().add(acertou ? "sucess" : "error");
+            }
+            if (!acertou) {
+                destacarRespostaCorreta(alternativaCorreta);
+            }
+
+            btnConfirmar.setDisable(true);
+            btnProximo.setDisable(false);
+            return;
+        }
+
+        btnConfirmar.setDisable(false);
+        btnProximo.setDisable(true);
+    }
+
+    private String resolverChaveSessaoPausa() {
+        return Authentication.getCurrentUserId() == null
+            ? null
+            : SESSAO_PAUSA_CACHE_PREFIX + Authentication.getCurrentUserId();
+    }
+
+    private record SessaoDiagnosticoPausada(
+        List<Questao> questoes,
+        int questaoAtual,
+        List<Character> respostasUsuario,
+        int h,
+        int m,
+        int s,
+        char respostaSelecionada,
+        long pausadoEm
+    ) {
     }
 
     private void limparEstilosAlternativas() {
@@ -930,16 +1150,22 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     }
 
     private void setDiagnosticMode(boolean iniciar) {
+        sessaoAtiva = iniciar;
         end.setVisible(iniciar);
         start.setVisible(!iniciar);
         if (iniciar) {
             iniciarLoadingInicial();
+        } else {
+            loadingOverlay.setVisible(false);
         }
     }
 
     @Override
     public void dispose() {
         DiagnosticoCoordinator.clearHost(this);
+        if (sessaoAtiva) {
+            salvarSessaoPausada();
+        }
         if (time != null) {
             time.stop();
             time = null;
@@ -953,7 +1179,9 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private void navigate(String key) {
         switch (key) {
             case "mydiagnostic" -> App.swapContent(swcDiagnos, "views/components/diagnostico/DiagnosticoList");
-            case "statics" -> App.swapContent(swcDiagnos, "views/components/diagnostico/EstatisticasDiagnostic");
+
+            case "plan" -> App.swapContent(swcDiagnos, "views/components/diagnostico/PlanoPersonalizado");
+
             case "timeline" -> App.swapContent(swcDiagnos, "views/components/diagnostico/TimelineDiagnostic");
             default -> {
             }
@@ -1000,5 +1228,25 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    @FXML
+    public void desisitir(ActionEvent event) {
+        limparSessaoPausada();
+        resetarEstadoDiagnostico();
+        setDiagnosticMode(false);
+        loadingOverlay.setVisible(false);
+    }
+
+    @FXML
+    public void pausar(ActionEvent event) {
+        if (!sessaoAtiva) {
+            return;
+        }
+
+        salvarSessaoPausada();
+        resetarEstadoDiagnostico();
+        setDiagnosticMode(false);
+        loadingOverlay.setVisible(false);
     }
 }

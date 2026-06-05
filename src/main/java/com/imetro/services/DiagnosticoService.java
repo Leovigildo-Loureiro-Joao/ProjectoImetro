@@ -23,12 +23,14 @@ import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
 import com.imetro.persistence.repository.ProgressaoRigorRepository;
+import com.imetro.persistence.repository.ProgressoALunoDisciplinaRepository;
 import com.imetro.persistence.repository.RecomendacaoRepository;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.CalculoStats;
 import com.imetro.util.ConversorTempo;
 import com.imetro.util.QuestaoUtil;
+import com.imetro.services.PlaneamentoEstudoService;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -263,6 +265,61 @@ public class DiagnosticoService {
         } catch (Exception e) {
             System.err.println("Erro ao verificar historico do diagnostico: " + e.getMessage());
             return false;
+        }
+    }
+
+    public void reiniciarDiagnosticos(UUID candidatoId) {
+        if (candidatoId == null) {
+            return;
+        }
+
+        try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                apagarDadosDiagnostico(conn, candidatoId);
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao reiniciar diagnosticos do candidato: " + e.getMessage());
+        }
+    }
+
+    private void apagarDadosDiagnostico(Connection conn, UUID candidatoId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement("""
+            delete from progressao_rigor
+            where aluno_id = ?
+            """)) {
+            stmt.setObject(1, candidatoId);
+            stmt.executeUpdate();
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement("""
+            delete from progresso_aluno_disciplina
+            where aluno_id = ?
+            """)) {
+            stmt.setObject(1, candidatoId);
+            stmt.executeUpdate();
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement("""
+            delete from planeamentos_estudo
+            where candidato_id = ?
+            """)) {
+            stmt.setObject(1, candidatoId);
+            stmt.executeUpdate();
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement("""
+            delete from diagnosticos
+            where candidato_id = ?
+            """)) {
+            stmt.setObject(1, candidatoId);
+            stmt.executeUpdate();
         }
     }
 
@@ -561,6 +618,13 @@ public class DiagnosticoService {
             }
         } catch (Exception e) {
             System.err.println("Erro ao registrar diagnostico concluido: " + e.getMessage());
+            return;
+        }
+
+        try {
+            new PlaneamentoEstudoService().gerarResumo(candidatoId);
+        } catch (Exception e) {
+            System.err.println("Erro ao gerar planeamento apos diagnostico: " + e.getMessage());
         }
     }
 
@@ -967,6 +1031,7 @@ public class DiagnosticoService {
         questao.setSubtopico( QuestaoUtil.safeText(row.get("subtopico"), questao.getTopico()));
         questao.setTopicoPrincipal( QuestaoUtil.safeText(row.get("topico_principal"), questao.getTopico()));
         questao.setEnunciado( QuestaoUtil.safeText(row.get("questao"), ""));
+        questao.setExercicio( QuestaoUtil.safeText(row.get("exercicio"), null));
         questao.setBloco2(null);
 
         List<String> respostasOriginais = parseJsonStringArray(row.get("respostas"));

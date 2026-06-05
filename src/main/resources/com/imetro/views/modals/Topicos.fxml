@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="modal" alignment="TOP_CENTER" maxHeight="538.0" maxWidth="450.0" minWidth="450.0" prefHeight="538.0" prefWidth="450.0" spacing="10.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.TopicModalController">
+<VBox fx:id="modal" alignment="TOP_CENTER" maxHeight="538.0" maxWidth="450.0" minWidth="450.0" prefHeight="538.0" prefWidth="450.0" spacing="10.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.TopicModalController">
    <children>
       <HBox>
          <children>

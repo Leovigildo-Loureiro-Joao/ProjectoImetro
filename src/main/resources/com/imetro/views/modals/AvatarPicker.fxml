@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox fx:id="modal" maxHeight="520.0" maxWidth="680.0" minHeight="520.0" minWidth="680.0" prefHeight="520.0" prefWidth="680.0" spacing="18.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.AvatarPickerModalController">
+<VBox fx:id="modal" maxHeight="520.0" maxWidth="680.0" minHeight="520.0" minWidth="680.0" prefHeight="520.0" prefWidth="680.0" spacing="18.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.AvatarPickerModalController">
    <children>
       <HBox alignment="CENTER_LEFT" spacing="12.0">
          <children>

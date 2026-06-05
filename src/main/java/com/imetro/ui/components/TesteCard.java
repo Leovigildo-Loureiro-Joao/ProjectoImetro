@@ -87,7 +87,7 @@ public class TesteCard extends VBox {
         indicadores.setPadding(new Insets(14));
         indicadores.setMaxWidth(Double.MAX_VALUE);
 
-        JFXButton buttonPadrao = new JFXButton("Entrar com foco padrao");
+        JFXButton buttonPadrao = new JFXButton("Seguir plano ativo");
         buttonPadrao.getStyleClass().add("btn-primary-two");
         buttonPadrao.setMaxWidth(Double.MAX_VALUE);
         buttonPadrao.setPrefHeight(38);
@@ -103,7 +103,13 @@ public class TesteCard extends VBox {
         Label actionTitle = new Label("Iniciar teste");
         actionTitle.getStyleClass().add("teste-card-section-title");
 
-        VBox acoes = new VBox(10, actionTitle, buttonPadrao, buttonInteligente);
+        Label actionNote = new Label(
+            "A rota padrao segue o teu plano semanal e costuma ser a escolha mais produtiva para ganhar consistencia."
+        );
+        actionNote.getStyleClass().add("teste-card-action-note");
+        actionNote.setWrapText(true);
+
+        VBox acoes = new VBox(10, actionTitle, actionNote, buttonPadrao, buttonInteligente);
         acoes.getStyleClass().add("teste-card-surface");
         acoes.setPadding(new Insets(14));
         acoes.setPrefWidth(220);

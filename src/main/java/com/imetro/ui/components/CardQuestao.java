@@ -53,7 +53,7 @@ public class CardQuestao extends VBox{
             "Resposta correta: " + questao.getRespostaCorreta() + " - " + questao.getTextoRespostaCorreta()
         );
         respostaCorreta.getStyleClass().add("h3-thin");
-        respostaCorreta.setStyle("-fx-text-fill: #2563eb;");
+        respostaCorreta.setStyle("-fx-text-fill: #202e3d;");
         respostaCorreta.setWrapText(true);
 
         this.getChildren().addAll(status, titulo, enunciado, bloco2, respostaUsuario, respostaCorreta);

@@ -8,7 +8,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -24,7 +23,7 @@
    <children>
       <VBox alignment="TOP_LEFT" prefHeight="833.0" prefWidth="998.0" spacing="15.0" styleClass="placeholder-card" AnchorPane.bottomAnchor="-76.0" AnchorPane.leftAnchor="-2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="-2.0">
          <padding>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
          </padding>
 
          <!-- CABECALHO -->
@@ -33,7 +32,7 @@
                <VBox spacing="8.0">
                   <children>
                      <Label styleClass="big-h1" text="Teste Adaptativo" />
-                     <Label styleClass="muted" text="A dificuldade se ajusta ao seu desempenho em tempo real" />
+                     <Label fx:id="planHintLabel" prefHeight="15.0" prefWidth="412.0" styleClass="profile-feedback profile-feedback-info" text="Plano ativo ate --" wrapText="true" />
                   </children>
                </VBox>
             </children>
@@ -43,7 +42,7 @@
             <children>
 
                <!-- TELA DE SELECAO (START) -->
-               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <Label styleClass="h3-thin" text="Selecione uma disciplina para iniciar ou configurar o teste adaptativo" />
                      <VBox fx:id="trilhoAdaptacaoCard" minHeight="0.0" prefHeight="0.0" prefWidth="956.0" spacing="14.0" styleClass="adaptation-trail-card" visible="false">
@@ -128,56 +127,33 @@
                            <VBox fx:id="tela" prefWidth="956.0" spacing="15.0">
                               <children>
                                  <!-- HEADER DA QUESTAO -->
-                                 <HBox alignment="CENTER_RIGHT" maxHeight="97.0" minHeight="97.0" prefHeight="97.0" prefWidth="778.0" spacing="20.0" translateX="10.0" translateY="-80.0">
+                                 <HBox alignment="CENTER_RIGHT" maxHeight="97.0" minHeight="53.0" prefHeight="53.0" prefWidth="899.0" spacing="20.0">
                                     <children>
-                                       <HBox spacing="20.0">
+                                       <VBox prefHeight="75.0" prefWidth="711.0" spacing="5.0" HBox.hgrow="ALWAYS">
                                           <children>
-                                             <StackPane fx:id="circleProgressContainer" prefHeight="70.0" prefWidth="70.0" />
-                                             <VBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <VBox prefHeight="73.0" prefWidth="611.0">
                                                 <children>
-                                                   <Label fx:id="nomeDisc" styleClass="h3-thin" text="MATEMATICA" />
-                                                   <Label fx:id="nPergunta" styleClass="h1" text="Questao 1" />
+                                                   <Label fx:id="nomeDisc" styleClass="h3-bold" text="MATEMATICA" />
+                                                   <HBox alignment="CENTER_LEFT" spacing="40.0">
+                                                      <children>
+                                                         <Label fx:id="nPergunta" styleClass="h3-thin" text="Questao 1" />
+                                                      </children>
+                                                   </HBox>
                                                 </children>
                                              </VBox>
-                                          </children>
-                                       </HBox>
-
-                                       <VBox alignment="CENTER" spacing="5.0">
-                                          <children>
-                                             <HBox alignment="CENTER" spacing="5.0" />
+                                             <ProgressBar fx:id="questionProgressBar" maxWidth="1.7976931348623157E308" minHeight="14.0" prefHeight="14.0" prefWidth="691.0" progress="0.0" VBox.vgrow="ALWAYS" />
+                                             <Label fx:id="bloco2" prefHeight="21.0" prefWidth="500.0" styleClass="h3-thin" text="Sem subtopicos" wrapText="true">
+                                                <font>
+                                                   <Font size="10.0" />
+                                                </font>
+                                             </Label>
                                           </children>
                                        </VBox>
-                                       <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <HBox alignment="CENTER_LEFT" prefHeight="65.0" prefWidth="401.0" spacing="10.0">
                                           <children>
-                                             <HBox alignment="CENTER_LEFT" maxHeight="38.0" minHeight="38.0" prefHeight="38.0" prefWidth="127.0" spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 45; -fx-border-color: -color-primary; -fx-border-radius: 45;">
+                                             <HBox alignment="CENTER_LEFT" maxHeight="38.0" minHeight="25.0" prefHeight="38.0" prefWidth="97.0" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 45; -fx-border-color: -color-muted; -fx-border-radius: 45;" styleClass="card-blur">
                                                 <children>
-                                                   <ImageView fitHeight="30.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                                                      <image>
-                                                         <Image url="@../../../assets/imgs/difficult_decision_64px.png" />
-                                                      </image>
-                                                   </ImageView>
-                                                   <Label fx:id="dificuldadeAtual" styleClass="h3-thin-big" text="**" />
-                                                </children>
-                                                <padding>
-                                                   <Insets left="10.0" right="10.0" />
-                                                </padding>
-                                             </HBox>
-                                             <HBox alignment="CENTER_LEFT" maxHeight="38.0" minHeight="38.0" prefHeight="38.0" prefWidth="135.0" spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 45; -fx-border-color: #ff6138; -fx-border-radius: 45;">
-                                                <children>
-                                                   <ImageView fitHeight="30.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                                                      <image>
-                                                         <Image url="@../../../assets/imgs/step_60px.png" />
-                                                      </image>
-                                                   </ImageView>
-                                                   <Label fx:id="nivelAtual" styleClass="h3-thin-big" text="MEDIO" />
-                                                </children>
-                                                <padding>
-                                                   <Insets left="10.0" right="10.0" />
-                                                </padding>
-                                             </HBox>
-                                             <HBox alignment="CENTER_LEFT" maxHeight="38.0" minHeight="38.0" prefHeight="38.0" prefWidth="119.0" spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 45; -fx-border-color: -color-success; -fx-border-radius: 45;">
-                                                <children>
-                                                   <ImageView fitHeight="30.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
+                                                   <ImageView fitHeight="26.0" fitWidth="23.0" pickOnBounds="true" preserveRatio="true">
                                                       <image>
                                                          <Image url="@../../../assets/imgs/time_100px.png" />
                                                       </image>
@@ -185,202 +161,257 @@
                                                    <Label fx:id="tempo" styleClass="h3-thin-big" text="00:00" />
                                                 </children>
                                                 <padding>
-                                                   <Insets left="10.0" right="10.0" />
+                                                   <Insets left="10.0" right="5.0" />
                                                 </padding>
                                              </HBox>
+                                             <JFXButton onAction="#desisitir" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary-warm" text="Desistir" />
+                                             <JFXButton onAction="#pausar" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary" text="Pausar" />
                                           </children>
                                        </HBox>
                                     </children>
+                                    <VBox.margin>
+                                       <Insets bottom="80.0" />
+                                    </VBox.margin>
                                  </HBox>
 
                                  <!-- CORPO DA QUESTAO -->
-                                 <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="555.0" prefWidth="956.0" styleClass="card-blur" translateY="-80.0">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="673.0" prefWidth="956.0" translateY="-80.0" VBox.vgrow="ALWAYS">
                                     <content>
-                                       <VBox prefHeight="534.0" prefWidth="952.0" spacing="20.0">
-                                          <padding>
-                                             <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                                          </padding>
+                                       <StackPane prefHeight="182.0" prefWidth="922.0">
                                           <children>
-                                             <StackPane prefHeight="182.0" prefWidth="922.0">
+                                             <HBox prefHeight="525.0" prefWidth="954.0" spacing="20.0">
                                                 <children>
-                                                   <HBox prefHeight="180.0" prefWidth="922.0">
+                                                   <VBox alignment="CENTER_LEFT" prefHeight="538.0" prefWidth="652.0" spacing="10.0" styleClass="card-blur" HBox.hgrow="ALWAYS">
                                                       <children>
-                                                         <VBox alignment="CENTER_LEFT" prefHeight="150.0" prefWidth="478.0" spacing="10.0">
+                                                         <Label fx:id="bloco1" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="638.0" style="-fx-font-size: 14;" text="Aqui vai o texto do enunciado da questão." wrapText="true" VBox.vgrow="ALWAYS">
+                                                            <styleClass>
+                                                               <String fx:value="h3-thin" />
+                                                               <String fx:value="diagnostico-question" />
+                                                            </styleClass>
+                                                         </Label>
+                                                         <VBox fx:id="exercicioContainer" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="0.0" styleClass="sub-card" visible="false" managed="false">
+                                                            <padding>
+                                                               <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                                            </padding>
                                                             <children>
-                                                               <Label fx:id="bloco1" alignment="TOP_LEFT" prefHeight="72.0" prefWidth="439.0" style="-fx-font-size: 14;" text="Aqui vai o texto do enunciado da questão." wrapText="true">
-                                                                  <styleClass>
-                                                                     <String fx:value="h3-thin" />
-                                                                     <String fx:value="diagnostico-question" />
-                                                                  </styleClass>
-                                                               </Label>
-                                                               <Label fx:id="bloco2" prefHeight="8.0" prefWidth="0.0" styleClass="h3-thin" text="" wrapText="true" />
-                  
-                                                               <Separator />
-                  
+                                                               <ImageView fx:id="exercicioImageView" fitWidth="610.0" pickOnBounds="true" preserveRatio="true" smooth="true" />
+                                                            </children>
+                                                         </VBox>
+
                                                                <!-- ALTERNATIVAS -->
-                                                               <VBox>
+                                                         <VBox prefHeight="410.0" prefWidth="530.0" VBox.vgrow="ALWAYS">
+                                                            <children>
+                                                               <FlowPane columnHalignment="CENTER" hgap="10.0" maxHeight="1.7976931348623157E308" prefWidth="638.0" vgap="10.0">
                                                                   <children>
-                                                                     <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="15.0" prefWidth="440.0" styleClass="h3-thin" text="Selecione uma alternativa:" />
-                                                                     <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="10.0" vgap="10.0">
-                                                                        <children>
-                                                                           <JFXToggleNode fx:id="toggleA" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" minHeight="45.0" minWidth="350.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="45.0" prefWidth="422.0" styleClass="toggle-letter" text="A">
-                                                                              <toggleGroup>
-                                                                                 <ToggleGroup fx:id="alternativas" />
-                                                                              </toggleGroup>
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResA" maxWidth="377.0" minWidth="294.0" prefHeight="36.0" prefWidth="377.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                    <font>
-                                                                                       <Font size="11.0" />
-                                                                                    </font>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                           <JFXToggleNode fx:id="toggleB" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" prefWidth="422.0" styleClass="toggle-letter" text="B" toggleGroup="$alternativas">
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResB" maxWidth="376.0" minWidth="294.0" prefHeight="36.0" prefWidth="376.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                    <font>
-                                                                                       <Font size="11.0" />
-                                                                                    </font>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                           <JFXToggleNode fx:id="toggleC" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" prefWidth="422.0" styleClass="toggle-letter" text="C" toggleGroup="$alternativas">
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResC" maxWidth="375.0" minWidth="294.0" prefHeight="36.0" prefWidth="375.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                    <font>
-                                                                                       <Font size="11.0" />
-                                                                                    </font>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                           <JFXToggleNode fx:id="toggleD" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="D" toggleGroup="$alternativas">
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResD" maxWidth="377.0" minWidth="294.0" prefHeight="36.0" prefWidth="377.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                    <font>
-                                                                                       <Font size="11.0" />
-                                                                                    </font>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                           <JFXToggleNode fx:id="toggleE" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="E" toggleGroup="$alternativas">
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResE" maxWidth="376.0" minWidth="294.0" prefHeight="36.0" prefWidth="376.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                    <font>
-                                                                                       <Font size="11.0" />
-                                                                                    </font>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                           <JFXToggleNode fx:id="toggleF" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="F" toggleGroup="$alternativas">
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResF" maxWidth="377.0" minWidth="294.0" prefHeight="36.0" prefWidth="377.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                    <font>
-                                                                                       <Font size="11.0" />
-                                                                                    </font>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                           <JFXToggleNode fx:id="toggleG" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="300.0" minHeight="45.0" minWidth="422.0" styleClass="toggle-letter" text="G" toggleGroup="$alternativas">
-                                                                              <padding>
-                                                                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                                              </padding>
-                                                                              <graphic>
-                                                                                 <Label fx:id="ResG" maxWidth="378.0" minWidth="294.0" prefHeight="36.0" prefWidth="378.0" styleClass="radio-label" translateX="10.0" wrapText="true">
-                                                                                    <padding>
-                                                                                       <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
-                                                                                    </padding>
-                                                                                 </Label>
-                                                                              </graphic>
-                                                                           </JFXToggleNode>
-                                                                        </children>
+                                                                     <JFXToggleNode fx:id="toggleA" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="45.0" styleClass="toggle-letter" text="A">
+                                                                        <toggleGroup>
+                                                                           <ToggleGroup fx:id="alternativas" />
+                                                                        </toggleGroup>
                                                                         <padding>
-                                                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
                                                                         </padding>
-                                                                     </FlowPane>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResA" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+                                                                              </padding>
+                                                                              <font>
+                                                                                 <Font size="11.0" />
+                                                                              </font>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
+                                                                     <JFXToggleNode fx:id="toggleB" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" prefHeight="45.0" styleClass="toggle-letter" text="B" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResB" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+                                                                              </padding>
+                                                                              <font>
+                                                                                 <Font size="11.0" />
+                                                                              </font>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
+                                                                     <JFXToggleNode fx:id="toggleC" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" prefHeight="45.0" styleClass="toggle-letter" text="C" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResC" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+                                                                              </padding>
+                                                                              <font>
+                                                                                 <Font size="11.0" />
+                                                                              </font>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
+                                                                     <JFXToggleNode fx:id="toggleD" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" prefHeight="45.0" styleClass="toggle-letter" text="D" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResD" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+                                                                              </padding>
+                                                                              <font>
+                                                                                 <Font size="11.0" />
+                                                                              </font>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
+                                                                     <JFXToggleNode fx:id="toggleE" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" prefHeight="45.0" styleClass="toggle-letter" text="E" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResE" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="10.0" top="10.0" />
+                                                                              </padding>
+                                                                              <font>
+                                                                                 <Font size="11.0" />
+                                                                              </font>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
+                                                                     <JFXToggleNode fx:id="toggleF" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" prefHeight="45.0" styleClass="toggle-letter" text="F" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResF" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+                                                                              </padding>
+                                                                              <font>
+                                                                                 <Font size="11.0" />
+                                                                              </font>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
+                                                                     <JFXToggleNode fx:id="toggleG" alignment="CENTER_LEFT" contentDisplay="RIGHT" maxHeight="45.0" maxWidth="1.7976931348623157E308" minHeight="45.0" minWidth="100.0" prefHeight="45.0" styleClass="toggle-letter" text="G" toggleGroup="$alternativas">
+                                                                        <padding>
+                                                                           <Insets bottom="10.0" left="10.0" right="25.0" top="10.0" />
+                                                                        </padding>
+                                                                        <graphic>
+                                                                           <Label fx:id="ResG" maxWidth="1.7976931348623157E308" prefHeight="36.0" styleClass="radio-label" translateX="10.0" wrapText="true">
+                                                                              <padding>
+                                                                                 <Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+                                                                              </padding>
+                                                                           </Label>
+                                                                        </graphic>
+                                                                     </JFXToggleNode>
                                                                   </children>
-                                                               </VBox>
+                                                                  <padding>
+                                                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                  </padding>
+                                                               </FlowPane>
+                              
+                                                               <!-- BOTOES -->
+                                                               <HBox alignment="CENTER" prefHeight="73.0" prefWidth="956.0" spacing="20.0">
+                                                                  <children>
+                                                                     <JFXButton fx:id="btnConfirmar" maxWidth="1.7976931348623157E308" onAction="#confirmarResposta" prefHeight="40.0" prefWidth="160.0" styleClass="btn-secondary" text="Confirmar" HBox.hgrow="ALWAYS" />
+                                                                     <JFXButton fx:id="btnProximo" disable="true" maxWidth="1.7976931348623157E308" onAction="#proximaQuestao" prefHeight="40.0" prefWidth="160.0" styleClass="btn-primary" text="Proxima Questao" HBox.hgrow="ALWAYS" />
+                                                                  </children>
+                                                               </HBox>
+                                                            </children>
+                                                         </VBox>
+                                                      </children>
+                                                      <padding>
+                                                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                      </padding>
+                                                   </VBox>
+                                                   <VBox maxWidth="274.0" spacing="20.0" HBox.hgrow="ALWAYS">
+                                                      <children>
+                                                         <VBox prefHeight="232.0" prefWidth="274.0" spacing="20.0" styleClass="card-blur">
+                                                            <children>
+                                                               <Label fx:id="nivelAtual12" styleClass="mid-h2" text="Seu desempenho" />
+                                                               <HBox prefHeight="18.0" prefWidth="232.0">
+                                                                  <children>
+                                                                     <Label fx:id="nivelAtual2" styleClass="h3-bold" text="Precisão" />
+                                                                     <Region prefHeight="18.0" prefWidth="143.0" />
+                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="50%" />
+                                                                  </children>
+                                                               </HBox>
+                                                               <HBox prefHeight="18.0" prefWidth="232.0">
+                                                                  <children>
+                                                                     <Label fx:id="nivelAtual23" styleClass="h3-bold" text="Consistencia" />
+                                                                     <Region prefHeight="18.0" prefWidth="116.0" />
+                                                                     <Label fx:id="nivelAtual231" styleClass="h3-thin-big" text="50%" />
+                                                                  </children>
+                                                               </HBox>
+                                                               <HBox prefHeight="18.0" prefWidth="232.0">
+                                                                  <children>
+                                                                     <Label fx:id="nivelAtual23" styleClass="h3-bold" text="Velocidade" />
+                                                                     <Region prefHeight="18.0" prefWidth="130.0" />
+                                                                     <Label fx:id="nivelAtual232" styleClass="h3-thin-big" text="50%" />
+                                                                  </children>
+                                                               </HBox>
                                                             </children>
                                                             <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" />
+                                                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                                                             </padding>
                                                          </VBox>
-                                                         <Separator orientation="VERTICAL" />
-                                                         <ImageView fx:id="imgBloco2" fitHeight="150.0" preserveRatio="true" visible="false" />
-                                                         <Region prefHeight="150.0" prefWidth="25.0" />
-                                                         <VBox alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" prefHeight="150.0" prefWidth="478.0" spacing="10.0">
+                                                         <VBox prefHeight="110.0" prefWidth="274.0" spacing="20.0" styleClass="card-blur">
+                                                            <children>
+                                                               <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                                                  <children>
+                                                                     <Label fx:id="nivelAtual1" styleClass="mid-h2" text="Dificuldade actual" />
+                                                                  </children>
+                                                               </HBox>
+                                                               <Label fx:id="dificuldadeAtual" styleClass="h3-thin-big" text="**" />
+                                                            </children>
                                                             <padding>
-                                                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                                            </padding>
+                                                         </VBox>
+                                                         <VBox prefHeight="110.0" prefWidth="274.0" spacing="20.0" styleClass="card-blur">
+                                                            <children>
+                                                               <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                                                  <children>
+                                                                     <Label fx:id="nivelAtual11" styleClass="mid-h2" text="Nivel Actual" />
+                                                                  </children>
+                                                               </HBox>
+                                                               <Label fx:id="nivelAtual" styleClass="h3-thin-big" text="MEDIO" />
+                                                            </children>
+                                                            <padding>
+                                                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                                                             </padding>
                                                          </VBox>
                                                       </children>
-                                                   </HBox>
-
-                                                   <!-- FEEDBACK ADAPTATIVO -->
-                                                   <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card">
-                                                      <padding>
-                                                         <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
-                                                      </padding>
-                                                      <children>
-                                                         <Label fx:id="feedbackIcon" styleClass="h1" text="OK" visible="false" />
-                                                         <ImageView fx:id="feedbackImg" fitHeight="91.0" fitWidth="89.0" pickOnBounds="true" preserveRatio="true">
-                                                            <image>
-                                                               <Image url="@../../../assets/imgs/corret.png" />
-                                                            </image>
-                                                         </ImageView>
-                                                         <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h2-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
-                                                      </children>
+                                                      <HBox.margin>
+                                                         <Insets />
+                                                      </HBox.margin>
                                                    </VBox>
                                                 </children>
-                                             </StackPane>
+                                             </HBox>
 
+                                                   <!-- FEEDBACK ADAPTATIVO -->
+                                             <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card" visible="false">
+                                                <padding>
+                                                   <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                                </padding>
+                                                <children>
+                                                   <Label fx:id="feedbackIcon" styleClass="h1" text="OK" visible="false" />
+                                                   <ImageView fx:id="feedbackImg" fitHeight="91.0" fitWidth="89.0" pickOnBounds="true" preserveRatio="true">
+                                                      <image>
+                                                         <Image url="@../../../assets/imgs/corret.png" />
+                                                      </image>
+                                                   </ImageView>
+                                                   <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h2-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
+                                                </children>
+                                             </VBox>
                                           </children>
-                                       </VBox>
+                                       </StackPane>
                                     </content>
                                  </ScrollPane>
-
-                                 <!-- BOTOES -->
-                                 <HBox alignment="CENTER" prefHeight="73.0" prefWidth="956.0" spacing="20.0" translateY="-70.0">
-                                    <children>
-                                       <JFXButton fx:id="btnConfirmar" onAction="#confirmarResposta" prefHeight="40.0" prefWidth="160.0" styleClass="btn-secondary" text="Confirmar" />
-                                       <JFXButton fx:id="btnProximo" disable="true" onAction="#proximaQuestao" prefHeight="40.0" prefWidth="160.0" styleClass="btn-primary" text="Proxima Questao" />
-                                    </children>
-                                 </HBox>
                               </children>
                            </VBox>
                         </children>

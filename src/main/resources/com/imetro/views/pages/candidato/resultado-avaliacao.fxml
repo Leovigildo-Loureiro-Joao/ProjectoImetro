@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="18.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController">
+<VBox spacing="18.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController">
    <styleClass>
       <String fx:value="page" />
       <String fx:value="placeholder-card" />

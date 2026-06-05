@@ -1,7 +1,7 @@
 @import "global.css";
 
 .auth-brand {
-  -fx-background-color: linear-gradient(to bottom right, rgba(29, 78, 216, 0.10), rgba(245, 158, 11, 0.10));
+  -fx-background-color: linear-gradient(to bottom right, rgba(32, 46, 61, 0.12), rgba(71, 85, 105, 0.08));
   -fx-border-color: -color-border;
   -fx-border-width: 0 1 0 0;
   -fx-min-width: 420px;

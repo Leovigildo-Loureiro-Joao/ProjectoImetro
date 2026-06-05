@@ -9,104 +9,126 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
 
-<HBox prefHeight="369.0" prefWidth="886.0" spacing="32.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoStats">
+<HBox prefHeight="582.0" prefWidth="981.0" spacing="32.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoStats">
    <children>
-      <VBox prefHeight="207.0" prefWidth="886.0" spacing="12.0" HBox.hgrow="ALWAYS">
+      <VBox prefHeight="902.0" prefWidth="981.0" spacing="12.0" HBox.hgrow="ALWAYS">
          <children>
-            <Label fx:id="disciplinaValue" alignment="CENTER" contentDisplay="CENTER" prefHeight="24.0" prefWidth="893.0" styleClass="big-h1" text="-" />
-            <VBox spacing="10.0" />
-            <VBox spacing="10.0" />
-            <FlowPane alignment="CENTER" hgap="20.0" prefHeight="295.0" prefWidth="499.0" vgap="20.0">
+            <VBox alignment="CENTER">
                <children>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="123.0" spacing="5.0" style="-fx-border-width: 1;" styleClass="card">
+                  <Label fx:id="disciplinaValue" alignment="CENTER" contentDisplay="CENTER" prefHeight="34.0" prefWidth="163.0" styleClass="big-h1" text="Matematica" />
+                  <VBox alignment="CENTER" prefHeight="18.0" prefWidth="961.0" spacing="5.0">
                      <children>
-                        <Label styleClass="h3-thin-big" text="Erros" />
-                        <Label fx:id="errosValue" styleClass="h1" text="0" />
-                     </children>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color red="0.9342105388641357" green="0.06487572938203812" blue="0.06487572938203812" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="127.0" spacing="5.0" styleClass="card">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Acertos" />
-                        <Label fx:id="acertosValue" styleClass="h1" text="0 / 0" />
-                     </children>
-                  </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="145.0" spacing="5.0" styleClass="card">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Melhorias" />
-                        <Label fx:id="percentualMelhoria" styleClass="h1" text="0.0%" />
-                        <ProgressBar fx:id="percentualProgressMelhotis" prefHeight="10.0" prefWidth="430.0" progress="0.0" />
-                     </children>
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                  </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="139.0" spacing="5.0" styleClass="card">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Dificuldades" />
-                        <Label fx:id="percentualDificuldade" styleClass="h1" text="0.0%" />
-                        <ProgressBar fx:id="progressDificuldade" prefHeight="10.0" prefWidth="430.0" progress="0.0" />
-                     </children>
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                  </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="154.0" spacing="5.0" styleClass="card">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Percentual de acerto" />
-                        <Label fx:id="percentualAcerto" styleClass="h1" text="0.0%" />
-                        <ProgressBar fx:id="progressAcerto" prefHeight="10.0" prefWidth="122.0" progress="0.0" />
-                     </children>
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                  </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="117.0" spacing="5.0" styleClass="card">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Nivel final" />
-                        <Label fx:id="nivelValue" styleClass="h1" text="-" />
-                     </children>
-                     <padding>
-                        <Insets top="10.0" />
-                     </padding>
-                  </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="124.0" spacing="5.0" styleClass="card">
-                     <children>
-                        <Label styleClass="h3-thin-big" text="Perfil" />
                         <Label fx:id="perfilValue" styleClass="h1" text="-" />
                      </children>
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" prefHeight="120.0" prefWidth="136.0" spacing="8.0" styleClass="card">
+               </children>
+            </VBox>
+            <FlowPane alignment="CENTER_LEFT" hgap="20.0" prefHeight="260.0" prefWidth="802.0" vgap="20.0">
+               <children>
+                  <VBox prefHeight="459.0" prefWidth="476.0" spacing="10.0">
                      <children>
-                        <Label styleClass="h3-thin-big" text="Tempo total" />
-                        <Label fx:id="tempoValue" styleClass="h1" text="00:00" />
+                        <HBox spacing="10.0">
+                           <children>
+                              <VBox alignment="CENTER" prefHeight="120.0" prefWidth="123.0" spacing="5.0" style="-fx-border-width: 1;" styleClass="card">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Erros" />
+                                    <Label fx:id="errosValue" styleClass="h1" text="0" />
+                                 </children>
+                                 <effect>
+                                    <DropShadow>
+                                       <color>
+                                          <Color red="0.9342105388641357" green="0.06487572938203812" blue="0.06487572938203812" />
+                                       </color>
+                                    </DropShadow>
+                                 </effect>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="120.0" prefWidth="127.0" spacing="5.0" styleClass="card">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Acertos" />
+                                    <Label fx:id="acertosValue" styleClass="h1" text="0 / 0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="120.0" prefWidth="128.0" spacing="5.0" styleClass="card">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Nivel final" />
+                                    <Label fx:id="nivelValue" styleClass="h1" text="-" />
+                                 </children>
+                                 <padding>
+                                    <Insets top="10.0" />
+                                 </padding>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="120.0" prefWidth="136.0" spacing="8.0" styleClass="card">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Tempo total" />
+                                    <Label fx:id="tempoValue" styleClass="h1" text="00:00" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <VBox styleClass="card">
+                           <children>
+                              <VBox alignment="CENTER_LEFT" prefHeight="105.0" prefWidth="522.0" spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Dificuldades" />
+                                    <Label fx:id="percentualDificuldade" styleClass="h1" text="0.0%" />
+                                    <ProgressBar fx:id="progressDificuldade" prefHeight="10.0" prefWidth="430.0" progress="0.0" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                              <VBox alignment="CENTER_LEFT" prefHeight="96.0" prefWidth="522.0" spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Percentual de acerto" />
+                                    <Label fx:id="percentualAcerto" styleClass="h1" text="0.0%" />
+                                    <ProgressBar fx:id="progressAcerto" prefHeight="12.0" prefWidth="439.0" progress="0.0" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                              <VBox alignment="CENTER_LEFT" prefHeight="106.0" prefWidth="522.0" spacing="5.0">
+                                 <children>
+                                    <Label styleClass="h3-thin-big" text="Melhorias" />
+                                    <Label fx:id="percentualMelhoria" styleClass="h1" text="0.0%" />
+                                    <ProgressBar fx:id="percentualProgressMelhotis" prefHeight="10.0" prefWidth="430.0" progress="0.0" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  <VBox alignment="TOP_CENTER" maxWidth="459.0" minWidth="459.0" prefHeight="459.0" prefWidth="377.0" spacing="16.0" styleClass="scholarship-card-locked">
+                     <children>
+                        <Label alignment="CENTER" prefHeight="23.0" prefWidth="1010.0" styleClass="big-h2" text="Medalhas do sistema" />
+                        <Label styleClass="muted" text="Veja aqui a sua proxima medalha" wrapText="true" />
+                        <FlowPane fx:id="medalhasFlow" hgap="16.0" prefWrapLength="1010.0" vgap="16.0" />
                      </children>
                      <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
                      </padding>
                   </VBox>
                </children>
             </FlowPane>
-            <VBox alignment="TOP_CENTER" prefHeight="369.0" prefWidth="325.0" spacing="16.0" styleClass="scholarship-card-locked">
-               <children>
-                  <Label alignment="CENTER" prefHeight="23.0" prefWidth="1010.0" styleClass="big-h2" text="Medalhas do sistema" />
-                  <Label styleClass="muted" text="Veja aqui a sua proxima medalha" wrapText="true" />
-                  <FlowPane fx:id="medalhasFlow" hgap="16.0" prefWrapLength="1010.0" vgap="16.0" />
-               </children>
-               <padding>
-                  <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
-               </padding>
-            </VBox>
          </children>
+         <HBox.margin>
+            <Insets />
+         </HBox.margin>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
       </VBox>
    </children>
 </HBox>

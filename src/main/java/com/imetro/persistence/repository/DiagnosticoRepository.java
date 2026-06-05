@@ -101,6 +101,23 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
         return DisciplinaService.filtrarDisciplinasSuportadas(disciplinas);
     }
 
+    public int deleteByCandidatoId(UUID candidatoId) throws SQLException {
+        if (candidatoId == null) {
+            return 0;
+        }
+
+        String sql = """
+            delete from diagnosticos
+            where candidato_id = ?
+            """;
+
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            return stmt.executeUpdate();
+        }
+    }
+
     public UUID inserir(
         UUID candidatoId,
         UUID disciplinaId,

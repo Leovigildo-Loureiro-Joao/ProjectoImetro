@@ -11,6 +11,7 @@ public class Questao {
     private String subtopico;
     private String enunciado;
     private String bloco2; // texto adicional
+    private String exercicio; // bloco visual renderizavel
     private Image imagem; // imagem opcional
     private String opcaoA;
     private String opcaoB;
@@ -75,6 +76,12 @@ public class Questao {
     }
     public void setBloco2(String bloco2) {
         this.bloco2 = bloco2;
+    }
+    public String getExercicio() {
+        return exercicio;
+    }
+    public void setExercicio(String exercicio) {
+        this.exercicio = exercicio;
     }
     public Image getImagem() {
         return imagem;

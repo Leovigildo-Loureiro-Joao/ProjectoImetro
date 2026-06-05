@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="rootPane" prefHeight="980.0" prefWidth="1120.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.bolsas.BolsaSimuladoController">
+<StackPane fx:id="rootPane" prefHeight="980.0" prefWidth="1120.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.bolsas.BolsaSimuladoController">
    <children>
       <VBox maxWidth="1120.0" prefWidth="1120.0" spacing="18.0">
          <padding>
@@ -22,6 +22,7 @@
                   <JFXButton onAction="#onBack" prefHeight="38.0" prefWidth="150.0" styleClass="btn-secondary" text="Voltar as bolsas" />
                   <Region HBox.hgrow="ALWAYS" />
                   <Label fx:id="heroStatusLabel" styleClass="pill-good" text="Elegivel" />
+                  <Label fx:id="heroPlanLabel" styleClass="timeline-pill" text="Plano ativo ate --" />
                </children>
             </HBox>
 

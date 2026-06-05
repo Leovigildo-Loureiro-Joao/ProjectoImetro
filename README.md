@@ -84,6 +84,8 @@ Notas:
 mvn clean javafx:run
 ```
 
+Se aparecer o erro `JavaFX runtime components are missing`, nao execute a classe `com.imetro.App` diretamente no IDE. Use o comando acima, ou configure a execucao do projeto para chamar o goal `javafx:run` do Maven.
+
 ## Base de dados
 
 ### Schema novo

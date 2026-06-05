@@ -3,21 +3,19 @@ package com.imetro.ui.controller.candidato.diagnosticos;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
-import com.imetro.domain.dto.diagnostico.TimelineDTO;
-import com.imetro.domain.dto.stats.Stats;
 import com.imetro.services.DiagnosticoService;
-import com.imetro.ui.components.TimelineCard;
 import com.imetro.util.Authentication;
 import com.imetro.util.ConversorTempo;
 import com.imetro.util.TextoUtil;
@@ -26,24 +24,25 @@ import com.jfoenix.controls.JFXComboBox;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class DiagnosticoTimeline implements Initializable {
+
+    private static final Locale LOCALE_PT = new Locale("pt", "AO");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", LOCALE_PT);
 
     @FXML
     private DatePicker data;
 
     @FXML
     private JFXComboBox<String> disciplina;
-
-    @FXML
-    private JFXComboBox<String> horas;
-
-    @FXML
-    private JFXComboBox<String> minutos;
 
     @FXML
     private VBox timelineContent;
@@ -57,6 +56,7 @@ public class DiagnosticoTimeline implements Initializable {
             return;
         }
 
+        timelineContent.setFillWidth(true);
         prepararFiltros();
         carregarHistorico();
         renderizarTimeline(historicoCompleto);
@@ -66,20 +66,6 @@ public class DiagnosticoTimeline implements Initializable {
         if (disciplina != null) {
             disciplina.getItems().clear();
             disciplina.setValue(null);
-        }
-        if (horas != null) {
-            horas.getItems().clear();
-            for (int hora = 0; hora < 24; hora++) {
-                horas.getItems().add(String.format("%02d", hora));
-            }
-            horas.setValue(null);
-        }
-        if (minutos != null) {
-            minutos.getItems().clear();
-            for (int minuto = 0; minuto < 60; minuto++) {
-                minutos.getItems().add(String.format("%02d", minuto));
-            }
-            minutos.setValue(null);
         }
         if (data != null) {
             data.setValue(null);
@@ -142,76 +128,64 @@ public class DiagnosticoTimeline implements Initializable {
                 Collectors.toCollection(ArrayList::new)
             ));
 
-        ArrayList<VBox> cardsTimeline = new ArrayList<>();
+        ArrayList<VBox> secoes = new ArrayList<>();
         for (var entry : diagnosticosPorData.entrySet()) {
-            cardsTimeline.add(criarCardTimeline(entry.getKey(), entry.getValue()));
+            secoes.add(criarSecaoDia(entry.getKey(), entry.getValue()));
         }
 
-        if (cardsTimeline.isEmpty()) {
+        if (secoes.isEmpty()) {
             timelineContent.getChildren().add(
                 criarEstadoVazio(
-                    "Nao foi possivel montar o timeline.",
+                    "Nao foi possivel montar a linha do tempo.",
                     "Os diagnosticos encontrados estao sem data valida para exibicao."
                 )
             );
             return;
         }
 
-        timelineContent.getChildren().setAll(cardsTimeline);
+        timelineContent.getChildren().setAll(secoes);
     }
 
-    private VBox criarCardTimeline(LocalDate dataReferencia, List<DiagnosticoDto> diagnosticosDoDia) {
-        ArrayList<LocalTime> horarios = new ArrayList<>();
-        ArrayList<Float> acertos = new ArrayList<>();
-        ArrayList<Float> erros = new ArrayList<>();
-        ArrayList<Float> evolucoes = new ArrayList<>();
-        ArrayList<Stats> metricas = new ArrayList<>();
-        ArrayList<String> disciplinas = new ArrayList<>();
-        ArrayList<String> duracoes = new ArrayList<>();
+    private VBox criarSecaoDia(LocalDate dataReferencia, List<DiagnosticoDto> diagnosticosDoDia) {
+        VBox secao = new VBox(10);
+        secao.getStyleClass().add("diagnostico-timeline-section");
+        secao.setFillWidth(true);
 
-        for (DiagnosticoDto diagnostico : diagnosticosDoDia) {
+        HBox header = new HBox(10);
+        header.getStyleClass().add("diagnostico-timeline-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label dataLabel = new Label(formatarData(dataReferencia));
+        dataLabel.getStyleClass().add("diagnostico-timeline-date");
+        header.getChildren().addAll(dataLabel);
+
+        VBox lista = new VBox(8);
+        lista.setFillWidth(true);
+
+        for (int index = 0; index < diagnosticosDoDia.size(); index++) {
+            DiagnosticoDto diagnostico = diagnosticosDoDia.get(index);
             LocalDateTime momento = resolverMomento(diagnostico);
             if (momento == null) {
                 continue;
             }
+            lista.getChildren().add(criarLinhaDiagnostico(index + 1, diagnostico));
+        }
 
-            horarios.add(momento.toLocalTime());
-            disciplinas.add(TextoUtil.safeText(diagnostico.disciplina_nome(), "Sem disciplina"));
-            duracoes.add(ConversorTempo.formatarDuracao(diagnostico.duracao_segundos()));
-            acertos.add((float) diagnostico.total_acertos());
-            erros.add((float) diagnostico.total_erros());
-            evolucoes.add((float) diagnostico.evolucao_percentual());
-            metricas.add(
-                new Stats(
-                    limitarProgresso(diagnostico.velocidade()),
-                    limitarProgresso(diagnostico.precisao()),
-                    limitarProgresso(diagnostico.consistencia()),
-                    limitarProgresso(diagnostico.logica()),
-                    limitarProgresso(diagnostico.resiliencia())
-                )
+        if (lista.getChildren().isEmpty()) {
+            return criarEstadoVazio(
+                "Sem diagnosticos com data valida.",
+                "Os itens desse dia nao possuem informacao suficiente para serem exibidos."
             );
         }
 
-        return new TimelineCard(
-            new TimelineDTO(
-                dataReferencia,
-                horarios,
-                disciplinas.toArray(String[]::new),
-                duracoes.toArray(String[]::new),
-                acertos,
-                erros,
-                evolucoes,
-                metricas
-            )
-        ).getRoot();
+        secao.getChildren().addAll(header, lista);
+        return secao;
     }
 
     private List<DiagnosticoDto> filtrarDiagnosticos() {
         return historicoCompleto.stream()
             .filter(this::correspondeDisciplina)
             .filter(this::correspondeData)
-            .filter(this::correspondeHora)
-            .filter(this::correspondeMinuto)
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -234,24 +208,37 @@ public class DiagnosticoTimeline implements Initializable {
         return momento != null && dataSelecionada.equals(momento.toLocalDate());
     }
 
-    private boolean correspondeHora(DiagnosticoDto diagnostico) {
-        String horaSelecionada = horas == null ? null : horas.getValue();
-        if (horaSelecionada == null || horaSelecionada.isBlank()) {
-            return true;
-        }
+    private HBox criarLinhaDiagnostico(int numero, DiagnosticoDto diagnostico) {
+        String disciplinaTexto = TextoUtil.safeText(diagnostico.disciplina_nome(), "Sem disciplina");
+        String percentualTexto = formatPercent(diagnostico.percentual_acerto());
+        String duracaoTexto = ConversorTempo.formatarDuracao(diagnostico.duracao_segundos());
 
-        LocalDateTime momento = resolverMomento(diagnostico);
-        return momento != null && String.format("%02d", momento.getHour()).equals(horaSelecionada);
-    }
+        Label ordemLabel = new Label("Diagnóstico #" + numero);
+        ordemLabel.getStyleClass().add("h2-thin");
 
-    private boolean correspondeMinuto(DiagnosticoDto diagnostico) {
-        String minutoSelecionado = minutos == null ? null : minutos.getValue();
-        if (minutoSelecionado == null || minutoSelecionado.isBlank()) {
-            return true;
-        }
+        Label disciplinaLabel = new Label(disciplinaTexto);
+        disciplinaLabel.getStyleClass().add("diagnostico-timeline-title");
+        disciplinaLabel.setWrapText(true);
 
-        LocalDateTime momento = resolverMomento(diagnostico);
-        return momento != null && String.format("%02d", momento.getMinute()).equals(minutoSelecionado);
+        Label percentLabel = new Label(percentualTexto);
+        percentLabel.getStyleClass().add("big-h2");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label duracaoLabel = new Label("Duração " + duracaoTexto);
+        duracaoLabel.getStyleClass().add("diagnostico-timeline-meta");
+        duracaoLabel.setWrapText(true);
+
+        VBox card = new VBox(4, ordemLabel,disciplinaLabel, duracaoLabel);
+        card.setFillWidth(true);
+        card.setMaxWidth(Double.MAX_VALUE);
+        HBox cardF=new HBox(10, card,spacer, percentLabel);
+        cardF.getStyleClass().add("card");
+        cardF.setPadding(new Insets(20));
+        cardF.setMaxWidth(400);
+        cardF.setMinWidth(500);
+        return cardF;
     }
 
     private LocalDateTime resolverMomento(DiagnosticoDto diagnostico) {
@@ -267,8 +254,15 @@ public class DiagnosticoTimeline implements Initializable {
         return diagnostico.criado_em();
     }
 
-    private float limitarProgresso(float valor) {
-        return Math.max(0f, Math.min(1f, valor));
+    private String formatarData(LocalDate value) {
+        if (value == null) {
+            return "Sem data";
+        }
+        return value.format(DATE_FORMAT);
+    }
+
+    private String formatPercent(double valor) {
+        return Math.round(Math.max(0d, Math.min(100d, valor))) + "%";
     }
 
 
@@ -296,14 +290,6 @@ public class DiagnosticoTimeline implements Initializable {
         if (disciplina != null) {
             disciplina.getSelectionModel().clearSelection();
             disciplina.setValue(null);
-        }
-        if (horas != null) {
-            horas.getSelectionModel().clearSelection();
-            horas.setValue(null);
-        }
-        if (minutos != null) {
-            minutos.getSelectionModel().clearSelection();
-            minutos.setValue(null);
         }
 
         renderizarTimeline(historicoCompleto);

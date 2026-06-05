@@ -1049,6 +1049,7 @@ public class PerguntasBootstrapService {
               referencia_livro,
               pagina_inicio,
               pagina_fim,
+              exercicio,
               usa_grafico,
               grafico_tipo_curva,
               grafico_a,
@@ -1097,6 +1098,7 @@ public class PerguntasBootstrapService {
                 when coalesce(nullif(q->>'paginaFim', ''), '') ~ '^[0-9]+$' then (q->>'paginaFim')::integer
                 else null
               end,
+              nullif(q->>'exercicio', ''),
               case
                 when jsonb_typeof(q->'grafico') = 'object'
                   then coalesce((q->'grafico'->>'usar')::boolean, false)

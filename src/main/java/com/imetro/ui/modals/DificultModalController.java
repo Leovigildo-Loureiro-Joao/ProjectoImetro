@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.VBox;
 
 public class DificultModalController extends ModalController {
 
@@ -33,6 +34,8 @@ public class DificultModalController extends ModalController {
 
     @FXML
     private ToggleGroup nivel;
+    @FXML
+    private VBox focoT;
 
     @Override
     public void init() {
@@ -40,10 +43,12 @@ public class DificultModalController extends ModalController {
             tituloLabel.setText("Configurando Teste...");
             iniciarButton.setText("Continuar com foco inteligente");
             padraoButton.setText("Usar configuracao padrao");
+            focoT.setVisible(true); 
         } else {
             tituloLabel.setText("Iniciando Diagnostico...");
             iniciarButton.setText("Iniciar diagnostico inteligente");
             padraoButton.setText("Pular e fazer apenas o padrao");
+            focoT.setVisible(false);
         }
         super.init();
     }
@@ -58,7 +63,7 @@ public class DificultModalController extends ModalController {
             Map<String, String> configuracao = Map.of("duracao", durac, "nivel", niv, "foco", foc);
             if (FluxoModalContext.isTesteAdaptativo()) {
                 TesteAdaptativoCoordinator.requestStartInteligente(configuracao);
-                
+
             } else {
                 DiagnosticoCoordinator.requestStartInteligente(configuracao);
             }

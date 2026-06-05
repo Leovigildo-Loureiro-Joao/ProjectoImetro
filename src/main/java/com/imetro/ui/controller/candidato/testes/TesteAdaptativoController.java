@@ -14,10 +14,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.imetro.App;
+import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.configuracao.AdaptacaoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
@@ -26,10 +28,10 @@ import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.persistence.repository.AdaptacaoRepository;
 import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.DiagnosticoService;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
 import com.imetro.services.TesteService.ResumoHistoricoDisciplina;
-import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.components.TesteCard;
 import com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController;
@@ -42,6 +44,7 @@ import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.Loading;
+import com.imetro.util.QuestaoExercicioSupport;
 import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoCelebracaoSupport;
@@ -57,6 +60,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -80,57 +84,188 @@ import javafx.util.Duration;
 
 public class TesteAdaptativoController implements DisposableController, TesteAdaptativoCoordinator.TesteHost {
 
-    @FXML private AnchorPane testeField;
-    @FXML private StackPane modalPai;
-    @FXML private StackPane circleProgressContainer;
-    @FXML private Label nomeDisc;
-    @FXML private Label nPergunta;
-    @FXML private Label bloco1;
-    @FXML private Label bloco2;
-    @FXML private Label ResA;
-    @FXML private Label ResB;
-    @FXML private Label ResC;
-    @FXML private Label ResD;
-    @FXML private Label ResE;
-    @FXML private Label ResF;
-    @FXML private Label ResG;
-    @FXML private JFXToggleNode toggleA;
-    @FXML private JFXToggleNode toggleB;
-    @FXML private JFXToggleNode toggleC;
-    @FXML private JFXToggleNode toggleD;
-    @FXML private JFXToggleNode toggleE;
-    @FXML private JFXToggleNode toggleF;
-    @FXML private JFXToggleNode toggleG;
-    @FXML private ToggleGroup alternativas;
-    @FXML private VBox testeContainer;
-    @FXML private VBox start;
-    @FXML private VBox tela;
-    @FXML private VBox disciplinasContainer;
-    @FXML private ImageView imgBloco2;
-    @FXML private JFXButton btnConfirmar;
-    @FXML private JFXButton btnProximo;
-    @FXML private StackPane loadingOverlay;
-    @FXML private ProgressBar loadingProgress;
-    @FXML private Label loadingMessage;
-    @FXML private Label nivelAtual;
-    @FXML private Label dificuldadeAtual;
-    @FXML private Label tempo;
-    @FXML private VBox feedbackContainer;
-    @FXML private Label feedbackIcon;
-    @FXML private Label feedbackMessage;
-    @FXML private VBox trilhoAdaptacaoCard;
-    @FXML private JFXComboBox<String> trilhoDisciplinaCombo;
-    @FXML private JFXComboBox<String> trilhoSubtopicoCombo;
-    @FXML private Label trilhoStatusValue;
-    @FXML private Label trilhoResumoValue;
-    @FXML private Label trilhoLivroValue;
-    @FXML private Label trilhoPaginasValue;
-    @FXML private Label trilhoAvancosValue;
-    @FXML private Label trilhoQuedasValue;
-    @FXML private Label trilhoDificuldadeValue;
-    @FXML private Label trilhoProgressoValue;
-    @FXML private ImageView feedbackImg;
-    @FXML private ProgressBar trilhoProgressoBar;
+    private static final String SESSAO_PAUSA_CACHE_PREFIX = "teste.adaptativo.pause.";
+
+    @FXML
+    private Label ResA;
+
+    @FXML
+    private Label ResB;
+
+    @FXML
+    private Label ResC;
+
+    @FXML
+    private Label ResD;
+
+    @FXML
+    private Label ResE;
+
+    @FXML
+    private Label ResF;
+
+    @FXML
+    private Label ResG;
+
+    @FXML
+    private ToggleGroup alternativas;
+
+    @FXML
+    private Label bloco1;
+
+    @FXML
+    private Label bloco2;
+
+    @FXML
+    private VBox exercicioContainer;
+
+    @FXML
+    private ImageView exercicioImageView;
+
+    @FXML
+    private JFXButton btnConfirmar;
+
+    @FXML
+    private JFXButton btnProximo;
+
+    @FXML
+    private Label dificuldadeAtual;
+
+    @FXML
+    private VBox disciplinasContainer;
+
+    @FXML
+    private VBox feedbackContainer;
+
+    @FXML
+    private Label feedbackIcon;
+
+    @FXML
+    private ImageView feedbackImg;
+
+    @FXML
+    private Label feedbackMessage;
+
+    @FXML
+    private Label loadingMessage;
+
+    @FXML
+    private StackPane loadingOverlay;
+
+    @FXML
+    private ProgressBar loadingProgress;
+
+    @FXML
+    private StackPane modalPai;
+
+    @FXML
+    private Label nPergunta;
+
+    @FXML
+    private Label nivelAtual;
+
+    @FXML
+    private Label nivelAtual1;
+
+    @FXML
+    private Label nivelAtual11;
+
+    @FXML
+    private Label nivelAtual12;
+
+    @FXML
+    private Label nivelAtual2;
+
+    @FXML
+    private Label nivelAtual23;
+
+    @FXML
+    private Label nivelAtual231;
+
+    @FXML
+    private Label nivelAtual232;
+
+    @FXML
+    private Label nomeDisc;
+
+    @FXML
+    private Label planHintLabel;
+
+    @FXML
+    private ProgressBar questionProgressBar;
+
+    @FXML
+    private VBox start;
+
+    @FXML
+    private VBox tela;
+
+    @FXML
+    private Label tempo;
+
+    @FXML
+    private VBox testeContainer;
+
+    @FXML
+    private AnchorPane testeField;
+
+    @FXML
+    private JFXToggleNode toggleA;
+
+    @FXML
+    private JFXToggleNode toggleB;
+
+    @FXML
+    private JFXToggleNode toggleC;
+
+    @FXML
+    private JFXToggleNode toggleD;
+
+    @FXML
+    private JFXToggleNode toggleE;
+
+    @FXML
+    private JFXToggleNode toggleF;
+
+    @FXML
+    private JFXToggleNode toggleG;
+
+    @FXML
+    private VBox trilhoAdaptacaoCard;
+
+    @FXML
+    private Label trilhoAvancosValue;
+
+    @FXML
+    private Label trilhoDificuldadeValue;
+
+    @FXML
+    private JFXComboBox<String> trilhoDisciplinaCombo;
+
+    @FXML
+    private Label trilhoLivroValue;
+
+    @FXML
+    private Label trilhoPaginasValue;
+
+    @FXML
+    private ProgressBar trilhoProgressoBar;
+
+    @FXML
+    private Label trilhoProgressoValue;
+
+    @FXML
+    private Label trilhoQuedasValue;
+
+    @FXML
+    private Label trilhoResumoValue;
+
+    @FXML
+    private Label trilhoStatusValue;
+
+    @FXML
+    private JFXComboBox<String> trilhoSubtopicoCombo;
+
     private ConfiguracaoDto configCandidato;
     private List<String> disciplinas = List.of();
     private Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
@@ -145,7 +280,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private final List<ReacaoTeste> reacao = new ArrayList<>();
     private final Map<String, List<TrilhaAdaptacaoSubtopico>> trilhoAdaptacaoCache = new LinkedHashMap<>();
 
-    private CircleProgress circleProgress;
     private List<Questao> questoes = new ArrayList<>();
     private List<Questao> focoQuestoes = new ArrayList<>();
     private int questaoAtual = 0;
@@ -167,25 +301,31 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private FXMLLoader modFxml;
     private ModalController cont;
     private TesteService testeService;
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private HBox linhaQuestaoPane;
     private VBox textoQuestaoPane;
     private VBox apoioVisualBox;
     private Separator apoioVisualSeparator;
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
+    private boolean sessaoAtiva;
     @FXML
     public void initialize() {
         TesteAdaptativoCoordinator.setHost(this);
         testeService=new TesteService();
-        circleProgress = new CircleProgress(35, 35, 35, 0);
-        circleProgressContainer.getChildren().add(circleProgress);
         configurarPainelApoioVisual();
         configurarTrilhoAdaptacao();
+        configurarListenerAlternativas();
 
         service = new TesteAdaptativoService();
         botoesDisciplinasBox.setFillWidth(false);
         botoesDisciplinasBox.setAlignment(Pos.TOP_LEFT);
         disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
+
+        if (restaurarSessaoPausada()) {
+            Platform.runLater(this::atualizarEstadoPlanejamento);
+            return;
+        }
 
         if (diagnosticoService.temHistoricoDiagnostico(Authentication.getCurrentUserId())) {
             carregarDisciplinas();
@@ -197,6 +337,20 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         testeContainer.setVisible(false);
         start.setVisible(true);
         atualizarIndicadoresNivel();
+        Platform.runLater(this::atualizarEstadoPlanejamento);
+    }
+
+    private void atualizarEstadoPlanejamento() {
+        if (planHintLabel == null) {
+            return;
+        }
+
+        PlaneamentoEstudoEstado estado = planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId());
+        String texto = estado.titulo();
+        if (estado.detalhe() != null && !estado.detalhe().isBlank()) {
+            texto += " - " + estado.detalhe();
+        }
+        planHintLabel.setText(texto);
     }
 
     private void configurarTrilhoAdaptacao() {
@@ -383,7 +537,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void carregarDisciplinas() {
-        Label titulo = new Label("Escolha uma disciplina para ver os topicos ja testados e iniciar a proxima rodada.");
+        Label titulo = new Label("Escolha uma disciplina para seguir o plano da semana e iniciar a proxima rodada.");
         titulo.getStyleClass().add("h3-thin");
         titulo.setWrapText(true);
         titulo.setMaxWidth(720);
@@ -503,6 +657,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.TesteConfig config) {
+        limparSessaoPausada();
         nivelAtualAdaptativo = resolverNivelInicial(config);
         focoQuestoes = service.carregarQuestoesDisponiveis(
             disciplinaSelecionada,
@@ -531,6 +686,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         start.setVisible(false);
         testeContainer.setVisible(true);
+        sessaoAtiva = true;
         iniciarLoading(config);
     }
 
@@ -614,7 +770,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             fadeOut.setOnFinished(ev -> {
                 loadingOverlay.setVisible(false);
                 tela.setVisible(true);
-                iniciarCronometro();
+                sessaoAtiva = true;
+                iniciarCronometro(0, 0);
                 carregarQuestao(0);
             });
             fadeOut.play();
@@ -622,13 +779,14 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         pause.play();
     }
 
-    private void iniciarCronometro() {
+    private void iniciarCronometro(int minutosIniciais, int segundosIniciais) {
         if (cronometro != null) {
             cronometro.stop();
         }
 
-        segundos = 0;
-        minutos = 0;
+        segundos = Math.max(0, segundosIniciais);
+        minutos = Math.max(0, minutosIniciais);
+        tempo.setText(String.format("%02d:%02d", minutos, segundos));
         cronometro = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             segundos++;
             if (segundos == 60) {
@@ -663,6 +821,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         nPergunta.setText("Questao " + (index + 1) + " / " + totalQuestoes);
         bloco1.setText(q.getEnunciado());
+        atualizarExercicioVisual(q);
         bloco2.setText(montarBlocoSecundario(q));
 
         ResA.setText(q.getOpcaoA());
@@ -681,7 +840,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         feedbackContainer.setOpacity(1);
 
         double progresso = totalQuestoes == 0 ? 0 : (double) (index + 1) / totalQuestoes;
-        circleProgress.setValue(progresso);
+        if (questionProgressBar != null) {
+            questionProgressBar.setProgress(progresso);
+        }
 
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
@@ -730,9 +891,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         apoioVisualBox.setManaged(false);
         HBox.setHgrow(apoioVisualBox, Priority.ALWAYS);
 
-        imgBloco2.setImage(null);
-        imgBloco2.setVisible(false);
-        imgBloco2.setManaged(false);
+
 
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
@@ -756,6 +915,236 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }
         node.setVisible(visivel);
         node.setManaged(visivel);
+    }
+
+    private JFXToggleNode getToggleByLetra(char letra) {
+        return switch (letra) {
+            case 'A' -> toggleA;
+            case 'B' -> toggleB;
+            case 'C' -> toggleC;
+            case 'D' -> toggleD;
+            case 'E' -> toggleE;
+            case 'F' -> toggleF;
+            case 'G' -> toggleG;
+            default -> null;
+        };
+    }
+
+    private void configurarListenerAlternativas() {
+        alternativas.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle instanceof JFXToggleNode toggle) {
+                respostaSelecionada = toggle.getText() == null || toggle.getText().isBlank()
+                    ? '\0'
+                    : toggle.getText().charAt(0);
+            } else {
+                respostaSelecionada = '\0';
+            }
+        });
+    }
+
+    private String resolverChaveSessaoPausa() {
+        return Authentication.getCurrentUserId() == null
+            ? null
+            : SESSAO_PAUSA_CACHE_PREFIX + Authentication.getCurrentUserId();
+    }
+
+    private void limparSessaoPausada() {
+        String chave = resolverChaveSessaoPausa();
+        if (chave != null) {
+            CacheService.remove(chave);
+        }
+    }
+
+    private void salvarSessaoPausada() {
+        String chave = resolverChaveSessaoPausa();
+        if (chave == null || questoes == null || questoes.isEmpty()) {
+            return;
+        }
+
+        CacheService.put(
+            chave,
+            new SessaoTestePausada(
+                disciplinaSelecionada,
+                new ArrayList<>(topicosSelecionados),
+                new ArrayList<>(subtopicosSelecionados),
+                new ArrayList<>(questoes),
+                new ArrayList<>(focoQuestoes),
+                new ArrayList<>(respostasUsuario),
+                new ArrayList<>(temposResposta),
+                new ArrayList<>(reacao),
+                questaoAtual,
+                totalQuestoes,
+                respostaSelecionada,
+                nivelAtualAdaptativo,
+                acertos,
+                erros,
+                sequenciaAcertos,
+                sequenciaErros,
+                tempoInicioQuestao,
+                segundos,
+                minutos,
+                System.currentTimeMillis()
+            )
+        );
+    }
+
+    private boolean restaurarSessaoPausada() {
+        String chave = resolverChaveSessaoPausa();
+        if (chave == null) {
+            return false;
+        }
+
+        Object estadoBruto = CacheService.get(chave);
+        if (!(estadoBruto instanceof SessaoTestePausada estado)) {
+            return false;
+        }
+
+        CacheService.remove(chave);
+        if (estado.questoes() == null || estado.questoes().isEmpty()) {
+            return false;
+        }
+
+        disciplinaSelecionada = estado.disciplinaSelecionada();
+
+        topicosSelecionados.clear();
+        topicosSelecionados.addAll(estado.topicosSelecionados());
+
+        subtopicosSelecionados.clear();
+        subtopicosSelecionados.addAll(estado.subtopicosSelecionados());
+
+        questoes = new ArrayList<>(estado.questoes());
+        focoQuestoes = new ArrayList<>(estado.focoQuestoes());
+        respostasUsuario.clear();
+        respostasUsuario.addAll(estado.respostasUsuario());
+        temposResposta.clear();
+        temposResposta.addAll(estado.temposResposta());
+        reacao.clear();
+        reacao.addAll(estado.reacao());
+
+        questaoAtual = Math.max(0, Math.min(estado.questaoAtual(), Math.max(0, questoes.size() - 1)));
+        totalQuestoes = Math.max(0, estado.totalQuestoes());
+        respostaSelecionada = estado.respostaSelecionada();
+        nivelAtualAdaptativo = estado.nivelAtualAdaptativo();
+        acertos = Math.max(0, estado.acertos());
+        erros = Math.max(0, estado.erros());
+        sequenciaAcertos = Math.max(0, estado.sequenciaAcertos());
+        sequenciaErros = Math.max(0, estado.sequenciaErros());
+
+        long pausa = Math.max(0L, System.currentTimeMillis() - Math.max(0L, estado.pausadoEm()));
+        tempoInicioQuestao = estado.tempoInicioQuestao() > 0
+            ? estado.tempoInicioQuestao() + pausa
+            : System.currentTimeMillis();
+        minutos = Math.max(0, estado.minutos());
+        segundos = Math.max(0, estado.segundos());
+
+        start.setVisible(false);
+        testeContainer.setVisible(true);
+        loadingOverlay.setVisible(false);
+        feedbackContainer.setVisible(false);
+        tela.setVisible(true);
+        nomeDisc.setText(formatarDisciplina(disciplinaSelecionada));
+        atualizarIndicadoresNivel();
+
+        if (questionProgressBar != null) {
+            questionProgressBar.setProgress(totalQuestoes == 0 ? 0 : (double) (questaoAtual + 1) / totalQuestoes);
+        }
+
+        if (!questoes.isEmpty()) {
+            atualizarConteudoQuestao(questaoAtual);
+            restaurarRespostaQuestaoAtual(estado.respostaSelecionada());
+        }
+
+        sessaoAtiva = true;
+        iniciarCronometro(minutos, segundos);
+        return true;
+    }
+
+    private void restaurarRespostaQuestaoAtual(char respostaSalva) {
+        if (questaoAtual < 0 || questaoAtual >= questoes.size()) {
+            return;
+        }
+
+        char respostaRestaurada = questaoAtual < respostasUsuario.size()
+            ? respostasUsuario.get(questaoAtual)
+            : respostaSalva;
+
+        if (respostaRestaurada == '\0') {
+            btnConfirmar.setDisable(false);
+            btnProximo.setDisable(true);
+            return;
+        }
+
+        JFXToggleNode toggle = getToggleByLetra(respostaRestaurada);
+        if (toggle != null) {
+            alternativas.selectToggle(toggle);
+        }
+
+        respostaSelecionada = respostaRestaurada;
+
+        if (questaoAtual < respostasUsuario.size()) {
+            Questao q = questoes.get(questaoAtual);
+            char alternativaCorreta = QuestaoUtil.resolverAlternativaCorreta(q);
+            boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaRestaurada);
+
+            limparEstilosToggles();
+            if (toggle != null) {
+                toggle.setStyle(acertou
+                    ? "-fx-background-color: #10b981; -fx-border-color: #10b981; -fx-text-fill: white;"
+                    : "-fx-background-color: #ef4444; -fx-border-color: #ef4444; -fx-text-fill: white;");
+            }
+            if (!acertou) {
+                destacarRespostaCorreta(alternativaCorreta);
+            }
+
+            btnConfirmar.setDisable(true);
+            btnProximo.setDisable(false);
+            return;
+        }
+
+        btnConfirmar.setDisable(false);
+        btnProximo.setDisable(true);
+    }
+
+    private void atualizarExercicioVisual(Questao questao) {
+        if (exercicioContainer == null || exercicioImageView == null) {
+            return;
+        }
+
+        Image imagem = QuestaoExercicioSupport.render(questao == null ? null : questao.getExercicio()).orElse(null);
+        exercicioImageView.setImage(imagem);
+        setNodeVisivel(exercicioContainer, imagem != null);
+    }
+
+    private void mostrarTelaInicialTeste() {
+        feedbackContainer.setVisible(false);
+        loadingOverlay.setVisible(false);
+        testeContainer.setVisible(false);
+        start.setVisible(true);
+        tela.setVisible(true);
+    }
+
+    private record SessaoTestePausada(
+        String disciplinaSelecionada,
+        List<String> topicosSelecionados,
+        List<String> subtopicosSelecionados,
+        List<Questao> questoes,
+        List<Questao> focoQuestoes,
+        List<Character> respostasUsuario,
+        List<Long> temposResposta,
+        List<ReacaoTeste> reacao,
+        int questaoAtual,
+        int totalQuestoes,
+        char respostaSelecionada,
+        NivelDificuldadeAdaptativa nivelAtualAdaptativo,
+        int acertos,
+        int erros,
+        int sequenciaAcertos,
+        int sequenciaErros,
+        long tempoInicioQuestao,
+        int segundos,
+        int minutos,
+        long pausadoEm
+    ) {
     }
 
     @FXML
@@ -933,6 +1322,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void finalizarTesteAdaptativo() {
+        sessaoAtiva = false;
+        limparSessaoPausada();
         if (cronometro != null) {
             cronometro.stop();
         }
@@ -1047,6 +1438,15 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void resetarMetricas() {
+        sessaoAtiva = false;
+        if (cronometro != null) {
+            cronometro.stop();
+            cronometro = null;
+        }
+        if (loadingTimeline != null) {
+            loadingTimeline.stop();
+            loadingTimeline = null;
+        }
         acertos = 0;
         erros = 0;
         sequenciaAcertos = 0;
@@ -1057,14 +1457,15 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         respostaSelecionada = '\0';
         segundos = 0;
         minutos = 0;
+        tempoInicioQuestao = 0L;
         tempo.setText("00:00");
         atualizarIndicadoresNivel();
         limparEstilosToggles();
         alternativas.selectToggle(null);
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
-        if (circleProgress != null) {
-            circleProgress.setValue(0);
+        if (questionProgressBar != null) {
+            questionProgressBar.setProgress(0);
         }
     }
 
@@ -1191,6 +1592,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @Override
     public void dispose() {
         TesteAdaptativoCoordinator.clearHost(this);
+        if (sessaoAtiva) {
+            salvarSessaoPausada();
+        }
         if (cronometro != null) {
             cronometro.stop();
             cronometro = null;
@@ -1232,5 +1636,23 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             resolverLimiteRapidoMs() + 1000L,
             Math.round(adaptacao.tempAdapt() * adaptacao.tempoLentoFator() * 1000d)
         );
+    }
+
+    @FXML
+    void desisitir(ActionEvent event) {
+        limparSessaoPausada();
+        resetarMetricas();
+        mostrarTelaInicialTeste();
+    }
+
+    @FXML
+    void pausar(ActionEvent event) {
+        if (!sessaoAtiva) {
+            return;
+        }
+
+        salvarSessaoPausada();
+        resetarMetricas();
+        mostrarTelaInicialTeste();
     }
 }

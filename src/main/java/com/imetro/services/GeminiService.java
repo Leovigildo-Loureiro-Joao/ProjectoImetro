@@ -515,6 +515,9 @@ public class GeminiService {
         prompt.append("- Usa pesos baixos para erros graves, pesos medios para distratores proximos e nunca deixes duas alternativas corretas.\n");
         prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Mantem a dificuldade coerente com o material.\n");
+        prompt.append("- No campo exercicio, devolve um bloco LaTeX curto e renderizavel pelo JLaTeXMath, sem markdown, sem delimitadores $ e sem texto explicativo extra.\n");
+        prompt.append("- O exercicio deve mostrar a expressao, igualdade ou dados essenciais de forma elegante e compacta.\n");
+        prompt.append("- Se a questao nao beneficiar de exercicio visual, devolve string vazia.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera base suficiente para testes curtos, medios e longos.\n");
         prompt.append("- Para cada questao, define um campo rigor entre 0.0 e 1.0 conforme a profundidade exigida.\n");
@@ -553,6 +556,9 @@ public class GeminiService {
         prompt.append("- Usa pesos baixos para erros graves, pesos medios para distratores proximos e nunca deixes duas alternativas corretas.\n");
         prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Equilibra a distribuicao das questoes pelos topicos principais.\n");
+        prompt.append("- No campo exercicio, devolve um bloco LaTeX curto e renderizavel pelo JLaTeXMath, sem markdown, sem delimitadores $ e sem texto explicativo extra.\n");
+        prompt.append("- O exercicio deve mostrar a expressao, igualdade ou dados essenciais de forma elegante e compacta.\n");
+        prompt.append("- Se a questao nao beneficiar de exercicio visual, devolve string vazia.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera uma base ampla o suficiente para testes curtos, medios e longos.\n");
         prompt.append("- Sempre que houver cobertura suficiente, distribui varias questoes por subtopico em niveis FACIL, MEDIO, DESAFIANTE e EXTRA.\n");
@@ -961,6 +967,7 @@ public class GeminiService {
                   "referenciaLivro": { "type": "string" },
                   "paginaInicio": { "type": "integer" },
                   "paginaFim": { "type": "integer" },
+                  "exercicio": { "type": "string" },
                   "alternativas": {
                     "type": "array",
                     "items": { "type": "string" },
@@ -1014,6 +1021,7 @@ public class GeminiService {
                   "referenciaLivro",
                   "paginaInicio",
                   "paginaFim",
+                  "exercicio",
                   "alternativas",
                   "pesosAlternativas",
                   "grafico",

@@ -36,7 +36,7 @@ public class PlanoCartesianoPane extends VBox {
     private final NumberAxis eixoY = new NumberAxis();
     private final LineChart<Number, Number> chart = new LineChart<>(eixoX, eixoY);
 
-    private String accentHex = "#2563eb";
+    private String accentHex = "#202e3d";
 
     public PlanoCartesianoPane() {
         getStyleClass().addAll("question-side-card", "plano-cartesiano-card");

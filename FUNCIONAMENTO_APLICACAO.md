@@ -1,383 +1,189 @@
-# Funcionamento Real da Aplicação Projecto Imetro
+# Funcionamento da Aplicacao Projecto Imetro
 
-## Índice
-1. [Missão e Objetivos](#missão-e-objetivos) 
-2. [Propósito Geral](#propósito-geral)
-3. [Escopo Operacional](#escopo-operacional)
-4. [Arquitetura Geral](#arquitetura-geral)
-5. [Fluxo Adaptativo Completo](#fluxo-adaptativo-completo)
-6. [Componentes Principais](#componentes-principais)
-7. [Ciclo de Vida do Candidato](#ciclo-de-vida-do-candidato)
-8. [Sistema de Persistência](#sistema-de-persistência)
-9. [Motor Adaptativo](#motor-adaptativo)
-10. [Processamento de Perguntas](#processamento-de-perguntas)
-11. [Metricas e Analytics](#metricas-e-analytics)
-12. [Funcionalidades Avançadas](#funcionalidades-avançadas)
+## Visao Geral
 
----
+O Projecto Imetro e uma aplicacao desktop em JavaFX para estudo individual de candidatos.
+O sistema trabalha hoje com foco em `Matematica` e `Fisica`, usa um banco de perguntas reais e cria, a partir do desempenho do candidato, um ciclo adaptativo de diagnostico, teste e planeamento.
 
-## Missão e Objetivos
+A ideia central e simples:
 
-### Missão
-Fornecer uma plataforma de estudo assistida e adaptativa para candidatos em preparação acadêmica, utilizando inteligência artificial para personalizar a experiência de aprendizagem com base no desempenho real do aluno.
+- o diagnostico e o mapa do estado atual do candidato
+- o planeamento e gerado pelo sistema a partir desse diagnostico
+- os testes adaptativos validam se o plano esta a ser cumprido
+- os relatarios mostram apenas o resultado do que o backend ja calculou
 
-### Objetivos Principais
+## Principios Do Sistema
 
-1. **Estudo Individual Personalizado**: Oferecer testes e diagnósticos adaptados ao nível de compreensão de cada candidato
-2. **Avaliação Diagnóstica Inicial**: Medir o estado de conhecimento do aluno em cada disciplina e subtópico
-3. **Teste Adaptativo**: Gerar sessões de testes que se ajustam ao desempenho em tempo real
-4. **Progresso Rastreável**: Manter histórico completo de desempenho para visualizar evolução
-5. **Suporte a Múltiplas Disciplinas**: Permitir estudo paralelo de Matemática e Física (escopo atual)
-6. **Base de Questões Dinâmica**: Utilizar PDFs reais e gerar perguntas inteligentes com IA Gemini
-7. **Bolsas de Estudo Simuladas**: Acompanhar potencial de elegibilidade para bolsas com base em desempenho
+- O candidato e o centro de tudo.
+- O sistema decide o que precisa ser estudado com base em dados reais.
+- O planeamento nao e manual: e calculado pelo backend.
+- Cada diagnostico concluido gera ou atualiza um plano de estudo.
+- O plano fica guardado na base de dados como snapshot semanal.
+- Se o utilizador quiser recomecar do zero, o reset limpa os diagnosticos e o estado derivado.
 
----
+## Fluxo Principal
 
-## Propósito Geral
+### 1. Onboarding
 
-O Projecto Imetro é uma **aplicação desktop em JavaFX** criada para:
+- O candidato cria a conta.
+- Escolhe o avatar.
+- Seleciona as disciplinas suportadas.
+- O sistema filtra qualquer disciplina fora do escopo atual.
 
-- **Candidatos**: Estudar de forma independente e adaptar seu ritmo de aprendizagem
-- **Produção de Base de Dados**: Gerar base real de questões a partir de livros (PDFs) usando IA
-- **Análise de Progresso**: Acompanhar métricas detalhadas de desempenho, fraquezas e evolução
-- **Concessão de Bolsas**: Simular cenários de bolsas de estudo baseados em desempenho
+### 2. Bootstrap Automatico
 
-O sistema trabalha com **dois modos principais**:
-- **Modo de Navegação**: UI sem banco de dados (apenas prototipagem)
-- **Modo com BD**: Completo com persistência em PostgreSQL
+- O sistema prepara as pastas de upload em `uploads/disciplinas/<uuid>`.
+- Os PDFs sao analisados para extrair topicos.
+- O Gemini pode gerar perguntas reais a partir desses PDFs.
+- A base de perguntas fica pronta para diagnostico e teste.
 
----
+### 3. Primeiro Diagnostico
 
-## Escopo Operacional
+- Se o candidato ainda nao tem historico, o sistema permite o primeiro diagnostico normalmente.
+- Esse primeiro diagnostico e a fotografia inicial do candidato.
+- No fim do diagnostico, o backend grava:
+  - `diagnosticos`
+  - `progressao_aluno_disciplina`
+  - `progressao_rigor`
+  - `recomendacoes_rigor`
+  - `planeamentos_estudo`
 
-### Limitações e Focos Atuais
+### 4. Planeamento De Estudo
 
-#### Disciplinas Suportadas
-- **Matemática**
-- **Física**
+- O planeamento e gerado por `PlaneamentoEstudoService`.
+- O plano usa:
+  - progresso por disciplina
+  - diagnosticos recentes
+  - testes anteriores
+  - dias sem estudo
+  - precisao, velocidade e consistencia
 
-Qualquer outra disciplina é filtrada automaticamente no onboarding, diagnóstico e bootstrap.
+- O resultado e gravado em `planeamentos_estudo`.
+- Cada linha representa um snapshot semanal do candidato.
+- O snapshot inclui:
+  - score principal
+  - resumo do plano
+  - foco atual
+  - insights
+  - etapas da semana
+  - registros recentes
+  - disciplinas priorizadas
+  - evolucao
 
-#### Tipos de Usuários
-- **CANDIDATO**: Único papel ativo no runtime atual
-  - O fluxo antigo de `orientador` foi removido do código ativo, views e schema
-  - Suporta apenas conta de estudante individual
+### 5. Teste Adaptativo
 
-#### Perguntão: Origem das Questões
-1. **Base Existente**: Perguntas já cadastradas no banco de dados
-2. **Gerada com IA**: Novas questões extraídas de PDFs via Gemini API
+- O teste adaptativo trabalha em cima do estado construido pelo diagnostico.
+- O motor ajusta a dificuldade de acordo com o desempenho.
+- O resultado final e salvo em:
+  - `testes`
+  - `teste_perguntas`
+  - `stats`
 
----
+### 6. Relatorios E Acompanhamento
 
-## Arquitetura Geral
+- A tela de relatorios nao cria o plano.
+- Ela apenas le o resumo ja calculado pelo backend.
+- Os graficos e cards refletem o estado real do candidato.
 
-### Camadas da Aplicação
+## Regra De Controle Do Diagnostico
 
-```
-┌─────────────────────────────────────────────┐
-│        Camada de Apresentação (UI)          │
-│  JavaFX Controllers, Components, FXML       │
-├─────────────────────────────────────────────┤
-│         Camada de Negócio (Services)        │
-│  TesteAdaptativoService, DiagnosticoService│
-├─────────────────────────────────────────────┤
-│      Camada de Persistência (Repository)    │
-│  JDBC com custom repositories               │
-├─────────────────────────────────────────────┤
-│           Camada de Dados (BD)              │
-│  PostgreSQL com schema Flyway               │
-└─────────────────────────────────────────────┘
-```
+### Quando o diagnostico pode comecar
 
-### Stack Técnico
+- Se o candidato ainda nao tem historico, o primeiro diagnostico pode comecar.
+- Se o candidato ja tem historico, o sistema exige um plano ativo.
+- Se nao existir planeamento ativo para um candidato com historico, o inicio do diagnostico e bloqueado.
 
-| Componente | Tecnologia | Versão |
-|------------|-----------|--------|
-| Linguagem | Java | 21 |
-| Interface | JavaFX | 23.0.1 |
-| Build Tool | Maven | - |
-| Banco de Dados | PostgreSQL | - |
-| Migrations | Flyway | 10.20.0 |
-| IA / Bootstrap | Gemini API | - |
-| Persistência | JDBC Customizado | - |
-| UI Components | ControlsFX, JFreeChart | - |
+### Quando o plano e prolongado
 
----
+- O sistema verifica o ultimo plano ativo.
+- Se o plano ja expirou, o backend pode prolongar o periodo do ultimo planeamento.
+- A ideia de negocio e manter o candidato dentro do ciclo ate o plano ser concluido.
 
-## Fluxo Adaptativo Completo
+### Quando o candidato quer recomecar
 
-### Ciclo Principal
+- O reset oficial apaga os diagnosticos.
+- Ao apagar os diagnosticos, o sistema tambem limpa o estado derivado.
+- Isso inclui:
+  - `diagnosticos`
+  - `progressao_rigor`
+  - `progresso_aluno_disciplina`
+  - `planeamentos_estudo`
 
-O sistema segue um ciclo cíclico de melhoria contínua:
+## Ciclo De Vida Do Candidato
 
-```
-┌──────────────────┐
-│  1. Onboarding   │ Candidato escolhe disciplinas (suportadas)
-└────────┬─────────┘
-         ↓
-┌────────────────────────────┐
-│  2. Bootstrap Automático   │ Prepara pastas, extrai tópicos, gera perguntas
-└────────┬────────────────────┘
-         ↓
-┌────────────────────────────┐
-│  3. Diagnóstico Inicial    │ Mede estado de entrada por disciplina/subtópico
-└────────┬────────────────────┘
-         ↓
-┌────────────────────────────┐
-│  4. Atualização Adaptativa │ Grava progressão e recomendações
-└────────┬────────────────────┘
-         ↓
-┌────────────────────────────┐
-│  5. Teste Adaptativo       │ Testa com perguntas ajustadas ao nível
-└────────┬────────────────────┘
-         ↓
-┌────────────────────────────┐
-│  6. Persistência de Resultado│ Salva em testes, stats, teste_perguntas
-└────────┬────────────────────┘
-         ↓
-         │
-         └──→ Volta ao passo 5 ou 3 conforme progresso
+```text
+Onboarding -> Bootstrap -> Primeiro Diagnostico -> Planeamento -> Teste Adaptativo -> Relatorios
 ```
 
-### Entidades-Chave do Fluxo
+Depois do primeiro diagnostico:
 
-| Tabela | Propósito |
-|--------|----------|
-| `diagnosticos` | Fotografia de entrada do candidato em cada disciplina |
-| `progressao_rigor` | Estado vivo do subtópico (evolução) |
-| `recomendacoes_rigor` | Debilidades abertas e direção do próximo ciclo |
-| `testes` | Sessão adaptativa concluída |
-| `teste_perguntas` | Detalhe de cada pergunta respondida em um teste |
-| `stats` | Resumo consolidado do teste |
+- o sistema conhece melhor as fraquezas reais do candidato
+- o planeamento passa a ser mais inteligente
+- cada novo diagnostico reforca ou ajusta o plano
+- o historico fica guardado para comparacao futura
 
----
+## Persistencia Em Base De Dados
+
+### Tabelas Principais
+
+| Tabela | Funcao |
+|---|---|
+| `diagnosticos` | Guarda a fotografia de entrada do candidato |
+| `progressao_aluno_disciplina` | Mantem o progresso geral por disciplina |
+| `progressao_rigor` | Mantem o estado vivo por topico/subtopico |
+| `recomendacoes_rigor` | Guarda as recomendacoes abertas do ciclo |
+| `planeamentos_estudo` | Guarda o plano semanal gerado pelo sistema |
+| `testes` | Guarda cada teste adaptativo concluido |
+| `teste_perguntas` | Guarda o detalhe de cada resposta |
+| `stats` | Guarda o resumo consolidado do teste |
+
+### Migration Mais Recente
+
+- `V29__planeamento_estudo.sql`
+
+Essa migration cria a tabela `planeamentos_estudo` e os indices para o plano semanal do candidato.
 
 ## Componentes Principais
 
-### 1. Controllers de Autenticação (`ui/controller/auth/`)
+### Services
 
-**LoginController**
-- Valida credenciais do candidato
-- Acesso apenas com email e senha válidos
-- Integração com `CandidatoRepository`
+- `DiagnosticoService`
+- `PlaneamentoEstudoService`
+- `TesteAdaptativoService`
+- `TesteService`
+- `DisciplinaService`
+- `GeminiService`
 
-**RegisterController**
-- Criação de nova conta de candidato
-- Validação de dados
-- Hash de senha com `PasswordHasher`
+### Repositories
 
-**ChooseDisciplinasOnboardingController**
-- Apresenta disciplinas suportadas (Matemática e Física)
-- Permite seleção múltipla
-- Filtra automaticamente disciplinas inativas
+- `DiagnosticoRepository`
+- `PlaneamentoEstudoRepository`
+- `ProgressaoRigorRepository`
+- `ProgressoALunoDisciplinaRepository`
+- `TesteRepository`
+- `TesteStatsRepository`
+- `RecomendacaoRepository`
 
-**AddImageOnboardingController**
-- Seleção de avatar do candidato
-- Suportado por `AvatarSupport`
+### Controllers
 
-### 2. Controllers de Candidato (`ui/controller/candidato/`)
+- `DiagnosticoCandidatoController`
+- `DiagnosticoListController`
+- `RelatoriosController`
+- `TesteAdaptativoController`
 
-**DashboardOrientadoController**
-- Tela principal pós-autenticação
-- Exibe disciplinas ativas, últimos testes, progresso
+## Como Executar
 
-**DiagnosticoCoordinator** e **DiagnosticoCandidatoController**
-- Orquestra o fluxo de diagnóstico
-- Apresenta perguntas por disciplina e subtópico
-- Integra com `DiagnosticoService` e `DiagnosticoRepository`
+- O arranque recomendado e `mvn clean javafx:run`.
+- Se a app for aberta diretamente pelo IDE sem o module-path do JavaFX, pode surgir o erro de runtime ausente.
+- O launcher do projeto ja aponta para o JavaFX local configurado no ambiente.
 
-**TesteAdaptativoCoordinator** e **TesteAdaptativoController**
-- Orquestra testes adaptativos
-- Ajusta dificuldade baseado em respostas
-- Coordena com `TesteAdaptativoService`
+## Resumo Final
 
-**PerfilController**
-- Exibe dados do candidato
-- Mostra medalhas conquistadas (`MedalhaRepository`)
+O comportamento atual do sistema e este:
 
-**RelatoriosController**
-- Visualiza histórico completo de testes
-- Gráficos de progresso por disciplina
-- Integra com `RelatorioService` e `RelatoriosRepository`
+- o diagnostico e a fonte de verdade
+- cada diagnostico concluido gera planeamento
+- o planeamento fica gravado na base de dados
+- o sistema bloqueia novos diagnosticos quando nao ha plano ativo para quem ja tem historico
+- se o candidato quiser recomecar, basta limpar os diagnosticos e o estado derivado
 
-**BolsasController**
-- Simula elegibilidade para bolsas
-- Calcula scores baseado em desempenho
-- Usa `BolsaRepository` e `ScoreBolsaRepository`
-
-### 3. Services (Camada de Negócio)
-
-#### TesteAdaptativoService
-- Orquestra a lógica do teste adaptativo
-- Define próxima pergunta baseado no desempenho atual
-- Integra métricas de dificuldade e acerto
-- **Ponto de atenção**: Parte da lógica ainda é hardcoded
-
-#### DiagnosticoService
-- Executa o fluxo de diagnóstico
-- Calcula `progressao_rigor` após término
-- Gera `recomendacoes_rigor` automáticas
-
-#### CatalogoQuestoesService
-- Carrega perguntas conforme critérios (disciplina, tópico, subtópico, dificuldade)
-- Suporta filtragem por pesos e graficos
-
-#### PerguntasBootstrapService
-- Gera perguntas em lotes usando Gemini
-- Insere perguntas na tabela `perguntas`
-- Trabalha apenas com Matemática e Física
-
-#### PerguntasBootstrapAsyncService
-- Acompanha estado de processamento em background
-- Notifica quando bootstrap está concluído
-
-#### GeminiService
-- Interface com Gemini API
-- Extrai tópicos de PDFs
-- Gera questões com base em conteúdo extraído
-
-#### DisciplinaUploadBootstrapService
-- Prepara pastas de upload por disciplina (`uploads/disciplinas/<uuid>`)
-- Gerencia ciclo de arquivo para PDFs
-
-#### RelatorioService
-- Consolida dados de testes históricos
-- Calcula tendências e métricas agregadas
-- Alimenta visualizações em `RelatoriosController`
-
-#### BolsaSimuladoService
-- Calcula score de bolsa para candidato
-- Simula diferentes cenários de desempenho
-
-### 4. Repositories (Camada de Persistência)
-
-**Padrão Customizado**: JDBC com SQL nativo (não usa ORM como Hibernate)
-
-| Repository | Entidade | Operações |
-|------------|----------|----------|
-| `CandidatoRepository` | Candidato (Users) | CRUD, autenticação |
-| `DisciplinaRepository` | Disciplina | Leitura, filtro |
-| `PerguntasRepository` | Pergunta | Leitura, filtro por critérios |
-| `DiagnosticoRepository` | Diagnóstico | CRUD, histórico |
-| `TesteRepository` | Teste | CRUD, histórico |
-| `TestePerguntasRepository` | Detalhe de pergunta em teste | Inserção (atômico) |
-| `TesteStatsRepository` | Estatísticas de teste | CRUD |
-| `ProgressaoRigorRepository` | Progresso por subtópico | CRUD |
-| `RecomendacaoRepository` | Recomendações abertas | CRUD |
-| `RelatoriosRepository` | Relatórios consolidados | Queries complexas |
-| `BolsaRepository` | Bolsas disponíveis | Leitura |
-| `ScoreBolsaRepository` | Score de bolsa por candidato | CRUD |
-| `MedalhaRepository` | Medalhas e achievements | CRUD |
-
----
-
-## Ciclo de Vida do Candidato
-
-### 1. Registro e Onboarding
-
-```
-Login → Register → Escolher Avatar → Escolher Disciplinas → Dashboard
-```
-
-**Detalhes:**
-- Email único validado
-- Senha hasheada com `PasswordHasher` (PBKDF2)
-- Avatar selecionado de conjunto pré-definido (`AvatarSupport`)
-- Disciplinas filtradas para apenas Matemática e Física
-- Bootstrap automático disparado se PDFs existirem
-
-### 2. Bootstrap de Questões (Automático)
-
-**Quando dispara:**
-- Onboarding completo com disciplinas
-- Entrada no fluxo de primeiro diagnóstico sem base suficiente
-- Chamadas explícitas de bootstrap
-
-**Processo:**
-1. Sistema verifica `uploads/disciplinas/<disciplina_uuid>` para PDFs
-2. Gemini extrai tópicos e subtópicos → `topicos-extraidos.json`
-3. Gemini gera perguntas por tópico → `questoes-geradas.json`
-4. Perguntas inseridas na tabela `perguntas` com pesos por alternativa
-5. Sistema marca disciplina como preparada
-
-### 3. Diagnóstico Inicial
-
-**Entrada:**
-- Candidato seleciona disciplina
-- Sistema prepara perguntas do diagnóstico (uma por subtópico)
-
-**Fluxo:**
-- Apresenta perguntas sequencialmente
-- Registra resposta, tempo e confiança
-- Ao final, calcula `progressao_rigor` para cada subtópico
-- Gera `recomendacoes_rigor` automáticas (subtópicos com baixo desempenho)
-- Salva tudo em `diagnosticos` (não reescreve diagnóstico anterior)
-
-**Output:**
-- `progressao_rigor`: % acerto por subtópico
-- `recomendacoes_rigor`: subtópicos abertos para revisão
-
-### 4. Teste Adaptativo
-
-**Contexto:**
-- Usa estado de `progressao_rigor` e `recomendacoes_rigor` como base
-- Ataca subtópicos abertos prioritariamente
-
-**Algoritmo de Seleção:**
-- Se P (precisão) < 60%: prioriza perguntas desse subtópico
-- Se 60% ≤ P < 80%: mixes perguntas de diferentes níveis
-- Se P ≥ 80%: apresenta perguntas de dificuldade aumentada
-
-**Adaptação em Tempo Real:**
-- Cada resposta correta → aumenta dificuldade
-- Cada resposta errada → mantém ou reduz dificuldade
-- Motor calcula próxima pergunta baseado em desempenho acumulado
-
-**Finalização:**
-- Teste tem limite de tempo configurável por nível adaptativo
-- Ao final, registra em `testes`, `teste_perguntas` e `stats`
-
-### 5. Resultado e Feedback
-
-**Após Teste:**
-- Mostra celebração (se performance > threshold)
-- Exibe resumo de acertos/erros
-- Apresenta recomendações para revisão
-- Mostra tempo total e velocidade média
-
-**Persisted Stats:**
-- Acurácia global
-- Acurácia por subtópico
-- Erros comuns (extraído de `teste_perguntas`)
-- Dificuldade percentual
-- Tempo total
-- Ganho normalizado vs. diagnóstico anterior
-
-### 6. Relatórios e Progresso
-
-**Relatórios Disponíveis:**
-- Timeline completa de todos os testes
-- Gráficos de acurácia por disciplina
-- Trends de desempenho
-- Pontos fortes e fracos por subtópico
-- Medalhas conquistadas
-
----
-
-## Conclusão
-
-O Projecto Imetro é um **sistema robusto e adaptativo** de estudo individual, com foco em:
-
-1. **Personalização**: Cada candidato recebe teste ajustado ao seu nível
-2. **Inteligência**: Uso de IA para gerar base real de questões
-3. **Análise**: Métricas matemáticas avançadas para medir progresso
-4. **Persistência**: Histórico completo em PostgreSQL
-5. **Escalabilidade**: Arquitetura em camadas com repositórios customizados
-
-**Próximas Melhorias**:
-- Remover hardcodes do motor adaptativo
-- Atomicidade completa em transações
-- Mover processamento pesado para background
-- Refinamento de critério para novo diagnóstico
-
-**Stack Moderno**: Java 21, JavaFX, PostgreSQL, Gemini API — preparado para evolução contínua.

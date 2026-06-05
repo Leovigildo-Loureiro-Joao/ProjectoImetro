@@ -25,10 +25,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="c:/Users/Moisês/.m2/repository/org/openjfx/javafx-graphics/23.0.1/javafx-graphics-23.0.1.jar"/>
-	<classpathentry kind="lib" path="c:/Users/Moisês/.m2/repository/org/openjfx/javafx-fxml/23.0.1/javafx-fxml-23.0.1.jar"/>
-	<classpathentry kind="lib" path="c:/Users/Moisês/.m2/repository/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1.jar"/>
-	<classpathentry kind="lib" path="c:/Users/Moisês/.m2/repository/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1.jar"/>
 	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
 		<attributes>
 			<attribute name="optional" value="true"/>

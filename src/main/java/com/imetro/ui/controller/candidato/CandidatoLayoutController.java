@@ -10,12 +10,13 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 import org.kordamp.ikonli.remixicon.RemixiconAL;
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
-import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.MenuEntry;
-import com.imetro.domain.model.Candidato;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.Item_Cell;
+import com.imetro.ui.support.PlaneamentoEstudoBannerSupport;
 import com.imetro.util.Authentication;
 
 import javafx.animation.KeyFrame;
@@ -40,6 +41,7 @@ public class CandidatoLayoutController implements Initializable {
     private static final String BANNER_WARNING_CLASS = "bootstrap-banner-warning";
     private static final String BANNER_ERROR_CLASS = "bootstrap-banner-error";
     private final DiagnosticoService diagnosticoService=new DiagnosticoService();
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
 
     @FXML
     private StackPane contentHost;
@@ -93,9 +95,9 @@ public class CandidatoLayoutController implements Initializable {
             new MenuEntry("dashboard", "Dashboard", RemixiconAL.LAYOUT_GRID_FILL),
             new MenuEntry("add_livro", "Add Livro", FontAwesomeSolid.FILE_ALT),
             new MenuEntry("diagnostico", "Diagnóstico", FontAwesomeSolid.BOLT),
-            new MenuEntry("exame_adaptativo", "Exame Adaptativo", RemixiconAL.FILE_WORD_FILL),
+            new MenuEntry("exame_adaptativo", "Exame Adaptativo", FontAwesomeSolid.FIRE),
             new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
-            new MenuEntry("bolsas", "Recomendações", FontAwesomeSolid.HAND_HOLDING_USD),
+            new MenuEntry("bolsas", "Recomendações", FontAwesomeSolid.STAR),
             new MenuEntry("perfil", "Perfil", FontAwesomeSolid.USER),
             new MenuEntry("configuracao", "Configurações", RemixiconAL.FILE_SETTINGS_FILL),
             new MenuEntry("logout", "Logout", FontAwesomeSolid.SIGN_OUT_ALT)
@@ -112,12 +114,13 @@ public class CandidatoLayoutController implements Initializable {
         if (candidatoId != null) {
             perguntasBootstrapAsyncService.startIfNeeded(candidatoId);
         }
+        Platform.runLater(this::atualizarBannerPlaneamento);
         FirstDiagnostic();
     }
 
     private void FirstDiagnostic(){
-        Candidato candidato =(Candidato) CacheService.get("currentUser");
-        if (!diagnosticoService.temHistoricoDiagnostico(candidato.getIdCandidato())) {
+        UUID candidatoId = Authentication.getCurrentUserId();
+        if (candidatoId != null && !diagnosticoService.temHistoricoDiagnostico(candidatoId)) {
             navigate("diagnostico");
         }
     }
@@ -181,6 +184,15 @@ public class CandidatoLayoutController implements Initializable {
         }
     }
 
+    private void atualizarBannerPlaneamento() {
+        if (contentHost == null || contentHost.getScene() == null) {
+            return;
+        }
+
+        PlaneamentoEstudoEstado estado = planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId());
+        PlaneamentoEstudoBannerSupport.aplicar(contentHost.getScene(), estado);
+    }
+
     @FXML
     private void openDashboard() throws IOException {
         App.swapContent(contentHost, "views/pages/candidato/dashboard");
@@ -242,7 +254,11 @@ public class CandidatoLayoutController implements Initializable {
                 case "logout" -> logout();
                 default -> openDashboard();
             }
+            if (!"logout".equals(key)) {
+                atualizarBannerPlaneamento();
+            }
         } catch (IOException ignored) {
+            
         }
     }
 }

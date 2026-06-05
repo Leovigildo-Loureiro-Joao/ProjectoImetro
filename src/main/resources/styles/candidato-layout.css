@@ -59,14 +59,14 @@
 }
 
 .teste-card-badge {
-    -fx-background-color: rgba(59, 130, 246, 0.10);
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-background-color: rgba(180, 83, 9, 0.10);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
     -fx-border-radius: 999;
     -fx-background-radius: 999;
     -fx-padding: 5 10 5 10;
     -fx-font-size: 10px;
     -fx-font-weight: 800;
-    -fx-text-fill: #1d4ed8;
+    -fx-text-fill: -color-primary-dark;
 }
 
 .teste-card-hero {
@@ -76,14 +76,14 @@
         rgba(248, 250, 252, 0.95)
     );
     -fx-background-radius: 16;
-    -fx-border-color: rgba(191, 219, 254, 0.95);
+    -fx-border-color: rgba(203, 213, 225, 0.95);
     -fx-border-radius: 16;
 }
 
 .teste-card-hero-title {
     -fx-font-size: 11px;
     -fx-font-weight: 800;
-    -fx-text-fill: #2563eb;
+    -fx-text-fill: -color-primary;
 }
 
 .teste-card-hero-value {
@@ -132,7 +132,7 @@
 .teste-card-metric-value {
     -fx-font-size: 11px;
     -fx-font-weight: 900;
-    -fx-text-fill: #1d4ed8;
+    -fx-text-fill: -color-primary-dark;
 }
 
 .teste-card-metric-caption {
@@ -148,13 +148,13 @@
 
 .teste-card-topic {
     -fx-background-color: white;
-    -fx-border-color: rgba(191, 219, 254, 0.95);
+    -fx-border-color: rgba(203, 213, 225, 0.95);
     -fx-border-radius: 999;
     -fx-background-radius: 999;
     -fx-padding: 6 10 6 10;
     -fx-font-size: 10px;
     -fx-font-weight: 700;
-    -fx-text-fill: #1e3a8a;
+    -fx-text-fill: -color-primary;
 }
 
 .teste-card-topics-wrap {
@@ -171,8 +171,8 @@
 }
 
 .teste-card-step-index {
-    -fx-background-color: rgba(59, 130, 246, 0.10);
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-background-color: rgba(180, 83, 9, 0.10);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
     -fx-border-radius: 999;
     -fx-background-radius: 999;
     -fx-min-width: 24;
@@ -180,7 +180,7 @@
     -fx-alignment: center;
     -fx-font-size: 11px;
     -fx-font-weight: 900;
-    -fx-text-fill: #1d4ed8;
+    -fx-text-fill: #b45309;
     -fx-padding: 4;
 }
 
@@ -202,8 +202,10 @@
 }
 
 .radio-option:selected {
-    -fx-border-color: -color-primary;
-    -fx-background-color: -color-primary-light;
+    -fx-border-color: rgba(180, 83, 9, 0.62);
+    -fx-border-width: 1.6;
+    -fx-background-color: rgba(180, 83, 9, 0.05);
+    -fx-background-insets: 0;
 }
 
 .radio-option .radio {
@@ -223,7 +225,12 @@
 }
 
 #progressoGeral .bar {
-    -fx-background-color: linear-gradient(to right, -color-primary, -color-secondary);
+    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
+    -fx-background-radius: 3;
+}
+
+#progressoGeral .track {
+    -fx-background-color: rgba(226, 232, 240, 0.95);
     -fx-background-radius: 3;
 }
 
@@ -288,12 +295,12 @@
 }
 
 .stat-progress {
-    -fx-accent: #3498db;
+    -fx-accent: #2563eb;
     -fx-pref-height: 6;
 }
 
 .stat-progress-large {
-    -fx-accent: #27ae60;
+    -fx-accent: #2563eb;
     -fx-pref-height: 20;
     -fx-background-radius: 10;
 }
@@ -321,7 +328,7 @@
 }
 
 .nav-btn-active {
-    -fx-background-color: #3498db;
+    -fx-background-color: -color-primary;
     -fx-text-fill: white;
     -fx-font-size: 14;
     -fx-padding: 10 20;
@@ -358,10 +365,10 @@
 .hero-gradient-card {
     -fx-background-color: linear-gradient(
         to bottom right,
-        rgba(239, 246, 255, 0.95),
-        rgba(248, 250, 252, 0.98)
+        rgba(248, 250, 252, 0.98),
+        rgba(255, 255, 255, 0.99)
     );
-    -fx-border-color: rgba(59, 130, 246, 0.16);
+    -fx-border-color: rgba(180, 83, 9, 0.16);
 }
 
 .hero-score {
@@ -369,9 +376,11 @@
     -fx-font-weight: 900;
     -fx-text-fill: -color-primary-dark;
 }
-
+.text{
+    -fx-line-spacing: 5px;
+}
 .hero-copy {
-    -fx-font-size: 14px;
+    -fx-font-size: 12px;
     -fx-line-spacing: 3px;
     -fx-text-fill: -color-text-secondary;
     -fx-font-weight: 600;
@@ -390,9 +399,9 @@
     -fx-min-height: 28;
     -fx-max-width: 28;
     -fx-max-height: 28;
-    -fx-background-color: rgba(59, 130, 246, 0.12);
+    -fx-background-color: rgba(180, 83, 9, 0.12);
     -fx-background-radius: 999;
-    -fx-border-color: rgba(59, 130, 246, 0.24);
+    -fx-border-color: rgba(180, 83, 9, 0.24);
     -fx-border-radius: 999;
     -fx-text-fill: -color-primary-dark;
     -fx-font-size: 12px;
@@ -408,7 +417,7 @@
 }
 
 .stat-emphasis {
-    -fx-font-size: 24px;
+    -fx-font-size: 18px;
     -fx-font-weight: 800;
     -fx-text-fill: -color-text;
 }
@@ -438,9 +447,9 @@
     -fx-min-height: 30;
     -fx-max-width: 30;
     -fx-max-height: 30;
-    -fx-background-color: rgba(59, 130, 246, 0.12);
+    -fx-background-color: rgba(180, 83, 9, 0.12);
     -fx-background-radius: 999;
-    -fx-border-color: rgba(59, 130, 246, 0.24);
+    -fx-border-color: rgba(180, 83, 9, 0.24);
     -fx-border-radius: 999;
     -fx-text-fill: -color-primary-dark;
     -fx-font-weight: 800;
@@ -459,8 +468,8 @@
 }
 
 .timeline-pill {
-    -fx-background-color: rgba(14, 165, 233, 0.10);
-    -fx-text-fill: #0369a1;
+    -fx-background-color: rgba(180, 83, 9, 0.10);
+    -fx-text-fill: #7c2d12;
     -fx-background-radius: 999;
     -fx-padding: 4 10 4 10;
     -fx-font-size: 11px;
@@ -472,6 +481,65 @@
     -fx-background-radius: 14;
     -fx-border-color: rgba(226, 232, 240, 0.85);
     -fx-border-radius: 14;
+}
+
+.diagnostico-timeline-section {
+    -fx-padding: 14 16 14 16;
+}
+
+.diagnostico-timeline-header {
+    -fx-padding: 0 0 2 0;
+}
+
+.diagnostico-timeline-date {
+    -fx-font-size: 14px;
+    -fx-font-weight: 900;
+    -fx-text-fill: -color-text;
+}
+
+.diagnostico-timeline-count {
+    -fx-background-color: rgba(180, 83, 9, 0.10);
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-padding: 4 10 4 10;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-primary;
+}
+
+.diagnostico-timeline-row {
+    -fx-background-color: rgba(248, 250, 252, 0.96);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(226, 232, 240, 0.92);
+    -fx-border-radius: 14;
+    -fx-padding: 10 12 10 12;
+}
+
+.diagnostico-timeline-order {
+    -fx-background-color: rgba(180, 83, 9, 0.10);
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-primary-dark;
+}
+
+.diagnostico-timeline-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-text;
+}
+
+.diagnostico-timeline-percent {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: -color-primary-dark;
+}
+
+.diagnostico-timeline-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-text-secondary;
 }
 
 .report-card-row {
@@ -486,12 +554,12 @@
 }
 
 .report-progress .bar {
-    -fx-background-color: linear-gradient(to right, -color-primary, #14b8a6);
+    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
     -fx-background-radius: 999;
 }
 
 .report-progress .track {
-    -fx-background-color: rgba(226, 232, 240, 0.85);
+    -fx-background-color: rgba(226, 232, 240, 0.95);
     -fx-background-radius: 999;
 }
 
@@ -512,7 +580,7 @@
 }
 
 .scholarship-card-locked {
-    -fx-border-color: rgba(245, 158, 11, 0.26);
+    -fx-border-color: rgba(180, 83, 9, 0.26);
     -fx-background-color: linear-gradient(
         to bottom,
         rgba(255, 251, 235, 0.96),
@@ -558,9 +626,9 @@
     -fx-font-size: 11px;
     -fx-font-weight: 900;
     -fx-text-fill: -color-primary-dark;
-    -fx-background-color: rgba(59, 130, 246, 0.12);
+    -fx-background-color: rgba(180, 83, 9, 0.12);
     -fx-background-radius: 999;
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
     -fx-border-radius: 999;
     -fx-padding: 6 10 6 10;
 }
@@ -571,7 +639,7 @@
         rgba(255, 247, 237, 0.98),
         rgba(239, 246, 255, 0.96)
     );
-    -fx-border-color: rgba(249, 115, 22, 0.18);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
 }
 
 .scholarship-exam-shell {
@@ -597,7 +665,7 @@
 .scholarship-exam-timer {
     -fx-font-size: 28px;
     -fx-font-weight: 900;
-    -fx-text-fill: #c2410c;
+    -fx-text-fill: -color-primary;
 }
 
 .scholarship-exam-enunciado {
@@ -610,7 +678,7 @@
 .scholarship-option-card {
     -fx-background-color: white;
     -fx-background-radius: 14;
-    -fx-border-color: rgba(191, 219, 254, 0.92);
+    -fx-border-color: rgba(203, 213, 225, 0.92);
     -fx-border-radius: 14;
     -fx-padding: 12 14 12 14;
     -fx-font-size: 12px;
@@ -621,7 +689,7 @@
 .scholarship-answer-field {
     -fx-background-color: white;
     -fx-background-radius: 14;
-    -fx-border-color: rgba(249, 115, 22, 0.24);
+    -fx-border-color: rgba(203, 213, 225, 0.95);
     -fx-border-radius: 14;
     -fx-border-width: 1.4;
     -fx-font-size: 13px;
@@ -630,7 +698,7 @@
 }
 
 .scholarship-answer-field:focused {
-    -fx-border-color: #f97316;
+    -fx-border-color: -color-primary;
 }
 
 .report-chart {
@@ -653,7 +721,7 @@
 }
 
 .report-chart .chart-series-area-fill {
-    -fx-fill: rgba(59, 130, 246, 0.16);
+    -fx-fill: rgba(32, 46, 61, 0.16);
 }
 
 .report-chart .chart-series-area-line {
@@ -662,8 +730,181 @@
 }
 
 .report-chart .default-color0.chart-bar {
-    -fx-bar-fill: linear-gradient(to top, #3b82f6, #14b8a6);
+    -fx-bar-fill: linear-gradient(to top, #334155, #202e3d);
     -fx-background-radius: 10 10 0 0;
+}
+
+.achievement-image-shell {
+    -fx-min-width: 128;
+    -fx-min-height: 140;
+    -fx-max-width: 128;
+    -fx-max-height: 140;
+    -fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.95));
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(180, 83, 9, 0.14);
+    -fx-border-radius: 20;
+    -fx-padding: 10;
+    -fx-alignment: center;
+}
+
+.achievement-image {
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.12), 12, 0.16, 0, 4);
+}
+
+.achievement-cards-box {
+    -fx-padding: 0;
+}
+
+.achievement-mini-card {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-width: 1.2;
+    -fx-padding: 8;
+    -fx-spacing: 4;
+}
+
+.achievement-mini-card-1 {
+    -fx-background-color: linear-gradient(to bottom right, rgba(255, 247, 237, 0.98), rgba(255, 255, 255, 0.99));
+    -fx-border-color: rgba(180, 83, 9, 0.16);
+}
+
+.achievement-mini-card-2 {
+    -fx-background-color: linear-gradient(to bottom right, rgba(239, 246, 255, 0.98), rgba(255, 255, 255, 0.99));
+    -fx-border-color: rgba(32, 46, 61, 0.16);
+}
+
+.achievement-mini-card-3 {
+    -fx-background-color: linear-gradient(to bottom right, rgba(236, 253, 245, 0.98), rgba(255, 255, 255, 0.99));
+    -fx-border-color: rgba(16, 185, 129, 0.18);
+}
+
+.achievement-mini-shell {
+    -fx-min-width: 52;
+    -fx-min-height: 52;
+    -fx-max-width: 52;
+    -fx-max-height: 52;
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-width: 1.1;
+    -fx-alignment: center;
+}
+
+.achievement-mini-card-1 .achievement-mini-shell {
+    -fx-border-color: rgba(180, 83, 9, 0.22);
+}
+
+.achievement-mini-card-2 .achievement-mini-shell {
+    -fx-border-color: rgba(32, 46, 61, 0.22);
+}
+
+.achievement-mini-card-3 .achievement-mini-shell {
+    -fx-border-color: rgba(16, 185, 129, 0.22);
+}
+
+.achievement-mini-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-text;
+}
+
+.achievement-mini-copy {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-text-secondary;
+    -fx-line-spacing: 1px;
+}
+
+.achievement-mini-badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-text-fill: white;
+    -fx-alignment: center;
+}
+
+.achievement-mini-badge-1 {
+    -fx-background-color: linear-gradient(to bottom right, #b45309, #d97706);
+}
+
+.achievement-mini-badge-2 {
+    -fx-background-color: linear-gradient(to bottom right, #334155, #202e3d);
+}
+
+.achievement-mini-badge-3 {
+    -fx-background-color: linear-gradient(to bottom right, #10b981, #22c55e);
+}
+
+.plan-steps-box {
+    -fx-padding: 0;
+}
+
+.plan-step-card {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-width: 1.2;
+    -fx-padding: 8 10 8 10;
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.plan-step-card-1 {
+    -fx-background-color: linear-gradient(to bottom right, rgba(255, 247, 237, 0.98), rgba(255, 255, 255, 0.99));
+    -fx-border-color: rgba(180, 83, 9, 0.18);
+}
+
+.plan-step-card-2 {
+    -fx-background-color: linear-gradient(to bottom right, rgba(239, 246, 255, 0.98), rgba(255, 255, 255, 0.99));
+    -fx-border-color: rgba(32, 46, 61, 0.18);
+}
+
+.plan-step-card-3 {
+    -fx-background-color: linear-gradient(to bottom right, rgba(236, 253, 245, 0.98), rgba(255, 255, 255, 0.99));
+    -fx-border-color: rgba(16, 185, 129, 0.18);
+}
+
+.plan-step-number {
+    -fx-min-width: 34;
+    -fx-min-height: 34;
+    -fx-max-width: 34;
+    -fx-max-height: 34;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: white;
+    -fx-alignment: center;
+}
+
+.plan-step-number-1 {
+    -fx-background-color: linear-gradient(to bottom right, #b45309, #d97706);
+}
+
+.plan-step-number-2 {
+    -fx-background-color: linear-gradient(to bottom right, #334155, #202e3d);
+}
+
+.plan-step-number-3 {
+    -fx-background-color: linear-gradient(to bottom right, #10b981, #22c55e);
+}
+
+.plan-step-window {
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-muted;
+}
+
+.plan-step-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-text;
+}
+
+.plan-step-detail {
+    -fx-font-size: 9px;
+    -fx-text-fill: -color-text-secondary;
+    -fx-line-spacing: 1px;
 }
 
 .profile-hero-card {
@@ -672,7 +913,7 @@
         rgba(255, 255, 255, 0.98),
         rgba(239, 246, 255, 0.96)
     );
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
 }
 
 .profile-summary-card,
@@ -689,9 +930,9 @@
     -fx-min-height: 182;
     -fx-max-width: 182;
     -fx-max-height: 182;
-    -fx-background-color: linear-gradient(to bottom right, rgba(56, 189, 248, 0.16), rgba(59, 130, 246, 0.24));
+    -fx-background-color: linear-gradient(to bottom right, rgba(32, 46, 61, 0.16), rgba(71, 85, 105, 0.20));
     -fx-background-radius: 999;
-    -fx-border-color: rgba(59, 130, 246, 0.22);
+    -fx-border-color: rgba(32, 46, 61, 0.22);
     -fx-border-width: 2;
     -fx-border-radius: 999;
     -fx-padding: 8;
@@ -706,9 +947,9 @@
 }
 
 .profile-feedback-info {
-    -fx-background-color: rgba(59, 130, 246, 0.08);
-    -fx-border-color: rgba(59, 130, 246, 0.18);
-    -fx-text-fill: #1d4ed8;
+    -fx-background-color: rgba(32, 46, 61, 0.08);
+    -fx-border-color: rgba(32, 46, 61, 0.18);
+    -fx-text-fill: -color-primary-dark;
 }
 
 .profile-feedback-success {
@@ -787,15 +1028,15 @@
 }
 
 .medal-tier-ouro {
-    -fx-background-color: rgba(245, 158, 11, 0.14);
-    -fx-border-color: rgba(245, 158, 11, 0.26);
-    -fx-text-fill: #b45309;
+    -fx-background-color: rgba(180, 83, 9, 0.14);
+    -fx-border-color: rgba(180, 83, 9, 0.26);
+    -fx-text-fill: #7c2d12;
 }
 
 .medal-tier-platina {
-    -fx-background-color: rgba(14, 165, 233, 0.12);
-    -fx-border-color: rgba(14, 165, 233, 0.24);
-    -fx-text-fill: #0369a1;
+    -fx-background-color: rgba(180, 83, 9, 0.12);
+    -fx-border-color: rgba(180, 83, 9, 0.24);
+    -fx-text-fill: -color-primary;
 }
 
 .diagnostico-card {
@@ -811,8 +1052,8 @@
 }
 
 .diagnostico-card-active {
-    -fx-border-color: rgba(59, 130, 246, 0.45);
-    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.16), 22, 0.20, 0, 8);
+    -fx-border-color: rgba(32, 46, 61, 0.45);
+    -fx-effect: dropshadow(gaussian, rgba(32, 46, 61, 0.16), 22, 0.20, 0, 8);
 }
 
 .diagnostico-card-check {
@@ -821,8 +1062,8 @@
 }
 
 .diagnostico-card-badge {
-    -fx-background-color: rgba(59, 130, 246, 0.12);
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-background-color: rgba(180, 83, 9, 0.12);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
     -fx-border-radius: 999;
     -fx-background-radius: 999;
     -fx-text-fill: -color-primary-dark;
@@ -896,10 +1137,10 @@
         rgba(239, 246, 255, 0.98),
         rgba(248, 250, 252, 0.98)
     );
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
     -fx-border-radius: 24;
     -fx-background-radius: 24;
-    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.10), 24, 0.18, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(32, 46, 61, 0.10), 24, 0.18, 0, 8);
 }
 
 .diagnostico-first-title {
@@ -909,14 +1150,14 @@
 }
 
 .diagnostico-first-badge {
-    -fx-background-color: rgba(14, 165, 233, 0.12);
-    -fx-text-fill: #0369a1;
+    -fx-background-color: rgba(180, 83, 9, 0.12);
+    -fx-text-fill: -color-primary;
     -fx-font-size: 11px;
     -fx-font-weight: 800;
     -fx-padding: 6 12 6 12;
     -fx-background-radius: 999;
     -fx-border-radius: 999;
-    -fx-border-color: rgba(14, 165, 233, 0.18);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
 }
 
 .diagnostico-first-action {
@@ -929,7 +1170,7 @@
         rgba(239, 246, 255, 0.98),
         rgba(248, 250, 252, 0.98)
     );
-    -fx-border-color: rgba(59, 130, 246, 0.18);
+    -fx-border-color: rgba(180, 83, 9, 0.18);
     -fx-border-width: 0 0 1 0;
 }
 
@@ -956,7 +1197,7 @@
         rgba(255, 251, 235, 0.98),
         rgba(255, 247, 237, 0.98)
     );
-    -fx-border-color: rgba(245, 158, 11, 0.22);
+    -fx-border-color: rgba(180, 83, 9, 0.22);
 }
 
 .bootstrap-banner-error {
@@ -990,13 +1231,71 @@
 }
 
 .bootstrap-progress-bar .bar {
-    -fx-background-color: linear-gradient(to right, -color-primary, #14b8a6);
+    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
     -fx-background-radius: 999;
 }
 
 .bootstrap-progress-bar .track {
-    -fx-background-color: rgba(226, 232, 240, 0.92);
+    -fx-background-color: rgba(226, 232, 240, 0.95);
     -fx-background-radius: 999;
+}
+
+.study-plan-banner {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(236, 253, 245, 0.98),
+        rgba(239, 246, 255, 0.98)
+    );
+    -fx-border-color: rgba(16, 185, 129, 0.20);
+    -fx-border-width: 0 0 1 0;
+}
+
+.study-plan-banner-active {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(239, 246, 255, 0.98),
+        rgba(240, 249, 255, 0.98)
+    );
+    -fx-border-color: rgba(180, 83, 9, 0.18);
+}
+
+.study-plan-banner-prolonged {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(255, 251, 235, 0.98),
+        rgba(255, 247, 237, 0.98)
+    );
+    -fx-border-color: rgba(180, 83, 9, 0.24);
+}
+
+.study-plan-banner-empty {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(248, 250, 252, 0.98),
+        rgba(241, 245, 249, 0.98)
+    );
+    -fx-border-color: rgba(148, 163, 184, 0.20);
+}
+
+.study-plan-banner-offline {
+    -fx-background-color: linear-gradient(
+        to right,
+        rgba(254, 242, 242, 0.98),
+        rgba(255, 241, 242, 0.98)
+    );
+    -fx-border-color: rgba(239, 68, 68, 0.20);
+}
+
+.study-plan-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -color-text;
+}
+
+.study-plan-detail {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-text-secondary;
+    -fx-line-spacing: 2px;
 }
 
 .upload-hero-card {
@@ -1005,10 +1304,10 @@
         rgba(255, 247, 237, 0.98),
         rgba(239, 246, 255, 0.98)
     );
-    -fx-border-color: rgba(249, 115, 22, 0.20);
+    -fx-border-color: rgba(180, 83, 9, 0.20);
     -fx-background-radius: 24;
     -fx-border-radius: 24;
-    -fx-effect: dropshadow(gaussian, rgba(249, 115, 22, 0.10), 26, 0.18, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(180, 83, 9, 0.10), 26, 0.18, 0, 8);
 }
 
 .upload-side-card,
@@ -1027,7 +1326,7 @@
         rgba(255, 255, 255, 0.98),
         rgba(248, 250, 252, 0.96)
     );
-    -fx-border-color: rgba(191, 219, 254, 0.86);
+    -fx-border-color: rgba(203, 213, 225, 0.86);
     -fx-border-style: segments(8, 6) line-cap round;
 }
 
@@ -1132,7 +1431,7 @@
 }
 
 .plano-cartesiano-card {
-    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.08), 18, 0.16, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(32, 46, 61, 0.08), 18, 0.16, 0, 6);
 }
 
 .plano-cartesiano-badge {
@@ -1146,7 +1445,7 @@
 .plano-cartesiano-shell {
     -fx-background-color: white;
     -fx-background-radius: 14;
-    -fx-border-color: rgba(191, 219, 254, 0.92);
+    -fx-border-color: rgba(203, 213, 225, 0.92);
     -fx-border-radius: 14;
     -fx-alignment: center;
 }
@@ -1236,12 +1535,12 @@
 }
 
 .result-trail-progress .bar {
-    -fx-background-color: linear-gradient(to right, #0f766e, #14b8a6);
+    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
     -fx-background-radius: 999;
 }
 
 .result-trail-progress .track {
-    -fx-background-color: rgba(226, 232, 240, 0.94);
+    -fx-background-color: rgba(226, 232, 240, 0.95);
     -fx-background-radius: 999;
 }
 
@@ -1252,14 +1551,14 @@
         rgba(248, 250, 252, 0.985)
     );
     -fx-background-radius: 24;
-    -fx-border-color: rgba(191, 219, 254, 0.82);
+    -fx-border-color: rgba(203, 213, 225, 0.82);
     -fx-border-radius: 24;
     -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.18), 28, 0.18, 0, 12);
 }
 
 .celebration-badge {
-    -fx-background-color: rgba(219, 234, 254, 0.96);
-    -fx-text-fill: #1d4ed8;
+    -fx-background-color: rgba(32, 46, 61, 0.12);
+    -fx-text-fill: -color-primary-dark;
     -fx-font-size: 11px;
     -fx-font-weight: 800;
     -fx-padding: 5 10 5 10;
@@ -1283,7 +1582,7 @@
 }
 
 .celebration-score-card {
-    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.08), 18, 0.14, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(32, 46, 61, 0.08), 18, 0.14, 0, 6);
 }
 
 .celebration-track-card {
@@ -1295,8 +1594,8 @@
     -fx-spacing: 10;
     -fx-background-color: linear-gradient(
         to right,
-        rgba(239, 246, 255, 0.92),
-        rgba(240, 253, 250, 0.92)
+        rgba(248, 250, 252, 0.92),
+        rgba(241, 245, 249, 0.92)
     );
 }
 
@@ -1311,15 +1610,29 @@
 }
 
 .celebration-progress .bar {
-    -fx-background-color: linear-gradient(to right, #2563eb, #38bdf8);
+    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
     -fx-background-radius: 999;
 }
 
 .celebration-progress .track {
-    -fx-background-color: rgba(226, 232, 240, 0.94);
+    -fx-background-color: rgba(226, 232, 240, 0.95);
     -fx-background-radius: 999;
 }
 
 .celebration-progress-alt .bar {
-    -fx-background-color: linear-gradient(to right, #0f766e, #22c55e);
+    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
+}
+
+
+.card-green{
+    -fx-background-color: #22c55e;
+
+}
+
+.card-blue{
+    -fx-background-color: #202e3d;
+
+}
+.text-all {
+    -fx-font-size: 10px;
 }

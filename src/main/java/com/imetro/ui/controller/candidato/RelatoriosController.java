@@ -3,11 +3,17 @@ package com.imetro.ui.controller.candidato;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.imetro.config.RuntimeConfig;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEtapa;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoInsight;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoRegistro;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.persistence.repository.UserRepository;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.relatorio.InsightCard;
 import com.imetro.ui.components.relatorio.ReportCard;
@@ -18,6 +24,7 @@ import com.imetro.util.ProfileSessionState;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
@@ -26,6 +33,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class RelatoriosController implements Initializable {
+
+    private static final Locale LOCALE_PT = new Locale("pt", "AO");
+    private static final DateTimeFormatter DATA_EXTENSA = DateTimeFormatter.ofPattern("dd 'de' MMMM", LOCALE_PT);
 
     @FXML
     private Label periodLabel;
@@ -66,91 +76,88 @@ public class RelatoriosController implements Initializable {
     @FXML
     private VBox reportsTimelineBox;
 
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         String primeiroNome = resolvePrimeiroNome();
-        @SuppressWarnings("deprecation")
-        String hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd 'de' MMMM", new Locale("pt", "AO")));
+        String hoje = LocalDate.now().format(DATA_EXTENSA);
 
-        periodLabel.setText("Panorama semanal de " + primeiroNome + " atualizado em " + hoje + ".");
-        heroScoreLabel.setText("81%");
-        heroSummaryLabel.setText("O teu desempenho esta estavel, com ganho claro em precisao e melhor leitura de questoes extensas.");
-        accuracyStatLabel.setText("84%");
-        paceStatLabel.setText("42 s");
-        consistencyStatLabel.setText("Alta");
-        focusStatLabel.setText("Algebra");
+        periodLabel.setText("Plano de estudo de " + primeiroNome + " atualizado em " + hoje + ".");
 
-        setupRing();
-        setupCharts();
-        setupPatterns();
-        setupPlan();
-        setupRecentReports();
+        PlaneamentoEstudoResumo resumo = planeamentoService.gerarResumo(Authentication.getCurrentUserId());
+
+        heroScoreLabel.setText(formatPercentual(resumo.pontuacaoHero()));
+        heroSummaryLabel.setText(resumo.resumoHero());
+        accuracyStatLabel.setText(resumo.acertoMedio());
+        paceStatLabel.setText(resumo.ritmoMedio());
+        consistencyStatLabel.setText(resumo.consistenciaMedia());
+        focusStatLabel.setText(resumo.focoAtual());
+
+        setupRing(resumo.pontuacaoHero());
+        setupCharts(resumo);
+        setupPatterns(resumo);
+        setupPlan(resumo);
+        setupRecentReports(resumo);
     }
 
-    private void setupRing() {
-        CircleProgress progress = new CircleProgress(54, 54, 54, 0.81f);
+    private void setupRing(double score) {
+        CircleProgress progress = new CircleProgress(54, 54, 54, (float) Math.max(0d, Math.min(1d, score / 100d)));
         progress.setSubtitle("Confianca");
         confiancaRingHost.getChildren().setAll(progress);
     }
 
-    @SuppressWarnings("unchecked")
-    private void setupCharts() {
+    private void setupCharts(PlaneamentoEstudoResumo resumo) {
         evolucaoChart.setAnimated(false);
         evolucaoChart.setLegendVisible(false);
         evolucaoChart.setCreateSymbols(true);
+        evolucaoChart.getData().clear();
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.getData().add(new XYChart.Data<>("Sem 1", 56));
-        series.getData().add(new XYChart.Data<>("Sem 2", 61));
-        series.getData().add(new XYChart.Data<>("Sem 3", 68));
-        series.getData().add(new XYChart.Data<>("Sem 4", 66));
-        series.getData().add(new XYChart.Data<>("Sem 5", 74));
-        series.getData().add(new XYChart.Data<>("Sem 6", 81));
+        resumo.evolucao().forEach(ponto ->
+            series.getData().add(new XYChart.Data<>(ponto.rotulo(), ponto.valor()))
+        );
         evolucaoChart.getData().setAll(series);
 
         disciplinasChart.setAnimated(false);
         disciplinasChart.setLegendVisible(false);
         disciplinasChart.setCategoryGap(18);
         disciplinasChart.setBarGap(6);
+        disciplinasChart.getData().clear();
 
         XYChart.Series<String, Number> barSeries = new XYChart.Series<>();
-        barSeries.getData().add(new XYChart.Data<>("Mat", 86));
-        barSeries.getData().add(new XYChart.Data<>("Fis", 71));
-        barSeries.getData().add(new XYChart.Data<>("Qui", 64));
-        barSeries.getData().add(new XYChart.Data<>("Bio", 78));
-        barSeries.getData().add(new XYChart.Data<>("Por", 82));
+        resumo.disciplinas().forEach(disciplina ->
+            barSeries.getData().add(new XYChart.Data<>(abreviarDisciplina(disciplina.disciplina()), disciplina.pontuacao()))
+        );
         disciplinasChart.getData().setAll(barSeries);
     }
 
-    private void setupPatterns() {
-        patternsBox.getChildren().setAll(
-            new SectionTitle("Padroes encontrados", "Leituras que se repetem no teu historico recente."),
-            new InsightCard("Pico de rendimento", "O teu melhor bloco costuma surgir entre a 2a e a 4a questao."),
-            new InsightCard("Erro recorrente", "As quedas aparecem quando a pergunta mistura calculo e interpretacao."),
-            new InsightCard("Forca silenciosa", "Quando revisas o enunciado, a taxa de acerto sobe de forma consistente."),
-            new InsightCard("Alerta util", "Fisica precisa de mais repeticao em questoes com duas etapas.")
-        );
+    private void setupPatterns(PlaneamentoEstudoResumo resumo) {
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodes.add(new SectionTitle("Sinais de estudo", "A politica usa o teu historico real para decidir o que vem primeiro."));
+        for (PlaneamentoEstudoInsight insight : resumo.insights()) {
+            nodes.add(new InsightCard(insight.titulo(), insight.descricao()));
+        }
+        patternsBox.getChildren().setAll(nodes);
     }
 
-    private void setupPlan() {
-        planoBox.getChildren().setAll(
-            new SectionTitle("Plano sugerido", "Ritmo recomendado para a proxima janela de estudo."),
-            new TimelineStep("Hoje", "Fechar 1 bloco curto de Algebra com foco em velocidade limpa."),
-            new TimelineStep("Amanha", "Executar 1 diagnostico curto de Fisica e rever apenas os erros."),
-            new TimelineStep("48h", "Refazer 5 questoes mistas para medir retencao e consistencia."),
-            new TimelineStep("Fim da semana", "Entrar num teste adaptativo longo para validar ganho real.")
-        );
+    private void setupPlan(PlaneamentoEstudoResumo resumo) {
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodes.add(new SectionTitle("Plano inteligente", "Blocos curtos, revisao espaçada e confirmacao final com base no teu desempenho real."));
+        for (PlaneamentoEstudoEtapa etapa : resumo.etapas()) {
+            nodes.add(new TimelineStep(etapa.janela(), etapa.acao() + " " + etapa.detalhe()));
+        }
+        planoBox.getChildren().setAll(nodes);
     }
 
-    private void setupRecentReports() {
-        reportsTimelineBox.getChildren().setAll(
-            new SectionTitle("Ultimos retratos", "Resumo rapido dos relatorios que mais contam agora."),
-            new ReportCard("Teste adaptativo", "Matematica", "84% de acerto, nivel dificil sustentado.", "Ha 2 dias", "pill-good"),
-            new ReportCard("Diagnostico", "Fisica", "Boa base conceitual, mas ainda oscilas no tempo.", "Ha 5 dias", "pill-warn"),
-            new ReportCard("Teste adaptativo", "Portugues", "Leitura melhorou e os erros de pressao cairam.", "Ha 8 dias", "pill-good")
-        );
+    private void setupRecentReports(PlaneamentoEstudoResumo resumo) {
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodes.add(new SectionTitle("Historico recente", "Os ultimos ciclos que alimentam o planeamento desta semana."));
+        for (PlaneamentoEstudoRegistro registro : resumo.registros()) {
+            nodes.add(new ReportCard(registro.tipo(), registro.disciplina(), registro.resumo(), registro.momento(), registro.pillClass()));
+        }
+        reportsTimelineBox.getChildren().setAll(nodes);
     }
-
 
     private String resolvePrimeiroNome() {
         String email = Authentication.getCurrentUserEmail();
@@ -170,5 +177,16 @@ public class RelatoriosController implements Initializable {
 
         String[] partes = nome.trim().split("\\s+");
         return partes.length == 0 ? "candidato" : partes[0];
+    }
+
+    private String formatPercentual(double valor) {
+        return Math.round(Math.max(0d, Math.min(100d, valor))) + "%";
+    }
+
+    private String abreviarDisciplina(String disciplina) {
+        if (disciplina == null || disciplina.isBlank()) {
+            return "Disciplina";
+        }
+        return disciplina;
     }
 }

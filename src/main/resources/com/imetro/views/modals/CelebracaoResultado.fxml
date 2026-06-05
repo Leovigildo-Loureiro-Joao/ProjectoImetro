@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="modal" maxHeight="533.0" maxWidth="818.0" minHeight="533.0" prefHeight="533.0" prefWidth="818.0" spacing="18.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.ResultadoCelebracaoModalController">
+<VBox fx:id="modal" maxHeight="533.0" maxWidth="818.0" minHeight="533.0" prefHeight="533.0" prefWidth="818.0" spacing="18.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.ResultadoCelebracaoModalController">
    <children>
       <HBox alignment="CENTER_LEFT" spacing="14.0">
          <children>

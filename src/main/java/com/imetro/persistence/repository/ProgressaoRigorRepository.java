@@ -81,4 +81,21 @@ public class ProgressaoRigorRepository extends JdbcBasicSqlRepository{
         }
     }
 
+    public int deleteByCandidatoId(UUID candidatoId) throws SQLException {
+        if (candidatoId == null) {
+            return 0;
+        }
+
+        String sql = """
+            delete from progressao_rigor
+            where aluno_id = ?
+            """;
+
+        try (var conn = openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            return stmt.executeUpdate();
+        }
+    }
+
 }

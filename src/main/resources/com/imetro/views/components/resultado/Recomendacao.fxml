@@ -9,13 +9,13 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="8.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoRecomendacao">
+<VBox spacing="8.0" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.resultados.ResultadoRecomendacao">
    <children>
       <HBox alignment="CENTER_LEFT" spacing="12.0">
          <children>
             <Label styleClass="h3-thin" text="Recomendacao" />
             <Region HBox.hgrow="ALWAYS" />
-            <JFXButton fx:id="btnToggleRecomendacao" onAction="#togglePainelRecomendacao" prefHeight="34.0" prefWidth="170.0" styleClass="btn-secondary" text="Ver recomendacao" />
+            <JFXButton fx:id="btnToggleRecomendacao" onAction="#togglePainelRecomendacao" prefHeight="34.0" prefWidth="190.0" styleClass="btn-secondary" text="Ver recomendacao" />
          </children>
       </HBox>
       <Label fx:id="recomendacaoValue" styleClass="muted" text="-" wrapText="true" />
@@ -40,6 +40,17 @@
                   </TitledPane>
                </panes>
             </Accordion>
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+               <children>
+                  <VBox HBox.hgrow="ALWAYS" spacing="3.0">
+                     <children>
+                        <Label styleClass="question-side-title" text="Aprender mais sobre a area" />
+                        <Label fx:id="bibliotecaHintValue" styleClass="question-side-copy" text="-" wrapText="true" />
+                     </children>
+                  </VBox>
+                  <JFXButton fx:id="abrirBibliotecaButton" onAction="#abrirBibliotecaDisciplina" prefHeight="36.0" styleClass="btn-secondary" text="Abrir biblioteca" />
+               </children>
+            </HBox>
          </children>
          <padding>
             <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />

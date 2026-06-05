@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.CandidatoLayoutController">
+<BorderPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.CandidatoLayoutController">
 
     <left>
         <VBox fx:id="sidebar" minWidth="69.0" prefHeight="1007.0" prefWidth="69.0" spacing="10" styleClass="sidebar">
@@ -32,7 +32,7 @@
                            </ImageView>
                         </graphic>
                      </JFXButton>
-                        <ListView fx:id="menu" prefHeight="371.0" prefWidth="64.0">
+                        <ListView fx:id="menu" prefHeight="494.0" prefWidth="64.0">
                         <styleClass>
                            <String fx:value="nav-bar" />
                            <String fx:value="min" />
@@ -55,7 +55,7 @@
                <children>
                   <HBox alignment="CENTER_LEFT" spacing="12.0">
                      <children>
-                        <VBox HBox.hgrow="ALWAYS" spacing="3.0">
+                        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
                            <children>
                               <Label fx:id="bootstrapTitleLabel" styleClass="bootstrap-title" text="A preparar a tua base de estudo" />
                               <Label fx:id="bootstrapDetailLabel" styleClass="bootstrap-detail" text="" wrapText="true" />
@@ -68,6 +68,15 @@
                </children>
                <padding>
                   <Insets bottom="10.0" left="18.0" right="18.0" top="12.0" />
+               </padding>
+            </VBox>
+            <VBox fx:id="layoutPlanBanner" id="layoutPlanBanner" managed="false" spacing="6.0" styleClass="study-plan-banner" visible="false">
+               <children>
+                  <Label fx:id="layoutPlanTitleLabel" id="layoutPlanTitleLabel" styleClass="study-plan-title" text="Sem plano ativo" />
+                  <Label fx:id="layoutPlanDetailLabel" id="layoutPlanDetailLabel" styleClass="study-plan-detail" text="Conclua o diagnostico inicial para gerar o primeiro mapa de estudo." wrapText="true" />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="18.0" right="18.0" top="10.0" />
                </padding>
             </VBox>
             <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">

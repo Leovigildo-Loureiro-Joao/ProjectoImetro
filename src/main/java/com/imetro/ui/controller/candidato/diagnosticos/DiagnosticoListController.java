@@ -12,9 +12,11 @@ import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.PrimeiroDiagnosticoResumo;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.components.diagnostico.DiagnosticoCard;
 import com.imetro.ui.components.diagnostico.FirsCardDiagnostico;
+import com.imetro.ui.support.PlaneamentoEstudoBannerSupport;
 import com.imetro.util.Authentication;
 import com.imetro.util.Loading;
 import com.jfoenix.controls.JFXButton;
@@ -51,6 +53,7 @@ public class DiagnosticoListController implements Initializable, DisposableContr
 
     private final ArrayList<Topico> topicosSelecionados = new ArrayList<>();
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
         PerguntasBootstrapAsyncService.getInstance();
 
@@ -190,19 +193,18 @@ public class DiagnosticoListController implements Initializable, DisposableContr
     private void ResetData(ActionEvent event) {
         DiagnosticoCoordinator.requestAlert(
             "Resetar diagnosticos",
-            "Deseja limpar a selecao atual e recomecar o fluxo?",
-            this::limparSelecaoAtual
+            "Isto vai apagar os diagnosticos, o planeamento e o progresso derivado deste candidato. Deseja continuar?",
+            this::reiniciarHistoricoDiagnostico
         );
     }
 
-    private void limparSelecaoAtual() {
-        for (Node node : diagnosticosPane.getChildren()) {
-            if (node instanceof DiagnosticoCard card) {
-                card.setSelecionado(false);
-            }
-        }
-        topicosSelecionados.clear();
-        atualizarEstadoBotoes();
+    private void reiniciarHistoricoDiagnostico() {
+        diagnosticoService.reiniciarDiagnosticos(Authentication.getCurrentUserId());
+        carregarConteudo();
+        PlaneamentoEstudoBannerSupport.aplicar(
+            diagnosticosPane == null ? null : diagnosticosPane.getScene(),
+            planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId())
+        );
     }
 
     private VBox criarEstadoVazio(boolean processamentoLivros) {

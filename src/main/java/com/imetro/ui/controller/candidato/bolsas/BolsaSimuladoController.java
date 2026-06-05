@@ -9,14 +9,17 @@ import java.util.UUID;
 
 import com.imetro.App;
 import com.imetro.domain.dto.bolsa.BolsaDto;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.services.BolsaSimuladoService;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.services.TesteService;
 import com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoResultado;
+import com.imetro.util.QuestaoUtil;
 import com.imetro.util.ResultadoPayload;
 import com.jfoenix.controls.JFXButton;
 
@@ -46,6 +49,8 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
     @FXML
     private Label heroStatusLabel;
 
+    
+
     @FXML
     private Label heroDisciplineLabel;
 
@@ -57,6 +62,9 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
 
     @FXML
     private Label heroReadinessLabel;
+
+    @FXML
+    private Label heroPlanLabel;
 
     @FXML
     private VBox introPane;
@@ -123,6 +131,7 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
 
     private final BolsaSimuladoService bolsaSimuladoService = new BolsaSimuladoService();
     private final TesteService testeService = new TesteService();
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final List<Questao> questoes = new ArrayList<>();
     private final List<Character> respostasUsuario = new ArrayList<>();
     private final List<ReacaoTeste> reacoes = new ArrayList<>();
@@ -147,9 +156,19 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
 
         configurarEstadoInicial();
         configurarHero();
+        Platform.runLater(this::atualizarEstadoPlanejamento);
         if (respostaField != null) {
             respostaField.setOnAction(event -> onSubmitAnswer());
         }
+    }
+
+    private void atualizarEstadoPlanejamento() {
+        if (heroPlanLabel == null) {
+            return;
+        }
+
+        PlaneamentoEstudoEstado estado = planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId());
+        heroPlanLabel.setText(estado.titulo());
     }
 
     @FXML
@@ -265,12 +284,15 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
             heroStatusLabel.setText("Fluxo pendente");
             heroDisciplineLabel.setText("Disciplina foco: -");
             heroCriteriaLabel.setText("Criterios: -");
-            heroDurationLabel.setText("Duracao: -");
-            heroReadinessLabel.setText("Prontidao: -");
-            if (startButton != null) {
-                startButton.setDisable(true);
-            }
-            return;
+        heroDurationLabel.setText("Duracao: -");
+        heroReadinessLabel.setText("Prontidao: -");
+        if (heroPlanLabel != null) {
+            heroPlanLabel.setText("Sem plano ativo");
+        }
+        if (startButton != null) {
+            startButton.setDisable(true);
+        }
+        return;
         }
 
         heroTitleLabel.setText(bolsa.nome());
@@ -283,6 +305,9 @@ public class BolsaSimuladoController implements Initializable, DisposableControl
         heroCriteriaLabel.setText("Criterios: " + firstNonBlank(selection == null ? null : selection.criterioResumo(), "-"));
         heroDurationLabel.setText("Duracao: " + safeInt(bolsa.duracaoMinutos()) + " min - modo " + firstNonBlank(bolsa.modoResposta(), "TEXTFIELD"));
         heroReadinessLabel.setText("Prontidao atual: " + (selection == null ? "-" : selection.prontidaoAtual() + "%"));
+        if (heroPlanLabel != null) {
+            heroPlanLabel.setText(planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId()).titulo());
+        }
         if (startButton != null) {
             startButton.setDisable(selection != null && !selection.elegivel());
         }

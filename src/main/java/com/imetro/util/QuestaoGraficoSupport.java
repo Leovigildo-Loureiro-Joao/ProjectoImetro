@@ -55,6 +55,9 @@ public final class QuestaoGraficoSupport {
         "newton"
     );
 
+    private static final String COR_GRAFICO_MATEMATICA = "#202e3d";
+    private static final String COR_GRAFICO_FISICA = "#b45309";
+
     private QuestaoGraficoSupport() {
     }
 
@@ -79,7 +82,7 @@ public final class QuestaoGraficoSupport {
                 "eixo x",
                 "eixo y",
                 "Neste tipo de questao, olha para o vertice antes de decidir onde a parabola sobe ou desce.",
-                "#2563eb",
+                COR_GRAFICO_MATEMATICA,
                 TipoCurva.PARABOLA,
                 1d,
                 0d,
@@ -97,7 +100,7 @@ public final class QuestaoGraficoSupport {
                 "eixo x",
                 "eixo y",
                 "Se a taxa e positiva, a reta sobe da esquerda para a direita; se for negativa, ela desce.",
-                "#2563eb",
+                COR_GRAFICO_MATEMATICA,
                 TipoCurva.RETA,
                 1d,
                 0d,
@@ -115,7 +118,7 @@ public final class QuestaoGraficoSupport {
                 "tempo (s)",
                 "altura / posicao",
                 "Em lancamentos, a curva sobe ate um ponto maximo e depois desce.",
-                "#f97316",
+                COR_GRAFICO_FISICA,
                 TipoCurva.PARABOLA,
                 -1d,
                 4d,
@@ -133,7 +136,7 @@ public final class QuestaoGraficoSupport {
                 "tempo (s)",
                 "posicao / velocidade",
                 "Se a inclinacao aumenta de forma constante, a curva deve manter a mesma direcao.",
-                "#f97316",
+                COR_GRAFICO_FISICA,
                 TipoCurva.RETA,
                 2d,
                 0d,
@@ -151,7 +154,7 @@ public final class QuestaoGraficoSupport {
                 "aceleracao / massa",
                 "forca (N)",
                 "Quando a relacao e diretamente proporcional, a reta passa pela origem.",
-                "#f97316",
+                COR_GRAFICO_FISICA,
                 TipoCurva.RETA,
                 2d,
                 0d,
@@ -200,7 +203,7 @@ public final class QuestaoGraficoSupport {
             TextoUtil.safeText(questao.getGraficoEixoX(), "eixo x"),
             TextoUtil.safeText(questao.getGraficoEixoY(), "eixo y"),
             dica,
-            "FISICA".equals(disciplina) ? "#f97316" : "#2563eb",
+            "FISICA".equals(disciplina) ? COR_GRAFICO_FISICA : COR_GRAFICO_MATEMATICA,
             tipoCurva,
             valueOrDefault(questao.getGraficoA(), 1d),
             valueOrDefault(questao.getGraficoB(), 0d),

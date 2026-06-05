@@ -5,6 +5,7 @@ import com.imetro.services.DisciplinaService;
 import com.imetro.services.DisciplinaUploadBootstrapService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.util.Authentication;
+import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import java.awt.Desktop;
@@ -40,6 +41,7 @@ import java.util.UUID;
 public class AddLivroController implements Initializable {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static String disciplinaPreferida;
 
     @FXML
     private JFXComboBox<DisciplinaOption> disciplinaCombo;
@@ -90,6 +92,10 @@ public class AddLivroController implements Initializable {
     private final PerguntasBootstrapAsyncService bootstrapAsyncService = PerguntasBootstrapAsyncService.getInstance();
     private final List<Path> arquivosSelecionados = new ArrayList<>();
     private final ObservableList<LivroTabelaRow> livros = FXCollections.observableArrayList();
+
+    public static void definirDisciplinaPreferida(String disciplina) {
+        disciplinaPreferida = disciplina;
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -293,7 +299,23 @@ public class AddLivroController implements Initializable {
         }
 
         disciplinaCombo.getSelectionModel().selectFirst();
+        aplicarDisciplinaPreferidaSeExistir();
         carregarBibliotecaAtual();
+    }
+
+    private void aplicarDisciplinaPreferidaSeExistir() {
+        String preferida = disciplinaPreferida;
+        disciplinaPreferida = null;
+
+        if (preferida == null || preferida.isBlank() || disciplinaCombo.getItems().isEmpty()) {
+            return;
+        }
+
+        String alvo = TextoUtil.normalizarMinusculo(preferida);
+        disciplinaCombo.getItems().stream()
+            .filter(item -> TextoUtil.normalizarMinusculo(item.nome()).equals(alvo))
+            .findFirst()
+            .ifPresent(item -> disciplinaCombo.getSelectionModel().select(item));
     }
 
     private void carregarBibliotecaAtual() {

@@ -51,7 +51,7 @@
                   </VBox>
                </children>
             </VBox>
-            <VBox spacing="10.0">
+            <VBox fx:id="focoT" spacing="10.0">
                <children>
                   <Label styleClass="h3-thin" text="Foco principal" />
                   <VBox spacing="10.0">

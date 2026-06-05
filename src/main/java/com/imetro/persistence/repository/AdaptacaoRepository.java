@@ -79,7 +79,6 @@ public class AdaptacaoRepository extends  JdbcBasicSqlRepository {
         String sql = """
             insert into adaptacao (
               user_id,
-              descricao,
               tempo_lento_fator,
               tempo_recuperacao_fator,
               tempo_adapt,
@@ -98,7 +97,6 @@ public class AdaptacaoRepository extends  JdbcBasicSqlRepository {
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, userId);
-            stmt.setString(2, padrao.descricao());
             stmt.setDouble(3, padrao.tempoLentoFator());
             stmt.setDouble(4, padrao.tempoRecuperacaoFator());
             stmt.setInt(5, padrao.tempAdapt());
