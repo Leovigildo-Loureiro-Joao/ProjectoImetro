@@ -517,6 +517,8 @@ public class GeminiService {
         prompt.append("- Mantem a dificuldade coerente com o material.\n");
         prompt.append("- No campo exercicio, devolve um bloco LaTeX curto e renderizavel pelo JLaTeXMath, sem markdown, sem delimitadores $ e sem texto explicativo extra.\n");
         prompt.append("- O exercicio deve mostrar a expressao, igualdade ou dados essenciais de forma elegante e compacta.\n");
+        prompt.append("- Quando precisares de raiz quadrada, usa sempre \\\\sqrt{...} e nunca a palavra literal sqrt.\n");
+        prompt.append("- Quando precisares de raiz n-esima, usa sempre \\\\sqrt[n]{...}.\n");
         prompt.append("- Se a questao nao beneficiar de exercicio visual, devolve string vazia.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera base suficiente para testes curtos, medios e longos.\n");
@@ -558,6 +560,8 @@ public class GeminiService {
         prompt.append("- Equilibra a distribuicao das questoes pelos topicos principais.\n");
         prompt.append("- No campo exercicio, devolve um bloco LaTeX curto e renderizavel pelo JLaTeXMath, sem markdown, sem delimitadores $ e sem texto explicativo extra.\n");
         prompt.append("- O exercicio deve mostrar a expressao, igualdade ou dados essenciais de forma elegante e compacta.\n");
+        prompt.append("- Quando precisares de raiz quadrada, usa sempre \\\\sqrt{...} e nunca a palavra literal sqrt.\n");
+        prompt.append("- Quando precisares de raiz n-esima, usa sempre \\\\sqrt[n]{...}.\n");
         prompt.append("- Se a questao nao beneficiar de exercicio visual, devolve string vazia.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera uma base ampla o suficiente para testes curtos, medios e longos.\n");

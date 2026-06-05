@@ -36,7 +36,6 @@ import com.imetro.ui.modals.TopicModalController;
 import com.imetro.ui.support.PlaneamentoEstudoBannerSupport;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoGraficoSupport;
-import com.imetro.util.QuestaoExercicioSupport;
 import com.imetro.util.QuestaoUtil;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoCelebracaoSupport;
@@ -63,7 +62,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -105,12 +103,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     @FXML
     private Label bloco21;
-
-    @FXML
-    private VBox exercicioContainer;
-
-    @FXML
-    private ImageView exercicioImageView;
 
     @FXML
     private JFXButton btnConfirmar;
@@ -422,7 +414,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         nPergunta.setText("Questao " + (index + 1) + " / " + totalQuestoes);
 
         bloco1.setText(q.getEnunciado());
-        atualizarExercicioVisual(q);
         ResA.setText(q.getOpcaoA());
         ResB.setText(q.getOpcaoB());
         ResC.setText(q.getOpcaoC());
@@ -444,16 +435,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
-    }
-
-    private void atualizarExercicioVisual(Questao questao) {
-        if (exercicioContainer == null || exercicioImageView == null) {
-            return;
-        }
-
-        Image imagem = QuestaoExercicioSupport.render(questao == null ? null : questao.getExercicio()).orElse(null);
-        exercicioImageView.setImage(imagem);
-        setNodeVisivel(exercicioContainer, imagem != null);
     }
 
     private String montarBlocoSecundarioQuestao(Questao questao) {

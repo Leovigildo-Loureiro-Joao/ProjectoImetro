@@ -1031,7 +1031,7 @@ public class DiagnosticoService {
         questao.setSubtopico( QuestaoUtil.safeText(row.get("subtopico"), questao.getTopico()));
         questao.setTopicoPrincipal( QuestaoUtil.safeText(row.get("topico_principal"), questao.getTopico()));
         questao.setEnunciado( QuestaoUtil.safeText(row.get("questao"), ""));
-        questao.setExercicio( QuestaoUtil.safeText(row.get("exercicio"), null));
+        questao.setExercicio(com.imetro.util.QuestaoExercicioSupport.normalizar(QuestaoUtil.safeText(row.get("exercicio"), null)));
         questao.setBloco2(null);
 
         List<String> respostasOriginais = parseJsonStringArray(row.get("respostas"));

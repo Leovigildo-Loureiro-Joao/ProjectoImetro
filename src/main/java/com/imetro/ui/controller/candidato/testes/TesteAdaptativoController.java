@@ -44,7 +44,6 @@ import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.Loading;
-import com.imetro.util.QuestaoExercicioSupport;
 import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoCelebracaoSupport;
@@ -115,12 +114,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     @FXML
     private Label bloco2;
-
-    @FXML
-    private VBox exercicioContainer;
-
-    @FXML
-    private ImageView exercicioImageView;
 
     @FXML
     private JFXButton btnConfirmar;
@@ -821,7 +814,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         nPergunta.setText("Questao " + (index + 1) + " / " + totalQuestoes);
         bloco1.setText(q.getEnunciado());
-        atualizarExercicioVisual(q);
         bloco2.setText(montarBlocoSecundario(q));
 
         ResA.setText(q.getOpcaoA());
@@ -1103,16 +1095,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
-    }
-
-    private void atualizarExercicioVisual(Questao questao) {
-        if (exercicioContainer == null || exercicioImageView == null) {
-            return;
-        }
-
-        Image imagem = QuestaoExercicioSupport.render(questao == null ? null : questao.getExercicio()).orElse(null);
-        exercicioImageView.setImage(imagem);
-        setNodeVisivel(exercicioContainer, imagem != null);
     }
 
     private void mostrarTelaInicialTeste() {

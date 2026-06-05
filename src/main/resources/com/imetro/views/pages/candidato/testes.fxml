@@ -189,15 +189,6 @@
                                                                <String fx:value="diagnostico-question" />
                                                             </styleClass>
                                                          </Label>
-                                                         <VBox fx:id="exercicioContainer" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="0.0" styleClass="sub-card" visible="false" managed="false">
-                                                            <padding>
-                                                               <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
-                                                            </padding>
-                                                            <children>
-                                                               <ImageView fx:id="exercicioImageView" fitWidth="610.0" pickOnBounds="true" preserveRatio="true" smooth="true" />
-                                                            </children>
-                                                         </VBox>
-
                                                                <!-- ALTERNATIVAS -->
                                                          <VBox prefHeight="410.0" prefWidth="530.0" VBox.vgrow="ALWAYS">
                                                             <children>
