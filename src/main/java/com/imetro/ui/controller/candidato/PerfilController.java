@@ -149,6 +149,7 @@ public class PerfilController implements Initializable {
         currentUserName = newName;
         ProfileSessionState.rememberName(currentUserEmail, newName);
         populateProfileData();
+        refreshLayoutTopBar();
         setEditingEnabled(false);
 
         if (!RuntimeConfig.isDbEnabled() && wantsPasswordUpdate) {
@@ -176,7 +177,6 @@ public class PerfilController implements Initializable {
             AvatarPickerModalController controller = loader.getController();
             controller.configure(currentUserName, currentUserEmail, currentAvatarRef, this::persistAvatarSelection);
             modalPai.getChildren().add(modal);
-            modalPai.getChildren().get(0).setTranslateY(-1100);
             controller.init();
         } catch (Exception e) {
             e.printStackTrace();
@@ -217,6 +217,7 @@ public class PerfilController implements Initializable {
             ProfileSessionState.rememberAvatar(currentUserEmail, normalizedRef);
             currentAvatarRef = normalizedRef;
             applyAvatar(currentAvatarRef, currentUserName, currentUserEmail);
+            refreshLayoutTopBar();
             setFeedbackMessage("Avatar ajustado nesta sessao. Em modo navegacao ele serve como preview local.", "profile-feedback-info");
             return true;
         }
@@ -227,6 +228,7 @@ public class PerfilController implements Initializable {
                 ProfileSessionState.rememberAvatar(currentUserEmail, normalizedRef);
                 currentAvatarRef = normalizedRef;
                 applyAvatar(currentAvatarRef, currentUserName, currentUserEmail);
+                refreshLayoutTopBar();
                 setFeedbackMessage("Avatar atualizado com sucesso.", "profile-feedback-success");
             }
             return updated;
@@ -391,7 +393,7 @@ public class PerfilController implements Initializable {
         }
 
         if (avatarInitialsLabel != null) {
-            avatarInitialsLabel.setText(AvatarSupport.extractInitials(nome, email));
+            avatarInitialsLabel.setText(AvatarSupport.previewFallbackLabel(avatarRef, nome, email));
             avatarInitialsLabel.setVisible(!hasImage);
             avatarInitialsLabel.setManaged(!hasImage);
         }
@@ -437,6 +439,17 @@ public class PerfilController implements Initializable {
         } catch (RuntimeException e) {
             e.printStackTrace();
             return remembered;
+        }
+    }
+
+    private void refreshLayoutTopBar() {
+        if (modalPai == null || modalPai.getScene() == null || modalPai.getScene().getRoot() == null) {
+            return;
+        }
+
+        Object controller = modalPai.getScene().getRoot().getProperties().get("__imetro_controller__");
+        if (controller instanceof CandidatoLayoutController layoutController) {
+            layoutController.refreshTopBarProfile();
         }
     }
 

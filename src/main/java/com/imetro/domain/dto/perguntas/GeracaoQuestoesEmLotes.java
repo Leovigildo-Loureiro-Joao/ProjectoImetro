@@ -7,6 +7,7 @@ public record GeracaoQuestoesEmLotes(
     String jsonAgregado,
     int totalLotes,
     int lotesSucesso,
-    int lotesFalha
+    int lotesFalha,
+    int perguntasInseridas
 ) {
 }

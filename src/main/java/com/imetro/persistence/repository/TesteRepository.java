@@ -262,6 +262,32 @@ public class TesteRepository extends JdbcBasicSqlRepository {
         return id;
     }
 
+    public int updateById(Connection conn, Object id, Map<String, ?> fields) throws SQLException {
+        if (conn == null) {
+            throw new IllegalArgumentException("conn must not be null");
+        }
+        if (fields == null || fields.isEmpty()) {
+            throw new IllegalArgumentException("fields must not be null/empty");
+        }
+
+        List<String> columns = fields.keySet().stream()
+            .map(SqlIdentifiers::requireSafeQualifiedName)
+            .sorted()
+            .toList();
+
+        String setClause = String.join(", ", columns.stream().map(c -> c + " = ?").toList());
+        String sql = "update testes set " + setClause + " where id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            int index = 1;
+            for (String column : columns) {
+                stmt.setObject(index++, fields.get(column));
+            }
+            stmt.setObject(index, id);
+            return stmt.executeUpdate();
+        }
+    }
+
     private List<Map<String, Object>> readRows(ResultSet rs) throws SQLException {
         ResultSetMetaData meta = rs.getMetaData();
         int totalColunas = meta.getColumnCount();

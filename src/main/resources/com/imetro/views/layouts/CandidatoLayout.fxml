@@ -9,41 +9,113 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 
-<BorderPane stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.CandidatoLayoutController">
+<BorderPane prefHeight="1007.0" prefWidth="785.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.CandidatoLayoutController">
+
+    <top>
+      <HBox styleClass="topbar">
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                          <ImageView fx:id="sidebarLogo" fitHeight="23.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" smooth="true" styleClass="topbar-logo">
+                     <image>
+                        <Image url="@../../assets/imgs/icone_solid.png" />
+                     </image>
+                  </ImageView>
+                          <Label styleClass="topbar-brand-title" text="KBols" textFill="WHITE" />
+               </children>
+               <padding>
+                  <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+               </padding>
+            </HBox>
+            <Region prefHeight="0.0" prefWidth="0.0" HBox.hgrow="ALWAYS" />
+                <HBox fx:id="sidebarSummary" alignment="CENTER_LEFT" prefHeight="29.0" prefWidth="330.0" spacing="40.0" styleClass="topbar-summary">
+                    <children>
+                  <HBox alignment="CENTER_LEFT" prefWidth="55.0" spacing="10.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <ImageView fitHeight="32.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../assets/imgs/fire_48px.png" />
+                           </image>
+                        </ImageView>
+                                <Label fx:id="sidebarDaysValue" styleClass="topbar-summary-value" text="0/7" />
+                     </children>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="29.0" prefWidth="39.0" spacing="5.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="18.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../assets/imgs/trophy_96px.png" />
+                           </image>
+                        </ImageView>
+                                <Label fx:id="sidebarMatchValue" styleClass="topbar-summary-value" text="0%" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="29.0" prefWidth="59.0" HBox.hgrow="ALWAYS">
+                     <children>
+                                <Label fx:id="sidebarLevelValue" styleClass="topbar-summary-value" text="Iniciante" />
+                     </children>
+                  </HBox>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                   <children>
+                      <StackPane fx:id="topbarAvatarShell" prefHeight="38.0" prefWidth="38.0" styleClass="topbar-avatar-shell">
+                         <children>
+                            <ImageView fx:id="topbarAvatarImage" fitHeight="28.0" fitWidth="28.0" managed="false" pickOnBounds="true" preserveRatio="true" smooth="true" visible="false">
+                               <clip>
+                                  <Circle centerX="14.0" centerY="14.0" radius="14.0" />
+                               </clip>
+                            </ImageView>
+                            <Label fx:id="topbarAvatarInitialsLabel" styleClass="avatar-initials topbar-avatar-initials" text="AA" />
+                         </children>
+                      </StackPane>
+                   </children>
+                   <HBox.margin>
+                      <Insets left="14.0" />
+                   </HBox.margin>
+                </HBox>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="-2.0" />
+         </BorderPane.margin>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </HBox>
+    </top>
 
     <left>
-        <VBox fx:id="sidebar" minWidth="69.0" prefHeight="1007.0" prefWidth="69.0" spacing="10" styleClass="sidebar">
-         <AnchorPane VBox.vgrow="ALWAYS">
+        <VBox id="sidebar" fx:id="sidebar" minWidth="69.0" prefHeight="969.0" prefWidth="69.0" spacing="10" styleClass="sidebar">
             <children>
-               <VBox prefHeight="385.0" prefWidth="70.0" spacing="10.0" styleClass="nav-bar-pai" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                  <children>
-                     <JFXButton onAction="#PopPup" text=" ">
-                        <graphic>
-                           <ImageView fitHeight="22.0" fitWidth="29.0" pickOnBounds="true" preserveRatio="true">
+                  <JFXButton onAction="#PopPup" prefHeight="30.0" prefWidth="30.0" text=" ">
+                      <graphic>
+                          <ImageView fitHeight="22.0" fitWidth="29.0" pickOnBounds="true" preserveRatio="true">
                               <image>
-                                 <Image url="@../../assets/imgs/menu_50px.png" />
+                                  <Image url="@../../assets/imgs/menu_50px.png" />
                               </image>
-                           </ImageView>
-                        </graphic>
-                     </JFXButton>
-                        <ListView fx:id="menu" prefHeight="494.0" prefWidth="64.0">
-                        <styleClass>
-                           <String fx:value="nav-bar" />
-                           <String fx:value="min" />
-                        </styleClass></ListView>
-                  </children>
-                  <padding>
-                     <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
-                  </padding>
-               </VBox>
+                          </ImageView>
+                      </graphic>
+                  </JFXButton>
+                <ListView fx:id="menu" minWidth="64.0" prefHeight="494.0" prefWidth="64.0" translateX="-5.0" VBox.vgrow="ALWAYS">
+                    <styleClass>
+                        <String fx:value="nav-bar" />
+                        <String fx:value="min" />
+                    </styleClass>
+                </ListView>
             </children>
-         </AnchorPane>
+            <padding>
+                <Insets bottom="12.0" left="6.0" right="6.0" top="10.0" />
+            </padding>
         </VBox>
     </left>
 
@@ -70,10 +142,10 @@
                   <Insets bottom="10.0" left="18.0" right="18.0" top="12.0" />
                </padding>
             </VBox>
-            <VBox fx:id="layoutPlanBanner" id="layoutPlanBanner" managed="false" spacing="6.0" styleClass="study-plan-banner" visible="false">
+            <VBox id="layoutPlanBanner" fx:id="layoutPlanBanner" managed="false" spacing="6.0" styleClass="study-plan-banner" visible="false">
                <children>
-                  <Label fx:id="layoutPlanTitleLabel" id="layoutPlanTitleLabel" styleClass="study-plan-title" text="Sem plano ativo" />
-                  <Label fx:id="layoutPlanDetailLabel" id="layoutPlanDetailLabel" styleClass="study-plan-detail" text="Conclua o diagnostico inicial para gerar o primeiro mapa de estudo." wrapText="true" />
+                  <Label id="layoutPlanTitleLabel" fx:id="layoutPlanTitleLabel" styleClass="study-plan-title" text="Sem plano ativo" />
+                  <Label id="layoutPlanDetailLabel" fx:id="layoutPlanDetailLabel" styleClass="study-plan-detail" text="Conclua o diagnostico inicial para gerar o primeiro mapa de estudo." wrapText="true" />
                </children>
                <padding>
                   <Insets bottom="10.0" left="18.0" right="18.0" top="10.0" />
@@ -81,7 +153,7 @@
             </VBox>
             <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
                <content>
-                    <StackPane fx:id="contentHost" styleClass="content" />
+                    <StackPane id="contentHost" fx:id="contentHost" styleClass="content" />
                </content>
             </ScrollPane>
          </children>

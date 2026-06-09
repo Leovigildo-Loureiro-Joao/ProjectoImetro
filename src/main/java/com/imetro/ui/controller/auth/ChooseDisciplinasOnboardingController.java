@@ -5,7 +5,6 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
-import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.DisciplinaUploadBootstrapService;
@@ -55,15 +54,37 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
     @FXML
     private void onContinue(ActionEvent actionEvent) {
         UUID candidatoId = Authentication.getCurrentUserId();
-        for(var node : disciplinasBox.getChildren()) {
-            if (node instanceof DisciplinaCard card) {
-                var radio = card.getRadioSelecionado();
-                if (radio != null && radio.isSelected()) {
-                    var nivel = (String) radio.getText();
-                    var disciplinaId = card.getDisciplina().id();
-                    candidatoService.AddFirstProgressoDisciplina(candidatoId, disciplinaId, NivelDisciplina.fromDescricao(nivel), card.getDisciplina().peso());
-                }
+        if (candidatoId == null) {
+            if (statusLabel != null) {
+                statusLabel.setText("Nao foi possivel identificar o candidato atual.");
             }
+            return;
+        }
+
+        boolean temSelecao = false;
+
+        for (var node : disciplinasBox.getChildren()) {
+            if (node instanceof DisciplinaCard card) {
+                if (!card.isSelecionada()) {
+                    continue;
+                }
+
+                temSelecao = true;
+                var disciplinaId = card.getDisciplina().id();
+                candidatoService.AddFirstProgressoDisciplina(
+                    candidatoId,
+                    disciplinaId,
+                    card.getSubtopicosFoco(),
+                    card.getDisciplina().peso()
+                );
+            }
+        }
+
+        if (!temSelecao) {
+            if (statusLabel != null) {
+                statusLabel.setText("Escolhe pelo menos uma disciplina e escreve os subtopicos prioritarios da bolsa.");
+            }
+            return;
         }
 
         StackPane contentHost = (StackPane) telaChooseDisciplinas.getParent();
@@ -81,7 +102,8 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
             if (statusLabel != null) {
                 statusLabel.setText(
                     "Disciplinas prontas. Pastas dos livros em uploads/disciplinas (" + totalPastas + "). "
-                        + "Depois de selecionar as tuas disciplinas, Matematica e Fisica comecam a gerar topicos e perguntas automaticamente em segundo plano. "
+                        + "Depois de escolheres as disciplinas, escreve os subtopicos prioritarios para a bolsa. "
+                        + "Matematica e Fisica comecam a gerar topicos e perguntas automaticamente em segundo plano. "
                         + "Podes entrar no sistema e continuar a navegar enquanto a barra de progresso acompanha a leitura dos livros. "
                         + "Este fluxo agora depende apenas da tua base de questoes."
                 );

@@ -272,7 +272,7 @@
 }
 
 .radio-option:selected {
-    -fx-border-color: rgba(180, 83, 9, 0.62);
+    -fx-border-color: #b453099e;
     -fx-border-width: 1.6;
     -fx-background-color: rgba(180, 83, 9, 0.05);
     -fx-background-insets: 0;
@@ -450,7 +450,7 @@
 /* ==================== SIDEBAR ==================== */
 .sidebar {
     -fx-background-color: -color-secondary;
-    -fx-border-color: -color-border;
+    -fx-border-color: -color-secondary;
     -fx-border-width: 0 1 0 0;
     -fx-min-width: 24px;
     -fx-max-width: 240px;
@@ -647,16 +647,9 @@
 
 
 /* Loading Overlay estilo Duolingo */
-.loading-overlay {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0, 0, 0);
-}
 
-.loading-card {
-    -fx-background-color: -color-surface;
-    -fx-background-radius: 24;
-    -fx-padding: 40 60 40 60;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 30, 0, 0, 10);
-}
+
+
 
 .loading-title {
     -fx-font-size: 24px;
@@ -700,10 +693,10 @@
 }
 
 .avatar-preview-shell {
-    -fx-min-width: 132;
-    -fx-min-height: 132;
-    -fx-max-width: 132;
-    -fx-max-height: 132;
+    -fx-min-width: 120;
+    -fx-min-height: 120;
+    -fx-max-width: 120;
+    -fx-max-height: 120;
     -fx-background-color: linear-gradient(to bottom right, rgba(32, 46, 61, 0.14), rgba(71, 85, 105, 0.18));
     -fx-background-radius: 999;
     -fx-border-color: rgba(32, 46, 61, 0.18);
@@ -731,6 +724,7 @@
     -fx-border-width: 1.2;
     -fx-border-radius: 22;
     -fx-cursor: hand;
+    -fx-alignment: center;
     -fx-padding: 6;
 }
 
@@ -744,6 +738,20 @@
     -fx-border-color: -color-primary;
     -fx-border-width: 2;
     -fx-effect: dropshadow(gaussian, rgba(32, 46, 61, 0.20), 10, 0, 0, 2);
+}
+
+.avatar-option-placeholder {
+    -fx-background-color: linear-gradient(
+        to bottom right,
+        rgba(32, 46, 61, 0.08),
+        rgba(71, 85, 105, 0.12)
+    );
+}
+
+.avatar-option-caption {
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-muted;
 }
 
 
@@ -794,18 +802,22 @@
   -fx-background-radius: 0;
 }
 
+.nav-bar.sub .list-cell:hover {
+    -fx-background-color: #d3d3d300;
+  }
+
 
 .nav-bar .list-cell:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.10);
+  -fx-background-color: #e9711542;
 }
 
 .nav-bar .list-cell:selected,
 .nav-bar .list-cell:selected:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.16);
+  -fx-background-color: #ec731625;
 }
 
 .nav-bar .list-cell:filled:selected {
-  -fx-border-color: rgba(255, 255, 255, 0.22);
+  -fx-border-color: #ffffff38;
   -fx-border-width: 1;
   -fx-border-radius: 12;
 }

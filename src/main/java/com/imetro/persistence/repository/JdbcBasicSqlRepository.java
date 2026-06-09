@@ -195,6 +195,15 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
 
     @Override
     public int insert(Map<String, ?> fields) throws SQLException {
+        try (Connection conn = openRequiredConnection()) {
+            return insert(conn, fields);
+        }
+    }
+
+    protected int insert(Connection conn, Map<String, ?> fields) throws SQLException {
+        if (conn == null) {
+            throw new IllegalArgumentException("conn must not be null");
+        }
         if (fields == null || fields.isEmpty()) {
             throw new IllegalArgumentException("fields must not be null/empty");
         }
@@ -208,8 +217,7 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
         String placeholders = String.join(", ", columns.stream().map(c -> "?").toList());
         String sql = "insert into " + tableName + " (" + columnList + ") values (" + placeholders + ")";
 
-        try (Connection conn = openRequiredConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (int i = 0; i < columns.size(); i++) {
                 Object value = fields.get(columns.get(i));
                 stmt.setObject(i + 1, value);
@@ -220,6 +228,15 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
 
     @Override
     public int updateById(Object id, Map<String, ?> fields) throws SQLException {
+        try (Connection conn = openRequiredConnection()) {
+            return updateById(conn, id, fields);
+        }
+    }
+
+    protected int updateById(Connection conn, Object id, Map<String, ?> fields) throws SQLException {
+        if (conn == null) {
+            throw new IllegalArgumentException("conn must not be null");
+        }
         if (fields == null || fields.isEmpty()) {
             throw new IllegalArgumentException("fields must not be null/empty");
         }
@@ -232,8 +249,7 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
         String setClause = String.join(", ", columns.stream().map(c -> c + " = ?").toList());
         String sql = "update " + tableName + " set " + setClause + " where " + idColumn + " = ?";
 
-        try (Connection conn = openRequiredConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             int index = 1;
             for (String column : columns) {
                 stmt.setObject(index++, fields.get(column));

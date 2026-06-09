@@ -32,10 +32,10 @@
                                         <Insets bottom="20" left="20" right="20" top="26"/>
                                     </padding>
 
-                                    <Label text="Escolher disciplinas" styleClass="h1"/>
-                                    <Label text="Selecione as disciplinas para o simulado da bolsa." styleClass="muted" wrapText="true"/>
+                                    <Label text="Definir focos de estudo" styleClass="h1"/>
+                                    <Label text="Seleciona as disciplinas e escreve os subtopicos prioritarios que queres trabalhar para a bolsa." styleClass="muted" wrapText="true"/>
 
-                                    <ScrollPane fitToWidth="true" prefViewportHeight="240" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                                    <ScrollPane fitToWidth="true" prefViewportHeight="280" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                                                 style="-fx-background-color: transparent; -fx-background: transparent;">
                                         <content>
                                             <VBox fx:id="disciplinasBox" spacing="6" />
@@ -55,7 +55,7 @@
                                             </image>
                                         </ImageView>
                                         <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
-                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Escolha as disciplinas e comece a treinar." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
+                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Escolhe as disciplinas e define os subtopicos que vao contar para a tua bolsa." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
                                             <font>
                                                 <Font size="18.0" />
                                             </font>

@@ -80,7 +80,7 @@ public final class PerguntasBootstrapAsyncService {
         LOGGER.info("A iniciar o bootstrap automatico de perguntas para o candidato " + candidatoId + ".");
         activeCandidateId = candidatoId;
         title.set("A preparar a tua base de estudo");
-        detail.set("Os livros vao ser lidos em segundo plano. Podes navegar noutras abas.");
+        detail.set("Os livros vao ser lidos em segundo plano e as perguntas vao entrar na base aos poucos.");
         summary.set("");
         progress.set(0.0);
         state.set(BootstrapUiState.RUNNING);
@@ -91,7 +91,7 @@ public final class PerguntasBootstrapAsyncService {
             @Override
             protected List<BootstrapResult> call() {
                 updateTitle("A preparar a tua base de estudo");
-                updateMessage("Os livros vao ser lidos em segundo plano. Podes navegar noutras abas.");
+                updateMessage("Os livros vao ser lidos em segundo plano e as perguntas vao entrar na base aos poucos.");
                 updateProgress(0, 1);
 
                 return bootstrapService.processarDisciplinasAutomaticasDoCandidato(
@@ -149,7 +149,7 @@ public final class PerguntasBootstrapAsyncService {
         );
         activeCandidateId = candidatoId;
         title.set("A preparar o livro da disciplina");
-        detail.set("O PDF sera lido em segundo plano e a base de perguntas sera atualizada.");
+        detail.set("O PDF sera lido em segundo plano e as perguntas vao ser inseridas na base assim que ficarem prontas.");
         summary.set("");
         progress.set(0.0);
         state.set(BootstrapUiState.RUNNING);
@@ -160,7 +160,7 @@ public final class PerguntasBootstrapAsyncService {
             @Override
             protected List<BootstrapResult> call() {
                 updateTitle("A preparar o livro da disciplina");
-                updateMessage("O PDF sera lido em segundo plano e a base de perguntas sera atualizada.");
+                updateMessage("O PDF sera lido em segundo plano e as perguntas vao ser inseridas na base assim que ficarem prontas.");
                 updateProgress(0, 1);
 
                 BootstrapResult result = bootstrapService.processarDisciplinaDoCandidato(

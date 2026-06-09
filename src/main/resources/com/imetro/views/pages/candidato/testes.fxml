@@ -117,6 +117,11 @@
                                  <VBox alignment="CENTER" spacing="30.0" styleClass="loading-card">
                                     <children>
                                        <Label styleClass="loading-title" text="Preparando teste adaptativo..." />
+                                       <ImageView fitHeight="206.0" fitWidth="114.0" pickOnBounds="true" preserveRatio="true">
+                                          <image>
+                                             <Image url="@../../../assets/imgs/5.png" />
+                                          </image>
+                                       </ImageView>
                                        <ProgressBar fx:id="loadingProgress" prefHeight="8.0" prefWidth="300.0" styleClass="loading-progress-bar" />
                                        <Label fx:id="loadingMessage" styleClass="loading-message" text="Carregando questoes..." />
                                     </children>
@@ -165,7 +170,7 @@
                                                 </padding>
                                              </HBox>
                                              <JFXButton onAction="#desisitir" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary-warm" text="Desistir" />
-                                             <JFXButton onAction="#pausar" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary" text="Pausar" />
+                                             <JFXButton fx:id="btnPausa" onAction="#pausar" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary" text="Pausar" />
                                           </children>
                                        </HBox>
                                     </children>
@@ -189,6 +194,7 @@
                                                                <String fx:value="diagnostico-question" />
                                                             </styleClass>
                                                          </Label>
+                                                         <StackPane fx:id="graficoPane" />
                                                                <!-- ALTERNATIVAS -->
                                                          <VBox prefHeight="410.0" prefWidth="530.0" VBox.vgrow="ALWAYS">
                                                             <children>
@@ -328,21 +334,21 @@
                                                                   <children>
                                                                      <Label fx:id="nivelAtual2" styleClass="h3-bold" text="Precisão" />
                                                                      <Region prefHeight="18.0" prefWidth="143.0" />
-                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="50%" />
+                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="0%" />
                                                                   </children>
                                                                </HBox>
                                                                <HBox prefHeight="18.0" prefWidth="232.0">
                                                                   <children>
-                                                                     <Label fx:id="nivelAtual23" styleClass="h3-bold" text="Consistencia" />
+                                                                     <Label styleClass="h3-bold" text="Consistencia" />
                                                                      <Region prefHeight="18.0" prefWidth="116.0" />
-                                                                     <Label fx:id="nivelAtual231" styleClass="h3-thin-big" text="50%" />
+                                                                     <Label fx:id="nivelAtual231" styleClass="h3-thin-big" text="0%" />
                                                                   </children>
                                                                </HBox>
                                                                <HBox prefHeight="18.0" prefWidth="232.0">
                                                                   <children>
-                                                                     <Label fx:id="nivelAtual23" styleClass="h3-bold" text="Velocidade" />
+                                                                     <Label styleClass="h3-bold" text="Velocidade" />
                                                                      <Region prefHeight="18.0" prefWidth="130.0" />
-                                                                     <Label fx:id="nivelAtual232" styleClass="h3-thin-big" text="50%" />
+                                                                     <Label fx:id="nivelAtual232" styleClass="h3-thin-big" text="0%" />
                                                                   </children>
                                                                </HBox>
                                                             </children>
@@ -385,18 +391,18 @@
                                              </HBox>
 
                                                    <!-- FEEDBACK ADAPTATIVO -->
-                                             <VBox fx:id="feedbackContainer" alignment="CENTER" spacing="10.0" styleClass="sub-card" visible="false">
+                                             <VBox fx:id="feedbackContainer" alignment="CENTER" maxHeight="400.0" maxWidth="400.0" spacing="10.0" styleClass="sub-card" visible="false">
                                                 <padding>
                                                    <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
                                                 </padding>
                                                 <children>
-                                                   <Label fx:id="feedbackIcon" styleClass="h1" text="OK" visible="false" />
-                                                   <ImageView fx:id="feedbackImg" fitHeight="91.0" fitWidth="89.0" pickOnBounds="true" preserveRatio="true">
+                                                   <ImageView fx:id="feedbackImg" fitHeight="69.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
                                                       <image>
                                                          <Image url="@../../../assets/imgs/corret.png" />
                                                       </image>
                                                    </ImageView>
-                                                   <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h2-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
+                                                   <Label fx:id="feedbackIcon" styleClass="h2-thin" text="OK" visible="false" />
+                                                   <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h3-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
                                                 </children>
                                              </VBox>
                                           </children>

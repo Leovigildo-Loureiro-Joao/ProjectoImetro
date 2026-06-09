@@ -452,19 +452,34 @@ public class CandidatoService implements User {
         this.progresso = progresso;
     }
 
-    public void AddFirstProgressoDisciplina(UUID candidato, UUID disicplina, NivelDisciplina actual, double peso) {
+    public void AddFirstProgressoDisciplina(UUID candidato, UUID disciplina, String focoSubtopicos, double peso) {
+        AddFirstProgressoDisciplina(candidato, disciplina, NivelDisciplina.INICIANTE, peso, focoSubtopicos);
+    }
+
+    public void AddFirstProgressoDisciplina(UUID candidato, UUID disciplina, NivelDisciplina actual, double peso) {
+        AddFirstProgressoDisciplina(candidato, disciplina, actual, peso, null);
+    }
+
+    public void AddFirstProgressoDisciplina(
+        UUID candidato,
+        UUID disciplina,
+        NivelDisciplina actual,
+        double peso,
+        String focoSubtopicos
+    ) {
         try {
             progresso.insert(
                 new ProgressoAlunoDisciplinaDto(
                     UUID.randomUUID(),
                     candidato,
-                    disicplina,
+                    disciplina,
                     null,
                     0f,
                     actual,
                     actual,
                     LocalDate.now(),
                     peso,
+                    focoSubtopicos,
                     0,
                     0,
                     0,

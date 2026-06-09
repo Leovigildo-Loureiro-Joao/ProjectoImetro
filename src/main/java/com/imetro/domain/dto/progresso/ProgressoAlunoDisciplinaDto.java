@@ -23,6 +23,7 @@ public record ProgressoAlunoDisciplinaDto(
     NivelDisciplina nivelAnterior,
     LocalDate dataMudancaNivel,
     Double pesoAtual,
+    String focoSubtopicos,
     Integer totalQuestoesResolvidas,
     Integer totalAcertos,
     Integer totalErros,
@@ -42,6 +43,9 @@ public record ProgressoAlunoDisciplinaDto(
         }
         if (pesoAtual == null) {
             pesoAtual = 1.0;
+        }
+        if (focoSubtopicos == null) {
+            focoSubtopicos = "";
         }
         if (totalQuestoesResolvidas == null) {
             totalQuestoesResolvidas = 0;
@@ -98,6 +102,7 @@ public record ProgressoAlunoDisciplinaDto(
         map.put("nivel_anterior", this.nivelAnterior != null ? this.nivelAnterior.name() : null);
         map.put("data_mudanca_nivel", this.dataMudancaNivel);
         map.put("peso_atual", this.pesoAtual);
+        map.put("foco_subtopicos", this.focoSubtopicos);
         map.put("total_questoes_resolvidas", this.totalQuestoesResolvidas);
         map.put("total_acertos", this.totalAcertos);
         map.put("total_erros", this.totalErros);
@@ -130,6 +135,7 @@ public record ProgressoAlunoDisciplinaDto(
             map.get("nivel_anterior") != null ? NivelDisciplina.valueOf((String) map.get("nivel_anterior")) : null,
            ParseTimeStampLocalDate.mapearData(  map.get("data_mudanca_nivel")),
             map.get("peso_atual") != null ? ((Number) map.get("peso_atual")).doubleValue() : 1.0,
+            map.get("foco_subtopicos") != null ? (String) map.get("foco_subtopicos") : "",
             map.get("total_questoes_resolvidas") != null ? ((Number) map.get("total_questoes_resolvidas")).intValue() : 0,
             map.get("total_acertos") != null ? ((Number) map.get("total_acertos")).intValue() : 0,
             map.get("total_erros") != null ? ((Number) map.get("total_erros")).intValue() : 0,
@@ -143,6 +149,18 @@ public record ProgressoAlunoDisciplinaDto(
             ParseTimeStampLocalDate.mapearDataHora(map.get("criado_em")),
             ParseTimeStampLocalDate.mapearDataHora(map.get("atualizado_em"))
         );
+    }
+
+    public List<String> focoSubtopicosLista() {
+        if (focoSubtopicos == null || focoSubtopicos.isBlank()) {
+            return List.of();
+        }
+
+        return Arrays.stream(focoSubtopicos.split("[\\n,;]+"))
+            .map(String::trim)
+            .filter(item -> !item.isBlank())
+            .distinct()
+            .toList();
     }
 
      public  static Integer[] ConvertIntegerVector(Object value) {

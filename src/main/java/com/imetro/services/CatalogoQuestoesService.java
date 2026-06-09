@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.imetro.domain.dto.Topico;
 import com.imetro.ui.model.Questao;
+import com.imetro.util.QuestaoExercicioSupport;
 import com.imetro.util.TextoUtil;
 
 public class CatalogoQuestoesService {
@@ -285,7 +286,7 @@ public class CatalogoQuestoesService {
         copia.setTopico(origem.getTopico());
         copia.setSubtopico(origem.getSubtopico());
         copia.setEnunciado(origem.getEnunciado());
-        copia.setExercicio(origem.getExercicio());
+        copia.setExercicio(QuestaoExercicioSupport.normalizar(origem.getExercicio()));
         copia.setBloco2(origem.getBloco2());
         copia.setImagem(origem.getImagem());
         copia.setOpcaoA(origem.getOpcaoA());

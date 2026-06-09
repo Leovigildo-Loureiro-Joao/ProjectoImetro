@@ -9,6 +9,7 @@ import javafx.animation.FadeTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -27,9 +28,15 @@ public class ModalController implements Initializable{
     }
 
     public void init(){
-        StackPane pai=(StackPane)modal.getParent();
+        if (!(modal.getParent() instanceof StackPane pai)) {
+            return;
+        }
+
+        StackPane.setAlignment(modal, Pos.CENTER);
         pai.setVisible(true);
         modal.setVisible(true);
+        modal.toFront();
+        pai.toFront();
         FadeTransition dTransition=new FadeTransition(Duration.seconds(0.3),pai);
         dTransition.setByValue(0);
         dTransition.setToValue(1);
@@ -38,7 +45,11 @@ public class ModalController implements Initializable{
     }
 
     protected void closeModal(){
-        StackPane pai=(StackPane)modal.getParent();
+        if (!(modal.getParent() instanceof StackPane pai)) {
+            modal.setVisible(false);
+            return;
+        }
+
         FadeTransition dTransition=new FadeTransition(Duration.seconds(0.3),modal.getParent());
         dTransition.setByValue(1);
         dTransition.setToValue(0);

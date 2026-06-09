@@ -418,7 +418,8 @@ public class TesteService {
                     );
 
                     System.out.println("chegou");
-                    UUID id =testeRepository.inserir(
+                    UUID id = testeRepository.inserir(
+                        conn,
                         candidatoId,
                        null,
                         concluidoEm,
@@ -450,7 +451,7 @@ public class TesteService {
                     );
                     reacoesDisciplina.forEach(t -> {
                         try {
-                            testePerguntasRepository.inserir(Teste_Pergunta.fromQuestao(t), id);
+                            testePerguntasRepository.inserir(conn, Teste_Pergunta.fromQuestao(t), id);
                         } catch (SQLException e) {
                             System.err.println(e);
                             e.printStackTrace();
@@ -616,10 +617,10 @@ public class TesteService {
                 LinkedHashMap<String, Object> camposExtrasTeste = new LinkedHashMap<>();
                 camposExtrasTeste.put("origem", origem);
                 camposExtrasTeste.put("bolsa_id", bolsa.id());
-                testeRepository.updateById(testeId, camposExtrasTeste);
+                testeRepository.updateById(conn, testeId, camposExtrasTeste);
 
                 for (ReacaoTeste reacao : reacoesDisciplina) {
-                    testePerguntasRepository.inserir(Teste_Pergunta.fromQuestao(reacao), testeId);
+                    testePerguntasRepository.inserir(conn, Teste_Pergunta.fromQuestao(reacao), testeId);
                 }
 
                 testeStatsRepository.insert(

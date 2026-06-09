@@ -380,10 +380,7 @@ public class PerguntasBootstrapService {
                 "A inserir a base inicial de questoes na tabela perguntas."
             );
 
-            int inseridas = 0;
-            for (String jsonLote : geracao.jsonLotesComSucesso()) {
-                inseridas += inserirPerguntasGeradas(disciplina, pdfs, jsonLote);
-            }
+            int inseridas = geracao.perguntasInseridas();
             int totalPerguntas = contarPerguntasPorDisciplina(disciplina.nome());
             LOGGER.info(
                 "Disciplina " + disciplina.nome() + " recebeu " + inseridas
@@ -474,6 +471,7 @@ public class PerguntasBootstrapService {
         int concluidos = 0;
         int sucessos = 0;
         int falhas = 0;
+        int perguntasInseridas = 0;
 
         try {
             for (GeracaoLote lote : lotes) {
@@ -488,9 +486,30 @@ public class PerguntasBootstrapService {
                 if (resultado.sucesso()) {
                     jsonLotesComSucesso.add(resultado.jsonQuestoes());
                     sucessos++;
+
+                    int inseridasLote = 0;
+                    try {
+                        inseridasLote = inserirPerguntasGeradas(disciplina, pdfs, resultado.jsonQuestoes());
+                        perguntasInseridas += inseridasLote;
+                    } catch (Exception e) {
+                        LOGGER.log(
+                            Level.WARNING,
+                            "Falha ao inserir imediatamente as perguntas do lote "
+                                + resultado.lote().indice()
+                                + "/"
+                                + resultado.lote().totalLotes()
+                                + " para "
+                                + disciplina.nome()
+                                + ".",
+                            e
+                        );
+                    }
+
                     LOGGER.info(
                         "Lote " + resultado.lote().indice() + "/" + resultado.lote().totalLotes()
-                            + " concluido para " + disciplina.nome() + "."
+                            + " concluido para " + disciplina.nome() + " com "
+                            + inseridasLote
+                            + " perguntas inseridas."
                     );
                 } else {
                     falhas++;
@@ -524,7 +543,8 @@ public class PerguntasBootstrapService {
             montarJsonQuestoesAgregado(disciplina, jsonLotesComSucesso, sucessos, falhas),
             lotes.size(),
             sucessos,
-            falhas
+            falhas,
+            perguntasInseridas
         );
     }
 
@@ -897,16 +917,19 @@ public class PerguntasBootstrapService {
 
     private String construirResumoGeracaoEmLotes(GeracaoQuestoesEmLotes geracao) {
         if (geracao.totalLotes() <= 1) {
-            return "A geracao correu num lote unico.";
+            return "A geracao correu num lote unico e inseriu " + geracao.perguntasInseridas() + " perguntas.";
         }
         if (geracao.lotesFalha() <= 0) {
             return "A geracao foi repartida em " + geracao.totalLotes()
-                + " lotes com no maximo " + MAX_GEMINI_WORKERS + " chamadas paralelas.";
+                + " lotes com no maximo " + MAX_GEMINI_WORKERS + " chamadas paralelas e inseriu "
+                + geracao.perguntasInseridas() + " perguntas reais.";
         }
         return "A geracao foi repartida em " + geracao.totalLotes()
             + " lotes; " + geracao.lotesSucesso()
             + " concluiram e " + geracao.lotesFalha()
-            + " falharam sem interromper o restante fluxo.";
+            + " falharam sem interromper o restante fluxo. Foram inseridas "
+            + geracao.perguntasInseridas()
+            + " perguntas reais.";
     }
 
     private void emitirConclusaoDisciplina(

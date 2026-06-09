@@ -2,18 +2,28 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane stylesheets="@../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.AuthLayoutController">
+<StackPane stylesheets="@../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.AuthLayoutController">
    <children>
-        <VBox alignment="CENTER" prefHeight="283.0" prefWidth="540.0" spacing="10.0" styleClass="auth-shell" StackPane.alignment="CENTER">
+        <VBox alignment="CENTER" prefHeight="283.0" prefWidth="540.0" spacing="5.0" styleClass="auth-shell" StackPane.alignment="CENTER">
             <padding>
                 <Insets bottom="28" left="28" right="28" top="28" />
             </padding>
-         <Label styleClass="brand-title" text="Simulator Bolsa Study" />
+         <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+               <Image url="@../../assets/imgs/icone_long.png" />
+            </image>
+         </ImageView>
+         <Label styleClass="h3-bold" text="SEU SIMULADOR PARA ADERIR SUA BOLSA DE ESTUDO" />
 
-                        <StackPane fx:id="contentHost" maxWidth="460" />
+                        <StackPane fx:id="contentHost" maxWidth="460" prefWidth="460.0">
+            <VBox.margin>
+               <Insets bottom="-40.0" top="-40.0" />
+            </VBox.margin></StackPane>
          <Label maxWidth="600.0" styleClass="brand-subtitle" text="Simulador de exames de bolsas (MVP) para apoiar a preparação de estudantes com banco real de questões, análise adaptativa e foco em Matemática e Física." textAlignment="CENTER" wrapText="true" />
         </VBox>
    </children>

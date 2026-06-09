@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox fx:id="modal" maxHeight="520.0" maxWidth="680.0" minHeight="520.0" minWidth="680.0" prefHeight="520.0" prefWidth="680.0" spacing="18.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.AvatarPickerModalController">
+<VBox fx:id="modal" maxHeight="623.0" maxWidth="680.0" minHeight="520.0" minWidth="680.0" prefHeight="623.0" prefWidth="680.0" spacing="18.0" stylesheets="@../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.AvatarPickerModalController">
    <children>
       <HBox alignment="CENTER_LEFT" spacing="12.0">
          <children>
@@ -39,18 +39,18 @@
          <children>
             <VBox alignment="CENTER" prefWidth="210.0" spacing="12.0" styleClass="report-note-card">
                <children>
-                  <StackPane prefHeight="168.0" prefWidth="168.0" styleClass="profile-avatar-shell">
+                  <StackPane prefHeight="148.0" prefWidth="148.0" styleClass="avatar-picker-preview-shell">
                      <children>
-                        <ImageView fx:id="avatarPreview" fitHeight="150.0" fitWidth="150.0" managed="false" pickOnBounds="true" preserveRatio="true" visible="false">
+                        <ImageView fx:id="avatarPreview" fitHeight="132.0" fitWidth="132.0" managed="false" pickOnBounds="true" preserveRatio="true" visible="false">
                            <clip>
-                              <Circle centerX="75.0" centerY="75.0" radius="75.0" />
+                              <Circle centerX="66.0" centerY="66.0" radius="66.0" />
                            </clip>
                         </ImageView>
                         <Label fx:id="avatarInitialsLabel" styleClass="avatar-initials avatar-initials-large" text="AA" />
                      </children>
                   </StackPane>
                   <Label styleClass="h3-thin-big" text="Preview atual" />
-                  <Label fx:id="statusLabel" styleClass="muted" text="Escolhe um dos 4 avatares ou mantem as iniciais." wrapText="true">
+                  <Label fx:id="statusLabel" styleClass="muted" text="Escolhe um dos avatares prontos ou mantem as iniciais." wrapText="true">
                      <padding>
                         <Insets left="16.0" right="16.0" />
                      </padding>
@@ -60,49 +60,10 @@
                   <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
                </padding>
             </VBox>
-            <VBox HBox.hgrow="ALWAYS" spacing="16.0">
+            <VBox spacing="16.0" HBox.hgrow="ALWAYS">
                <children>
                   <Label styleClass="h3-thin-big" text="Avatares disponiveis" />
-                  <FlowPane hgap="14.0" prefWrapLength="390.0" vgap="14.0">
-                     <children>
-                        <StackPane fx:id="avatarOption1" onMouseClicked="#onSelectAvatar" prefHeight="142.0" prefWidth="142.0" styleClass="avatar-option" userData="/com/imetro/assets/imgs/avatar1.png">
-                           <children>
-                              <ImageView fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../../assets/imgs/avatar1.png" />
-                                 </image>
-                              </ImageView>
-                           </children>
-                        </StackPane>
-                        <StackPane fx:id="avatarOption2" onMouseClicked="#onSelectAvatar" prefHeight="142.0" prefWidth="142.0" styleClass="avatar-option" userData="/com/imetro/assets/imgs/avatar2.png">
-                           <children>
-                              <ImageView fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../../assets/imgs/avatar2.png" />
-                                 </image>
-                              </ImageView>
-                           </children>
-                        </StackPane>
-                        <StackPane fx:id="avatarOption3" onMouseClicked="#onSelectAvatar" prefHeight="142.0" prefWidth="142.0" styleClass="avatar-option" userData="/com/imetro/assets/imgs/avatar3.png">
-                           <children>
-                              <ImageView fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../../assets/imgs/avatar3.png" />
-                                 </image>
-                              </ImageView>
-                           </children>
-                        </StackPane>
-                        <StackPane fx:id="avatarOption4" onMouseClicked="#onSelectAvatar" prefHeight="142.0" prefWidth="142.0" styleClass="avatar-option" userData="/com/imetro/assets/imgs/avatar4.png">
-                           <children>
-                              <ImageView fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../../assets/imgs/avatar4.png" />
-                                 </image>
-                              </ImageView>
-                           </children>
-                        </StackPane>
-                     </children>
-                  </FlowPane>
+                  <FlowPane fx:id="avatarOptionsBox" hgap="12.0" prefWrapLength="340.0" vgap="12.0" />
                   <HBox alignment="CENTER_RIGHT" spacing="10.0">
                      <children>
                         <JFXButton onAction="#onUseInitials" prefHeight="38.0" prefWidth="145.0" styleClass="btn-secondary" text="Usar iniciais" />

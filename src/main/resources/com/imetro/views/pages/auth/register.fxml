@@ -18,7 +18,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<StackPane fx:id="telaRegister" stylesheets="@../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.RegisterController">
+<StackPane fx:id="telaRegister" stylesheets="@../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.RegisterController">
    <children>
       <HBox>
          <children>
@@ -80,7 +80,7 @@
                                              <children>
                                                 <ImageView fitHeight="470.0" fitWidth="512.0">
                                                    <image>
-                                                      <Image url="@../../../assets/imgs/register2.png" />
+                                                      <Image url="@../../../assets/imgs/register3.png" />
                                                    </image>
                                                 </ImageView>
                                                 <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
@@ -95,7 +95,7 @@
                                              <children>
                                                 <ImageView fitHeight="470.0" fitWidth="512.0">
                                                    <image>
-                                                      <Image url="@../../../assets/imgs/register3.jpg" />
+                                                      <Image url="@../../../assets/imgs/register.png" />
                                                    </image>
                                                 </ImageView>
                                                 <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />

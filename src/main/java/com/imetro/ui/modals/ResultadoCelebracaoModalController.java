@@ -66,22 +66,26 @@ public class ResultadoCelebracaoModalController extends ModalController {
     public void init() {
         ResultadoCelebracaoContext.CelebrationRequest request = ResultadoCelebracaoContext.obterAtual();
         CelebrationSummary summary = request == null ? resumoPadrao() : request.summary();
+        boolean compacto = summary.compacto();
 
         badgeLabel.setText(summary.badgeLabel());
         headlineLabel.setText(summary.headline());
         summaryLabel.setText(summary.summary());
         encouragementLabel.setText(summary.encouragement());
-        performanceValueLabel.setText(Math.round(summary.performancePercent()) + "% de desempenho");
-        performanceDetailLabel.setText(summary.performanceDetail());
+
+        performanceValueLabel.setText(compacto ? "" : Math.round(summary.performancePercent()) + "% de desempenho");
+        performanceDetailLabel.setText(compacto ? "" : summary.performanceDetail());
         medalTitleLabel.setText(summary.medalTitle());
         medalMessageLabel.setText(summary.medalMessage());
         medalProgressBar.setProgress(summary.medalProgress());
-        medalProgressDetailLabel.setText(summary.medalProgressDetail());
+        medalProgressDetailLabel.setText(compacto ? "" : summary.medalProgressDetail());
         scholarshipTitleLabel.setText(summary.scholarshipTitle());
         scholarshipMessageLabel.setText(summary.scholarshipMessage());
         scholarshipProgressBar.setProgress(summary.scholarshipProgress());
-        scholarshipProgressDetailLabel.setText(summary.scholarshipProgressDetail());
-        actionButton.setText(summary.actionLabel());
+        scholarshipProgressDetailLabel.setText(compacto ? "" : summary.scholarshipProgressDetail());
+        actionButton.setText(compacto ? "Continuar" : summary.actionLabel());
+
+        aplicarModoCompacto(compacto);
 
         CircleProgress progress = new CircleProgress(62, 62, 62, 0);
         progress.setValue(summary.performancePercent() / 100d);
@@ -119,6 +123,23 @@ public class ResultadoCelebracaoModalController extends ModalController {
         fade.play();
     }
 
+    private void aplicarModoCompacto(boolean compacto) {
+        performanceValueLabel.setVisible(!compacto);
+        performanceValueLabel.setManaged(!compacto);
+        performanceDetailLabel.setVisible(!compacto);
+        performanceDetailLabel.setManaged(!compacto);
+
+        medalProgressBar.setVisible(!compacto);
+        medalProgressBar.setManaged(!compacto);
+        medalProgressDetailLabel.setVisible(!compacto);
+        medalProgressDetailLabel.setManaged(!compacto);
+
+        scholarshipProgressBar.setVisible(!compacto);
+        scholarshipProgressBar.setManaged(!compacto);
+        scholarshipProgressDetailLabel.setVisible(!compacto);
+        scholarshipProgressDetailLabel.setManaged(!compacto);
+    }
+
     private CelebrationSummary resumoPadrao() {
         return new CelebrationSummary(
             "RESULTADO",
@@ -135,7 +156,8 @@ public class ResultadoCelebracaoModalController extends ModalController {
             "O teu perfil interno vai ganhar mais forca conforme fores concluindo novas rodadas.",
             0,
             "0% de match interno | meta 60%",
-            "Ver meu resultado"
+            "Ver meu resultado",
+            false
         );
     }
 }

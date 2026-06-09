@@ -519,6 +519,8 @@ public class GeminiService {
         prompt.append("- O exercicio deve mostrar a expressao, igualdade ou dados essenciais de forma elegante e compacta.\n");
         prompt.append("- Quando precisares de raiz quadrada, usa sempre \\\\sqrt{...} e nunca a palavra literal sqrt.\n");
         prompt.append("- Quando precisares de raiz n-esima, usa sempre \\\\sqrt[n]{...}.\n");
+        prompt.append("- Nao uses o simbolo Unicode de raiz nem a palavra sqrt sem barra; escreve sempre \\\\sqrt{radicando} ou \\\\sqrt[n]{radicando}.\n");
+        prompt.append("- Se o radicando tiver soma, fracao, potencia ou parenteses, inclui a expressao completa dentro das chavetas.\n");
         prompt.append("- Se a questao nao beneficiar de exercicio visual, devolve string vazia.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera base suficiente para testes curtos, medios e longos.\n");
@@ -562,6 +564,8 @@ public class GeminiService {
         prompt.append("- O exercicio deve mostrar a expressao, igualdade ou dados essenciais de forma elegante e compacta.\n");
         prompt.append("- Quando precisares de raiz quadrada, usa sempre \\\\sqrt{...} e nunca a palavra literal sqrt.\n");
         prompt.append("- Quando precisares de raiz n-esima, usa sempre \\\\sqrt[n]{...}.\n");
+        prompt.append("- Nao uses o simbolo Unicode de raiz nem a palavra sqrt sem barra; escreve sempre \\\\sqrt{radicando} ou \\\\sqrt[n]{radicando}.\n");
+        prompt.append("- Se o radicando tiver soma, fracao, potencia ou parenteses, inclui a expressao completa dentro das chavetas.\n");
         prompt.append("- Se a questao nao beneficiar de exercicio visual, devolve string vazia.\n");
         prompt.append("- Nao devolvas menos do que a quantidade minima pedida.\n");
         prompt.append("- Gera uma base ampla o suficiente para testes curtos, medios e longos.\n");

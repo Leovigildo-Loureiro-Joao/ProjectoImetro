@@ -35,7 +35,7 @@
             <children>
                <VBox fx:id="start" spacing="10.0">
                   <children>
-                     <ListView fx:id="sublist" orientation="HORIZONTAL" prefHeight="48.0" prefWidth="1125.0">
+                     <ListView fx:id="sublist" maxHeight="48.0" minHeight="48.0" orientation="HORIZONTAL" prefHeight="48.0" prefWidth="1125.0">
                         <styleClass>
                            <String fx:value="nav-bar" />
                            <String fx:value="sub" />
@@ -60,6 +60,11 @@
                                  <VBox alignment="CENTER" spacing="30.0" styleClass="loading-card">
                                     <children>
                                        <Label styleClass="loading-title" text="Preparando seu diagnóstico..." />
+                                       <ImageView fitHeight="177.0" fitWidth="114.0" pickOnBounds="true" preserveRatio="true">
+                                          <image>
+                                             <Image url="@../../../assets/imgs/1.png" />
+                                          </image>
+                                       </ImageView>
                                        <ProgressBar fx:id="loadingProgress" prefHeight="8.0" prefWidth="300.0" styleClass="loading-progress-bar" />
                                        <Label fx:id="loadingMessage" styleClass="loading-message" text="Carregando questões..." />
                                     </children>
@@ -107,7 +112,7 @@
                                                 </padding>
                                              </HBox>
                                              <JFXButton onAction="#desisitir" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary-warm" text="Desistir" />
-                                             <JFXButton onAction="#pausar" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary" text="Pausar" />
+                                             <JFXButton fx:id="btnPausa" onAction="#pausar" prefHeight="37.0" prefWidth="97.0" styleClass="btn-secondary" text="Pausar" />
                                           </children>
                                        </HBox>
                                     </children>
@@ -126,6 +131,7 @@
                                                                <String fx:value="diagnostico-question" />
                                                             </styleClass>
                                                          </Label>
+                                                         <StackPane fx:id="graficoPane" />
                                                          <VBox prefHeight="410.0" prefWidth="530.0" VBox.vgrow="ALWAYS">
                                                             <children>
                                                                <FlowPane columnHalignment="CENTER" hgap="10.0" maxHeight="1.7976931348623157E308" prefWidth="638.0" vgap="10.0">
@@ -262,21 +268,21 @@
                                                                   <children>
                                                                      <Label fx:id="nivelAtual2" styleClass="h3-thin-big" text="Precisão" />
                                                                      <Region prefHeight="18.0" prefWidth="137.0" />
-                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="50%" />
+                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="0%" />
                                                                   </children>
                                                                </HBox>
                                                                <HBox prefHeight="18.0" prefWidth="232.0">
                                                                   <children>
-                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="Consistencia" />
+                                                                     <Label styleClass="h3-thin-big" text="Consistencia" />
                                                                      <Region prefHeight="55.0" prefWidth="110.0" />
-                                                                     <Label fx:id="nivelAtual231" styleClass="h3-thin-big" text="50%" />
+                                                                     <Label fx:id="nivelAtual231" styleClass="h3-thin-big" text="0%" />
                                                                   </children>
                                                                </HBox>
                                                                <HBox prefHeight="18.0" prefWidth="232.0">
                                                                   <children>
-                                                                     <Label fx:id="nivelAtual23" styleClass="h3-thin-big" text="Velocidade" />
+                                                                     <Label styleClass="h3-thin-big" text="Velocidade" />
                                                                      <Region prefHeight="18.0" prefWidth="124.0" />
-                                                                     <Label fx:id="nivelAtual232" styleClass="h3-thin-big" text="50%" />
+                                                                     <Label fx:id="nivelAtual232" styleClass="h3-thin-big" text="0%" />
                                                                   </children>
                                                                </HBox>
                                                             </children>

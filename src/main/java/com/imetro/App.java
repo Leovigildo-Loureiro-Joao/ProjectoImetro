@@ -134,6 +134,17 @@ public class App extends Application {
             return;
         }
 
+        if (host.getScene() == null) {
+            try {
+                Parent next = loadView(fxml);
+                host.getChildren().setAll(next);
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Falha ao trocar para a view " + fxml, ex);
+                host.getChildren().clear();
+            }
+            return;
+        }
+
         Node previous = host.getChildren().isEmpty() ? null : host.getChildren().getFirst();
 
         FadeTransition fadeOut = new FadeTransition(Duration.millis(140), host);

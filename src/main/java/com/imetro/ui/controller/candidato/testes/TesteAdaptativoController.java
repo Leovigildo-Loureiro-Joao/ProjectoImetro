@@ -39,9 +39,12 @@ import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.PausaModalController;
+import com.imetro.ui.modals.PauseSessionContext;
 import com.imetro.ui.modals.ResultadoCelebracaoContext;
 import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
+import com.imetro.util.CalculoStats;
 import com.imetro.util.Authentication;
 import com.imetro.util.Loading;
 import com.imetro.util.QuestaoGraficoSupport;
@@ -122,6 +125,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private JFXButton btnProximo;
 
     @FXML
+    private JFXButton btnPausa;
+
+    @FXML
     private Label dificuldadeAtual;
 
     @FXML
@@ -198,6 +204,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     @FXML
     private VBox testeContainer;
+
+    @FXML
+    private StackPane graficoPane;
 
     @FXML
     private AnchorPane testeField;
@@ -288,6 +297,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private Timeline loadingTimeline;
     private int segundos = 0;
     private int minutos = 0;
+    private boolean pausaUsada;
     private TesteAdaptativoService service;
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private String disciplinaSelecionada;
@@ -329,6 +339,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         feedbackContainer.setVisible(false);
         testeContainer.setVisible(false);
         start.setVisible(true);
+        atualizarEstadoBotaoPausa();
         atualizarIndicadoresNivel();
         Platform.runLater(this::atualizarEstadoPlanejamento);
     }
@@ -593,6 +604,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void iniciarTestePadrao(String disciplina, List<Topico> topicos) {
         disciplinaSelecionada = disciplina;
+        pausaUsada = false;
         aplicarFocoSelecionado(topicos, Map.of());
         iniciarTesteComConfiguracao(null);
     }
@@ -620,6 +632,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return;
         }
 
+        pausaUsada = false;
         aplicarFocoSelecionado(topicos, TesteAdaptativoCoordinator.getSubtopicosSelecionados());
         iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.getConfiguracaoAtual());
     }
@@ -677,6 +690,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         questoes.add(primeiraQuestao);
         nomeDisc.setText(formatarDisciplina(disciplinaSelecionada));
 
+        setSidebarVisible(false);
         start.setVisible(false);
         testeContainer.setVisible(true);
         sessaoAtiva = true;
@@ -716,6 +730,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         loadingOverlay.setVisible(true);
         loadingOverlay.setOpacity(1);
         loadingProgress.setProgress(0);
+        atualizarEstadoBotaoPausa();
 
         String configuracao = config == null
             ? "Aplicando o fluxo padrao do teste."
@@ -766,6 +781,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 sessaoAtiva = true;
                 iniciarCronometro(0, 0);
                 carregarQuestao(0);
+                atualizarEstadoBotaoPausa();
             });
             fadeOut.play();
         });
@@ -790,6 +806,83 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }));
         cronometro.setCycleCount(Timeline.INDEFINITE);
         cronometro.play();
+    }
+
+    private void atualizarEstadoBotaoPausa() {
+        if (btnPausa != null) {
+            btnPausa.setDisable(!podePausar());
+        }
+    }
+
+    private boolean podePausar() {
+        return sessaoAtiva && !pausaUsada && !estaCarregando();
+    }
+
+    private boolean estaCarregando() {
+        return loadingOverlay != null && loadingOverlay.isVisible();
+    }
+
+    private void setSidebarVisible(boolean visible) {
+        Platform.runLater(() -> {
+            if (testeField == null || testeField.getScene() == null) {
+                return;
+            }
+
+            Node sidebarNode = testeField.getScene().lookup("#sidebar");
+            if (sidebarNode != null) {
+                sidebarNode.setVisible(visible);
+                sidebarNode.setManaged(visible);
+            }
+        });
+    }
+
+    private void abrirMenuPausa() {
+        if (modalPai == null) {
+            return;
+        }
+
+        try {
+            PauseSessionContext.setRequest(new PauseSessionContext.PauseRequest(
+                "Pausa do teste adaptativo",
+                "O tempo ficou congelado. Escolhe como queres continuar.",
+                "Continuar",
+                "Desistir",
+                "Recomeçar",
+                this::continuarTestePausado,
+                this::desistirTestePausado,
+                this::recomecarTestePausado
+            ));
+
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("Pausa");
+            Node modal = modFxml.load();
+            modalPai.getChildren().add(modal);
+            PausaModalController controller = modFxml.getController();
+            controller.init();
+        } catch (Exception ex) {
+            System.err.println("Falha ao abrir o menu de pausa: " + ex.getMessage());
+            PauseSessionContext.clear();
+            continuarTestePausado();
+        }
+    }
+
+    private void continuarTestePausado() {
+        limparSessaoPausada();
+        atualizarEstadoBotaoPausa();
+        iniciarCronometro(minutos, segundos);
+        setSidebarVisible(false);
+    }
+
+    private void desistirTestePausado() {
+        limparSessaoPausada();
+        pausaUsada = false;
+        resetarMetricas();
+        mostrarTelaInicialTeste();
+    }
+
+    private void recomecarTestePausado() {
+        limparSessaoPausada();
+        iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.getConfiguracaoAtual());
     }
 
     private void carregarQuestao(int index) {
@@ -887,7 +980,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
-        linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator, apoioVisualBox);
+        linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator,
+            apoioVisualBox);
+            graficoPane.getChildren().set(0, linhaQuestaoPane);
     }
 
     private void atualizarApoioVisual(Questao questao) {
@@ -1047,7 +1142,10 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }
 
         sessaoAtiva = true;
+        pausaUsada = true;
+        setSidebarVisible(false);
         iniciarCronometro(minutos, segundos);
+        atualizarEstadoBotaoPausa();
         return true;
     }
 
@@ -1103,6 +1201,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         testeContainer.setVisible(false);
         start.setVisible(true);
         tela.setVisible(true);
+        setSidebarVisible(true);
+        atualizarEstadoBotaoPausa();
     }
 
     private record SessaoTestePausada(
@@ -1147,15 +1247,27 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         Questao q = questoes.get(questaoAtual);
         char alternativaCorreta = QuestaoUtil.resolverAlternativaCorreta(q);
         boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaSelecionada);
+        LocalDateTime respondidoEm = LocalDateTime.now();
+        ReacaoTeste reacaoAtual = new ReacaoTeste(
+            q,
+            questaoAtual,
+            respostaSelecionada,
+            tempoRespostaSegundos,
+            0d,
+            0d,
+            respondidoEm
+        );
+        double consistenciaQuestao = CalculoStats.calcularConsistenciaQuestao(reacao, reacaoAtual);
+        double resilienciaQuestao = CalculoStats.calcularResilienciaQuestao(reacao, reacaoAtual);
         reacao.add(
             new ReacaoTeste(
                 q,
                 questaoAtual,
                 respostaSelecionada,
                 tempoRespostaSegundos,
-                0.1d, // TODO CONFIG_ADAPTATIVA: placeholder de consistencia por questao; substituir pelo valor real calculado.
-                0.1d, // TODO CONFIG_ADAPTATIVA: placeholder de resiliencia por questao; substituir pelo valor real calculado.
-                LocalDateTime.now())
+                consistenciaQuestao,
+                resilienciaQuestao,
+                respondidoEm)
             );
         if (acertou) {
             acertos++;
@@ -1243,6 +1355,56 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         nivelAtual.setText(nivelAtualAdaptativo.codigo());
         dificuldadeAtual.setText(nivelAtualAdaptativo.estrelas());
         nivelAtual.setStyle("-fx-text-fill: " + nivelAtualAdaptativo.corHex() + ";");
+        atualizarIndicadoresDesempenhoTempoReal();
+    }
+
+    private void atualizarIndicadoresDesempenhoTempoReal() {
+        double precisaoAtual = reacao.isEmpty()
+            ? 0d
+            : CalculoStats.calcularPrecisaoMediaRespostas(reacao) * 100d;
+        double consistenciaAtual = reacao.isEmpty()
+            ? 0d
+            : CalculoStats.calcularConsistenciaTeste(reacao) * 100d;
+        double velocidadeAtual = calcularVelocidadeTempoReal();
+
+        aplicarPercentual(nivelAtual23, precisaoAtual);
+        aplicarPercentual(nivelAtual231, consistenciaAtual);
+        aplicarPercentual(nivelAtual232, velocidadeAtual);
+    }
+
+    private double calcularVelocidadeTempoReal() {
+        if (temposResposta.isEmpty()) {
+            return 0d;
+        }
+
+        long totalMillis = 0L;
+        for (Long tempoResposta : temposResposta) {
+            if (tempoResposta != null && tempoResposta > 0L) {
+                totalMillis += tempoResposta;
+            }
+        }
+
+        if (totalMillis <= 0L) {
+            return 0d;
+        }
+
+        long totalSegundos = Math.max(1L, Math.round(totalMillis / 1000.0));
+        int totalQuestoesRespondidas = Math.min(reacao.size(), respostasUsuario.size());
+        if (totalQuestoesRespondidas <= 0) {
+            return 0d;
+        }
+
+        int totalSegundosInt = totalSegundos > Integer.MAX_VALUE
+            ? Integer.MAX_VALUE
+            : (int) totalSegundos;
+        return CalculoStats.calcularVelocidade(totalSegundosInt, totalQuestoesRespondidas) * 100d;
+    }
+
+    private void aplicarPercentual(Label label, double valor) {
+        if (label == null) {
+            return;
+        }
+        label.setText(Math.round(Math.max(0d, Math.min(100d, valor))) + "%");
     }
 
     private void destacarRespostaCorreta(char letra) {
@@ -1305,6 +1467,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void finalizarTesteAdaptativo() {
         sessaoAtiva = false;
+        pausaUsada = false;
         limparSessaoPausada();
         if (cronometro != null) {
             cronometro.stop();
@@ -1312,6 +1475,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         if (loadingTimeline != null) {
             loadingTimeline.stop();
         }
+        setSidebarVisible(true);
+        atualizarEstadoBotaoPausa();
 
         double mediaTempo = temposResposta.stream().mapToLong(Long::longValue).average().orElse(0);
         double porcentagemAcertos = totalQuestoes == 0 ? 0 : (acertos * 100.0) / totalQuestoes;
@@ -1355,27 +1520,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             questoesResultado
         );
 
-        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = ResultadoCelebracaoSupport.criarResumo(
-            candidatoID,
-            "Exame Adaptativo",
-            formatarDisciplina(disciplinaSelecionada),
-            acertos,
-            totalQuestoes,
-            porcentagemAcertos,
-            tempo.getText(),
-            mediaTempo / 1000d,
-            false
-        );
+        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = criarResumoTesteCompacto(porcentagemAcertos);
 
         abrirCelebracaoResultado(
             payload,
             celebrationSummary,
-            () -> mostrarResultadoFallbackTeste(
-                porcentagemAcertos,
-                mediaTempo,
-                perfil,
-                recomendacao
-            )
+            () -> mostrarResultadoFallbackTeste(celebrationSummary)
         );
     }
 
@@ -1408,6 +1558,54 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void mostrarAlerta(String titulo, String mensagem) {
         TesteAdaptativoCoordinator.requestAlert(titulo, mensagem, null);
+    }
+
+    private ResultadoCelebracaoSupport.CelebrationSummary criarResumoTesteCompacto(double porcentagemAcertos) {
+        return ResultadoCelebracaoSupport.criarResumoTesteCompacto(
+            porcentagemAcertos,
+            resolverAreaProgressoTeste(),
+            resolverPontoForteTeste(),
+            resolverProximoDesafioTeste()
+        );
+    }
+
+    private String resolverAreaProgressoTeste() {
+        if (QuestaoUtil.normalizar(disciplinaSelecionada).contains("fisica")) {
+            return "Cinemática";
+        }
+        return primeiroSubtopicoSelecionado("Conteúdo");
+    }
+
+    private String resolverPontoForteTeste() {
+        if (QuestaoUtil.normalizar(disciplinaSelecionada).contains("fisica")) {
+            return "Movimento Uniforme";
+        }
+        return primeiroSubtopicoSelecionado("Base consolidada");
+    }
+
+    private String resolverProximoDesafioTeste() {
+        if (QuestaoUtil.normalizar(disciplinaSelecionada).contains("fisica")) {
+            return "Leis de Newton";
+        }
+        String proximo = subtopicosSelecionados == null
+            ? null
+            : subtopicosSelecionados.stream()
+                .filter(valor -> valor != null && !valor.isBlank())
+                .skip(1)
+                .findFirst()
+                .orElse(null);
+        return proximo == null ? "Próxima etapa" : proximo;
+    }
+
+    private String primeiroSubtopicoSelecionado(String padrao) {
+        if (subtopicosSelecionados != null) {
+            for (String subtopico : subtopicosSelecionados) {
+                if (subtopico != null && !subtopico.isBlank()) {
+                    return subtopico;
+                }
+            }
+        }
+        return padrao;
     }
 
     private List<QuestaoResultado> construirQuestoesResultado() {
@@ -1446,6 +1644,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         alternativas.selectToggle(null);
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
+        atualizarEstadoBotaoPausa();
         if (questionProgressBar != null) {
             questionProgressBar.setProgress(0);
         }
@@ -1507,24 +1706,18 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }
     }
 
-    private void mostrarResultadoFallbackTeste(
-        double porcentagemAcertos,
-        double mediaTempo,
-        String perfil,
-        String recomendacao
-    ) {
+    private void mostrarResultadoFallbackTeste(ResultadoCelebracaoSupport.CelebrationSummary summary) {
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("Teste Adaptativo Concluido");
-        alert.setHeaderText("Resultado Final Adaptativo");
-        alert.setContentText(String.format(
-            "RESULTADOS:\n- Acertos: %d/%d (%.1f%%)\n- Nivel alcancado: %s\n- Tempo medio por questao: %.1f segundos\n- Perfil: %s\n\nRecomendacao: %s",
-            acertos,
-            totalQuestoes,
-            porcentagemAcertos,
-            nivelAtualAdaptativo.codigo(),
-            mediaTempo / 1000,
-            perfil,
-            recomendacao
+        alert.setTitle("Teste Concluído");
+        alert.setHeaderText("Feedback final");
+        alert.setContentText(String.join(
+            "\n\n",
+            summary.badgeLabel(),
+            summary.headline(),
+            summary.summary(),
+            summary.encouragement(),
+            summary.medalTitle() + "\n" + summary.medalMessage(),
+            summary.scholarshipTitle() + "\n" + summary.scholarshipMessage()
         ));
         alert.showAndWait();
     }
@@ -1585,6 +1778,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             loadingTimeline.stop();
             loadingTimeline = null;
         }
+        setSidebarVisible(true);
     }
 
     private ConfiguracaoDto getConfigCadidato(){
@@ -1623,18 +1817,23 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @FXML
     void desisitir(ActionEvent event) {
         limparSessaoPausada();
+        pausaUsada = false;
         resetarMetricas();
         mostrarTelaInicialTeste();
     }
 
     @FXML
     void pausar(ActionEvent event) {
-        if (!sessaoAtiva) {
+        if (!sessaoAtiva || pausaUsada || estaCarregando()) {
             return;
         }
 
+        pausaUsada = true;
+        atualizarEstadoBotaoPausa();
         salvarSessaoPausada();
-        resetarMetricas();
-        mostrarTelaInicialTeste();
+        if (cronometro != null) {
+            cronometro.stop();
+        }
+        abrirMenuPausa();
     }
 }

@@ -30,10 +30,13 @@ import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.PausaModalController;
+import com.imetro.ui.modals.PauseSessionContext;
 import com.imetro.ui.modals.ResultadoCelebracaoContext;
 import com.imetro.ui.modals.ResultadoCelebracaoModalController;
 import com.imetro.ui.modals.TopicModalController;
 import com.imetro.ui.support.PlaneamentoEstudoBannerSupport;
+import com.imetro.util.CalculoStats;
 import com.imetro.util.Authentication;
 import com.imetro.util.QuestaoGraficoSupport;
 import com.imetro.util.QuestaoUtil;
@@ -102,6 +105,9 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private Label bloco1;
 
     @FXML
+    private StackPane graficoPane;
+
+    @FXML
     private Label bloco21;
 
     @FXML
@@ -109,6 +115,9 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     @FXML
     private JFXButton btnProximo;
+
+    @FXML
+    private JFXButton btnPausa;
 
     @FXML
     private AnchorPane diagnosticoField;
@@ -235,6 +244,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
     private boolean sessaoAtiva;
+    private boolean pausaUsada;
     @FXML
     public void initialize() throws IOException {
         DiagnosticoCoordinator.setHost(this);
@@ -279,6 +289,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             tela.setVisible(true);
             loadingOverlay.setVisible(false);
             btnProximo.setDisable(true);
+            atualizarEstadoBotaoPausa();
         });
     }
 
@@ -292,6 +303,88 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         s = Math.max(0, segundos);
         tempo.setText(String.format("%02d:%02d:%02d", h, m, s));
         TimerDiagnostic();
+    }
+
+    private void atualizarEstadoBotaoPausa() {
+        if (btnPausa != null) {
+            btnPausa.setDisable(!podePausar());
+        }
+    }
+
+    private boolean podePausar() {
+        return sessaoAtiva && !pausaUsada && !estaCarregando();
+    }
+
+    private boolean estaCarregando() {
+        return loadingOverlay != null && loadingOverlay.isVisible();
+    }
+
+    private void setSidebarVisible(boolean visible) {
+        Platform.runLater(() -> {
+            if (diagnosticoField == null || diagnosticoField.getScene() == null) {
+                return;
+            }
+
+            Node sidebarNode = diagnosticoField.getScene().lookup("#sidebar");
+            if (sidebarNode != null) {
+                sidebarNode.setVisible(visible);
+                sidebarNode.setManaged(visible);
+            }
+        });
+    }
+
+    private void abrirMenuPausa() {
+        if (modalPai == null) {
+            return;
+        }
+
+        try {
+            PauseSessionContext.setRequest(new PauseSessionContext.PauseRequest(
+                "Pausa do diagnostico",
+                "O tempo ficou congelado. Escolhe como queres continuar.",
+                "Continuar",
+                "Desistir",
+                "Recomeçar",
+                this::continuarDiagnosticoPausado,
+                this::desistirDiagnosticoPausado,
+                this::recomecarDiagnosticoPausado
+            ));
+
+            modalPai.getChildren().clear();
+            modFxml = App.loadFXMLModal("Pausa");
+            Node modal = modFxml.load();
+            modalPai.getChildren().add(modal);
+            PausaModalController controller = modFxml.getController();
+            controller.init();
+        } catch (Exception ex) {
+            System.err.println("Falha ao abrir o menu de pausa: " + ex.getMessage());
+            PauseSessionContext.clear();
+            continuarDiagnosticoPausado();
+        }
+    }
+
+    private void continuarDiagnosticoPausado() {
+        limparSessaoPausada();
+        atualizarEstadoBotaoPausa();
+        iniciarCronometroDiagnostico(h, m, s);
+        setSidebarVisible(false);
+    }
+
+    private void desistirDiagnosticoPausado() {
+        limparSessaoPausada();
+        pausaUsada = false;
+        resetarEstadoDiagnostico();
+        setDiagnosticMode(false);
+        loadingOverlay.setVisible(false);
+        setSidebarVisible(true);
+        atualizarEstadoBotaoPausa();
+    }
+
+    private void recomecarDiagnosticoPausado() {
+        limparSessaoPausada();
+        prepararDiagnostico();
+        setSidebarVisible(false);
+        setDiagnosticMode(true);
     }
 
     private void TimerDiagnostic() {
@@ -393,6 +486,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
                 sessaoAtiva = true;
                 iniciarCronometroDiagnostico(0, 0, 0);
                 carregarQuestao(0);
+                atualizarEstadoBotaoPausa();
             });
             fadeOut.play();
         });
@@ -435,6 +529,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
+        atualizarIndicadoresDesempenho();
     }
 
     private String montarBlocoSecundarioQuestao(Questao questao) {
@@ -482,6 +577,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
         linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator, apoioVisualBox);
+        graficoPane.getChildren().set(0, linhaQuestaoPane);
+
     }
 
     private void atualizarApoioVisual(Questao questao) {
@@ -531,11 +628,13 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaSelecionada);
         if (acertou) {
             selected.getStyleClass().add("sucess");
+            acertos++;
         } else {
             selected.getStyleClass().add("error");
             destacarRespostaCorreta(alternativaCorreta);
         }
 
+        atualizarIndicadoresDesempenho();
         btnProximo.setDisable(false);
         btnConfirmar.setDisable(true);
     }
@@ -585,18 +684,14 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     int acertos = 0;
     private void finalizarDiagnostico() {
         sessaoAtiva = false;
+        pausaUsada = false;
         limparSessaoPausada();
         if (time != null) {
             time.stop();
         }
-        acertos = 0;
-
-        int limiteCorrecao = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
-        for (int i = 0; i < limiteCorrecao; i++) {
-            if (QuestaoUtil.respostaEstaCorreta(questoes.get(i), respostasUsuario.get(i))) {
-                acertos++;
-            }
-        }
+        recalcularAcertosDiagnostico();
+        setSidebarVisible(true);
+        atualizarEstadoBotaoPausa();
 
         double porcentagem = totalQuestoes == 0 ? 0 : (acertos * 100.0) / totalQuestoes;
         String nivelFinal = getNivelPorPorcentagem(porcentagem);
@@ -665,24 +760,82 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     }
 
     private double calcularTempoMedioSegundos() {
-        if (tempo == null || tempo.getText() == null || tempo.getText().isBlank() || totalQuestoes <= 0) {
+        if (respostasUsuario.isEmpty()) {
             return 0;
         }
 
-        String[] partes = tempo.getText().trim().split(":");
-        if (partes.length != 3) {
-            return 0;
+        return obterTempoDecorridoSegundos() / (double) respostasUsuario.size();
+    }
+
+    private void atualizarIndicadoresDesempenho() {
+        int totalRespondidas = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
+        double precisaoAtual = calcularPrecisaoTempoReal(totalRespondidas);
+        double consistenciaAtual = calcularConsistenciaTempoReal(totalRespondidas);
+        double velocidadeAtual = totalRespondidas <= 0
+            ? 0d
+            : CalculoStats.calcularVelocidade(obterTempoDecorridoSegundos(), totalRespondidas) * 100d;
+
+        aplicarPercentual(nivelAtual23, precisaoAtual);
+        aplicarPercentual(nivelAtual231, consistenciaAtual);
+        aplicarPercentual(nivelAtual232, velocidadeAtual);
+    }
+
+    private double calcularPrecisaoTempoReal(int totalRespondidas) {
+        if (totalRespondidas <= 0 || questoes == null || respostasUsuario == null) {
+            return 0d;
         }
 
-        try {
-            int horas = Integer.parseInt(partes[0]);
-            int minutos = Integer.parseInt(partes[1]);
-            int segundos = Integer.parseInt(partes[2]);
-            int totalSegundos = (horas * 3600) + (minutos * 60) + segundos;
-            return totalSegundos / (double) totalQuestoes;
-        } catch (NumberFormatException ex) {
-            return 0;
+        int limite = Math.min(totalRespondidas, Math.min(questoes.size(), respostasUsuario.size()));
+        if (limite <= 0) {
+            return 0d;
         }
+
+        double soma = 0d;
+        for (int i = 0; i < limite; i++) {
+            soma += CalculoStats.calcularPrecisaoResposta(questoes.get(i), respostasUsuario.get(i));
+        }
+        return (soma / limite) * 100d;
+    }
+
+    private double calcularConsistenciaTempoReal(int totalRespondidas) {
+        if (totalRespondidas <= 0 || questoes == null || respostasUsuario == null) {
+            return 0d;
+        }
+        if (totalRespondidas == 1) {
+            return 50d;
+        }
+
+        int limite = Math.min(totalRespondidas, Math.min(questoes.size(), respostasUsuario.size()));
+        if (limite < 2) {
+            return 50d;
+        }
+
+        double precisaoAtual = calcularPrecisaoTempoReal(limite);
+        double precisaoAnterior = calcularPrecisaoTempoReal(limite - 1);
+        return CalculoStats.calcularConsistencia(precisaoAnterior, precisaoAtual) * 100d;
+    }
+
+    private int obterTempoDecorridoSegundos() {
+        return Math.max(0, (h * 3600) + (m * 60) + s);
+    }
+
+    private void aplicarPercentual(Label label, double valor) {
+        if (label == null) {
+            return;
+        }
+        label.setText(Math.round(Math.max(0d, Math.min(100d, valor))) + "%");
+    }
+
+    private int recalcularAcertosDiagnostico() {
+        int limiteCorrecao = Math.min(questoes == null ? 0 : questoes.size(), respostasUsuario.size());
+        int totalAcertos = 0;
+        for (int i = 0; i < limiteCorrecao; i++) {
+            if (QuestaoUtil.respostaEstaCorreta(questoes.get(i), respostasUsuario.get(i))) {
+                totalAcertos++;
+            }
+        }
+        acertos = totalAcertos;
+        return totalAcertos;
     }
 
     private String getNivelPorPorcentagem(double pct) {
@@ -804,6 +957,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             );
             return;
         }
+        pausaUsada = false;
+        setSidebarVisible(false);
         setDiagnosticMode(true);
     }
 
@@ -971,6 +1126,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         respostaSelecionada = '\0';
         selected = null;
         corretaLetra = '\0';
+        acertos = 0;
         h = 0;
         m = 0;
         s = 0;
@@ -979,6 +1135,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
         alternativas.selectToggle(null);
+        atualizarIndicadoresDesempenho();
+        atualizarEstadoBotaoPausa();
 
         if (questionProgressBar != null) {
             questionProgressBar.setProgress(0);
@@ -1034,6 +1192,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         questaoAtual = Math.max(0, Math.min(estado.questaoAtual(), Math.max(0, totalQuestoes - 1)));
         respostasUsuario.clear();
         respostasUsuario.addAll(estado.respostasUsuario());
+        recalcularAcertosDiagnostico();
 
         h = Math.max(0, estado.h());
         m = Math.max(0, estado.m());
@@ -1057,7 +1216,10 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         }
 
         sessaoAtiva = true;
+        pausaUsada = true;
+        setSidebarVisible(false);
         iniciarCronometroDiagnostico(h, m, s);
+        atualizarEstadoBotaoPausa();
         return true;
     }
 
@@ -1138,7 +1300,9 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             iniciarLoadingInicial();
         } else {
             loadingOverlay.setVisible(false);
+            setSidebarVisible(true);
         }
+        atualizarEstadoBotaoPausa();
     }
 
     @Override
@@ -1155,6 +1319,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             loadingTimeline.stop();
             loadingTimeline = null;
         }
+        setSidebarVisible(true);
     }
 
     private void navigate(String key) {
@@ -1214,6 +1379,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     @FXML
     public void desisitir(ActionEvent event) {
         limparSessaoPausada();
+        pausaUsada = false;
         resetarEstadoDiagnostico();
         setDiagnosticMode(false);
         loadingOverlay.setVisible(false);
@@ -1221,13 +1387,16 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
     @FXML
     public void pausar(ActionEvent event) {
-        if (!sessaoAtiva) {
+        if (!sessaoAtiva || pausaUsada || estaCarregando()) {
             return;
         }
 
+        pausaUsada = true;
+        atualizarEstadoBotaoPausa();
         salvarSessaoPausada();
-        resetarEstadoDiagnostico();
-        setDiagnosticMode(false);
-        loadingOverlay.setVisible(false);
+        if (time != null) {
+            time.stop();
+        }
+        abrirMenuPausa();
     }
 }

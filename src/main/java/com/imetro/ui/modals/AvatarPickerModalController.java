@@ -1,7 +1,6 @@
 package com.imetro.ui.modals;
 
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 
@@ -14,9 +13,13 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 
 public class AvatarPickerModalController extends ModalController implements Initializable {
+
+    private static final double AVATAR_OPTION_CARD_SIZE = 64.0;
+    private static final double AVATAR_OPTION_IMAGE_SIZE = 50.0;
 
     @FXML
     private ImageView avatarPreview;
@@ -28,16 +31,7 @@ public class AvatarPickerModalController extends ModalController implements Init
     private Label statusLabel;
 
     @FXML
-    private StackPane avatarOption1;
-
-    @FXML
-    private StackPane avatarOption2;
-
-    @FXML
-    private StackPane avatarOption3;
-
-    @FXML
-    private StackPane avatarOption4;
+    private FlowPane avatarOptionsBox;
 
     private String selectedAvatarRef;
     private String currentUserName;
@@ -56,10 +50,14 @@ public class AvatarPickerModalController extends ModalController implements Init
             ? AvatarSupport.INITIALS_TOKEN
             : AvatarSupport.normalizeAvatarRef(currentAvatarRef);
 
+        renderAvatarOptions();
         updatePreview(this.selectedAvatarRef);
         updateOptionSelection();
         if (statusLabel != null) {
-            statusLabel.setText("Escolhe um dos 4 avatares ou mantem as iniciais.");
+            int totalAvatars = AvatarSupport.PRESET_AVATAR_COUNT;
+            statusLabel.setText(totalAvatars == 0
+                ? "Ainda nao encontrei avatares nesta pasta."
+                : "Escolhe um dos " + totalAvatars + " avatares ou mantem as iniciais.");
         }
     }
 
@@ -131,15 +129,22 @@ public class AvatarPickerModalController extends ModalController implements Init
         }
 
         if (avatarInitialsLabel != null) {
-            avatarInitialsLabel.setText(AvatarSupport.extractInitials(currentUserName, currentUserEmail));
+            avatarInitialsLabel.setText(AvatarSupport.previewFallbackLabel(avatarRef, currentUserName, currentUserEmail));
             avatarInitialsLabel.setVisible(!hasImage);
             avatarInitialsLabel.setManaged(!hasImage);
         }
     }
 
     private void updateOptionSelection() {
-        List<StackPane> options = List.of(avatarOption1, avatarOption2, avatarOption3, avatarOption4);
-        for (StackPane option : options) {
+        if (avatarOptionsBox == null) {
+            return;
+        }
+
+        for (Node node : avatarOptionsBox.getChildren()) {
+            if (!(node instanceof StackPane option)) {
+                continue;
+            }
+
             if (option == null) {
                 continue;
             }
@@ -150,5 +155,18 @@ public class AvatarPickerModalController extends ModalController implements Init
                 option.getStyleClass().add("avatar-option-selected");
             }
         }
+    }
+
+    private void renderAvatarOptions() {
+        if (avatarOptionsBox == null) {
+            return;
+        }
+
+        avatarOptionsBox.getChildren().setAll(
+            AvatarSupport.availableAvatars().stream()
+                .map(avatarRef -> AvatarSupport.createAvatarOption(avatarRef, AVATAR_OPTION_CARD_SIZE, AVATAR_OPTION_IMAGE_SIZE, this::onSelectAvatar))
+                .toList()
+        );
+        updateOptionSelection();
     }
 }

@@ -312,13 +312,13 @@ public class  PlaneamentoEstudoService {
     return List.of(
 
         new PlaneamentoEstudoInsight(
-                "🚀 Melhor oportunidade",
+                "Melhor oportunidade",
                 principal.disciplina()
                         + " é atualmente a disciplina com maior potencial de evolução."
         ),
 
         new PlaneamentoEstudoInsight(
-                "⏳ Conhecimento a arrefecer",
+                "Conhecimento a arrefecer",
                 principal.diasSemEstudo() > 0
                         ? "Já passaram "
                         + principal.diasSemEstudo()
@@ -328,7 +328,7 @@ public class  PlaneamentoEstudoService {
         ),
 
         new PlaneamentoEstudoInsight(
-                "🧠 Combinação recomendada",
+                "Combinação recomendada",
                 secundario == principal
                         ? "Mistura exercícios novos com revisão de erros para acelerar a retenção."
                         : "Alternar "
@@ -354,7 +354,7 @@ return List.of(
 
     new PlaneamentoEstudoEtapa(
             "Hoje",
-            "🔥 Missão principal",
+            "Missão principal",
             "25 minutos focados em "
                     + principal.foco()
                     + ". O objetivo é recuperar confiança rapidamente."
@@ -362,13 +362,13 @@ return List.of(
 
     new PlaneamentoEstudoEtapa(
             "Amanhã",
-            "🛡️ Consolidação",
+            "Consolidação",
             "Reforça o conteúdo estudado hoje e corrige os erros encontrados."
     ),
 
     new PlaneamentoEstudoEtapa(
             "48h",
-            "⚔️ Desafio combinado",
+            "Desafio combinado",
             "Alterna "
                     + principal.disciplina()
                     + " e "
@@ -378,7 +378,7 @@ return List.of(
 
     new PlaneamentoEstudoEtapa(
             "Fim da semana",
-            "🏁 Checkpoint semanal",
+            "Checkpoint semanal",
             "Realiza um mini diagnóstico para medir a evolução real."
     )
 );
@@ -732,9 +732,7 @@ return List.of(
         if (heroScore >= 80) {
             return """
                  Estás numa fase de consolidação.
-
                 O objetivo agora não é estudar mais, mas manter o que já conquistaste.
-
                 %s continua a ser a disciplina com maior potencial de evolução.
                 """
                 .formatted(principal.disciplina());
@@ -742,20 +740,16 @@ return List.of(
 
         if (principal.diasSemEstudo() >= 7) {
             return """
-                ⚠️ %s está a perder frescura.
-
+                %s está a perder frescura.
                 Uma revisão curta agora vale muito mais do que reaprender tudo daqui a alguns dias.
-
                 Impacto esperado: %s.
                 """
                 .formatted(principal.disciplina(), impacto);
         }
 
         return """
-            🎯 O sistema identificou %s como a melhor oportunidade de crescimento desta semana.
-
+            O sistema identificou %s como a melhor oportunidade de crescimento desta semana.
             Pequenos avanços nesta área podem refletir-se diretamente no teu desempenho geral.
-
             Impacto esperado: %s.
             """
             .formatted(principal.disciplina(), impacto);
@@ -1201,7 +1195,7 @@ return List.of(
                 Math.min(100, atual + ganhoPotencial);
 
         return """
-            📈 Previsão
+            Previsão
 
             Se mantiveres a rotina sugerida,
             %s pode evoluir de %.0f%% para %.0f%% nos próximos dias.
@@ -1216,7 +1210,7 @@ return List.of(
     private String gerarRisco(PlaneamentoEstudoDisciplina disciplina) {
 
         if (disciplina.diasSemEstudo() < 3) {
-            return "🟢 Conteúdo estável.";
+            return "Conteúdo estável.";
         }
 
         double perda =
@@ -1229,7 +1223,7 @@ return List.of(
                 );
 
         return """
-            ⚠️ Zona de atenção
+            Zona de atenção
 
             Sem revisão,
             %s pode cair de %.0f%% para %.0f%%.

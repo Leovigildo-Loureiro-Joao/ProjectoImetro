@@ -26,7 +26,7 @@
             <VBox spacing="8.0">
                <children>
                   <Label styleClass="big-h1" text="Plano personalizado" />
-                  <Label fx:id="subtitleLabel" styleClass="muted" text="Gerado a partir do teu diagnostico e do ritmo real." wrapText="true" />
+                  <Label fx:id="subtitleLabel" styleClass="muted" text="Gerado a partir do teu diagnostico e do ritmo real. Siga o plano de um vencedor" wrapText="true" />
                </children>
             </VBox>
             <Region HBox.hgrow="ALWAYS" />
@@ -45,7 +45,7 @@
                               <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
                            </padding>
                            <children>
-                              <HBox prefHeight="97.0" prefWidth="524.0">
+                              <HBox prefHeight="97.0" prefWidth="447.0">
                                  <children>
                                     <VBox prefHeight="184.0" prefWidth="341.0" spacing="8.0">
                                        <children>
@@ -59,11 +59,15 @@
                                           <Label fx:id="heroObjectiveLabel" alignment="TOP_LEFT" prefHeight="51.0" prefWidth="325.0" styleClass="hero-copy" text="Objectivos" wrapText="true" />
                                        </children>
                                     </VBox>
-                                    <ImageView fitHeight="188.0" fitWidth="122.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../../../assets/imgs/6.png" />
-                                       </image>
-                                    </ImageView>
+                                    <VBox prefHeight="188.0" prefWidth="107.0">
+                                       <children>
+                                          <ImageView fitHeight="153.0" fitWidth="113.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../../../assets/imgs/10.png" />
+                                             </image>
+                                          </ImageView>
+                                       </children>
+                                    </VBox>
                                  </children>
                               </HBox>
                               <HBox spacing="12.0">

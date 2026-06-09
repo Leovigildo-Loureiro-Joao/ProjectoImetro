@@ -27,7 +27,8 @@ public final class ResultadoCelebracaoSupport {
         String scholarshipMessage,
         double scholarshipProgress,
         String scholarshipProgressDetail,
-        String actionLabel
+        String actionLabel,
+        boolean compacto
     ) {
     }
 
@@ -119,7 +120,38 @@ public final class ResultadoCelebracaoSupport {
             scholarshipPreview.message(),
             scholarshipPreview.progress(),
             scholarshipPreview.detail(),
-            "Ver meu resultado"
+            "Ver meu resultado",
+            false
+        );
+    }
+
+    public static CelebrationSummary criarResumoTesteCompacto(
+        double desempenhoPercentual,
+        String areaProgresso,
+        String pontoForte,
+        String proximoDesafio
+    ) {
+        double percentual = limitarFaixaCem(desempenhoPercentual);
+        int ganhoProgresso = percentual >= 75d ? 3 : percentual >= 60d ? 2 : 1;
+        int diasSequencia = percentual >= 75d ? 5 : percentual >= 60d ? 4 : 3;
+
+        return new CelebrationSummary(
+            "Teste Concluído",
+            Math.round(percentual) + "% de acerto",
+            "+" + ganhoProgresso + "% de progresso em " + valorOuPadrao(areaProgresso, "Cinemática"),
+            "Nova sequência:\n" + diasSequencia + " dias",
+            percentual,
+            "",
+            "Ponto Forte",
+            valorOuPadrao(pontoForte, "Movimento Uniforme"),
+            0d,
+            "",
+            "Próximo Desafio",
+            valorOuPadrao(proximoDesafio, "Leis de Newton"),
+            0d,
+            "",
+            "Continuar",
+            true
         );
     }
 

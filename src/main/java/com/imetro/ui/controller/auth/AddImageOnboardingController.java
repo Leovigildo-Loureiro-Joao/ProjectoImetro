@@ -1,7 +1,6 @@
 package com.imetro.ui.controller.auth;
 
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import com.imetro.config.RuntimeConfig;
@@ -20,6 +19,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 
 public class AddImageOnboardingController implements Initializable {
@@ -37,16 +37,7 @@ public class AddImageOnboardingController implements Initializable {
     private Label statusLabel;
 
     @FXML
-    private StackPane avatarOption1;
-
-    @FXML
-    private StackPane avatarOption2;
-
-    @FXML
-    private StackPane avatarOption3;
-
-    @FXML
-    private StackPane avatarOption4;
+    private FlowPane avatarOptionsBox;
 
     private String selectedAvatarRef;
     private String currentUserEmail;
@@ -61,6 +52,7 @@ public class AddImageOnboardingController implements Initializable {
             statusLabel.setText("Se nao escolheres um avatar, vamos usar as iniciais do teu nome.");
         }
 
+        renderAvatarOptions();
         showInitialsPreview();
         updateOptionSelection();
     }
@@ -157,7 +149,7 @@ public class AddImageOnboardingController implements Initializable {
         }
 
         if (avatarInitialsLabel != null) {
-            avatarInitialsLabel.setText(AvatarSupport.extractInitials(currentUserName, currentUserEmail));
+            avatarInitialsLabel.setText(AvatarSupport.previewFallbackLabel(avatarRef, currentUserName, currentUserEmail));
             avatarInitialsLabel.setVisible(!hasImage);
             avatarInitialsLabel.setManaged(!hasImage);
         }
@@ -169,8 +161,15 @@ public class AddImageOnboardingController implements Initializable {
     }
 
     private void updateOptionSelection() {
-        List<StackPane> options = List.of(avatarOption1, avatarOption2, avatarOption3, avatarOption4);
-        for (StackPane option : options) {
+        if (avatarOptionsBox == null) {
+            return;
+        }
+
+        for (Node node : avatarOptionsBox.getChildren()) {
+            if (!(node instanceof StackPane option)) {
+                continue;
+            }
+
             if (option == null) {
                 continue;
             }
@@ -181,6 +180,19 @@ public class AddImageOnboardingController implements Initializable {
                 option.getStyleClass().add("avatar-option-selected");
             }
         }
+    }
+
+    private void renderAvatarOptions() {
+        if (avatarOptionsBox == null) {
+            return;
+        }
+
+        avatarOptionsBox.getChildren().setAll(
+            AvatarSupport.availableAvatars().stream()
+                .map(avatarRef -> AvatarSupport.createAvatarOption(avatarRef, 48.0, 38.0, this::onSelectAvatar))
+                .toList()
+        );
+        updateOptionSelection();
     }
 
     private String resolveCurrentUserName(String email) {
