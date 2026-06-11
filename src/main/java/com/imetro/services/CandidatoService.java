@@ -460,6 +460,29 @@ public class CandidatoService implements User {
         AddFirstProgressoDisciplina(candidato, disciplina, actual, peso, null);
     }
 
+    public boolean insertFocos(String foco, UUID user){
+        try {
+            return userRepository.insertFocos(foco, user);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<String> topicosDisciplina(String nome){
+        List<String> p = List.of();
+        try {
+            for (String string : DisciplinaService.getDisciplinaCandidato(nome).focoSubtopicos().split("\n")) {
+                p.add(string);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return p;
+    }
+
+
     public void AddFirstProgressoDisciplina(
         UUID candidato,
         UUID disciplina,
@@ -468,31 +491,15 @@ public class CandidatoService implements User {
         String focoSubtopicos
     ) {
         try {
-            progresso.insert(
-                new ProgressoAlunoDisciplinaDto(
-                    UUID.randomUUID(),
-                    candidato,
-                    disciplina,
-                    null,
-                    0f,
-                    actual,
-                    actual,
-                    LocalDate.now(),
-                    peso,
-                    focoSubtopicos,
-                    0,
-                    0,
-                    0,
-                    0.0,
-                    null,
-                    null,
-                    LocalDateTime.now(),
-                    0,
-                    0,
-                    LocalDateTime.now(),
-                    LocalDateTime.now()
-                ).toMap()
-            );
+            progresso.upsertFocoDisciplina(candidato, disciplina, actual, peso, focoSubtopicos);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void RemoverProgressoDisciplina(UUID candidato, UUID disciplina) {
+        try {
+            progresso.deleteByAlunoIdAndDisciplinaId(candidato, disciplina);
         } catch (SQLException e) {
             e.printStackTrace();
         }

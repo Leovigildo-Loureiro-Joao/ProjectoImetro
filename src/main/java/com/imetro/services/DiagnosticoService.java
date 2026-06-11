@@ -16,7 +16,9 @@ import com.imetro.domain.dto.diagnostico.TempoStatsDiagnostico;
 import com.imetro.domain.dto.diagnostico.Value;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.perguntas.BootstrapResult;
+import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
+import com.imetro.domain.enums.TopicoExame;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
 import com.imetro.persistence.repository.DiagnosticoRepository;
@@ -64,6 +66,7 @@ public class DiagnosticoService {
     private final DiagnosticoRepository diagnosticoRepository = new DiagnosticoRepository();
     private final RecomendacaoRepository recomendacaoRepository = new RecomendacaoRepository();
     private final ProgressaoRigorRepository progressaoRigorRepository = new ProgressaoRigorRepository();
+    private final ProgressoALunoDisciplinaRepository progressoALunoDisciplinaRepository = new ProgressoALunoDisciplinaRepository();
     private final PerguntasBootstrapService perguntasBootstrapService;
     private final ConfiguracaoTesteAdaptativoNivelRepositorty configTesteAdaptNiv;
     public DiagnosticoService() {
@@ -77,7 +80,7 @@ public class DiagnosticoService {
     }
 
     public List<Questao> carregarQuestoesReais() {
-        
+
         try {
             return perguntasRepository.findAll().stream()
                 .map(this::mapearQuestao)
@@ -102,7 +105,10 @@ public class DiagnosticoService {
     }
 
     public List<Topico> carregarTopicosPorDisciplina(String disciplina) {
+        return carregarTopicosPorDisciplina(Authentication.getCurrentUserId(), disciplina);
+    }
 
+    public List<Topico> carregarTopicosPorDisciplina(UUID candidatoId, String disciplina) {
         String disciplinaNormalizada =  QuestaoUtil.normalizar(disciplina);
         List<Questao> questoesDisciplina = carregarQuestoesReais().stream()
             .filter(questao -> disciplinaNormalizada.equals( QuestaoUtil.normalizar(questao.getDisciplina())))
@@ -112,9 +118,15 @@ public class DiagnosticoService {
             return List.of();
         }
 
-        String nomeDisciplina = questoesDisciplina.getFirst().getDisciplina();
+        Map<String, Set<String>> topicosSelecionados = carregarTopicosSelecionadosPorDisciplina(candidatoId);
+        List<Questao> questoesEscopo = filtrarQuestoesDoEscopo(questoesDisciplina, topicosSelecionados, disciplina);
+        if (questoesEscopo.isEmpty()) {
+            return List.of();
+        }
+
+        String nomeDisciplina = questoesEscopo.getFirst().getDisciplina();
         UUID disciplinaId =  QuestaoUtil.resolverDisciplinaId(nomeDisciplina);
-        return construirTopicos(disciplinaId, nomeDisciplina, questoesDisciplina);
+        return construirTopicos(disciplinaId, nomeDisciplina, questoesEscopo);
     }
 
     public Map<String, Double> carregarProgressoSubtopicos(UUID candidatoId,String nivel, Collection<Topico> topicos) throws SQLException {
@@ -342,6 +354,19 @@ public class DiagnosticoService {
             disciplinas = DisciplinaService.discCategoria();
         }
 
+        Map<String, Set<String>> topicosSelecionadosPorDisciplina = carregarTopicosSelecionadosPorDisciplina(candidatoId);
+        if (topicosSelecionadosPorDisciplina.isEmpty()) {
+            return new PrimeiroDiagnosticoResumo(
+                0,
+                0,
+                0,
+                new ArrayList<>(),
+                List.of(),
+                false,
+                "Seleciona os topicos no onboarding para libertar o primeiro diagnostico."
+            );
+        }
+
         Map<String, List<Questao>> questoesPorDisciplina = questoes.stream()
             .collect(Collectors.groupingBy(
                 questao -> QuestaoUtil.normalizar(questao.getDisciplina()),
@@ -355,23 +380,38 @@ public class DiagnosticoService {
         int totalDisciplinas = 0;
 
         for (DisciplinaDto disciplina : disciplinas) {
-            List<Questao> questoesDisciplina = questoesPorDisciplina.get( QuestaoUtil.normalizar(disciplina.nome()));
+            String disciplinaNormalizada = QuestaoUtil.normalizar(disciplina.nome());
+            List<Questao> questoesDisciplina = questoesPorDisciplina.get(disciplinaNormalizada);
             if (questoesDisciplina == null || questoesDisciplina.isEmpty()) {
-                disciplinasSemBase.add(disciplina.nome());
+                if (topicosSelecionadosPorDisciplina.containsKey(disciplinaNormalizada)) {
+                    disciplinasSemBase.add(disciplina.nome());
+                }
+                continue;
+            }
+
+            List<Questao> questoesFiltradas = filtrarQuestoesDoEscopo(
+                questoesDisciplina,
+                topicosSelecionadosPorDisciplina,
+                disciplina.nome()
+            );
+            if (questoesFiltradas.isEmpty()) {
+                if (topicosSelecionadosPorDisciplina.containsKey(QuestaoUtil.normalizar(disciplina.nome()))) {
+                    disciplinasSemBase.add(disciplina.nome());
+                }
                 continue;
             }
 
             totalDisciplinas++;
-            totalQuestoes += questoesDisciplina.size();
-            topicos.addAll(construirTopicos(disciplina.id(), disciplina.nome(), questoesDisciplina));
+            totalQuestoes += questoesFiltradas.size();
+            topicos.addAll(construirTopicos(disciplina.id(), disciplina.nome(), questoesFiltradas));
         }
 
         boolean pronto = !topicos.isEmpty();
         String detalhe = pronto
-            ? "Escolha os topicos que quer diagnosticar e arranque agora mesmo. Depois deste primeiro passo, os cards normais passam a aparecer com historico real."
+            ? "Escolhe os topicos que queres diagnosticar e arranca agora mesmo. Depois deste primeiro passo, os cards normais passam a aparecer com historico real."
             : processamentoEmCurso
-                ? "Ainda estamos a ler os teus livros em segundo plano. Podes navegar noutras abas enquanto a barra no topo acompanha a geracao das perguntas."
-                : "Ainda nao encontramos questoes reais suficientes para o teu primeiro diagnostico. Os PDFs ficam em `uploads/disciplinas/<uuid>` e os topicos saem em `topicos-extraidos.json` enquanto a base automatica gera perguntas de Matematica e Fisica.";
+                ? "Ainda estamos a preparar a base para os topicos que escolheste. Podes navegar noutras abas enquanto o sistema conclui o processamento."
+                : "Ainda nao encontramos questoes reais suficientes para os topicos que escolheste. O sistema vai continuar a preparar a base em segundo plano.";
 
         return new PrimeiroDiagnosticoResumo(
             totalDisciplinas,
@@ -387,6 +427,11 @@ public class DiagnosticoService {
     public List<DiagnosticoDisciplinaResumo> carregarDiagnosticosDisponiveis(UUID candidatoId) {
         List<Questao> questoes = carregarQuestoesReais();
         if (questoes.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Set<String>> topicosSelecionadosPorDisciplina = carregarTopicosSelecionadosPorDisciplina(candidatoId);
+        if (topicosSelecionadosPorDisciplina.isEmpty()) {
             return List.of();
         }
 
@@ -421,7 +466,11 @@ public class DiagnosticoService {
             if (!disciplinasPermitidas.isEmpty() && !disciplinasPermitidas.contains(entry.getKey())) {
                 continue;
             }
-            List<Questao> questoesDisciplina = entry.getValue();
+            List<Questao> questoesDisciplina = filtrarQuestoesDoEscopo(
+                entry.getValue(),
+                topicosSelecionadosPorDisciplina,
+                entry.getKey()
+            );
             if (questoesDisciplina.isEmpty()) {
                 continue;
             }
@@ -493,6 +542,68 @@ public class DiagnosticoService {
 
         resumos.sort(Comparator.comparing(DiagnosticoDisciplinaResumo::nomeDisciplina, String.CASE_INSENSITIVE_ORDER));
         return List.copyOf(resumos);
+    }
+
+    private Map<String, Set<String>> carregarTopicosSelecionadosPorDisciplina(UUID candidatoId) {
+        if (candidatoId == null) {
+            return Map.of();
+        }
+
+        try {
+            List<Map<String, Object>> linhas = progressoALunoDisciplinaRepository.findAllByField("aluno_id", candidatoId);
+            if (linhas.isEmpty()) {
+                return Map.of();
+            }
+
+            LinkedHashMap<String, Set<String>> topicosPorDisciplina = new LinkedHashMap<>();
+            for (Map<String, Object> linha : linhas) {
+                ProgressoAlunoDisciplinaDto progresso = ProgressoAlunoDisciplinaDto.fromMap(linha);
+                if (progresso == null || progresso.disciplina() == null || progresso.disciplina().isBlank()) {
+                    continue;
+                }
+
+                Set<String> topicosSelecionados = progresso.focoSubtopicosLista().stream()
+                    .map(QuestaoUtil::normalizar)
+                    .filter(item -> !item.isBlank())
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+                if (topicosSelecionados.isEmpty()) {
+                    continue;
+                }
+
+                topicosPorDisciplina.put(QuestaoUtil.normalizar(progresso.disciplina()), topicosSelecionados);
+            }
+
+            return topicosPorDisciplina.isEmpty() ? Map.of() : Map.copyOf(topicosPorDisciplina);
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar os topicos selecionados do candidato: " + e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private List<Questao> filtrarQuestoesDoEscopo(
+        Collection<Questao> questoes,
+        Map<String, Set<String>> topicosSelecionadosPorDisciplina,
+        String disciplina
+    ) {
+        if (questoes == null || questoes.isEmpty() || topicosSelecionadosPorDisciplina == null
+            || topicosSelecionadosPorDisciplina.isEmpty() || disciplina == null || disciplina.isBlank()) {
+            return List.of();
+        }
+
+        String disciplinaNormalizada = QuestaoUtil.normalizar(disciplina);
+        Set<String> topicosSelecionados = topicosSelecionadosPorDisciplina.get(disciplinaNormalizada);
+        if (topicosSelecionados == null || topicosSelecionados.isEmpty()) {
+            return List.of();
+        }
+
+        TopicoExame.Disciplina disciplinaEnum = TopicoExame.resolverDisciplina(disciplina).orElse(null);
+        return questoes.stream()
+            .filter(questao -> {
+                String topicoCanonico = resolverTopicoCanonico(disciplinaEnum, questao.getTopico());
+                String topicoNormalizado = QuestaoUtil.normalizar(topicoCanonico);
+                return !topicoNormalizado.isBlank() && topicosSelecionados.contains(topicoNormalizado);
+            })
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public void registrarDiagnosticoConcluido(
@@ -990,7 +1101,7 @@ public class DiagnosticoService {
             progresso = progressoDiagnostico;
         }
 
-        if (precisaRevisao || precisaNovoDiagnostico) {
+        if (config != null && (precisaRevisao || precisaNovoDiagnostico)) {
             progresso = Math.min(progresso, config.resumo_med());
         }
 
@@ -999,8 +1110,15 @@ public class DiagnosticoService {
 
     private List<Topico> construirTopicos(UUID disciplinaId, String disciplina, Collection<Questao> questoes) {
         Map<String, LinkedHashSet<String>> grupos = new LinkedHashMap<>();
+        com.imetro.domain.enums.TopicoExame.Disciplina disciplinaEnum =
+            com.imetro.domain.enums.TopicoExame.resolverDisciplina(disciplina).orElse(null);
+
         for (Questao questao : questoes) {
-            String topico =  QuestaoUtil.safeText(questao.getTopico(), "Geral");
+            String topico = resolverTopicoCanonico(disciplinaEnum, questao.getTopico());
+            if (topico == null) {
+                continue;
+            }
+
             String subtopico =  QuestaoUtil.safeText(questao.getSubtopico(), topico);
             grupos.computeIfAbsent(topico, ignored -> new LinkedHashSet<>()).add(subtopico);
         }
@@ -1020,6 +1138,21 @@ public class DiagnosticoService {
             );
         }
         return topicos;
+    }
+
+    private String resolverTopicoCanonico(
+        com.imetro.domain.enums.TopicoExame.Disciplina disciplina,
+        String valor
+    ) {
+        if (disciplina == null || valor == null || valor.isBlank()) {
+            return null;
+        }
+
+        return com.imetro.domain.enums.TopicoExame.resolverTopicoModoInteligente(disciplina, valor)
+            .map(com.imetro.domain.enums.TopicoExame::getLabel)
+            .orElseGet(() -> disciplina == com.imetro.domain.enums.TopicoExame.Disciplina.FISICA
+                ? null
+                : QuestaoUtil.safeText(valor, null));
     }
 
     private Questao mapearQuestao(Map<String, Object> row) {

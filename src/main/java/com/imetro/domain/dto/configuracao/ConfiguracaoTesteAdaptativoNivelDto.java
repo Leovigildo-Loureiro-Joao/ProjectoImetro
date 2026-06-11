@@ -56,10 +56,10 @@ public record ConfiguracaoTesteAdaptativoNivelDto(
         values.put("rigor_base", rigorBase());
         values.put("limite_inferior", limiteInferior());
         values.put("limite_superior", limiteSuperior());
-        values.put("limiar_acerto", limiteInferior());
-        values.put("limiar_erro", limiteSuperior());
-        values.put("resumo_med", limiteInferior());
-        values.put("tot_erro_revisao", limiteSuperior());
+        values.put("limiar_erro", limiar_erro());
+        values.put("limiar_acerto", limiar_acerto());
+        values.put("resumo_med", resumo_med());
+        values.put("tot_erro_revisao", tot_erro_revisao());
         values.put("criado_em", criadoEm());
         values.put("atualizado_em", atualizadoEm());
         return values;

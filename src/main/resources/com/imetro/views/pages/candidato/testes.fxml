@@ -45,6 +45,7 @@
                <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <Label styleClass="h3-thin" text="Selecione uma disciplina para iniciar ou configurar o teste adaptativo" />
+                     <Label styleClass="muted" text="O teste nunca vai dar perguntas fora do escopo que escolheste. Se ainda nao houver perguntas num topico, o sistema mostra isso claramente." wrapText="true" />
                      <VBox fx:id="trilhoAdaptacaoCard" minHeight="0.0" prefHeight="0.0" prefWidth="956.0" spacing="14.0" styleClass="adaptation-trail-card" visible="false">
                         <children>
                            <VBox spacing="5.0">
@@ -147,7 +148,7 @@
                                                 </children>
                                              </VBox>
                                              <ProgressBar fx:id="questionProgressBar" maxWidth="1.7976931348623157E308" minHeight="14.0" prefHeight="14.0" prefWidth="691.0" progress="0.0" VBox.vgrow="ALWAYS" />
-                                             <Label fx:id="bloco2" prefHeight="21.0" prefWidth="500.0" styleClass="h3-thin" text="Sem subtopicos" wrapText="true">
+                                             <Label fx:id="bloco2" prefHeight="21.0" prefWidth="500.0" styleClass="h3-thin" text="Sem foco adicional" wrapText="true">
                                                 <font>
                                                    <Font size="10.0" />
                                                 </font>

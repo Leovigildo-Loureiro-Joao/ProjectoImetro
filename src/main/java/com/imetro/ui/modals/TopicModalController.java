@@ -50,9 +50,9 @@ public class TopicModalController extends ModalController {
     @Override
     public void init() {
         if (FluxoModalContext.isTesteAdaptativo()) {
-            tituloLabel.setText("Escolher subtopicos do teste");
-            iniciarButton.setText("Iniciar teste com os selecionados");
-            usarTodosButton.setText("Usar todos os subtopicos do teste");
+            tituloLabel.setText("Escolher foco do teste");
+            iniciarButton.setText("Iniciar com os selecionados");
+            usarTodosButton.setText("Usar todo o foco do teste");
         }
         try {
             montarTopicos();
@@ -68,7 +68,7 @@ public class TopicModalController extends ModalController {
     private void InteligentDiagnostic(ActionEvent event) {
         Map<String, List<String>> selecionados = coletarSubtopicosSelecionados(false);
         if (selecionados.isEmpty()) {
-            contadorLabel.setText("Selecione pelo menos um subtopico para continuar.");
+            contadorLabel.setText("Selecione pelo menos um foco para continuar.");
             return;
         }
 
@@ -161,8 +161,8 @@ public class TopicModalController extends ModalController {
             ? TesteAdaptativoCoordinator.buildResumoSelecao()
             : DiagnosticoCoordinator.buildResumoSelecao();
 
-        resumoLabel.setText("Topicos: " + resumo);
-        contadorLabel.setText(totalSelecionado + " de " + totalDisponivel + " subtopicos selecionados");
+
+        contadorLabel.setText(totalSelecionado + " de " + totalDisponivel + " focos selecionados");
         iniciarButton.setDisable(totalSelecionado == 0);
     }
 

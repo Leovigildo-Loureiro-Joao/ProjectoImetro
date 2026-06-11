@@ -65,6 +65,44 @@ public final class UserRepository extends JdbcBasicSqlRepository {
         }
     }
 
+
+    public boolean insertFocos(String focos,UUID user) throws SQLException {
+        if ((focos == null&&user == null) || !focos.trim().isEmpty()) {
+            return false;
+        }
+
+        String sql = """
+            update users set foco = ? where id = ?
+            """;
+
+        try (Connection conn = openRequiredConnection()) {
+            boolean previousAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try {
+                try (var stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, focos);
+                    stmt.setObject(2, user);
+
+                    try (var rs = stmt.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(previousAutoCommit);
+            }
+        }
+    }
+
+
+
     public UUID getIdByEmail(String email) {
         String sql = "SELECT id FROM users WHERE email = ?";
         try (var conn = openRequiredConnection();

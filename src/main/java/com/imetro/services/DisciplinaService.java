@@ -1,6 +1,7 @@
 package com.imetro.services;
 
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,22 +26,49 @@ public class DisciplinaService {
     private static final DisciplinaRepository disciplinaRepository=new DisciplinaRepository();
     private static final ProgressoALunoDisciplinaRepository progressoRepository=new ProgressoALunoDisciplinaRepository();
     private static final Set<String> DISCIPLINAS_SUPORTADAS = Set.of("matematica", "fisica");
+    private static final Map<String, Integer> ORDEM_DISCIPLINAS_SUPORTADAS = Map.of(
+        "matematica", 0,
+        "fisica", 1
+    );
+    private static final List<DisciplinaSeed> DISCIPLINAS_PADRAO = List.of(
+        new DisciplinaSeed(
+            "Matemática",
+            1.5d,
+            "INICIANTE",
+            "Desenvolver raciocínio lógico-matemático e capacidade de resolução de problemas"
+        ),
+        new DisciplinaSeed(
+            "Física",
+            1.2d,
+            "INICIANTE",
+            "Desenvolver raciocínio científico e aplicação de conceitos físicos"
+        )
+    );
 
     public static ArrayList<DisciplinaDto> discCategoria(){
-        ArrayList<DisciplinaDto> disc=new ArrayList<>();
-
-        try {
-            for (Object elObject : disciplinaRepository.findAll()) {
-                if (elObject instanceof LinkedHashMap) {
-                    disc.add(ParseDto(elObject));
-                }
-            }
-        } catch (Exception e) {
-             System.err.println("Erro ao buscar disciplinas: " + e.getMessage());
-        };
-        return disc.stream()
-            .filter(disciplina -> isDisciplinaSuportada(disciplina.nome()))
+        ArrayList<DisciplinaDto> disciplinas = carregarDisciplinasPersistidas();
+        ArrayList<DisciplinaDto> suportadas = disciplinas.stream()
+            .filter(disciplina -> disciplina != null && isDisciplinaSuportada(disciplina.nome()))
             .collect(Collectors.toCollection(ArrayList::new));
+
+        if (suportadas.isEmpty()) {
+            garantirDisciplinasPadrao();
+            disciplinas = carregarDisciplinasPersistidas();
+            suportadas = disciplinas.stream()
+                .filter(disciplina -> disciplina != null && isDisciplinaSuportada(disciplina.nome()))
+                .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        suportadas.sort(Comparator
+            .comparingInt((DisciplinaDto disciplina) ->
+                ORDEM_DISCIPLINAS_SUPORTADAS.getOrDefault(
+                    TextoUtil.normalizarMinusculo(disciplina.nome()),
+                    Integer.MAX_VALUE
+                )
+            )
+            .thenComparing(DisciplinaDto::nome, String.CASE_INSENSITIVE_ORDER));
+
+        return suportadas;
     }
 
     public static String findByNomeIdSearch(UUID id){
@@ -75,6 +103,33 @@ public class DisciplinaService {
         String objectivo = (String) map.get("objectivo");
         NivelDisciplina nivelDisciplina=NivelDisciplina.fromDescricao(nivelStr);
         return new DisciplinaDto(id,nome,peso,nivelDisciplina,objectivo);
+    }
+
+    private static ArrayList<DisciplinaDto> carregarDisciplinasPersistidas() {
+        ArrayList<DisciplinaDto> disc = new ArrayList<>();
+
+        try {
+            for (Object elObject : disciplinaRepository.findAll()) {
+                if (elObject instanceof LinkedHashMap) {
+                    disc.add(ParseDto(elObject));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao buscar disciplinas: " + e.getMessage());
+        }
+
+        return disc;
+    }
+
+    private static void garantirDisciplinasPadrao() {
+        for (DisciplinaSeed seed : DISCIPLINAS_PADRAO) {
+            disciplinaRepository.ensureExists(
+                seed.nome(),
+                seed.peso(),
+                seed.nivel(),
+                seed.objectivo()
+            );
+        }
     }
 
     public static void associarDisciplinaCandidato(UUID disciplinaId) throws SQLException {
@@ -174,6 +229,9 @@ public class DisciplinaService {
 
         UUID candidatoId = Authentication.getCurrentUserId();
         return progressoRepository.getDto(candidatoId, disciplinaNNome);
+    }
+
+    private record DisciplinaSeed(String nome, double peso, String nivel, String objectivo) {
     }
 
 

@@ -208,13 +208,13 @@ public class DiagnosticoListController implements Initializable, DisposableContr
     }
 
     private VBox criarEstadoVazio(boolean processamentoLivros) {
-        Label titulo = new Label("Nenhuma disciplina com questoes reais disponivel.");
+        Label titulo = new Label("Nenhuma disciplina com perguntas reais disponivel neste escopo.");
         titulo.getStyleClass().add("h1-thin");
 
         Label descricao = new Label(
             processamentoLivros
-                ? "Os livros continuam a ser processados em segundo plano. Podes navegar noutras abas e acompanhar a barra de progresso no topo enquanto a tabela `perguntas` e preenchida."
-                : "Ainda nao surgiram perguntas reais na tabela `perguntas`. Confirma os PDFs em `uploads/disciplinas/<uuid>`, a chave do Gemini e se a disciplina e Matematica ou Fisica para o processamento automatico."
+                ? "Os teus materiais continuam a ser preparados em segundo plano. Podes navegar noutras abas e acompanhar a barra de progresso no topo."
+                : "Ainda nao ha perguntas reais suficientes para os topicos selecionados. Confirma se o onboarding ja definiu o foco correto."
         );
         descricao.getStyleClass().add("muted");
         descricao.setWrapText(true);

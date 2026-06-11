@@ -6,12 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
+import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.persistence.repository.MedalhaRepository;
 import com.imetro.persistence.repository.UserRepository;
+import com.imetro.services.DisciplinaService;
 import com.imetro.ui.components.perfil.MedalCard;
+import com.imetro.ui.OnboardingRouter;
 import com.imetro.ui.modals.AvatarPickerModalController;
 import com.imetro.util.Authentication;
 import com.imetro.util.AvatarSupport;
@@ -31,6 +35,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
 public class PerfilController implements Initializable {
@@ -87,6 +92,15 @@ public class PerfilController implements Initializable {
     @FXML
     private FlowPane medalhasFlow;
 
+    @FXML
+    private VBox studyTopicsBox;
+
+    @FXML
+    private Label studyTopicsSummaryLabel;
+
+    @FXML
+    private JFXButton manageTopicsButton;
+
     private final UserRepository userRepository = new UserRepository();
     private final MedalhaRepository medalhaRepository = new MedalhaRepository();
 
@@ -103,7 +117,11 @@ public class PerfilController implements Initializable {
 
         populateProfileData();
         renderMedals();
+        renderStudyTopics();
         setEditingEnabled(false);
+        if (manageTopicsButton != null) {
+            manageTopicsButton.setDisable(!RuntimeConfig.isDbEnabled());
+        }
         setFeedbackMessage(
             RuntimeConfig.isDbEnabled()
                 ? "O teu mural de medalhas ja esta pronto para receber conquistas reais."
@@ -182,6 +200,22 @@ public class PerfilController implements Initializable {
             e.printStackTrace();
             setFeedbackMessage("Nao foi possivel abrir a selecao de avatar agora.", "profile-feedback-error");
         }
+    }
+
+    @FXML
+    private void onManageStudyTopics() {
+        if (!RuntimeConfig.isDbEnabled()) {
+            setFeedbackMessage("Ativa a BD para alterar ou adicionar topicos de estudo.", "profile-feedback-info");
+            return;
+        }
+
+        StackPane contentHost = resolveContentHost();
+        if (contentHost == null) {
+            setFeedbackMessage("Nao foi possivel abrir a gestao de topicos agora.", "profile-feedback-error");
+            return;
+        }
+
+        OnboardingRouter.goToCandidateDisciplinas(contentHost);
     }
 
     private boolean persistProfileChanges(String newName, String newPassword) {
@@ -303,6 +337,42 @@ public class PerfilController implements Initializable {
         }
     }
 
+    private void renderStudyTopics() {
+        List<ProgressoAlunoDisciplinaDto> progressos = DisciplinaService.getProgressoDisciplinasCandidatoSafe();
+        if (studyTopicsBox != null) {
+            studyTopicsBox.getChildren().clear();
+
+            if (progressos.isEmpty()) {
+                studyTopicsBox.getChildren().add(criarLinhaVazia(
+                    "Ainda nao ha topicos de estudo guardados.",
+                    "Abre a aba Alterar topicos para definir o teu escopo."
+                ));
+            } else {
+                for (ProgressoAlunoDisciplinaDto progresso : progressos) {
+                    studyTopicsBox.getChildren().add(criarLinhaTopico(progresso));
+                }
+            }
+        }
+
+        if (studyTopicsSummaryLabel != null) {
+            int totalDisciplinas = progressos.size();
+            int totalSubtopicos = progressos.stream()
+                .mapToInt(item -> item == null ? 0 : item.focoSubtopicosLista().size())
+                .sum();
+
+            if (totalDisciplinas == 0) {
+                studyTopicsSummaryLabel.setText(
+                    "O teste vai respeitar sempre o escopo escolhido. Sem escopo ainda, o sistema avisa em vez de sair do tema."
+                );
+            } else {
+                studyTopicsSummaryLabel.setText(
+                    totalSubtopicos + " topico(s) em " + totalDisciplinas + " disciplina(s) ja estao a guiar o teste."
+                        + " Se nao houver perguntas num topico, vais ver a mensagem \"Sem perguntas ainda neste topico\"."
+                );
+            }
+        }
+    }
+
     private List<MedalSupport.MedalViewModel> buildMedalViewModels() {
         Map<String, MedalSupport.MedalAward> awardsByCode = new HashMap<>();
         Map<MedalSupport.MedalSkill, Integer> previewProgress = RuntimeConfig.isDbEnabled()
@@ -381,6 +451,42 @@ public class PerfilController implements Initializable {
         }
     }
 
+    private VBox criarLinhaTopico(ProgressoAlunoDisciplinaDto progresso) {
+        VBox card = new VBox(6);
+        card.getStyleClass().add("sub-card");
+
+        Label titulo = new Label(firstNonBlank(progresso.disciplina(), "Disciplina"));
+        titulo.getStyleClass().add("h3-thin");
+
+        List<String> focos = progresso.focoSubtopicosLista();
+        String resumoFocos = focos.isEmpty()
+            ? "Sem topicos escolhidos ainda."
+            : focos.stream().limit(4).collect(Collectors.joining(", "))
+                + (focos.size() > 4 ? ", ..." : "");
+
+        Label detalhe = new Label(resumoFocos);
+        detalhe.setWrapText(true);
+        detalhe.getStyleClass().add("muted");
+
+        card.getChildren().addAll(titulo, detalhe);
+        return card;
+    }
+
+    private VBox criarLinhaVazia(String titulo, String detalhe) {
+        VBox card = new VBox(6);
+        card.getStyleClass().add("sub-card");
+
+        Label tituloLabel = new Label(titulo);
+        tituloLabel.getStyleClass().add("h3-thin");
+
+        Label detalheLabel = new Label(detalhe);
+        detalheLabel.setWrapText(true);
+        detalheLabel.getStyleClass().add("muted");
+
+        card.getChildren().addAll(tituloLabel, detalheLabel);
+        return card;
+    }
+
     private void applyAvatar(String avatarRef, String nome, String email) {
         Image image = AvatarSupport.loadAvatarImage(avatarRef);
         boolean hasImage = image != null;
@@ -451,6 +557,29 @@ public class PerfilController implements Initializable {
         if (controller instanceof CandidatoLayoutController layoutController) {
             layoutController.refreshTopBarProfile();
         }
+    }
+
+    private StackPane resolveContentHost() {
+        if (modalPai == null || modalPai.getParent() == null) {
+            return null;
+        }
+
+        var rootNode = modalPai.getParent();
+        if (rootNode.getParent() instanceof StackPane contentHost) {
+            return contentHost;
+        }
+
+        return null;
+    }
+
+    private String firstNonBlank(String first, String second) {
+        if (first != null && !first.isBlank()) {
+            return first.trim();
+        }
+        if (second != null && !second.isBlank()) {
+            return second.trim();
+        }
+        return "";
     }
 
     private UUID resolveCurrentUserId() {

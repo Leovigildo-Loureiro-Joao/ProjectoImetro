@@ -156,7 +156,12 @@ public record ProgressoAlunoDisciplinaDto(
             return List.of();
         }
 
-        return Arrays.stream(focoSubtopicos.split("[\\n,;]+"))
+        String texto = focoSubtopicos.trim();
+        String separador = texto.contains("\n") || texto.contains("\r")
+            ? "\\R+"
+            : "[,;]+";
+
+        return Arrays.stream(texto.split(separador))
             .map(String::trim)
             .filter(item -> !item.isBlank())
             .distinct()

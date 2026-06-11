@@ -18,6 +18,7 @@ package com.imetro.config;
 public final class RuntimeConfig {
 
     private static final boolean DB_ENABLED = computeDbEnabled();
+    private static final boolean BlockedIA = computeBlockedIA();
 
     private RuntimeConfig() {
     }
@@ -25,6 +26,11 @@ public final class RuntimeConfig {
     public static boolean isDbEnabled() {
         return DB_ENABLED;
     }
+
+    public static boolean isBlockedIA() {
+        return BlockedIA;
+    }
+
 
     private static boolean computeDbEnabled() {
         // Explicit config wins.
@@ -35,5 +41,14 @@ public final class RuntimeConfig {
         // Alias switch (requested): TESTE=true enables DB; false => navigation-only.
         return Env.getBoolean("TESTE", false);
     }
-}
 
+    private static boolean computeBlockedIA() {
+        // Explicit config wins.
+        String explicit = Env.get("BlockedIA", null);
+        if (explicit != null) {
+            return Env.getBoolean("BlockedIA", false);
+        }
+        // Alias switch (requested): TESTE=true enables DB; false => navigation-only.
+        return Env.getBoolean("TESTE", false);
+    }
+}

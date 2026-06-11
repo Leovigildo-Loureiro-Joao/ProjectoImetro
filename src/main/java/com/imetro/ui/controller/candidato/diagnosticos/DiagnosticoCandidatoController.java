@@ -445,7 +445,6 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     private String[] buildMensagensLoading() {
         DiagnosticoCoordinator.DiagnosticoConfig config = DiagnosticoCoordinator.getConfiguracaoAtual();
         String topicos = DiagnosticoCoordinator.buildResumoSelecao();
-        String subtopicos = buildResumoSubtopicos();
 
         String configuracao = config == null
             ? "Aplicando o diagnostico padrao."
@@ -453,7 +452,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
 
         return new String[] {
             "Analisando os topicos selecionados: " + topicos,
-            "Preparando questoes para " + subtopicos,
+            "Preparando questoes para os topicos escolhidos: " + topicos,
             configuracao,
             "Quase la..."
         };
@@ -468,7 +467,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             .collect(Collectors.toList());
 
         if (itens.isEmpty()) {
-            return "todos os subtopicos";
+            return "todos os topicos";
         }
 
         return String.join(", ", itens);

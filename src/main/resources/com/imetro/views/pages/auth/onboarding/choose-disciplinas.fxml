@@ -14,8 +14,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<StackPane fx:id="telaChooseDisciplinas" stylesheets="@../../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/21.0.11" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.imetro.ui.controller.auth.ChooseDisciplinasOnboardingController">
+<StackPane fx:id="telaChooseDisciplinas" stylesheets="@../../../../../../styles/auth-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.auth.ChooseDisciplinasOnboardingController">
     <children>
         <HBox>
             <children>
@@ -27,35 +26,34 @@
 
                         <HBox styleClass="auth-card">
                             <children>
-                                <VBox spacing="14" styleClass="cardleft" minWidth="400.0">
+                                <VBox minWidth="400.0" spacing="14" styleClass="cardleft">
                                     <padding>
-                                        <Insets bottom="20" left="20" right="20" top="26"/>
+                                        <Insets bottom="20" left="20" right="20" top="26" />
                                     </padding>
 
-                                    <Label text="Definir focos de estudo" styleClass="h1"/>
-                                    <Label text="Seleciona as disciplinas e escreve os subtopicos prioritarios que queres trabalhar para a bolsa." styleClass="muted" wrapText="true"/>
+                                    <Label styleClass="h1" text="Definir focos de estudo" />
+                                    <Label styleClass="muted" text="Seleciona apenas os topicos que queres trabalhar para a bolsa." wrapText="true" />
 
-                                    <ScrollPane fitToWidth="true" prefViewportHeight="280" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
-                                                style="-fx-background-color: transparent; -fx-background: transparent;">
+                                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefViewportHeight="280" style="-fx-background-color: transparent; -fx-background: transparent;" vbarPolicy="AS_NEEDED">
                                         <content>
                                             <VBox fx:id="disciplinasBox" spacing="6" />
                                         </content>
                                     </ScrollPane>
 
-                                    <Label fx:id="statusLabel" text="" styleClass="muted" wrapText="true"/>
+                                    <Label fx:id="statusLabel" styleClass="muted" text="" wrapText="true" />
 
-                                    <JFXButton onAction="#onContinue" text="Entrar no sistema" styleClass="btn-primary" prefHeight="40"/>
+                                    <JFXButton onAction="#onContinue" prefHeight="40" styleClass="btn-primary" text="Entrar no sistema" />
                                 </VBox>
 
-                                <StackPane maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back">
+                                <StackPane maxWidth="512.0" minHeight="470.0" minWidth="454.0" prefHeight="478.0" prefWidth="454.0" styleClass="auth-back">
                                     <children>
-                                        <ImageView fitHeight="470.0" fitWidth="512.0">
+                                        <ImageView fitHeight="470.0" fitWidth="449.0">
                                             <image>
                                                 <Image url="@../../../../assets/imgs/choose.png" />
                                             </image>
                                         </ImageView>
-                                        <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="512.0" prefHeight="470.0" prefWidth="512.0" styleClass="auth-back-overlay" />
-                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Escolhe as disciplinas e define os subtopicos que vao contar para a tua bolsa." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
+                                        <Region maxHeight="470.0" maxWidth="512.0" minHeight="470.0" minWidth="371.0" prefHeight="470.0" prefWidth="371.0" styleClass="auth-back-overlay" />
+                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="auth-back-text" text="Escolhe os topicos que vao contar para a tua bolsa. Nao precisas marcar a disciplina inteira." textAlignment="CENTER" translateY="150.0" wrappingWidth="420.0">
                                             <font>
                                                 <Font size="18.0" />
                                             </font>

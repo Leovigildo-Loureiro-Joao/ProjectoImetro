@@ -103,7 +103,7 @@ public class AddLivroController implements Initializable {
         livrosTable.setItems(livros);
         selectedFilesField.setText("Nenhum PDF selecionado");
         selectionSummaryLabel.setText("Seleciona uma disciplina e escolhe um ou mais livros em PDF.");
-        launchHintLabel.setText("Ao lancar, o sistema recalcula os topicos e atualiza a tabela perguntas.");
+        launchHintLabel.setText("Ao atualizar, o sistema recalcula os topicos e atualiza a biblioteca.");
 
         disciplinaCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
             arquivosSelecionados.clear();
@@ -125,7 +125,7 @@ public class AddLivroController implements Initializable {
 
         carregarDisciplinas();
         aplicarFeedback(
-            "Esta area aceita livros de Matematica e Fisica. Depois do envio, a geracao corre em segundo plano.",
+            "Esta area atualiza a biblioteca de Matematica e Fisica. Os PDFs ficam guardados localmente e no Supabase.",
             "info"
         );
         atualizarEstadoAcoes();
@@ -165,7 +165,7 @@ public class AddLivroController implements Initializable {
         arquivosSelecionados.addAll(unicos.values());
         atualizarSelecaoArquivos();
         aplicarFeedback(
-            arquivosSelecionados.size() + " PDF(s) preparados para " + disciplina.nome() + ". Clica em Lancar para enviar.",
+            arquivosSelecionados.size() + " PDF(s) prontos para atualizar a biblioteca de " + disciplina.nome() + ". Clica em Atualizar.",
             "info"
         );
     }
@@ -223,10 +223,10 @@ public class AddLivroController implements Initializable {
             }
 
             String prefixo = copiados > 0
-                ? copiados + " PDF(s) enviados para a biblioteca. "
+                ? copiados + " PDF(s) guardados na biblioteca e sincronizados no Supabase. "
                 : "A biblioteca atual sera relida sem enviar novos PDFs. ";
             aplicarFeedback(
-                prefixo + "O Gemini ja esta a recalcular topicos e a atualizar a tabela perguntas em segundo plano.",
+                prefixo + "A leitura dos livros e a geracao das perguntas ja estao a correr em segundo plano.",
                 "success"
             );
         } catch (Exception e) {
@@ -412,11 +412,11 @@ public class AddLivroController implements Initializable {
     private void atualizarSelecaoArquivos() {
         if (arquivosSelecionados.isEmpty()) {
             selectedFilesField.setText("Nenhum PDF selecionado");
-            selectionSummaryLabel.setText("Seleciona um ou mais PDFs. Eles entram na biblioteca ao clicar em Lancar.");
+            selectionSummaryLabel.setText("Seleciona um ou mais PDFs. Eles entram na biblioteca ao clicar em Atualizar.");
         } else if (arquivosSelecionados.size() == 1) {
             Path unico = arquivosSelecionados.getFirst();
             selectedFilesField.setText(unico.getFileName().toString());
-            selectionSummaryLabel.setText("1 PDF pronto para envio.");
+            selectionSummaryLabel.setText("1 PDF pronto para atualizar a biblioteca.");
         } else {
             selectedFilesField.setText(arquivosSelecionados.size() + " PDFs selecionados");
             selectionSummaryLabel.setText("Os PDFs serao enviados juntos para a disciplina selecionada.");
@@ -437,9 +437,9 @@ public class AddLivroController implements Initializable {
         if (running) {
             launchHintLabel.setText("Existe um processamento ativo. Podes acompanhar a barra de progresso no topo.");
         } else if (temSelecao) {
-            launchHintLabel.setText("Ao lancar, os PDFs selecionados entram na biblioteca e a geracao arranca.");
+            launchHintLabel.setText("Ao atualizar, os PDFs selecionados entram na biblioteca e a geracao arranca.");
         } else if (temBiblioteca) {
-            launchHintLabel.setText("Podes relancar a disciplina para atualizar topicos e tentar gerar novas perguntas.");
+            launchHintLabel.setText("Podes atualizar novamente a disciplina para sincronizar novos PDFs e gerar novas perguntas.");
         } else {
             launchHintLabel.setText("A biblioteca ainda esta vazia. Seleciona pelo menos um PDF para comecar.");
         }

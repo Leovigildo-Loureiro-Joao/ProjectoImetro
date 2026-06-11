@@ -1,5 +1,7 @@
 package com.imetro.persistence.repository;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,6 +42,51 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
         }
     }
 
+    public int upsertFocoDisciplina(
+        UUID candidatoId,
+        UUID disciplinaId,
+        NivelDisciplina nivelAtual,
+        double pesoAtual,
+        String focoSubtopicos
+    ) throws SQLException {
+        String sql = """
+            insert into progresso_aluno_disciplina (
+              id,
+              aluno_id,
+              disciplina_id,
+              nivel_atual,
+              nivel_anterior,
+              data_mudanca_nivel,
+              peso_atual,
+              foco_subtopicos,
+              criado_em,
+              atualizado_em
+            ) values (
+              ?, ?, ?, ?, ?, ?, ?, ?, now(), now()
+            )
+            on conflict (aluno_id, disciplina_id) do update set
+              foco_subtopicos = excluded.foco_subtopicos,
+              peso_atual = excluded.peso_atual,
+              atualizado_em = now()
+            """;
+
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            NivelDisciplina nivelSeguro = nivelAtual == null ? NivelDisciplina.INICIANTE : nivelAtual;
+            String focoSeguro = focoSubtopicos == null ? "" : focoSubtopicos.trim();
+
+            stmt.setObject(1, UUID.randomUUID());
+            stmt.setObject(2, candidatoId);
+            stmt.setObject(3, disciplinaId);
+            stmt.setString(4, nivelSeguro.name());
+            stmt.setString(5, nivelSeguro.name());
+            stmt.setObject(6, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setDouble(7, Math.max(0.1d, pesoAtual));
+            stmt.setString(8, focoSeguro);
+            return stmt.executeUpdate();
+        }
+    }
+
     public int deleteByAlunoId(UUID candidatoId) throws SQLException {
         if (candidatoId == null) {
             return 0;
@@ -53,6 +100,24 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
         try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, candidatoId);
+            return stmt.executeUpdate();
+        }
+    }
+
+    public int deleteByAlunoIdAndDisciplinaId(UUID candidatoId, UUID disciplinaId) throws SQLException {
+        if (candidatoId == null || disciplinaId == null) {
+            return 0;
+        }
+
+        String sql = """
+            delete from progresso_aluno_disciplina
+            where aluno_id = ? and disciplina_id = ?
+            """;
+
+        try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setObject(2, disciplinaId);
             return stmt.executeUpdate();
         }
     }
@@ -129,6 +194,7 @@ public class ProgressoALunoDisciplinaRepository extends JdbcBasicSqlRepository{
         }
         return null;
     }
+
 
 
     public  ProgressoAlunoDisciplinaDto getDto(UUID candidatoId, String disciplinaNome) throws SQLException {

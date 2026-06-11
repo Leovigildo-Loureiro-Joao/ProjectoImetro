@@ -2,6 +2,7 @@ package com.imetro.services;
 
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
+import com.imetro.domain.enums.TopicoExame;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,18 +24,26 @@ public class DisciplinaUploadBootstrapService {
     private static final String DEFAULT_OUTPUT_FILE = "topicos-extraidos.json";
     private static final String PROCESSED_STATE_FILE = ".livros-processados.snapshot";
     private final GeminiService geminiService;
+    private final BibliotecaLivroService bibliotecaLivroService;
     private final Path uploadRoot;
 
     public DisciplinaUploadBootstrapService() {
-        this(new DisciplinaService(), new GeminiService(), Paths.get("uploads", "disciplinas"));
+        this(
+            new DisciplinaService(),
+            new GeminiService(),
+            new BibliotecaLivroService(),
+            Paths.get("uploads", "disciplinas")
+        );
     }
 
     DisciplinaUploadBootstrapService(
         DisciplinaService disciplinaService,
         GeminiService geminiService,
+        BibliotecaLivroService bibliotecaLivroService,
         Path uploadRoot
     ) {
         this.geminiService = geminiService;
+        this.bibliotecaLivroService = bibliotecaLivroService;
         this.uploadRoot = uploadRoot.toAbsolutePath().normalize();
     }
 
@@ -43,8 +52,8 @@ public class DisciplinaUploadBootstrapService {
     }
 
     public List<DisciplinaUploadFolder> prepararPastasUploads() throws IOException {
-        List<DisciplinaDto> disciplinas = carregarDisciplinas();
         Files.createDirectories(uploadRoot);
+        List<DisciplinaDto> disciplinas = carregarDisciplinas();
 
         ArrayList<DisciplinaUploadFolder> folders = new ArrayList<>();
         for (DisciplinaDto disciplina : disciplinas) {
@@ -110,12 +119,15 @@ public class DisciplinaUploadBootstrapService {
             );
         }
 
+        TopicoExame.Disciplina disciplinaEnum = TopicoExame.resolverDisciplina(disciplina.nome()).orElse(null);
+        String instrucoesCanonicas = TopicoExame.instrucoesModoInteligente(disciplinaEnum);
         String jsonTopicos = geminiService.extrairTopicosJson(
             pdfs,
             new ExtracaoTopicosRequest(
                 disciplina.nome(),
                 "pt-AO",
                 "Organiza os topicos com foco no conteudo programatico da disciplina " + disciplina.nome() + "."
+                    + (instrucoesCanonicas.isBlank() ? "" : "\n" + instrucoesCanonicas)
             )
         );
 
@@ -135,7 +147,7 @@ public class DisciplinaUploadBootstrapService {
             arquivoTopicos,
             pdfs.size(),
             BootstrapStatus.PROCESSADO,
-            "Topicos extraidos com sucesso."
+            "Conteudo preparado com sucesso."
         );
     }
 
@@ -227,6 +239,7 @@ public class DisciplinaUploadBootstrapService {
             throw new IllegalArgumentException("Nenhum PDF valido foi selecionado.");
         }
 
+        bibliotecaLivroService.sincronizarArquivos(disciplina.id(), copiados);
         return List.copyOf(copiados);
     }
 

@@ -555,8 +555,13 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             Platform.runLater(() -> {
                 botoesDisciplinasBox.getChildren().clear();
                 botoesDisciplinasBox.getChildren().add(titulo);
+                boolean encontrouTopicos = false;
                 for (String disciplina :  disciplinas ) {
                     List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
+                    if (topicos == null || topicos.isEmpty()) {
+                        continue;
+                    }
+                    encontrouTopicos = true;
                     String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
                     TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
                         chaveResumo,
@@ -569,6 +574,13 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                         () -> abrirConfiguracaoInteligente(disciplina, topicos)
                     );
                     botoesDisciplinasBox.getChildren().add(teste);
+                }
+
+                if (!encontrouTopicos) {
+                    Label vazio = new Label("Nenhum foco selecionado no onboarding para os testes.");
+                    vazio.getStyleClass().add("h3-thin");
+                    vazio.setWrapText(true);
+                    botoesDisciplinasBox.getChildren().add(vazio);
                 }
             });
         });
@@ -611,7 +623,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void abrirConfiguracaoInteligente(String disciplina, List<Topico> topicos) {
         if (topicos == null || topicos.isEmpty()) {
-            mostrarAlerta("Atencao", "Nao encontramos topicos para iniciar o teste dessa disciplina.");
+            mostrarAlerta("Atencao", mensagemSemPerguntasNoEscopo());
             return;
         }
 
@@ -628,7 +640,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             return;
         }
         if (topicos.isEmpty()) {
-            mostrarAlerta("Atencao", "Nao encontramos topicos para essa disciplina.");
+            mostrarAlerta("Atencao", mensagemSemPerguntasNoEscopo());
             return;
         }
 
@@ -672,7 +684,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             nivelAtualAdaptativo.nivel()
         );
         if (focoQuestoes.isEmpty()) {
-            mostrarAlerta("Atencao", "Nao encontramos questoes para esse foco. Tente outro recorte.");
+            mostrarAlerta("Atencao", mensagemSemPerguntasNoEscopo());
             return;
         }
 
@@ -738,7 +750,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         String[] mensagens = {
             "Organizando o foco em " + String.join(", ", topicosSelecionados),
-            "Separando questoes para " + buildResumoSubtopicos(),
+            "Separando apenas perguntas dentro do escopo escolhido: " + buildResumoTopicos(),
             configuracao,
             "Teste adaptativo pronto!"
         };
@@ -762,11 +774,16 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         loadingTimeline.play();
     }
 
-    private String buildResumoSubtopicos() {
-        if (subtopicosSelecionados.isEmpty()) {
-            return "todos os subtopicos";
+    private String buildResumoTopicos() {
+        if (topicosSelecionados.isEmpty()) {
+            return "todos os topicos";
         }
-        return subtopicosSelecionados.stream().limit(4).collect(Collectors.joining(", "));
+        return topicosSelecionados.stream().limit(4).collect(Collectors.joining(", "));
+    }
+
+    private String mensagemSemPerguntasNoEscopo() {
+        return "Sem perguntas ainda neste foco. O sistema respeita apenas os topicos escolhidos. "
+            + "Abre o perfil para alterar ou adicionar novos topicos de estudo.";
     }
 
     private void finalizarLoading() {
@@ -1305,7 +1322,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         } else if (acertou) {
             feedbackIcon.setText("OK");
             feedbackImg.setImage(new Image(App.class.getResourceAsStream("/com/imetro/assets/imgs/corret.png")));
-            feedbackMessage.setText("Correta! O foco continua nos mesmos subtopicos.");
+            feedbackMessage.setText("Correta! O foco continua nos mesmos topicos.");
             feedbackContainer.setStyle("-fx-background-color: #ecfdf5; -fx-border-color: #10b981;");
         } else if (foiMuitoLento) {
             feedbackIcon.setText("!");
@@ -1541,16 +1558,16 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private String getRecomendacao(double porcentagem) {
-        String foco = subtopicosSelecionados.isEmpty()
-            ? "os subtopicos escolhidos"
-            : subtopicosSelecionados.stream().limit(3).collect(Collectors.joining(", "));
+        String foco = topicosSelecionados.isEmpty()
+            ? "os topicos escolhidos"
+            : topicosSelecionados.stream().limit(3).collect(Collectors.joining(", "));
 
         if (porcentagem >= 80) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (80%).
             return "Parabens! Voce esta pronto para desafios mais avancados em " + foco + ".";
         } else if (porcentagem >= 60) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (60%).
             return "Bom trabalho! Continue praticando " + foco + " para subir de nivel.";
         } else if (porcentagem >= 40) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (40%).
-            return "Vamos melhorar! Foque nos subtopicos " + foco + ".";
+            return "Vamos melhorar! Foque nos topicos " + foco + ".";
         } else {
             return "Vale revisar os fundamentos de " + foco + " antes da proxima tentativa.";
         }
@@ -1573,23 +1590,23 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         if (QuestaoUtil.normalizar(disciplinaSelecionada).contains("fisica")) {
             return "Cinemática";
         }
-        return primeiroSubtopicoSelecionado("Conteúdo");
+        return primeiroTopicoSelecionado("Conteúdo");
     }
 
     private String resolverPontoForteTeste() {
         if (QuestaoUtil.normalizar(disciplinaSelecionada).contains("fisica")) {
             return "Movimento Uniforme";
         }
-        return primeiroSubtopicoSelecionado("Base consolidada");
+        return primeiroTopicoSelecionado("Base consolidada");
     }
 
     private String resolverProximoDesafioTeste() {
         if (QuestaoUtil.normalizar(disciplinaSelecionada).contains("fisica")) {
             return "Leis de Newton";
         }
-        String proximo = subtopicosSelecionados == null
+        String proximo = topicosSelecionados == null
             ? null
-            : subtopicosSelecionados.stream()
+            : topicosSelecionados.stream()
                 .filter(valor -> valor != null && !valor.isBlank())
                 .skip(1)
                 .findFirst()
@@ -1597,11 +1614,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         return proximo == null ? "Próxima etapa" : proximo;
     }
 
-    private String primeiroSubtopicoSelecionado(String padrao) {
-        if (subtopicosSelecionados != null) {
-            for (String subtopico : subtopicosSelecionados) {
-                if (subtopico != null && !subtopico.isBlank()) {
-                    return subtopico;
+    private String primeiroTopicoSelecionado(String padrao) {
+        if (topicosSelecionados != null) {
+            for (String topico : topicosSelecionados) {
+                if (topico != null && !topico.isBlank()) {
+                    return topico;
                 }
             }
         }

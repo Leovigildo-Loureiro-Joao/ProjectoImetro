@@ -219,7 +219,7 @@ public class ResultadoAvaliacaoController implements DisposableController,Result
 
         return firstNonBlank(
             payload.getRecomendacao(),
-            "Ainda nao temos leitura guiada especifica para os subtopicos desta tentativa."
+            "Ainda nao temos leitura guiada especifica para o foco desta tentativa."
         );
     }
 

@@ -2,12 +2,13 @@ package com.imetro.services;
 
 import com.imetro.config.Env;
 import com.imetro.config.RuntimeConfig;
-import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
 import com.imetro.domain.dto.gemini.GeracaoSimuladoRequest;
 import com.imetro.domain.dto.gemini.ParsedJsonString;
-import com.imetro.domain.dto.gemini.UploadedPdf;
-import com.imetro.util.TextoUtil;
 import com.imetro.util.AppLogger;
+import com.imetro.util.TextoUtil;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -18,53 +19,46 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GeminiService {
+public class GroqService {
 
-    private static final String API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
-    private static final String DEFAULT_MODEL = "gemini-2.5-flash";
-    private static final String MIME_TYPE_PDF = "application/pdf";
-    private static final String GENERATE_CONTENT_URL_TEMPLATE = API_BASE_URL + "/models/%s:generateContent";
-    private static final String FILES_START_URL_TEMPLATE =
-        "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s";
-    private static final Duration FILE_UPLOAD_TIMEOUT = Duration.ofMinutes(5);
-    private static final Duration FILE_PROCESSING_TIMEOUT = Duration.ofMinutes(3);
-    private static final Duration FILE_PROCESSING_POLL_INTERVAL = Duration.ofSeconds(2);
-    private static final Duration GENERATE_CONTENT_RETRY_BASE_DELAY = Duration.ofSeconds(2);
+    private static final String API_BASE_URL = "https://api.groq.com/openai/v1";
+    private static final URI CHAT_COMPLETIONS_URI = URI.create(API_BASE_URL + "/chat/completions");
+    private static final String DEFAULT_MODEL = "openai/gpt-oss-120b";
+    private static final String FALLBACK_MODEL = "openai/gpt-oss-20b";
+    private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(5);
+    private static final Duration RETRY_BASE_DELAY = Duration.ofSeconds(2);
+    private static final int MAX_ATTEMPTS = 3;
     public static final int DEFAULT_SIMULADO_QUESTOES = 48;
     private static final int MINIMO_QUESTOES_BASE_TOPICOS = 72;
-    private static final int GENERATE_CONTENT_MAX_ATTEMPTS = 3;
-
     private static final long MAX_DOCUMENT_BYTES = 50L * 1024L * 1024L;
-    private static final long INLINE_BYTES_LIMIT = 15L * 1024L * 1024L;
-    private static final Logger LOGGER = AppLogger.getLogger(GeminiService.class);
+    private static final int MAX_DOCUMENTO_CHARS = 90_000;
+    private static final int MAX_PROMPT_CHARS = 180_000;
+    private static final Logger LOGGER = AppLogger.getLogger(GroqService.class);
 
     private final HttpClient httpClient;
     private final String apiKey;
     private final String defaultModel;
 
-    public GeminiService() {
-
+    public GroqService() {
         this(
             HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .version(HttpClient.Version.HTTP_1_1)
                 .build(),
-            firstNonBlank(Env.get("GEMINI_API_KEY"), Env.get("GEMENI_API_KEY")),
-            firstNonBlank(Env.get("GEMINI_MODEL"), Env.get("GEMENI_MODEL"), DEFAULT_MODEL)
+            firstNonBlank(Env.get("GROQ_API_KEY")),
+            firstNonBlank(Env.get("GROQ_MODEL"), DEFAULT_MODEL)
         );
     }
 
-    GeminiService(HttpClient httpClient, String apiKey, String defaultModel) {
+    GroqService(HttpClient httpClient, String apiKey, String defaultModel) {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
         this.apiKey = apiKey == null ? null : apiKey.trim();
         this.defaultModel = firstNonBlank(defaultModel, DEFAULT_MODEL);
@@ -76,35 +70,6 @@ public class GeminiService {
 
     public String getDefaultModel() {
         return defaultModel;
-    }
-
-    public String enviarPromptComPdf(Path pdfPath, String prompt) throws IOException, InterruptedException {
-        return enviarPromptComPdfs(List.of(pdfPath), prompt);
-    }
-
-    public String enviarPromptComPdfs(List<Path> pdfPaths, String prompt) throws IOException, InterruptedException {
-        List<Path> documentos = validarDocumentos(pdfPaths);
-        String promptFinal = requireNonBlank(prompt, "prompt");
-        LOGGER.info("A enviar prompt com " + documentos.size() + " PDF(s) ao Gemini.");
-
-        List<String> documentParts = deveUsarFilesApi(documentos)
-            ? criarPartesPorUpload(documentos)
-            : criarPartesInline(documentos);
-
-        String requestBody = montarRequestGenerateContent(
-            promptFinal,
-            documentParts,
-            "text/plain",
-            null
-        );
-
-        String responseBody = postGenerateContent(requestBody);
-
-        String text = extrairTextoResposta(responseBody);
-        if (text == null || text.isBlank()) {
-            throw new IOException("Gemini respondeu sem texto util. Corpo: " + resumir(responseBody));
-        }
-        return text;
     }
 
     public String gerarSimuladoJson(Path pdfPath) throws IOException, InterruptedException {
@@ -119,11 +84,19 @@ public class GeminiService {
     public String gerarSimuladoJson(List<Path> pdfPaths, GeracaoSimuladoRequest request)
         throws IOException, InterruptedException {
         GeracaoSimuladoRequest requestFinal = request == null ? GeracaoSimuladoRequest.padrao() : request;
-        return gerarJsonEstruturado(
-            pdfPaths,
-            montarPromptSimulado(requestFinal),
-            SIMULADO_JSON_SCHEMA,
-            "Gemini nao devolveu o JSON do simulado."
+        List<DocumentoExtraido> documentos = extrairDocumentos(pdfPaths);
+        String prompt = montarPromptSimulado(requestFinal);
+        String userPrompt = construirPromptComDocumentos(prompt, documentos);
+
+        LOGGER.info(
+            "A gerar perguntas com o Groq para a disciplina " + requestFinal.disciplina()
+                + " usando " + documentos.size() + " PDF(s)."
+        );
+
+        return chamarGroq(
+            userPrompt,
+            "simulado",
+            SIMULADO_JSON_SCHEMA
         );
     }
 
@@ -148,54 +121,97 @@ public class GeminiService {
             : baseRequest;
         String contexto = requireNonBlank(topicosJson, "topicosJson");
         LOGGER.info(
-            "A gerar base alargada de questoes a partir do JSON de topicos para a disciplina "
+            "A gerar base de questoes com o Groq a partir do JSON de topicos para a disciplina "
                 + requestFinal.disciplina()
                 + " com minimo de "
                 + requestFinal.quantidadeQuestoes()
                 + " questoes."
         );
 
-        return gerarJsonEstruturadoSemDocumentos(
-            montarPromptSimuladoPorTopicos(contexto, requestFinal),
-            SIMULADO_JSON_SCHEMA,
-            "Gemini nao devolveu o JSON do simulado."
-        );
+        String prompt = montarPromptSimuladoPorTopicos(contexto, requestFinal);
+        return chamarGroq(prompt, "simulado", SIMULADO_JSON_SCHEMA);
     }
 
-    public String extrairTopicosJson(Path pdfPath) throws IOException, InterruptedException {
-        return extrairTopicosJson(List.of(pdfPath), ExtracaoTopicosRequest.padrao());
+    private List<DocumentoExtraido> extrairDocumentos(List<Path> pdfPaths) throws IOException {
+        List<Path> documentos = validarDocumentos(pdfPaths);
+        ArrayList<DocumentoExtraido> extraidos = new ArrayList<>();
+
+        for (Path documento : documentos) {
+            DocumentoExtraido extraido = extrairDocumento(documento);
+            if (extraido.texto().isBlank()) {
+                LOGGER.warning("O PDF " + extraido.nome() + " nao tem texto extraivel.");
+                continue;
+            }
+            extraidos.add(extraido);
+        }
+
+        if (extraidos.isEmpty()) {
+            throw new IOException(
+                "Nenhum PDF tem texto extraivel. Se forem digitalizacoes, faz OCR antes de usar o Groq."
+            );
+        }
+
+        return List.copyOf(extraidos);
     }
 
-    public String extrairTopicosJson(Path pdfPath, ExtracaoTopicosRequest request)
-        throws IOException, InterruptedException {
-        return extrairTopicosJson(List.of(pdfPath), request);
-    }
+    private DocumentoExtraido extrairDocumento(Path pdfPath) throws IOException {
+        Path normalizado = pdfPath.toAbsolutePath().normalize();
+        long tamanho = Files.size(normalizado);
+        if (tamanho <= 0) {
+            throw new IllegalArgumentException("O PDF esta vazio: " + normalizado);
+        }
+        if (tamanho > MAX_DOCUMENT_BYTES) {
+            throw new IllegalArgumentException("O PDF excede 50MB e nao pode ser processado: " + normalizado);
+        }
 
-    public String extrairTopicosJson(List<Path> pdfPaths, ExtracaoTopicosRequest request)
-        throws IOException, InterruptedException {
+        String nome = normalizado.getFileName() == null ? normalizado.toString() : normalizado.getFileName().toString();
+        StringBuilder texto = new StringBuilder();
+        int paginasTotais = 0;
+        int paginasComTexto = 0;
+        boolean truncado = false;
 
-        ExtracaoTopicosRequest requestFinal = request == null ? ExtracaoTopicosRequest.padrao() : request;
-        LOGGER.info(
-            "A extrair topicos com o Gemini para a disciplina " + requestFinal.disciplina()
-                + " usando " + (pdfPaths == null ? 0 : pdfPaths.size()) + " PDF(s)."
-        );
-        return gerarJsonEstruturado(
-            pdfPaths,
-            montarPromptExtracaoTopicos(requestFinal),
-            TOPICOS_JSON_SCHEMA,
-            "Gemini nao devolveu o JSON de topicos."
-        );
+        try (PDDocument document = Loader.loadPDF(normalizado.toFile())) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            paginasTotais = document.getNumberOfPages();
+
+            for (int pagina = 1; pagina <= paginasTotais; pagina++) {
+                stripper.setStartPage(pagina);
+                stripper.setEndPage(pagina);
+                String paginaTexto = stripper.getText(document);
+                if (paginaTexto != null) {
+                    paginaTexto = paginaTexto.strip();
+                }
+                if (paginaTexto == null || paginaTexto.isBlank()) {
+                    continue;
+                }
+
+                paginasComTexto++;
+                String bloco = "[Pagina " + pagina + "]\n" + paginaTexto.strip() + "\n";
+                if (texto.length() + bloco.length() > MAX_DOCUMENTO_CHARS) {
+                    int restante = MAX_DOCUMENTO_CHARS - texto.length();
+                    if (restante > 0) {
+                        texto.append(bloco, 0, Math.min(restante, bloco.length()));
+                    }
+                    truncado = true;
+                    break;
+                }
+                texto.append(bloco);
+            }
+        }
+
+        return new DocumentoExtraido(normalizado, nome, texto.toString(), paginasTotais, paginasComTexto, truncado);
     }
 
     private List<Path> validarDocumentos(List<Path> pdfPaths) throws IOException {
         if (!isConfigured()) {
-            LOGGER.warning("Tentativa de usar o Gemini sem API key configurada.");
+            LOGGER.warning("Tentativa de usar o Groq sem API key configurada.");
             throw new IllegalStateException(
-                "Gemini nao configurado. Define GEMINI_API_KEY ou GEMENI_API_KEY no ambiente."
+                "Groq nao configurado. Define GROQ_API_KEY no ambiente."
             );
         }
         if (pdfPaths == null || pdfPaths.isEmpty()) {
-            throw new IllegalArgumentException("Indica pelo menos um PDF para enviar ao Gemini.");
+            throw new IllegalArgumentException("Indica pelo menos um PDF para enviar ao Groq.");
         }
 
         ArrayList<Path> documentos = new ArrayList<>();
@@ -214,16 +230,6 @@ public class GeminiService {
                 throw new IllegalArgumentException("Apenas ficheiros PDF sao suportados: " + normalizado);
             }
 
-            long size = Files.size(normalizado);
-            if (size <= 0) {
-                throw new IllegalArgumentException("O PDF esta vazio: " + normalizado);
-            }
-            if (size > MAX_DOCUMENT_BYTES) {
-                throw new IllegalArgumentException(
-                    "O PDF excede 50MB e nao pode ser enviado ao Gemini: " + normalizado
-                );
-            }
-
             documentos.add(normalizado);
         }
 
@@ -233,225 +239,82 @@ public class GeminiService {
         return List.copyOf(documentos);
     }
 
-    private boolean deveUsarFilesApi(List<Path> documentos) throws IOException {
-        if (documentos.size() > 1) {
-            return true;
+    private String construirPromptComDocumentos(String promptBase, List<DocumentoExtraido> documentos) {
+        StringBuilder prompt = new StringBuilder(requireNonBlank(promptBase, "prompt"));
+        prompt.append("\n\nContexto extraido dos livros:\n");
+
+        boolean primeiro = true;
+        for (DocumentoExtraido documento : documentos) {
+            if (documento == null || documento.texto().isBlank()) {
+                continue;
+            }
+
+            String bloco = formatarDocumento(documento);
+            if (!primeiro) {
+                prompt.append("\n\n");
+            }
+
+            if (prompt.length() + bloco.length() > MAX_PROMPT_CHARS) {
+                int restante = MAX_PROMPT_CHARS - prompt.length();
+                if (restante > 0) {
+                    prompt.append(bloco, 0, Math.min(restante, bloco.length()));
+                }
+                prompt.append("\n[Contexto truncado por limite de tamanho.]");
+                break;
+            }
+
+            prompt.append(bloco);
+            primeiro = false;
         }
 
-        long totalBytes = 0L;
-        for (Path documento : documentos) {
-            totalBytes += Files.size(documento);
-        }
-        return totalBytes > INLINE_BYTES_LIMIT;
+        return prompt.toString();
     }
 
-    private List<String> criarPartesInline(List<Path> documentos) throws IOException {
-        ArrayList<String> partes = new ArrayList<>();
-        for (Path documento : documentos) {
-            byte[] pdfBytes = Files.readAllBytes(documento);
-            String base64 = Base64.getEncoder().encodeToString(pdfBytes);
-            partes.add(
-                "{\"inline_data\":{\"mime_type\":\"" + MIME_TYPE_PDF + "\",\"data\":\"" + base64 + "\"}}"
-            );
+    private String formatarDocumento(DocumentoExtraido documento) {
+        StringBuilder bloco = new StringBuilder();
+        bloco.append("[Livro: ").append(documento.nome()).append("]\n");
+        bloco.append("[Paginas totais: ").append(documento.paginasTotais()).append("]\n");
+        bloco.append("[Paginas com texto: ").append(documento.paginasComTexto()).append("]\n");
+        if (documento.truncado()) {
+            bloco.append("[Texto truncado: sim]\n");
         }
-        return partes;
+        bloco.append(documento.texto().strip());
+        return bloco.toString();
     }
 
-    private List<String> criarPartesPorUpload(List<Path> documentos) throws IOException, InterruptedException {
-        ArrayList<String> partes = new ArrayList<>();
-        for (Path documento : documentos) {
-            LOGGER.info("A preparar upload do PDF " + documento.getFileName() + ".");
-            UploadedPdf uploadedPdf = uploadPdf(documento);
-            partes.add(
-                "{\"file_data\":{\"mime_type\":\"" + uploadedPdf.mimeType() + "\",\"file_uri\":\""
-                    + escapeJson(uploadedPdf.uri()) + "\"}}"
-            );
-        }
-        return partes;
-    }
-
-    private UploadedPdf uploadPdf(Path pdfPath) throws IOException, InterruptedException {
-        long fileSize = Files.size(pdfPath);
-        LOGGER.info("A iniciar upload do PDF " + pdfPath.getFileName() + " (" + fileSize + " bytes).");
-        String startBody = "{\"file\":{\"display_name\":\"" + escapeJson(pdfPath.getFileName().toString()) + "\"}}";
-
-        HttpRequest startRequest = HttpRequest.newBuilder()
-            .uri(URI.create(FILES_START_URL_TEMPLATE.formatted(apiKey)))
-            .timeout(Duration.ofSeconds(60))
-            .header("Content-Type", "application/json")
-            .header("X-Goog-Upload-Protocol", "resumable")
-            .header("X-Goog-Upload-Command", "start")
-            .header("X-Goog-Upload-Header-Content-Length", Long.toString(fileSize))
-            .header("X-Goog-Upload-Header-Content-Type", MIME_TYPE_PDF)
-            .POST(HttpRequest.BodyPublishers.ofString(startBody))
-            .build();
-
-        HttpResponse<String> startResponse = httpClient.send(
-            startRequest,
-            HttpResponse.BodyHandlers.ofString()
-        );
-        ensureSuccess("iniciar upload do PDF", startResponse.statusCode(), startResponse.body());
-
-        String uploadUrl = firstHeader(startResponse, "x-goog-upload-url")
-            .orElseThrow(() -> new IOException("Gemini nao devolveu a URL do upload resumable."));
-        LOGGER.info("Upload resumable iniciado para " + pdfPath.getFileName() + ".");
-
-        HttpRequest uploadRequest = HttpRequest.newBuilder()
-            .uri(URI.create(uploadUrl))
-            .timeout(FILE_UPLOAD_TIMEOUT)
-            .header("Content-Type", MIME_TYPE_PDF)
-            .header("X-Goog-Upload-Offset", "0")
-            .header("X-Goog-Upload-Command", "upload, finalize")
-            .POST(HttpRequest.BodyPublishers.ofFile(pdfPath))
-            .build();
-
-        HttpResponse<String> uploadResponse = httpClient.send(
-            uploadRequest,
-            HttpResponse.BodyHandlers.ofString()
-        );
-        ensureSuccess("finalizar upload do PDF", uploadResponse.statusCode(), uploadResponse.body());
-        LOGGER.info("Upload finalizado para " + pdfPath.getFileName() + ".");
-
-        String fileUri = extractFirstJsonStringValue(uploadResponse.body(), "uri");
-        if (fileUri == null || fileUri.isBlank()) {
-            throw new IOException("Gemini nao devolveu file_uri para o PDF. Corpo: " + resumir(uploadResponse.body()));
-        }
-
-        String fileName = extractFirstJsonStringValue(uploadResponse.body(), "name");
-        String fileState = extractFirstJsonStringValue(uploadResponse.body(), "state");
-        String mimeType = firstNonBlank(
-            extractFirstJsonStringValue(uploadResponse.body(), "mimeType"),
-            MIME_TYPE_PDF
-        );
-
-        return aguardarArquivoAtivo(new UploadedPdf(fileUri, mimeType, fileName, fileState));
-    }
-
-    private String gerarJsonEstruturado(
-        List<Path> pdfPaths,
-        String prompt,
-        String jsonSchema,
-        String emptyResponseMessage
-    ) throws IOException, InterruptedException {
-        List<Path> documentos = validarDocumentos(pdfPaths);
-
-        List<String> documentParts = deveUsarFilesApi(documentos)
-            ? criarPartesPorUpload(documentos)
-            : criarPartesInline(documentos);
-
-        String requestBody = montarRequestGenerateContent(
-            prompt,
-            documentParts,
-            "application/json",
-            jsonSchema
-        );
-
-        String responseBody = postGenerateContent(requestBody);
-
-        String json = extrairTextoResposta(responseBody);
-        if (json == null || json.isBlank()) {
-            throw new IOException(emptyResponseMessage + " Corpo: " + resumir(responseBody));
-        }
-        return json;
-    }
-
-    private String gerarJsonEstruturadoSemDocumentos(
-        String prompt,
-        String jsonSchema,
-        String emptyResponseMessage
-    ) throws IOException, InterruptedException {
-        String requestBody = montarRequestGenerateContent(
-            prompt,
-            List.of(),
-            "application/json",
-            jsonSchema
-        );
-
-        String responseBody = postGenerateContent(requestBody);
-        String json = extrairTextoResposta(responseBody);
-        if (json == null || json.isBlank()) {
-            throw new IOException(emptyResponseMessage + " Corpo: " + resumir(responseBody));
-        }
-        return json;
-    }
-
-    private String montarRequestGenerateContent(
-        String prompt,
-        List<String> documentParts,
-        String responseMimeType,
-        String responseJsonSchema
-    ) {
-        StringBuilder body = new StringBuilder();
-        body.append("{\"contents\":[{\"parts\":[");
-        body.append("{\"text\":\"").append(escapeJson(prompt)).append("\"}");
-
-        for (String documentPart : documentParts) {
-            body.append(",").append(documentPart);
-        }
-        body.append("]}],\"generationConfig\":{");
-        body.append("\"temperature\":0.2,");
-        if (responseJsonSchema != null && !responseJsonSchema.isBlank()) {
-            body.append("\"responseFormat\":{");
-            body.append("\"text\":{");
-            body.append("\"mimeType\":\"").append(escapeJson(responseMimeType)).append("\",");
-            body.append("\"schema\":").append(responseJsonSchema);
-            body.append("}}");
-        } else {
-            body.append("\"responseMimeType\":\"").append(escapeJson(responseMimeType)).append("\"");
-        }
-
-        body.append("}}");
-        return body.toString();
-    }
-
-    private String postJson(URI uri, String jsonBody) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(uri)
-            .timeout(Duration.ofMinutes(5))
-            .header("Content-Type", "application/json")
-            .header("x-goog-api-key", apiKey)
-            .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-            .build();
-
-        HttpResponse<String> response = httpClient.send(
-            request,
-            HttpResponse.BodyHandlers.ofString()
-        );
-        ensureSuccess("chamar generateContent", response.statusCode(), response.body());
-        return response.body();
-    }
-
-    private String postGenerateContent(String jsonBody) throws IOException, InterruptedException {
+    private String chamarGroq(String userPrompt, String schemaName, String schemaJson)
+        throws IOException, InterruptedException {
         IOException lastError = null;
 
         for (String model : resolveModelAttempts()) {
-            for (int attempt = 1; attempt <= GENERATE_CONTENT_MAX_ATTEMPTS; attempt++) {
+            for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
                 try {
                     LOGGER.info(
-                        "A chamar generateContent no modelo " + model + " (tentativa "
-                            + attempt + "/" + GENERATE_CONTENT_MAX_ATTEMPTS + ")."
+                        "A chamar o Groq no modelo " + model + " (tentativa "
+                            + attempt + "/" + MAX_ATTEMPTS + ")."
                     );
-                    return postJson(
-                        URI.create(GENERATE_CONTENT_URL_TEMPLATE.formatted(model)),
-                        jsonBody
-                    );
+                    String requestBody = montarRequestBody(model, userPrompt, schemaName, schemaJson);
+                    String responseBody = postChatCompletion(requestBody);
+                    String content = extrairConteudoResposta(responseBody);
+                    if (content == null || content.isBlank()) {
+                        throw new IOException("Groq respondeu sem conteudo util. Corpo: " + resumir(responseBody));
+                    }
+                    return content.trim();
                 } catch (IOException e) {
                     lastError = e;
                     boolean retryable = isRetryableGenerateContentError(e);
                     boolean fallback = shouldTryModelFallback(model, e);
-                    boolean hasMoreAttempts = attempt < GENERATE_CONTENT_MAX_ATTEMPTS;
+                    boolean hasMoreAttempts = attempt < MAX_ATTEMPTS;
 
                     LOGGER.log(
                         retryable || fallback ? Level.WARNING : Level.SEVERE,
-                        "Falha ao chamar o Gemini no modelo " + model + ": " + e.getMessage(),
+                        "Falha ao chamar o Groq no modelo " + model + ": " + e.getMessage(),
                         retryable || fallback ? null : e
                     );
 
                     if (retryable && hasMoreAttempts) {
-                        long delayMillis = GENERATE_CONTENT_RETRY_BASE_DELAY.toMillis() * (1L << (attempt - 1));
-                        LOGGER.info(
-                            "Nova tentativa do Gemini em " + delayMillis + "ms para o modelo " + model + "."
-                        );
+                        long delayMillis = RETRY_BASE_DELAY.toMillis() * (1L << (attempt - 1));
+                        LOGGER.info("Nova tentativa do Groq em " + delayMillis + "ms para o modelo " + model + ".");
                         Thread.sleep(delayMillis);
                         continue;
                     }
@@ -467,58 +330,178 @@ public class GeminiService {
         if (lastError != null) {
             throw lastError;
         }
-        throw new IOException("Nao foi possivel chamar o Gemini.");
+        throw new IOException("Nao foi possivel chamar o Groq.");
     }
 
-    private void ensureSuccess(String operacao, int statusCode, String body) throws IOException {
-        if (statusCode >= 200 && statusCode < 300) {
-            return;
-        }
+    private String montarRequestBody(String model, String prompt, String schemaName, String schemaJson) {
+        StringBuilder body = new StringBuilder();
+        body.append("{");
+        body.append("\"model\":\"").append(escapeJson(model)).append("\",");
+        body.append("\"messages\":[");
+        body.append("{\"role\":\"system\",\"content\":\"")
+            .append(escapeJson(montarMensagemSistema(schemaJson != null && !schemaJson.isBlank())))
+            .append("\"},");
+        body.append("{\"role\":\"user\",\"content\":\"").append(escapeJson(prompt)).append("\"}");
+        body.append("],");
+        body.append("\"temperature\":0.2");
 
-        String apiMessage = extractFirstJsonStringValue(body, "message");
-        String detalhe = apiMessage == null || apiMessage.isBlank() ? resumir(body) : apiMessage;
-        throw new IOException("Falha ao " + operacao + " no Gemini (HTTP " + statusCode + "): " + detalhe);
-    }
-
-    private Optional<String> firstHeader(HttpResponse<?> response, String headerName) {
-        return response.headers().firstValue(headerName);
-    }
-
-    private String extrairTextoResposta(String responseBody) {
-        List<String> textos = extractJsonStringValues(responseBody, "text");
-        StringBuilder text = new StringBuilder();
-        for (String trecho : textos) {
-            if (text.length() > 0) {
-                text.append('\n');
+        if (schemaJson != null && !schemaJson.isBlank()) {
+            if (suportaStructuredOutputsEstritos(model)) {
+                body.append(",\"response_format\":{");
+                body.append("\"type\":\"json_schema\",");
+                body.append("\"json_schema\":{");
+                body.append("\"name\":\"").append(escapeJson(schemaName)).append("\",");
+                body.append("\"strict\":true,");
+                body.append("\"schema\":").append(schemaJson);
+                body.append("}}");
+            } else {
+                body.append(",\"response_format\":{\"type\":\"json_object\"}");
             }
-            text.append(trecho);
         }
-        return text.toString();
+
+        body.append("}");
+        return body.toString();
     }
 
-    private String extractFirstJsonStringValue(String json, String fieldName) {
-        List<String> values = extractJsonStringValues(json, fieldName);
-        if (values.isEmpty()) {
-            return null;
+    private String montarMensagemSistema(boolean estruturado) {
+        if (estruturado) {
+            return """
+                Responde apenas com JSON valido.
+                Segue rigorosamente o schema pedido e nao acrescentes markdown, texto extra ou blocos de codigo.
+                Se o schema exigir campos obrigatorios, preenche todos.
+                Se um valor nao se aplicar, usa valores neutros validos em vez de omitir o campo.
+                """;
         }
-        return values.getFirst();
+
+        return """
+            Responde com base apenas no contexto fornecido.
+            Nao inventes factos fora dos livros e respeita a lingua pedida pelo utilizador.
+            """;
+    }
+
+    private String postChatCompletion(String jsonBody) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(CHAT_COMPLETIONS_URI)
+            .timeout(REQUEST_TIMEOUT)
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+            .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        int statusCode = response.statusCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new IOException("Falha ao chamar o Groq (HTTP " + statusCode + "): " + resumir(response.body()));
+        }
+
+        return response.body();
+    }
+
+    private String extrairConteudoResposta(String responseBody) {
+        return extractFirstJsonStringValue(responseBody, "content");
+    }
+
+    private List<String> resolveModelAttempts() {
+        LinkedHashSet<String> models = new LinkedHashSet<>();
+        models.add(defaultModel);
+        models.add(DEFAULT_MODEL);
+        models.add(FALLBACK_MODEL);
+        return List.copyOf(models);
+    }
+
+    private boolean shouldTryModelFallback(String model, IOException error) {
+        if (model == null || error == null) {
+            return false;
+        }
+
+        String normalized = firstNonBlank(error.getMessage(), "").toLowerCase(Locale.ROOT);
+        if (normalized.contains("prompt too long")
+            || normalized.contains("context length")
+            || normalized.contains("maximum context")
+            || normalized.contains("too long")) {
+            return false;
+        }
+
+        if (normalized.contains("http 429")
+            || normalized.contains("http 500")
+            || normalized.contains("http 502")
+            || normalized.contains("http 503")
+            || normalized.contains("http 504")
+            || normalized.contains("quota")
+            || normalized.contains("rate limit")
+            || normalized.contains("temporar")
+            || normalized.contains("service unavailable")
+            || normalized.contains("timeout")
+            || normalized.contains("timed out")
+            || normalized.contains("connection")
+            || normalized.contains("network")
+            || normalized.contains("model")
+            || normalized.contains("not found")
+            || normalized.contains("unsupported")) {
+            return !fallbackModelMatches(model);
+        }
+
+        return !fallbackModelMatches(model);
+    }
+
+    private boolean fallbackModelMatches(String model) {
+        return FALLBACK_MODEL.equalsIgnoreCase(model);
+    }
+
+    private boolean isRetryableGenerateContentError(IOException error) {
+        String message = error == null ? null : error.getMessage();
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+
+        String normalized = message.toLowerCase(Locale.ROOT);
+        return normalized.contains("http 500")
+            || normalized.contains("http 502")
+            || normalized.contains("http 503")
+            || normalized.contains("http 504")
+            || normalized.contains("high demand")
+            || normalized.contains("temporar")
+            || normalized.contains("service unavailable")
+            || normalized.contains("timeout")
+            || normalized.contains("timed out")
+            || normalized.contains("connection")
+            || normalized.contains("network");
+    }
+
+    private boolean suportaStructuredOutputsEstritos(String model) {
+        if (model == null || model.isBlank()) {
+            return false;
+        }
+
+        String normalizado = model.trim().toLowerCase(Locale.ROOT);
+        return "openai/gpt-oss-120b".equals(normalizado) || "openai/gpt-oss-20b".equals(normalizado);
+    }
+
+    private GeracaoSimuladoRequest expandirRequestParaBaseDeQuestoes(GeracaoSimuladoRequest request) {
+        if (request.quantidadeQuestoes() >= MINIMO_QUESTOES_BASE_TOPICOS) {
+            return request;
+        }
+        return new GeracaoSimuladoRequest(
+            request.disciplina(),
+            request.idioma(),
+            MINIMO_QUESTOES_BASE_TOPICOS,
+            request.nivel(),
+            request.instrucoesExtras()
+        );
     }
 
     private String montarPromptSimulado(GeracaoSimuladoRequest request) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Analisa apenas os PDFs anexados.\n");
         prompt.append("Gera um simulado em ").append(request.idioma()).append(".\n");
         prompt.append("Disciplina alvo: ").append(request.disciplina()).append(".\n");
         prompt.append("Quantidade minima de questoes: ").append(request.quantidadeQuestoes()).append(".\n");
         prompt.append("Nivel desejado: ").append(request.nivel()).append(".\n");
         prompt.append("Regras obrigatorias:\n");
         prompt.append("- Usa o nome da disciplina exatamente como foi recebido, incluindo acentos.\n");
-        prompt.append("- Usa somente conteudo suportado pelos documentos.\n");
         prompt.append("- Cria exatamente 4 alternativas objetivas e apenas uma resposta correta.\n");
         prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
         prompt.append("- No campo pesosAlternativas, devolve 4 numeros entre 0.0 e 1.0 alinhados com as 4 alternativas.\n");
         prompt.append("- A alternativa correta deve ter peso 1.0 e as outras devem ter pesos menores que 1.0.\n");
-        prompt.append("- Usa pesos baixos para erros graves, pesos medios para distratores proximos e nunca deixes duas alternativas corretas.\n");
         prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Mantem a dificuldade coerente com o material.\n");
         prompt.append("- No campo exercicio, devolve um bloco LaTeX curto e renderizavel pelo JLaTeXMath, sem markdown, sem delimitadores $ e sem texto explicativo extra.\n");
@@ -563,7 +546,6 @@ public class GeminiService {
         prompt.append("- No campo respostaCorreta, devolve o texto exato da alternativa correta, nunca apenas a letra.\n");
         prompt.append("- No campo pesosAlternativas, devolve 4 numeros entre 0.0 e 1.0 alinhados com as 4 alternativas.\n");
         prompt.append("- A alternativa correta deve ter peso 1.0 e as outras devem ter pesos menores que 1.0.\n");
-        prompt.append("- Usa pesos baixos para erros graves, pesos medios para distratores proximos e nunca deixes duas alternativas corretas.\n");
         prompt.append("- Nao repitas alternativas e nao uses alternativas genericas como 'todas as anteriores'.\n");
         prompt.append("- Equilibra a distribuicao das questoes pelos topicos principais.\n");
         prompt.append("- No campo exercicio, devolve um bloco LaTeX curto e renderizavel pelo JLaTeXMath, sem markdown, sem delimitadores $ e sem texto explicativo extra.\n");
@@ -608,7 +590,7 @@ public class GeminiService {
         if (disciplinaSuportaGrafico(disciplina)) {
             prompt.append("- Nesta fase do projeto, podes gerar questoes com grafico apenas para MATEMATICA e FISICA.\n");
             prompt.append("- Quando a leitura da questao melhorar com grafico, preenche o objeto grafico com usar=true.\n");
-            prompt.append("- Quando nao precisares de grafico, devolve grafico.usar=false e grafico.tipoCurva='NENHUM'.\n");
+            prompt.append("- Quando nao precisares de grafico, devolve grafico.usar=false, grafico.tipoCurva='NENHUM' e preenche a=0, b=0, c=0, eixoX='', eixoY='', xMin=0, xMax=0 e xTickUnit=0.\n");
             prompt.append("- Usa apenas os tipos de curva RETA ou PARABOLA.\n");
             prompt.append("- Para RETA, usa a formula y = a*x + b.\n");
             prompt.append("- Para PARABOLA, usa a formula y = a*x^2 + b*x + c.\n");
@@ -619,156 +601,13 @@ public class GeminiService {
             prompt.append("- Quando grafico.usar=true, preenche obrigatoriamente: tipoCurva, a, b, c, eixoX, eixoY, xMin, xMax e xTickUnit.\n");
             prompt.append("- Usa janelas simples e estaveis como xMin/xMax pequenos e xTickUnit positivo.\n");
         } else {
-            prompt.append("- Para disciplinas fora de MATEMATICA e FISICA, devolve sempre grafico.usar=false e grafico.tipoCurva='NENHUM'.\n");
+            prompt.append("- Para disciplinas fora de MATEMATICA e FISICA, devolve sempre grafico.usar=false, grafico.tipoCurva='NENHUM' e preenche a=0, b=0, c=0, eixoX='', eixoY='', xMin=0, xMax=0 e xTickUnit=0.\n");
         }
     }
 
     private boolean disciplinaSuportaGrafico(String disciplina) {
         String normalizada = TextoUtil.normalizarMaiusculo(disciplina);
         return "MATEMATICA".equals(normalizada) || "FISICA".equals(normalizada);
-    }
-
-    private GeracaoSimuladoRequest expandirRequestParaBaseDeQuestoes(GeracaoSimuladoRequest request) {
-        if (request.quantidadeQuestoes() >= MINIMO_QUESTOES_BASE_TOPICOS) {
-            return request;
-        }
-        return new GeracaoSimuladoRequest(
-            request.disciplina(),
-            request.idioma(),
-            MINIMO_QUESTOES_BASE_TOPICOS,
-            request.nivel(),
-            request.instrucoesExtras()
-        );
-    }
-
-    private String montarPromptExtracaoTopicos(ExtracaoTopicosRequest request) {
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("Analisa apenas os PDFs anexados.\n");
-        prompt.append("Extrai somente os topicos e subtopicos realmente abordados no material.\n");
-        prompt.append("Disciplina alvo: ").append(request.disciplina()).append(".\n");
-        prompt.append("Idioma de resposta: ").append(request.idioma()).append(".\n");
-        prompt.append("Regras obrigatorias:\n");
-        prompt.append("- Mantem o nome oficial da disciplina exatamente como recebido, incluindo acentos.\n");
-        prompt.append("- Nao geres perguntas, exercicios ou respostas.\n");
-        prompt.append("- Nao inventes topicos que nao estejam sustentados pelos documentos.\n");
-        prompt.append("- Junta topicos repetidos e organiza os subtopicos sem duplicacao.\n");
-        prompt.append("- O campo fonteResumo deve resumir em poucas linhas o escopo dos livros.\n");
-        prompt.append("- O campo observacoes deve citar lacunas, ambiguidades ou mistura de areas, se existirem.\n");
-        prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
-
-        if (request.instrucoesExtras() != null && !request.instrucoesExtras().isBlank()) {
-            prompt.append("Instrucoes extra:\n");
-            prompt.append(request.instrucoesExtras().trim()).append('\n');
-        }
-
-        return prompt.toString();
-    }
-
-    private UploadedPdf aguardarArquivoAtivo(UploadedPdf uploadedPdf) throws IOException, InterruptedException {
-        if (uploadedPdf.name() == null || uploadedPdf.name().isBlank()) {
-            return uploadedPdf;
-        }
-
-        String estadoAtual = normalizeFileState(uploadedPdf.state());
-        if (!"PROCESSING".equals(estadoAtual)) {
-            LOGGER.info("Ficheiro " + uploadedPdf.name() + " pronto com estado " + estadoAtual + ".");
-            return uploadedPdf;
-        }
-
-        LOGGER.info("A aguardar que o Gemini processe o ficheiro " + uploadedPdf.name() + ".");
-        long deadlineNanos = System.nanoTime() + FILE_PROCESSING_TIMEOUT.toNanos();
-        UploadedPdf atual = uploadedPdf;
-        while (System.nanoTime() < deadlineNanos) {
-            Thread.sleep(FILE_PROCESSING_POLL_INTERVAL.toMillis());
-            atual = consultarArquivo(atual);
-            estadoAtual = normalizeFileState(atual.state());
-
-            if (estadoAtual == null || estadoAtual.isBlank() || "ACTIVE".equals(estadoAtual)) {
-                LOGGER.info("Ficheiro " + atual.name() + " ficou ativo no Gemini.");
-                return atual;
-            }
-            if ("FAILED".equals(estadoAtual) || "ERROR".equals(estadoAtual)) {
-                LOGGER.severe("O Gemini falhou ao processar o ficheiro " + atual.name() + ".");
-                throw new IOException("O Gemini falhou ao processar o PDF enviado: " + atual.name());
-            }
-        }
-
-        LOGGER.warning("O Gemini demorou demasiado tempo a processar o ficheiro " + uploadedPdf.name() + ".");
-        throw new IOException("O Gemini demorou demasiado tempo a processar o PDF enviado: " + uploadedPdf.name());
-    }
-
-    private UploadedPdf consultarArquivo(UploadedPdf uploadedPdf) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(API_BASE_URL + "/" + uploadedPdf.name()))
-            .timeout(Duration.ofSeconds(30))
-            .header("x-goog-api-key", apiKey)
-            .GET()
-            .build();
-
-        HttpResponse<String> response = httpClient.send(
-            request,
-            HttpResponse.BodyHandlers.ofString()
-        );
-        ensureSuccess("consultar o estado do ficheiro", response.statusCode(), response.body());
-
-        return new UploadedPdf(
-            firstNonBlank(extractFirstJsonStringValue(response.body(), "uri"), uploadedPdf.uri()),
-            firstNonBlank(extractFirstJsonStringValue(response.body(), "mimeType"), uploadedPdf.mimeType()),
-            firstNonBlank(extractFirstJsonStringValue(response.body(), "name"), uploadedPdf.name()),
-            firstNonBlank(extractFirstJsonStringValue(response.body(), "state"), uploadedPdf.state())
-        );
-    }
-
-    private List<String> resolveModelAttempts() {
-        LinkedHashSet<String> models = new LinkedHashSet<>();
-        models.add(defaultModel);
-        models.add(DEFAULT_MODEL);
-        return List.copyOf(models);
-    }
-
-    private boolean shouldTryModelFallback(String model, IOException error) {
-        if (DEFAULT_MODEL.equalsIgnoreCase(model)) {
-            return false;
-        }
-
-        String message = error.getMessage();
-        if (message == null) {
-            return false;
-        }
-
-        String normalized = message.toLowerCase(Locale.ROOT);
-        return normalized.contains("http 429")
-            || normalized.contains("http 503")
-            || normalized.contains("quota")
-            || normalized.contains("free tier")
-            || normalized.contains("high demand")
-            || normalized.contains("temporar")
-            || normalized.contains("model")
-            || normalized.contains("not found")
-            || normalized.contains("unsupported");
-    }
-
-    private boolean isRetryableGenerateContentError(IOException error) {
-        String message = error == null ? null : error.getMessage();
-        if (message == null || message.isBlank()) {
-            return false;
-        }
-
-        String normalized = message.toLowerCase(Locale.ROOT);
-        return normalized.contains("http 500")
-            || normalized.contains("http 502")
-            || normalized.contains("http 503")
-            || normalized.contains("http 504")
-            || normalized.contains("high demand")
-            || normalized.contains("temporar")
-            || normalized.contains("service unavailable");
-    }
-
-    private String normalizeFileState(String state) {
-        if (state == null || state.isBlank()) {
-            return null;
-        }
-        return state.trim().toUpperCase(Locale.ROOT);
     }
 
     private static String firstNonBlank(String... values) {
@@ -803,6 +642,10 @@ public class GeminiService {
     }
 
     private static String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+
         StringBuilder out = new StringBuilder(value.length() + 16);
         for (int i = 0; i < value.length(); i++) {
             char ch = value.charAt(i);
@@ -824,6 +667,11 @@ public class GeminiService {
             }
         }
         return out.toString();
+    }
+
+    private String extractFirstJsonStringValue(String json, String fieldName) {
+        List<String> values = extractJsonStringValues(json, fieldName);
+        return values.isEmpty() ? null : values.getFirst();
     }
 
     private List<String> extractJsonStringValues(String json, String fieldName) {
@@ -929,38 +777,10 @@ public class GeminiService {
         return cursor;
     }
 
-
-
-    private static final String TOPICOS_JSON_SCHEMA = """
-        {
-          "type": "object",
-          "properties": {
-            "disciplina": { "type": "string" },
-            "idioma": { "type": "string" },
-            "fonteResumo": { "type": "string" },
-            "topicos": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "nome": { "type": "string" },
-                  "subtopicos": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  }
-                },
-                "required": ["nome", "subtopicos"]
-              }
-            },
-            "observacoes": { "type": "string" }
-          },
-          "required": ["disciplina", "idioma", "fonteResumo", "topicos", "observacoes"]
-        }
-        """;
-
     private static final String SIMULADO_JSON_SCHEMA = """
         {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "titulo": { "type": "string" },
             "disciplina": { "type": "string" },
@@ -970,6 +790,7 @@ public class GeminiService {
               "type": "array",
               "items": {
                 "type": "object",
+                "additionalProperties": false,
                 "properties": {
                   "numero": { "type": "integer" },
                   "enunciado": { "type": "string" },
@@ -996,6 +817,7 @@ public class GeminiService {
                   },
                   "grafico": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                       "usar": { "type": "boolean" },
                       "tipoCurva": { "type": "string" },
@@ -1048,4 +870,14 @@ public class GeminiService {
           "required": ["titulo", "disciplina", "idioma", "fonteResumo", "questoes"]
         }
         """;
+
+    private record DocumentoExtraido(
+        Path arquivo,
+        String nome,
+        String texto,
+        int paginasTotais,
+        int paginasComTexto,
+        boolean truncado
+    ) {
+    }
 }

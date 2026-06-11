@@ -141,7 +141,7 @@ public class CandidatoLayoutController implements Initializable {
 
         menu.getItems().setAll(
             new MenuEntry("dashboard", "Dashboard", RemixiconAL.LAYOUT_GRID_FILL),
-            new MenuEntry("add_livro", "Add Livro", FontAwesomeSolid.FILE_ALT),
+            new MenuEntry("add_livro", "Atualizar Biblioteca", FontAwesomeSolid.FILE_ALT),
             new MenuEntry("diagnostico", "Diagnóstico", FontAwesomeSolid.BOLT),
             new MenuEntry("exame_adaptativo", "Exame Adaptativo", FontAwesomeSolid.FIRE),
             new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
@@ -177,7 +177,7 @@ public class CandidatoLayoutController implements Initializable {
             return;
         }
 
-        bootstrapBanner.managedProperty().bind(bootstrapBanner.visibleProperty());
+        /*bootstrapBanner.managedProperty().bind(bootstrapBanner.visibleProperty());
         bootstrapBanner.visibleProperty().bind(perguntasBootstrapAsyncService.showBannerProperty());
 
         if (bootstrapTitleLabel != null) {
@@ -202,7 +202,7 @@ public class CandidatoLayoutController implements Initializable {
         updateBootstrapBannerStyle(perguntasBootstrapAsyncService.getState());
         perguntasBootstrapAsyncService.stateProperty().addListener((obs, oldState, newState) ->
             updateBootstrapBannerStyle(newState)
-        );
+        );*/
     }
 
     private void updateBootstrapBannerStyle(PerguntasBootstrapAsyncService.BootstrapUiState state) {

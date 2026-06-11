@@ -31,9 +31,13 @@ public class FirsCardDiagnostico extends VBox{
         descricao.setWrapText(true);
 
         Label apoio = new Label(
-            resumo.disciplinasSemBase().isEmpty()
-                ? "Os topicos vao abrir no modal para voce escolher por onde quer comecar."
-                : "Ainda sem base real para: " + String.join(", ", resumo.disciplinasSemBase()) + "."
+            !resumo.pronto()
+                ? (resumo.disciplinasSemBase().isEmpty()
+                    ? "Ainda nao ha topicos prontos neste escopo. Confirma o onboarding ou aguarda a base terminar de preparar."
+                    : "Ainda sem base real para: " + String.join(", ", resumo.disciplinasSemBase()) + ".")
+                : resumo.disciplinasSemBase().isEmpty()
+                    ? "Os topicos filtrados vao abrir no modal para voce escolher por onde quer comecar."
+                    : "Ainda sem base real para: " + String.join(", ", resumo.disciplinasSemBase()) + "."
         );
         apoio.getStyleClass().add("diagnostico-card-note");
         apoio.setWrapText(true);

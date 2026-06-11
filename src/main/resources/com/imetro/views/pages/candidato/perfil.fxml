@@ -6,6 +6,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.FlowPane?>
@@ -147,6 +149,48 @@
                         </VBox>
                      </children>
                   </HBox>
+                  <VBox spacing="14.0" styleClass="card">
+                     <children>
+                        <Label styleClass="h1-thin" text="Tópicos de estudo" />
+                        <TabPane fx:id="studyTopicsTabPane" tabClosingPolicy="UNAVAILABLE">
+                           <tabs>
+                              <Tab text="Tópicos actuais">
+                                 <content>
+                                    <VBox spacing="12.0">
+                                       <children>
+                                          <Label styleClass="muted" text="O teste nunca vai dar perguntas fora do escopo que escolheste. Se ainda nao houver perguntas num tópico, o sistema mostra isso claramente." wrapText="true" />
+                                          <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="200.0" vbarPolicy="AS_NEEDED">
+                                             <content>
+                                                <VBox fx:id="studyTopicsBox" spacing="10.0">
+                                                   <padding>
+                                                      <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                                                   </padding>
+                                                </VBox>
+                                             </content>
+                                          </ScrollPane>
+                                          <Label fx:id="studyTopicsSummaryLabel" styleClass="profile-feedback profile-feedback-info" text="" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                 </content>
+                              </Tab>
+                              <Tab text="Alterar tópicos">
+                                 <content>
+                                    <VBox spacing="12.0">
+                                       <children>
+                                          <Label styleClass="muted" text="Aqui podes rever, alterar ou adicionar novos tópicos de estudo. A escolha volta a carregar o teu foco actual e o sistema mantém o teste dentro do escopo." wrapText="true" />
+                                          <Label styleClass="muted" text="Se um tópico ainda nao tiver perguntas, o teste vai avisar sem inventar fora do tema." wrapText="true" />
+                                          <JFXButton fx:id="manageTopicsButton" onAction="#onManageStudyTopics" prefHeight="38.0" prefWidth="260.0" styleClass="btn-primary-two" text="Alterar ou adicionar tópicos" />
+                                       </children>
+                                    </VBox>
+                                 </content>
+                              </Tab>
+                           </tabs>
+                        </TabPane>
+                     </children>
+                     <padding>
+                        <Insets bottom="22.0" left="22.0" right="22.0" top="22.0" />
+                     </padding>
+                  </VBox>
                   <VBox spacing="16.0" styleClass="card">
                      <children>
                         <Label styleClass="h1-thin" text="Medalhas do sistema" />

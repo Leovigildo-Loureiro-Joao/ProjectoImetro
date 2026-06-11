@@ -89,7 +89,7 @@
                                                 </children>
                                              </VBox>
                                              <ProgressBar fx:id="questionProgressBar" maxWidth="1.7976931348623157E308" minHeight="14.0" prefHeight="14.0" prefWidth="691.0" progress="0.0" VBox.vgrow="ALWAYS" />
-                                             <Label fx:id="bloco21" prefHeight="21.0" prefWidth="500.0" styleClass="h3-thin" text="Sem subtopicos" wrapText="true">
+                                             <Label fx:id="bloco21" prefHeight="21.0" prefWidth="500.0" styleClass="h3-thin" text="Sem foco adicional" wrapText="true">
                                                 <font>
                                                    <Font size="10.0" />
                                                 </font>

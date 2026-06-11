@@ -1,10 +1,15 @@
 package com.imetro.ui.controller.auth;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
+import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.services.CandidatoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.DisciplinaUploadBootstrapService;
@@ -12,6 +17,7 @@ import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.OnboardingRouter;
 import com.imetro.ui.components.DisciplinaCard;
 import com.imetro.util.Authentication;
+import com.imetro.util.TextoUtil;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -44,11 +50,14 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
         }
         disciplinasBox.getChildren().clear();
         candidatoService = new CandidatoService();
-        for (DisciplinaDto seed : DisciplinaService.discCategoria()) {
-            disciplinasBox.getChildren().add(new DisciplinaCard(seed));
-        }
-
+        List<DisciplinaDto> disciplinas = DisciplinaService.discCategoria();
         prepararPastasLivros();
+        Map<String, List<String>> focosExistentes = carregarFocosExistentes();
+        for (DisciplinaDto seed : disciplinas) {
+            disciplinasBox.getChildren().add(
+                new DisciplinaCard(seed, focosExistentes.getOrDefault(TextoUtil.normalizarMinusculo(seed.nome()), List.of()))
+            );
+        }
     }
 
     @FXML
@@ -61,30 +70,39 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
             return;
         }
 
-        boolean temSelecao = false;
+        List<DisciplinaCard> cardsComSelecao = new ArrayList<>();
+        List<DisciplinaCard> cardsSemSelecao = new ArrayList<>();
 
         for (var node : disciplinasBox.getChildren()) {
             if (node instanceof DisciplinaCard card) {
-                if (!card.isSelecionada()) {
-                    continue;
+                if (!card.getTopicosSelecionados().isEmpty()) {
+                    cardsComSelecao.add(card);
+                } else {
+                    cardsSemSelecao.add(card);
                 }
-
-                temSelecao = true;
-                var disciplinaId = card.getDisciplina().id();
-                candidatoService.AddFirstProgressoDisciplina(
-                    candidatoId,
-                    disciplinaId,
-                    card.getSubtopicosFoco(),
-                    card.getDisciplina().peso()
-                );
             }
         }
 
-        if (!temSelecao) {
+        if (cardsComSelecao.isEmpty()) {
             if (statusLabel != null) {
-                statusLabel.setText("Escolhe pelo menos uma disciplina e escreve os subtopicos prioritarios da bolsa.");
+                statusLabel.setText("Escolhe pelo menos um topico que vais estudar.");
             }
             return;
+        }
+        String focos="";
+        for (DisciplinaCard card : cardsComSelecao) {
+            var disciplinaId = card.getDisciplina().id();
+            focos+=card.getTopicosFocoPersistencia();
+            candidatoService.AddFirstProgressoDisciplina(
+                candidatoId,
+                disciplinaId,
+                card.getTopicosFocoPersistencia(),
+                card.getDisciplina().peso()
+            );
+        }
+        //candidatoService.insertFocos(focos, candidatoId);
+        for (DisciplinaCard card : cardsSemSelecao) {
+            candidatoService.RemoverProgressoDisciplina(candidatoId, card.getDisciplina().id());
         }
 
         StackPane contentHost = (StackPane) telaChooseDisciplinas.getParent();
@@ -95,17 +113,16 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
 
     }
 
+
     private void prepararPastasLivros() {
         try {
             DisciplinaUploadBootstrapService bootstrapService = new DisciplinaUploadBootstrapService();
-            int totalPastas = bootstrapService.prepararPastasUploads().size();
+            bootstrapService.prepararPastasUploads();
             if (statusLabel != null) {
                 statusLabel.setText(
-                    "Disciplinas prontas. Pastas dos livros em uploads/disciplinas (" + totalPastas + "). "
-                        + "Depois de escolheres as disciplinas, escreve os subtopicos prioritarios para a bolsa. "
-                        + "Matematica e Fisica comecam a gerar topicos e perguntas automaticamente em segundo plano. "
-                        + "Podes entrar no sistema e continuar a navegar enquanto a barra de progresso acompanha a leitura dos livros. "
-                        + "Este fluxo agora depende apenas da tua base de questoes."
+                    ""
+                        + "Seleciona os topicos que queres estudar e o sistema guarda esse escopo. "
+                        + "Depois podes voltar ao Perfil para alterar ou adicionar novos topicos de estudo. "
                 );
             }
         } catch (Exception e) {
@@ -115,6 +132,18 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
                 );
             }
         }
+    }
+
+    private Map<String, List<String>> carregarFocosExistentes() {
+        Map<String, List<String>> focosExistentes = new LinkedHashMap<>();
+        for (ProgressoAlunoDisciplinaDto progresso : DisciplinaService.getProgressoDisciplinasCandidatoSafe()) {
+            if (progresso == null || progresso.disciplina() == null || progresso.disciplina().isBlank()) {
+                continue;
+            }
+
+            focosExistentes.put(TextoUtil.normalizarMinusculo(progresso.disciplina()), progresso.focoSubtopicosLista());
+        }
+        return focosExistentes;
     }
 
 }

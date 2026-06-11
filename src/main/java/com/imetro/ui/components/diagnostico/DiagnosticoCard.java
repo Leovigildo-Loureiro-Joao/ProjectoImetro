@@ -75,7 +75,7 @@ public class DiagnosticoCard extends VBox {
         HBox metricas = new HBox(
             10,
             criarMetrica("Topicos", String.valueOf(resumo.totalTopicos())),
-            criarMetrica("Subtopicos", String.valueOf(resumo.totalSubtopicos())),
+            criarMetrica("Focos", String.valueOf(resumo.totalSubtopicos())),
             criarMetrica("Tendencia", resumo.tendencia()),
             criarMetrica("Nivel", resumo.nivel())
         );

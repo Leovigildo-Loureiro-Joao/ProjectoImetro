@@ -27,18 +27,24 @@ public  class DisciplinaRepository extends JdbcBasicSqlRepository{
     }
 
     public void ensureExists(String nome, double peso, String nivel) {
+        ensureExists(nome, peso, nivel, null);
+    }
+
+    public void ensureExists(String nome, double peso, String nivel, String objectivo) {
         String sql = """
-                INSERT INTO disciplinas (nome, peso, nivel)
-                VALUES (?, ?, ?)
+                INSERT INTO disciplinas (nome, peso, nivel, objectivo)
+                VALUES (?, ?, ?, ?)
                 ON CONFLICT (nome) DO UPDATE SET
                   peso = EXCLUDED.peso,
-                  nivel = EXCLUDED.nivel
+                  nivel = EXCLUDED.nivel,
+                  objectivo = COALESCE(EXCLUDED.objectivo, disciplinas.objectivo)
                 """;
         try (var conn = JdbcBasicSqlRepository.openRequiredConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, nome);
             stmt.setDouble(2, peso);
             stmt.setString(3, nivel);
+            stmt.setString(4, objectivo);
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
