@@ -44,7 +44,7 @@
             <children>
 
                <!-- TELA DE SELECAO (START) -->
-               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <TabPane prefHeight="709.0" prefWidth="956.0" rotateGraphic="true" tabClosingPolicy="UNAVAILABLE">
                        <tabs>
@@ -52,12 +52,34 @@
                            <content>
                                  <VBox fx:id="trilhoAdaptacaoCard" prefWidth="956.0" spacing="14.0" styleClass="adaptation-trail-card">
                                     <children>
-                                       <VBox spacing="5.0">
+                                       <HBox prefHeight="280.0" prefWidth="922.0">
                                           <children>
-                                             <Label styleClass="h3-thin" text="Trilho de adaptacao" />
-                                             <Label styleClass="muted" text="Escolha um subtopico para ver avancos, quedas e a leitura guiada antes da proxima rodada." wrapText="true" />
+                                             <HBox style="-fx-background-color: #1C1345;" styleClass="card-blur">
+                                                <children>
+                                                   <VBox alignment="CENTER_LEFT" prefHeight="258.0" prefWidth="392.0" spacing="5.0">
+                                                      <children>
+                                                         <Label style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: 600;" styleClass="h3-thin-big" text="Seu caminho" />
+                                                         <Label style="-fx-text-fill: white; -fx-font-size: 26; -fx-font-weight: 800;" styleClass="h3-thin-big" text="para a evolução" />
+                                                         <Label prefHeight="87.0" prefWidth="304.0" style="-fx-text-fill: white; -fx-font-weight: 600;" styleClass="h2-thin" text="Seu trilho passo a passo domine os temas as sequencias inteligentes e testes adaptativos" textFill="WHITE" wrapText="true" />
+                                                      </children>
+                                                      <padding>
+                                                         <Insets left="40.0" />
+                                                      </padding>
+                                                   </VBox>
+                                                   <ImageView fitHeight="283.0" fitWidth="503.0" pickOnBounds="true" preserveRatio="true">
+                                                      <image>
+                                                         <Image url="@../../../assets/imgs/ChatGPT%20Image%2013_06_2026,%2014_35_57.png" />
+                                                      </image>
+                                                      <HBox.margin>
+                                                         <Insets bottom="10.0" left="-20.0" right="10.0" top="10.0" />
+                                                      </HBox.margin>
+                                                   </ImageView>
+                                                </children>
+                                             </HBox>
+                                             <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                                             <HBox prefHeight="305.0" prefWidth="447.0" />
                                           </children>
-                                       </VBox>
+                                       </HBox>
                                        <HBox spacing="12.0">
                                           <children>
                                              <JFXComboBox fx:id="trilhoDisciplinaCombo" prefHeight="40.0" prefWidth="240.0" promptText="Disciplina" />
@@ -120,7 +142,7 @@
                </VBox>
 
                <!-- TELA DO TESTE ADAPTATIVO -->
-               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <VBox fx:id="testeContainer" prefHeight="650.0" prefWidth="782.0" spacing="15.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
                      <StackPane>
                         <children>
