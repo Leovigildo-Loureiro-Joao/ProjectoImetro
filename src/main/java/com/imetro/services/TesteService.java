@@ -17,6 +17,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoDto;
+import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
 import com.imetro.domain.dto.bolsa.BolsaDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
@@ -31,7 +33,9 @@ import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.Teste_Pergunta;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
+import com.imetro.persistence.repository.ConfiguracoesTesteAdaptativoRespository;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
+import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.MedalhaRepository;
@@ -48,6 +52,9 @@ import com.imetro.util.ConversorTempo;
 import com.imetro.util.QuestaoUtil;
 
 public class TesteService {
+    private static final String SQL_NORMALIZE_FROM = "\u00e1\u00e0\u00e2\u00e3\u00e4\u00e9\u00e8\u00ea\u00eb\u00ed\u00ec\u00ee\u00ef\u00f3\u00f2\u00f4\u00f5\u00f6\u00fa\u00f9\u00fb\u00fc\u00e7";
+    private static final String SQL_NORMALIZE_TO = "aaaaaeeeeiiiiooooouuuuc";
+
     private final TesteRepository testeRepository;
     private final TesteStatsRepository testeStatsRepository;
     private final TestePerguntasRepository testePerguntasRepository;
@@ -55,6 +62,8 @@ public class TesteService {
     private final DiagnosticoRepository diagnosticoRepository;
     private final ProgressoALunoDisciplinaRepository progressoALunoDisciplinaRepository;
     private final ConfiguracaoTesteAdaptativoNivelRepositorty configuracaoTesteAdaptativoNivelRepositorty;
+    private final ConfiguracoesRepository configuracoesRepository;
+    private final ConfiguracoesTesteAdaptativoRespository adaptacaoRepository;
     private final MedalhaRepository medalhaRepository;
 
     public TesteService() {
@@ -65,6 +74,8 @@ public class TesteService {
         this.diagnosticoRepository=new DiagnosticoRepository();
         this.progressoALunoDisciplinaRepository=new ProgressoALunoDisciplinaRepository();
         this.configuracaoTesteAdaptativoNivelRepositorty=new ConfiguracaoTesteAdaptativoNivelRepositorty();
+        this.configuracoesRepository = new ConfiguracoesRepository();
+        this.adaptacaoRepository = new ConfiguracoesTesteAdaptativoRespository();
         this.medalhaRepository = new MedalhaRepository();
 
     }
@@ -175,10 +186,11 @@ public class TesteService {
 
         int limiteTopicosSeguro = Math.max(1, limiteTopicos);
         String placeholders = String.join(", ", Collections.nCopies(disciplinasNormalizadas.size(), "?"));
+        String disciplinaKeySql = sqlNormalizarDisciplina("tp.disciplina_nome, t.disciplina_nome");
 
         String sqlResumo = """
             select
-              lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) as disciplina_key,
+              %s as disciplina_key,
               count(distinct tp.teste_id) as total_testes,
               count(*) as total_questoes,
               avg(case
@@ -197,21 +209,22 @@ public class TesteService {
             from teste_perguntas tp
             join testes t on t.id = tp.teste_id
             where t.candidato_id = ?
-              and lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) in (%s)
+              and %s in (%s)
             group by 1
-            """.formatted(placeholders);
+            """.formatted(disciplinaKeySql, disciplinaKeySql, placeholders);
 
+        String topicoDisciplinaKeySql = sqlNormalizarDisciplina("tp.disciplina_nome, t.disciplina_nome");
         String sqlTopicos = """
             with topicos as (
               select
-                lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) as disciplina_key,
+                %s as disciplina_key,
                 coalesce(nullif(trim(tp.topico), ''), 'Sem topico') as topico,
                 count(*) as total_questoes,
                 sum(case when tp.acertou is true then 1 else 0 end) as total_acertos
               from teste_perguntas tp
               join testes t on t.id = tp.teste_id
               where t.candidato_id = ?
-                and lower(coalesce(tp.disciplina_nome, t.disciplina_nome, '')) in (%s)
+                and %s in (%s)
               group by 1, 2
             ),
             ranqueados as (
@@ -227,7 +240,7 @@ public class TesteService {
             from ranqueados
             where posicao <= ?
             order by disciplina_key asc, posicao asc
-            """.formatted(placeholders);
+            """.formatted(topicoDisciplinaKeySql, topicoDisciplinaKeySql, placeholders);
 
         LinkedHashMap<String, ResumoHistoricoDisciplinaBuilder> builders = new LinkedHashMap<>();
         for (String disciplina : disciplinasNormalizadas) {
@@ -319,6 +332,30 @@ public class TesteService {
         return new StatsProgress(velocidade,precisao,consistencia,resiliencia,logica,progresso);
     }
 
+    private ConfiguracaoDto carregarConfiguracaoDoCandidato(UUID candidatoId) {
+        if (candidatoId == null) {
+            return null;
+        }
+
+        try {
+            return configuracoesRepository.findByCandidato(candidatoId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private ConfiguracaoTesteAdaptativoDto carregarAdaptacaoDoCandidato(UUID candidatoId) {
+        if (candidatoId == null) {
+            return ConfiguracaoTesteAdaptativoDto.padrao(null);
+        }
+
+        try {
+            return adaptacaoRepository.findAtiva();
+        } catch (Exception e) {
+            return ConfiguracaoTesteAdaptativoDto.padrao(candidatoId);
+        }
+    }
+
 
 
      public void registrarTesteConcluido(
@@ -361,6 +398,8 @@ public class TesteService {
 
         int duracaoSegundos = ConversorTempo.parseTempoEmSegundos(tempoFormatado);
         LocalDateTime concluidoEm = LocalDateTime.now();
+        ConfiguracaoDto configuracaoUsuario = carregarConfiguracaoDoCandidato(candidatoId);
+        ConfiguracaoTesteAdaptativoDto adaptacaoUsuario = carregarAdaptacaoDoCandidato(candidatoId);
 
         try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
             System.out.println("iniciou");
@@ -393,10 +432,10 @@ public class TesteService {
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
                     String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
                     double precisao = CalculoStats.calcularPrecisaoMediaRespostas(reacoesDisciplina);
-                    double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina);
+                    double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina, adaptacaoUsuario);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
-                    double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina);
-                    double velocidade = CalculoStats.calcularVelocidade(totalSeg, totalQuestoes);
+                    double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina, adaptacaoUsuario);
+                    double velocidade = CalculoStats.calcularVelocidade(totalSeg, totalQuestoes, configuracaoUsuario);
                     String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
                     String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
                     String errosComunsJson = QuestaoUtil.construirJsonErrosComuns(indices, questoes, respostasUsuario);
@@ -521,6 +560,9 @@ public class TesteService {
             return null;
         }
 
+        ConfiguracaoDto configuracaoUsuario = carregarConfiguracaoDoCandidato(candidatoId);
+        ConfiguracaoTesteAdaptativoDto adaptacaoUsuario = carregarAdaptacaoDoCandidato(candidatoId);
+
         ArrayList<Integer> indices = new ArrayList<>();
         for (int i = 0; i < limite; i++) {
             indices.add(i);
@@ -553,10 +595,10 @@ public class TesteService {
         double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
         String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
         double precisao = CalculoStats.calcularPrecisaoMediaRespostas(reacoesDisciplina);
-        double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina);
+        double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina, adaptacaoUsuario);
         double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
-        double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina);
-        double velocidade = CalculoStats.calcularVelocidade(totalSeg, totalQuestoes);
+        double resiliencia = CalculoStats.calcularResilienciaTeste(reacoesDisciplina, adaptacaoUsuario);
+        double velocidade = CalculoStats.calcularVelocidade(totalSeg, totalQuestoes, configuracaoUsuario);
         String topicosJson = construirJsonResumoQuestoes(indices, questoes, true);
         String subtopicosJson = construirJsonResumoQuestoes(indices, questoes, false);
         String errosComunsJson = QuestaoUtil.construirJsonErrosComuns(indices, questoes, respostasUsuario);
@@ -1011,8 +1053,12 @@ public class TesteService {
             from teste_perguntas tp
             join testes t on t.id = tp.teste_id
             where t.candidato_id = ? and t.disciplina_id = ?
-              and lower(coalesce(tp.disciplina_nome, '')) = lower(coalesce(t.disciplina_nome, ''))
+              and %s = %s
             """;
+        sql = sql.formatted(
+            sqlNormalizarDisciplina("tp.disciplina_nome"),
+            sqlNormalizarDisciplina("t.disciplina_nome")
+        );
 
         LinkedHashMap<UUID, HistoricoQuestao> historico = new LinkedHashMap<>();
         try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection();
@@ -1553,6 +1599,14 @@ public class TesteService {
 
     private String formatJsonDouble(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private String sqlNormalizarDisciplina(String expressao) {
+        return "translate(lower(coalesce(" + expressao + ", '')), '"
+            + SQL_NORMALIZE_FROM
+            + "', '"
+            + SQL_NORMALIZE_TO
+            + "')";
     }
 
     private float limitarUnitario(double valor) {

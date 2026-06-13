@@ -2,6 +2,7 @@ package com.imetro.services;
 
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
+import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
@@ -21,6 +22,7 @@ import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
 import com.imetro.domain.enums.TopicoExame;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.persistence.repository.ConfiguracaoTesteAdaptativoNivelRepositorty;
+import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.persistence.repository.DiagnosticoRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.persistence.repository.PerguntasRepository;
@@ -67,12 +69,16 @@ public class DiagnosticoService {
     private final RecomendacaoRepository recomendacaoRepository = new RecomendacaoRepository();
     private final ProgressaoRigorRepository progressaoRigorRepository = new ProgressaoRigorRepository();
     private final ProgressoALunoDisciplinaRepository progressoALunoDisciplinaRepository = new ProgressoALunoDisciplinaRepository();
+    private final ConfiguracoesRepository configuracoesRepository;
     private final PerguntasBootstrapService perguntasBootstrapService;
     private final ConfiguracaoTesteAdaptativoNivelRepositorty configTesteAdaptNiv;
+    private boolean contain=false;
+
     public DiagnosticoService() {
         this.perguntasRepository = new PerguntasRepository();
         this.perguntasBootstrapService = new PerguntasBootstrapService();
         this.configTesteAdaptNiv=new ConfiguracaoTesteAdaptativoNivelRepositorty();
+        this.configuracoesRepository = new ConfiguracoesRepository();
     }
 
     public DiagnosticoRepository getDiagnosticoRepository() {
@@ -579,7 +585,6 @@ public class DiagnosticoService {
             return Map.of();
         }
     }
-
     private List<Questao> filtrarQuestoesDoEscopo(
         Collection<Questao> questoes,
         Map<String, Set<String>> topicosSelecionadosPorDisciplina,
@@ -599,11 +604,17 @@ public class DiagnosticoService {
         TopicoExame.Disciplina disciplinaEnum = TopicoExame.resolverDisciplina(disciplina).orElse(null);
         return questoes.stream()
             .filter(questao -> {
-                String topicoCanonico = resolverTopicoCanonico(disciplinaEnum, questao.getTopico());
+                String topicoCanonico = resolverTopicoCanonico(disciplinaEnum, questao.getTopicoPrincipal());
                 String topicoNormalizado = QuestaoUtil.normalizar(topicoCanonico);
-                return !topicoNormalizado.isBlank() && topicosSelecionados.contains(topicoNormalizado);
+                for (String top : topicosSelecionados) {
+                    if(contain)
+                        break;
+                    contain=top.contains(topicoNormalizado);
+                }
+
+                return !topicoNormalizado.isBlank() && contain;
             })
-            .collect(Collectors.toCollection(ArrayList::new));
+             .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public void registrarDiagnosticoConcluido(
@@ -639,6 +650,7 @@ public class DiagnosticoService {
 
         int duracaoSegundos = ConversorTempo.parseTempoEmSegundos(tempoFormatado);
         LocalDateTime concluidoEm = LocalDateTime.now();
+        ConfiguracaoDto configuracaoUsuario = configuracoesRepository.findByCandidato(candidatoId);
 
         try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
             conn.setAutoCommit(false);
@@ -668,7 +680,7 @@ public class DiagnosticoService {
                     double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual, percentualAcerto);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
                     double resiliencia = 0d;
-                    double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes);
+                    double velocidade = CalculoStats.calcularVelocidade(duracaoSegundos, totalQuestoes, configuracaoUsuario);
                     System.out.println("Inserindo");
 
                     UUID diagnosticoId = diagnosticoRepository.inserir(
@@ -818,7 +830,13 @@ public class DiagnosticoService {
                 .average()
                 .orElse(atual.rigorAtual());
 
-            double rigorAtualNovo = CalculoStats.calcularNovoRigor(atual.rigorAtual(), atual.rigorAlvo(), rigorMedioTentado, taxaAcerto);
+            double rigorAtualNovo = CalculoStats.calcularNovoRigor(
+                atual.rigorAtual(),
+                atual.rigorAlvo(),
+                rigorMedioTentado,
+                taxaAcerto,
+                config
+            );
             int acertosConsecutivos = taxaAcerto >= config.limiar_acerto()? atual.acertosConsecutivos() + acertos : 0;
             int errosConsecutivos = taxaAcerto < config.limiar_erro() ? atual.errosConsecutivos() + erros : 0;
             boolean precisaRevisao = taxaAcerto < config.resumo_med() || errosConsecutivos >= config.tot_erro_revisao();
@@ -879,6 +897,9 @@ public class DiagnosticoService {
         ConfiguracaoTesteAdaptativoNivelDto config,
         String subtopico
     ) throws SQLException {
+        double rigorBase = config == null
+            ? NivelDificuldadeAdaptativa.padrao().rigorBase()
+            : config.rigorBase();
         String sql = """
             select id,
               rigor_atual,
@@ -899,8 +920,8 @@ public class DiagnosticoService {
                 if (rs.next()) {
                     return new ProgressaoRigorAtual(
                         rs.getObject("id", UUID.class),
-                        rs.getObject("rigor_atual") instanceof Number number ? number.doubleValue() : 0.12d, // TODO CONFIG_ADAPTATIVA: fallback de rigor atual ainda fixo.
-                        rs.getObject("rigor_alvo") instanceof Number number ? number.doubleValue() :config.rigorBase(),
+                        rs.getObject("rigor_atual") instanceof Number number ? number.doubleValue() : rigorBase,
+                        rs.getObject("rigor_alvo") instanceof Number number ? number.doubleValue() : rigorBase,
                         rs.getObject("tentativas_no_nivel") instanceof Number number ? number.intValue() : 0,
                         rs.getObject("acertos_consecutivos") instanceof Number number ? number.intValue() : 0,
                         rs.getObject("erros_consecutivos") instanceof Number number ? number.intValue() : 0
@@ -909,7 +930,7 @@ public class DiagnosticoService {
             }
         }
 
-        return new ProgressaoRigorAtual(null, 0.12d, config.rigorBase(), 0, 0, 0); // TODO CONFIG_ADAPTATIVA: progresso inicial ainda nasce com rigores fixos.
+        return new ProgressaoRigorAtual(null, rigorBase, rigorBase, 0, 0, 0);
     }
 
     private String escolherReferenciaLivro(List<QuestaoRigorResultado> resultados) {
@@ -1150,9 +1171,7 @@ public class DiagnosticoService {
 
         return com.imetro.domain.enums.TopicoExame.resolverTopicoModoInteligente(disciplina, valor)
             .map(com.imetro.domain.enums.TopicoExame::getLabel)
-            .orElseGet(() -> disciplina == com.imetro.domain.enums.TopicoExame.Disciplina.FISICA
-                ? null
-                : QuestaoUtil.safeText(valor, null));
+            .orElseGet(() -> QuestaoUtil.safeText(valor, null));
     }
 
     private Questao mapearQuestao(Map<String, Object> row) {
@@ -1579,7 +1598,7 @@ public class DiagnosticoService {
         if (rawValue instanceof Number number) {
             return Math.max(0d, Math.min(1d, number.doubleValue()));
         }
-        return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback de rigor da questao ainda fixo quando a origem nao traz valor.
+        return NivelDificuldadeAdaptativa.padrao().rigorBase();
     }
 
     private Integer mapearInteiro(Object rawValue) {

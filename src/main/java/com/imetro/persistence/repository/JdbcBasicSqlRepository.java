@@ -22,7 +22,7 @@ import java.util.Optional;
  * como identificadores seguros (sem espaços/aspas/etc).</p>
  */
 public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
-
+    public static Connection connection;
     private final String tableName;
     private final String idColumn;
 
@@ -289,7 +289,8 @@ public abstract class JdbcBasicSqlRepository implements BasicSqlRepository {
         if (connOpt.isEmpty()) {
             throw new IllegalStateException("BD desativada/não configurada. Defina TESTE=true (ou DB_ENABLED=true) e DB_URL, DB_USER, DB_PASSWORD.");
         }
-        return connOpt.get();
+        connection=connOpt.get();
+        return connection;
     }
 
     //Tables with many primary keys

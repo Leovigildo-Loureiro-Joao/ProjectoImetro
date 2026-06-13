@@ -161,7 +161,7 @@ public class  PlaneamentoEstudoService {
             return false;
         }
 
-        if (!RuntimeConfig.isDbEnabled()) {
+        if (!RuntimeConfig.isDbEnabled()) {   
             return true;
         }
 

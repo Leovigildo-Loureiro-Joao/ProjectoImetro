@@ -772,7 +772,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         double consistenciaAtual = calcularConsistenciaTempoReal(totalRespondidas);
         double velocidadeAtual = totalRespondidas <= 0
             ? 0d
-            : CalculoStats.calcularVelocidade(obterTempoDecorridoSegundos(), totalRespondidas) * 100d;
+            : CalculoStats.calcularVelocidade(obterTempoDecorridoSegundos(), totalRespondidas, getConfigCadidato()) * 100d;
 
         aplicarPercentual(nivelAtual23, precisaoAtual);
         aplicarPercentual(nivelAtual231, consistenciaAtual);
@@ -978,7 +978,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         for (String subtop : subtopicos) {
             List<Questao>  resultTemp=base.stream().filter(q -> q.getSubtopico().equals(subtop)).toList();
             Set<Integer> valueSet=new HashSet<>();
-            while (valueSet.size()<2) {
+            while (valueSet.size()<2 &&  valueSet.size()<resultTemp.size()) {
                 valueSet.add(new Random().nextInt(0, resultTemp.size()));
             }
             for (Integer res : valueSet) {
@@ -1079,6 +1079,10 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
             case "medio" -> limitarFaixaQuestoes(config.norm_test_q(), totalDisponivel);
             default -> limitarFaixaQuestoes(config.long_test_q(), totalDisponivel);
         };
+    }
+
+    private ConfiguracaoDto getConfigCadidato() {
+        return configuracoesRepository.findByCandidato(Authentication.getCurrentUserId());
     }
 
     private int limitarFaixaQuestoes(Integer limiteConfigurado, int totalDisponivel) {

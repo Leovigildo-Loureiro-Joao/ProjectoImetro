@@ -9,7 +9,7 @@ import java.util.UUID;
 
 import com.imetro.util.DtoMapperSupport;
 
-public record AdaptacaoDto(
+public record ConfiguracaoTesteAdaptativoDto(
     UUID id,
     UUID user_id,
     String descricao,
@@ -25,21 +25,25 @@ public record AdaptacaoDto(
     double pesoConsistenciaRitmo,
     double pesoResilienciaRecuperacao,
     double pesoResilienciaEstabilidade,
+    double resilienciaQuestaoBase,
+    double resilienciaQuestaoBonusAcerto,
+    double resilienciaQuestaoBonusRitmo,
+    double resilienciaQuestaoBonusRecuperacao,
     LocalDateTime criadoEm,
     LocalDateTime atualizadoEm,
     List<ConfiguracaoTesteAdaptativoNivelDto> niveis,
     List<ConfiguracaoTesteAdaptativoDuracaoDto> duracoes
 ) {
 
-    public AdaptacaoDto {
+    public ConfiguracaoTesteAdaptativoDto {
         niveis = niveis == null ? List.of() : List.copyOf(niveis);
         duracoes = duracoes == null ? List.of() : List.copyOf(duracoes);
     }
 
-    public static AdaptacaoDto fromMap(Map<String, ?> map) {
+    public static ConfiguracaoTesteAdaptativoDto fromMap(Map<String, ?> map) {
         Objects.requireNonNull(map, "map");
 
-        return new AdaptacaoDto(
+        return new ConfiguracaoTesteAdaptativoDto(
             DtoMapperSupport.parseUuid(map.get("id")),
             DtoMapperSupport.parseUuid(map.get("user_id")),
             DtoMapperSupport.parseText(map.get("descricao")),
@@ -55,6 +59,10 @@ public record AdaptacaoDto(
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("peso_consistencia_ritmo")), 0.30d),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("peso_resiliencia_recuperacao")), 0.70d),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("peso_resiliencia_estabilidade")), 0.30d),
+            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_base")), 0.10d),
+            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_bonus_acerto")), 0.65d),
+            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_bonus_ritmo")), 0.15d),
+            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_bonus_recuperacao")), 0.10d),
             DtoMapperSupport.parseDateTime(map.get("criado_em")),
             DtoMapperSupport.parseDateTime(map.get("atualizado_em")),
             List.of(),
@@ -62,8 +70,8 @@ public record AdaptacaoDto(
         );
     }
 
-    public static AdaptacaoDto padrao(UUID userId) {
-        return new AdaptacaoDto(
+    public static ConfiguracaoTesteAdaptativoDto padrao(UUID userId) {
+        return new ConfiguracaoTesteAdaptativoDto(
             null,
             userId,
             "Perfil adaptativo padrao do candidato.",
@@ -79,6 +87,10 @@ public record AdaptacaoDto(
             0.30d,
             0.70d,
             0.30d,
+            0.10d,
+            0.65d,
+            0.15d,
+            0.10d,
             null,
             null,
             List.of(),
@@ -86,11 +98,11 @@ public record AdaptacaoDto(
         );
     }
 
-    public AdaptacaoDto withRelacionamentos(
+    public ConfiguracaoTesteAdaptativoDto withRelacionamentos(
         List<ConfiguracaoTesteAdaptativoNivelDto> novosNiveis,
         List<ConfiguracaoTesteAdaptativoDuracaoDto> novasDuracoes
     ) {
-        return new AdaptacaoDto(
+        return new ConfiguracaoTesteAdaptativoDto(
             id,
             user_id,
             descricao,
@@ -106,6 +118,10 @@ public record AdaptacaoDto(
             pesoConsistenciaRitmo,
             pesoResilienciaRecuperacao,
             pesoResilienciaEstabilidade,
+            resilienciaQuestaoBase,
+            resilienciaQuestaoBonusAcerto,
+            resilienciaQuestaoBonusRitmo,
+            resilienciaQuestaoBonusRecuperacao,
             criadoEm,
             atualizadoEm,
             novosNiveis,
@@ -148,6 +164,10 @@ public record AdaptacaoDto(
         values.put("peso_consistencia_ritmo", pesoConsistenciaRitmo());
         values.put("peso_resiliencia_recuperacao", pesoResilienciaRecuperacao());
         values.put("peso_resiliencia_estabilidade", pesoResilienciaEstabilidade());
+        values.put("resiliencia_questao_base", resilienciaQuestaoBase());
+        values.put("resiliencia_questao_bonus_acerto", resilienciaQuestaoBonusAcerto());
+        values.put("resiliencia_questao_bonus_ritmo", resilienciaQuestaoBonusRitmo());
+        values.put("resiliencia_questao_bonus_recuperacao", resilienciaQuestaoBonusRecuperacao());
         values.put("criado_em", criadoEm());
         values.put("atualizado_em", atualizadoEm());
         return values;

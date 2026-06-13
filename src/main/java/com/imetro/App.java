@@ -3,6 +3,7 @@ package com.imetro;
 import com.imetro.config.RuntimeConfig;
 import com.imetro.persistence.connection.Database;
 import com.imetro.persistence.migrations.FlywayMigrations;
+import com.imetro.persistence.seed.ConfiguracoesSeedService;
 import com.imetro.persistence.seed.PerguntasSeedService;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.util.AppLogger;
@@ -68,6 +69,7 @@ public class App extends Application {
         if (RuntimeConfig.isDbEnabled()) {
             FlywayMigrations.tryMigrateFromEnv();
             Database.tryWarmup();
+            ConfiguracoesSeedService.trySeedIfNeeded();
             PerguntasSeedService.trySeedIfEmpty();
         } else {
             LOGGER.warning("Modo navegacao: BD desligada (ative TESTE=true ou DB_ENABLED=true).");

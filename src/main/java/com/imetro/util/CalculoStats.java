@@ -3,6 +3,9 @@ package com.imetro.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
+import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoDto;
+import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoNivelDto;
 import com.imetro.domain.dto.diagnostico.ProgressoResumo;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.ui.model.Questao;
@@ -13,13 +16,19 @@ public class CalculoStats {
     private static final double PRECISAO_NAO_SEI = 0.10d;
     private static final double PRECISAO_CONFUSO = 0.20d;
     private static final double PRECISAO_PULAR = 0d;
+    private static final ConfiguracaoTesteAdaptativoDto PADRAO_V1 = ConfiguracaoTesteAdaptativoDto.padrao(null);
 
     public static double calcularVelocidade(int duracaoSegundos, int totalQuestoes) {
+        return calcularVelocidade(duracaoSegundos, totalQuestoes, (ConfiguracaoDto) null);
+    }
+
+    public static double calcularVelocidade(int duracaoSegundos, int totalQuestoes, ConfiguracaoDto configuracao) {
         if (duracaoSegundos <= 0 || totalQuestoes <= 0) {
             return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro de velocidade ainda fixo.
         }
         double mediaPorQuestao = duracaoSegundos / (double) totalQuestoes;
-        double normalizado = 1d - (mediaPorQuestao / 120d); // TODO CONFIG_ADAPTATIVA: baseline de velocidade ainda fixa em 120s por questao.
+        double baseline = resolverBaselineVelocidade(configuracao);
+        double normalizado = 1d - (mediaPorQuestao / baseline);
         return Math.max(0d, Math.min(1d, normalizado));
     }
 
@@ -185,14 +194,19 @@ public class CalculoStats {
     }
 
     public static double calcularConsistenciaTeste(List<ReacaoTeste> reacoes) {
+        return calcularConsistenciaTeste(reacoes, (ConfiguracaoTesteAdaptativoDto) null);
+    }
+
+    public static double calcularConsistenciaTeste(List<ReacaoTeste> reacoes, ConfiguracaoTesteAdaptativoDto adaptacao) {
         if (reacoes == null || reacoes.isEmpty()) {
             return 0d;
         }
 
         List<Double> acertos = new ArrayList<>();
         List<Double> ritmos = new ArrayList<>();
+        int janelaConsistencia = resolverJanelaConsistencia(adaptacao);
 
-        for (ReacaoTeste reacao : reacoes) {
+        for (ReacaoTeste reacao : ultimasReacoesValidas(reacoes, janelaConsistencia)) {
             if (reacao == null || reacao.questao() == null) {
                 continue;
             }
@@ -214,16 +228,22 @@ public class CalculoStats {
             ? 0.5d // TODO CONFIG_ADAPTATIVA: fallback de estabilidade de ritmo ainda fixo.
             : 1d - Math.min(1d, calcularCoeficienteVariacao(ritmos));
 
-        double score = (estabilidadeAcertos * 0.7d) + (estabilidadeRitmo * 0.3d); // TODO CONFIG_ADAPTATIVA: pesos de consistencia ainda fixos.
-        return suavizarPorAmostra(score, acertos.size());
+        double pesoAcerto = resolverPesoConsistenciaAcerto(adaptacao);
+        double pesoRitmo = resolverPesoConsistenciaRitmo(adaptacao);
+        double score = (estabilidadeAcertos * pesoAcerto) + (estabilidadeRitmo * pesoRitmo);
+        return suavizarPorAmostra(score, acertos.size(), resolverAmostrasConfiancaPlena(adaptacao));
     }
 
     public static double calcularConsistenciaQuestao(List<ReacaoTeste> historico, ReacaoTeste atual) {
+        return calcularConsistenciaQuestao(historico, atual, (ConfiguracaoTesteAdaptativoDto) null);
+    }
+
+    public static double calcularConsistenciaQuestao(List<ReacaoTeste> historico, ReacaoTeste atual, ConfiguracaoTesteAdaptativoDto adaptacao) {
         if (atual == null || atual.questao() == null) {
             return 0d;
         }
 
-        List<ReacaoTeste> janela = ultimasReacoesValidas(historico, 3); // TODO CONFIG_ADAPTATIVA: janela de consistencia ainda fixa em 3 reacoes.
+        List<ReacaoTeste> janela = ultimasReacoesValidas(historico, resolverJanelaConsistencia(adaptacao));
         if (janela.isEmpty()) {
             return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback de consistencia sem historico ainda fixo.
         }
@@ -247,11 +267,17 @@ public class CalculoStats {
             desvioRitmo = Math.min(1d, Math.abs(ritmoAtual - mediaRitmo));
         }
 
-        double score = ((1d - desvioAcerto) * 0.65d) + ((1d - desvioRitmo) * 0.35d); // TODO CONFIG_ADAPTATIVA: pesos finos da consistencia ainda fixos.
+        double pesoAcerto = resolverPesoConsistenciaAcerto(adaptacao);
+        double pesoRitmo = resolverPesoConsistenciaRitmo(adaptacao);
+        double score = ((1d - desvioAcerto) * pesoAcerto) + ((1d - desvioRitmo) * pesoRitmo);
         return limitar01(score);
     }
 
     public static double calcularResilienciaTeste(List<ReacaoTeste> reacoes) {
+        return calcularResilienciaTeste(reacoes, (ConfiguracaoTesteAdaptativoDto) null);
+    }
+
+    public static double calcularResilienciaTeste(List<ReacaoTeste> reacoes, ConfiguracaoTesteAdaptativoDto adaptacao) {
         if (reacoes == null || reacoes.isEmpty()) {
             return 0d;
         }
@@ -261,6 +287,8 @@ public class CalculoStats {
         int recuperacoes = 0;
         int maiorSequenciaErros = 0;
         int sequenciaErros = 0;
+        int janelaRecuperacao = resolverJanelaRecuperacao(adaptacao);
+        double tempoLentoFator = resolverTempoLentoFator(adaptacao);
 
         for (int i = 0; i < reacoes.size(); i++) {
             ReacaoTeste reacao = reacoes.get(i);
@@ -277,12 +305,12 @@ public class CalculoStats {
                 maiorSequenciaErros = Math.max(maiorSequenciaErros, sequenciaErros);
             }
 
-            if (!ehEventoAdverso(reacao)) {
+            if (!ehEventoAdverso(reacao, tempoLentoFator)) {
                 continue;
             }
 
             eventosAdversos++;
-            if (recuperouNasProximasTentativas(reacoes, i, 2)) {
+            if (recuperouNasProximasTentativas(reacoes, i, janelaRecuperacao, resolverTempoRecuperacaoFator(adaptacao))) {
                 recuperacoes++;
             }
         }
@@ -291,13 +319,20 @@ public class CalculoStats {
             return 0d;
         }
 
-        double taxaRecuperacao = eventosAdversos == 0 ? 0.65d : recuperacoes / (double) eventosAdversos; // TODO CONFIG_ADAPTATIVA: fallback de recuperacao ainda fixo.
+        double taxaRecuperacao = eventosAdversos == 0
+            ? resolverPesoResilienciaRecuperacao(adaptacao)
+            : recuperacoes / (double) eventosAdversos;
         double estabilidadeAposQueda = 1d - (maiorSequenciaErros / (double) totalValidos);
-        double score = (taxaRecuperacao * 0.7d) + (estabilidadeAposQueda * 0.3d); // TODO CONFIG_ADAPTATIVA: pesos agregados de resiliencia ainda fixos.
-        return suavizarPorAmostra(score, totalValidos);
+        double score = (taxaRecuperacao * resolverPesoResilienciaRecuperacao(adaptacao))
+            + (estabilidadeAposQueda * resolverPesoResilienciaEstabilidade(adaptacao));
+        return suavizarPorAmostra(score, totalValidos, resolverAmostrasConfiancaPlena(adaptacao));
     }
 
     public static double calcularResilienciaQuestao(List<ReacaoTeste> historico, ReacaoTeste atual) {
+        return calcularResilienciaQuestao(historico, atual, (ConfiguracaoTesteAdaptativoDto) null);
+    }
+
+    public static double calcularResilienciaQuestao(List<ReacaoTeste> historico, ReacaoTeste atual, ConfiguracaoTesteAdaptativoDto adaptacao) {
         if (atual == null || atual.questao() == null) {
             return 0d;
         }
@@ -307,23 +342,24 @@ public class CalculoStats {
             return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro sem reacao anterior ainda fixo.
         }
 
-        if (!ehEventoAdverso(ultimaReacao)) {
+        double tempoLentoFator = resolverTempoLentoFator(adaptacao);
+        if (!ehEventoAdverso(ultimaReacao, tempoLentoFator)) {
             return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro sem evento adverso ainda fixo.
         }
 
-        int adversidadesConsecutivas = contarAdversidadesConsecutivas(historico);
-        double score = 0.1d; // TODO CONFIG_ADAPTATIVA: base minima de resiliencia por questao ainda fixa.
+        int adversidadesConsecutivas = contarAdversidadesConsecutivas(historico, tempoLentoFator);
+        double score = resolverResilienciaQuestaoBase(adaptacao);
 
         if (acertou(atual)) {
-            score += 0.65d; // TODO CONFIG_ADAPTATIVA: peso de recuperacao correta ainda fixo.
+            score += resolverResilienciaQuestaoBonusAcerto(adaptacao);
         }
 
-        if (!foiMuitoLento(atual, 1.10d)) { // TODO CONFIG_ADAPTATIVA: `tempo_recuperacao_fator` ainda fixo em 1.10.
-            score += 0.15d; // TODO CONFIG_ADAPTATIVA: peso de estabilidade de ritmo ainda fixo.
+        if (!foiMuitoLento(atual, resolverTempoRecuperacaoFator(adaptacao))) {
+            score += resolverResilienciaQuestaoBonusRitmo(adaptacao);
         }
 
-        if (adversidadesConsecutivas >= 2 && acertou(atual)) {
-            score += 0.10d; // TODO CONFIG_ADAPTATIVA: bonus de recuperacao apos adversidade ainda fixo.
+        if (adversidadesConsecutivas >= resolverJanelaRecuperacao(adaptacao) && acertou(atual)) {
+            score += resolverResilienciaQuestaoBonusRecuperacao(adaptacao);
         }
 
         return limitar01(score);
@@ -338,17 +374,36 @@ public class CalculoStats {
     }
 
     public static double calcularNovoRigor(double rigorAtual, double rigorAlvo, double rigorMedioTentado, double taxaAcerto) {
+        return calcularNovoRigor(rigorAtual, rigorAlvo, rigorMedioTentado, taxaAcerto, null);
+    }
+
+    public static double calcularNovoRigor(
+        double rigorAtual,
+        double rigorAlvo,
+        double rigorMedioTentado,
+        double taxaAcerto,
+        ConfiguracaoTesteAdaptativoNivelDto config
+    ) {
         double base = Math.max(rigorAtual, rigorMedioTentado);
-        if (taxaAcerto >= 0.85d) { // TODO CONFIG_ADAPTATIVA: limiar de subida forte ainda fixo.
-            return Math.min(rigorAlvo, base + 0.08d); // TODO CONFIG_ADAPTATIVA: delta de subida forte ainda fixo.
+        double limiarAcertoForte = config == null ? 0.85d : limitar01(config.limiar_acerto());
+        double limiarErroForte = config == null ? 0.35d : limitar01(config.limiar_erro());
+        double limiarAcertoSuave = config == null
+            ? 0.65d
+            : Math.max(limiarErroForte, (limiarAcertoForte + limiarErroForte) / 2d);
+        double piso = config == null
+            ? 0.05d
+            : Math.max(0.05d, limitar01(config.limiteInferior()));
+
+        if (taxaAcerto >= limiarAcertoForte) {
+            return Math.min(rigorAlvo, base + 0.08d);
         }
-        if (taxaAcerto >= 0.65d) { // TODO CONFIG_ADAPTATIVA: limiar de subida suave ainda fixo.
-            return Math.min(rigorAlvo, base + 0.03d); // TODO CONFIG_ADAPTATIVA: delta de subida suave ainda fixo.
+        if (taxaAcerto >= limiarAcertoSuave) {
+            return Math.min(rigorAlvo, base + 0.03d);
         }
-        if (taxaAcerto <= 0.35d) { // TODO CONFIG_ADAPTATIVA: limiar de descida forte ainda fixo.
-            return Math.max(0.05d, Math.min(rigorAtual, rigorMedioTentado) - 0.08d); // TODO CONFIG_ADAPTATIVA: piso e delta de descida forte ainda fixos.
+        if (taxaAcerto <= limiarErroForte) {
+            return Math.max(piso, Math.min(rigorAtual, rigorMedioTentado) - 0.08d);
         }
-        return Math.max(0.05d, Math.min(rigorAtual, rigorMedioTentado) - 0.03d); // TODO CONFIG_ADAPTATIVA: piso e delta de descida suave ainda fixos.
+        return Math.max(piso, Math.min(rigorAtual, rigorMedioTentado) - 0.03d);
     }
 
     public static double limitarRigor(double rigor) {
@@ -416,16 +471,24 @@ public class CalculoStats {
     }
 
     private static double suavizarPorAmostra(double score, int totalAmostras) {
+        return suavizarPorAmostra(score, totalAmostras, resolverAmostrasConfiancaPlena(null));
+    }
+
+    private static double suavizarPorAmostra(double score, int totalAmostras, int amostrasConfiancaPlena) {
         if (totalAmostras <= 0) {
             return 0d;
         }
 
-        double confianca = Math.min(1d, totalAmostras / 5d); // TODO CONFIG_ADAPTATIVA: amostra minima para confianca plena ainda fixa em 5.
+        double confianca = Math.min(1d, totalAmostras / (double) Math.max(1, amostrasConfiancaPlena));
         return limitar01((0.5d * (1d - confianca)) + (limitar01(score) * confianca)); // TODO CONFIG_ADAPTATIVA: blending com score neutro ainda fixo.
     }
 
     private static boolean ehEventoAdverso(ReacaoTeste reacao) {
-        return reacao != null && (!acertou(reacao) || foiMuitoLento(reacao, 1.25d)); // TODO CONFIG_ADAPTATIVA: `tempo_lento_fator` ainda fixo em 1.25.
+        return ehEventoAdverso(reacao, resolverTempoLentoFator(null));
+    }
+
+    private static boolean ehEventoAdverso(ReacaoTeste reacao, double tempoLentoFator) {
+        return reacao != null && (!acertou(reacao) || foiMuitoLento(reacao, tempoLentoFator));
     }
 
     private static boolean foiMuitoLento(ReacaoTeste reacao, double tolerancia) {
@@ -434,6 +497,10 @@ public class CalculoStats {
     }
 
     private static boolean recuperouNasProximasTentativas(List<ReacaoTeste> reacoes, int indiceBase, int alcance) {
+        return recuperouNasProximasTentativas(reacoes, indiceBase, alcance, resolverTempoRecuperacaoFator(null));
+    }
+
+    private static boolean recuperouNasProximasTentativas(List<ReacaoTeste> reacoes, int indiceBase, int alcance, double tempoRecuperacaoFator) {
         int limite = Math.min(reacoes.size() - 1, indiceBase + alcance);
         for (int i = indiceBase + 1; i <= limite; i++) {
             ReacaoTeste proxima = reacoes.get(i);
@@ -441,11 +508,125 @@ public class CalculoStats {
                 continue;
             }
 
-            if (acertou(proxima) && !foiMuitoLento(proxima, 1.10d)) { // TODO CONFIG_ADAPTATIVA: tolerancia de recuperacao ainda fixa em 1.10.
+            if (acertou(proxima) && !foiMuitoLento(proxima, tempoRecuperacaoFator)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static int resolverJanelaConsistencia(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.janelaConsistencia();
+        }
+        if (adaptacao.janelaConsistencia() <= 0) {
+            return PADRAO_V1.janelaConsistencia();
+        }
+        return adaptacao.janelaConsistencia();
+    }
+
+    private static int resolverJanelaRecuperacao(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.janelaRecuperacao();
+        }
+        if (adaptacao.janelaRecuperacao() <= 0) {
+            return PADRAO_V1.janelaRecuperacao();
+        }
+        return adaptacao.janelaRecuperacao();
+    }
+
+    private static int resolverAmostrasConfiancaPlena(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        return Math.max(1, resolverJanelaConsistencia(adaptacao) + resolverJanelaRecuperacao(adaptacao));
+    }
+
+    private static double resolverPesoConsistenciaAcerto(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        double pesoAcerto = adaptacao == null ? PADRAO_V1.pesoConsistenciaAcerto() : adaptacao.pesoConsistenciaAcerto();
+        double pesoRitmo = adaptacao == null ? PADRAO_V1.pesoConsistenciaRitmo() : adaptacao.pesoConsistenciaRitmo();
+        return normalizarPesos(pesoAcerto, pesoRitmo)[0];
+    }
+
+    private static double resolverPesoConsistenciaRitmo(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        double pesoAcerto = adaptacao == null ? PADRAO_V1.pesoConsistenciaAcerto() : adaptacao.pesoConsistenciaAcerto();
+        double pesoRitmo = adaptacao == null ? PADRAO_V1.pesoConsistenciaRitmo() : adaptacao.pesoConsistenciaRitmo();
+        return normalizarPesos(pesoAcerto, pesoRitmo)[1];
+    }
+
+    private static double resolverPesoResilienciaRecuperacao(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        double pesoRecuperacao = adaptacao == null ? PADRAO_V1.pesoResilienciaRecuperacao() : adaptacao.pesoResilienciaRecuperacao();
+        double pesoEstabilidade = adaptacao == null ? PADRAO_V1.pesoResilienciaEstabilidade() : adaptacao.pesoResilienciaEstabilidade();
+        return normalizarPesos(pesoRecuperacao, pesoEstabilidade)[0];
+    }
+
+    private static double resolverPesoResilienciaEstabilidade(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        double pesoRecuperacao = adaptacao == null ? PADRAO_V1.pesoResilienciaRecuperacao() : adaptacao.pesoResilienciaRecuperacao();
+        double pesoEstabilidade = adaptacao == null ? PADRAO_V1.pesoResilienciaEstabilidade() : adaptacao.pesoResilienciaEstabilidade();
+        return normalizarPesos(pesoRecuperacao, pesoEstabilidade)[1];
+    }
+
+    private static double resolverTempoLentoFator(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.tempoLentoFator();
+        }
+        if (adaptacao.tempoLentoFator() <= 0d) {
+            return PADRAO_V1.tempoLentoFator();
+        }
+        return adaptacao.tempoLentoFator();
+    }
+
+    private static double resolverTempoRecuperacaoFator(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.tempoRecuperacaoFator();
+        }
+        if (adaptacao.tempoRecuperacaoFator() <= 0d) {
+            return PADRAO_V1.tempoRecuperacaoFator();
+        }
+        return adaptacao.tempoRecuperacaoFator();
+    }
+
+    private static double resolverResilienciaQuestaoBase(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.resilienciaQuestaoBase();
+        }
+        return Math.max(0d, Math.min(1d, adaptacao.resilienciaQuestaoBase()));
+    }
+
+    private static double resolverResilienciaQuestaoBonusAcerto(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.resilienciaQuestaoBonusAcerto();
+        }
+        return Math.max(0d, Math.min(1d, adaptacao.resilienciaQuestaoBonusAcerto()));
+    }
+
+    private static double resolverResilienciaQuestaoBonusRitmo(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.resilienciaQuestaoBonusRitmo();
+        }
+        return Math.max(0d, Math.min(1d, adaptacao.resilienciaQuestaoBonusRitmo()));
+    }
+
+    private static double resolverResilienciaQuestaoBonusRecuperacao(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.resilienciaQuestaoBonusRecuperacao();
+        }
+        return Math.max(0d, Math.min(1d, adaptacao.resilienciaQuestaoBonusRecuperacao()));
+    }
+
+    private static double resolverBaselineVelocidade(ConfiguracaoDto configuracao) {
+        if (configuracao == null || configuracao.velocidade_segundos_por_percent() == null
+            || configuracao.velocidade_segundos_por_percent() <= 0) {
+            return 120d;
+        }
+        return configuracao.velocidade_segundos_por_percent();
+    }
+
+    private static double[] normalizarPesos(double primeiro, double segundo) {
+        double pesoPrimeiro = Double.isFinite(primeiro) ? Math.max(0d, primeiro) : 0d;
+        double pesoSegundo = Double.isFinite(segundo) ? Math.max(0d, segundo) : 0d;
+        double soma = pesoPrimeiro + pesoSegundo;
+        if (soma <= 0d) {
+            return new double[] { 0.7d, 0.3d };
+        }
+        return new double[] { pesoPrimeiro / soma, pesoSegundo / soma };
     }
 
     private static List<ReacaoTeste> ultimasReacoesValidas(List<ReacaoTeste> historico, int limite) {
@@ -479,6 +660,10 @@ public class CalculoStats {
     }
 
     private static int contarAdversidadesConsecutivas(List<ReacaoTeste> historico) {
+        return contarAdversidadesConsecutivas(historico, resolverTempoLentoFator(null));
+    }
+
+    private static int contarAdversidadesConsecutivas(List<ReacaoTeste> historico, double tempoLentoFator) {
         if (historico == null || historico.isEmpty()) {
             return 0;
         }
@@ -489,7 +674,7 @@ public class CalculoStats {
             if (reacao == null || reacao.questao() == null) {
                 continue;
             }
-            if (!ehEventoAdverso(reacao)) {
+            if (!ehEventoAdverso(reacao, tempoLentoFator)) {
                 break;
             }
             total++;

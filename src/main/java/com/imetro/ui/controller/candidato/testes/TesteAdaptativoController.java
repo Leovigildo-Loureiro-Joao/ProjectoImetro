@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import com.imetro.App;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
-import com.imetro.domain.dto.configuracao.AdaptacaoDto;
+import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
@@ -25,9 +25,10 @@ import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
-import com.imetro.persistence.repository.AdaptacaoRepository;
+import com.imetro.persistence.repository.ConfiguracoesTesteAdaptativoRespository;
 import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.DiagnosticoService;
+import com.imetro.services.DisciplinaService;
 import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
@@ -272,8 +273,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private List<String> disciplinas = List.of();
     private Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
     private ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
-    private AdaptacaoDto adaptacaoDto;
-    private AdaptacaoRepository adaptacaoRepository = new AdaptacaoRepository();
+    private ConfiguracaoTesteAdaptativoDto adaptacaoDto;
+    private ConfiguracoesTesteAdaptativoRespository adaptacaoRepository = new ConfiguracoesTesteAdaptativoRespository();
     private final VBox botoesDisciplinasBox = new VBox(12);
     private final List<Character> respostasUsuario = new ArrayList<>();
     private final List<Long> temposResposta = new ArrayList<>();
@@ -316,11 +317,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     public void initialize() {
         TesteAdaptativoCoordinator.setHost(this);
         testeService=new TesteService();
+        service = new TesteAdaptativoService();
         configurarPainelApoioVisual();
         configurarTrilhoAdaptacao();
         configurarListenerAlternativas();
 
-        service = new TesteAdaptativoService();
         botoesDisciplinasBox.setFillWidth(false);
         botoesDisciplinasBox.setAlignment(Pos.TOP_LEFT);
         disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
@@ -361,13 +362,36 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         if (trilhoDisciplinaCombo == null || trilhoSubtopicoCombo == null) {
             return;
         }
-
+        atualizarTrilhoDisciplinas(carregarDisciplinasTrilho());
         trilhoDisciplinaCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarTrilhoSubtopicos(newValue));
-        trilhoSubtopicoCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarDetalheTrilho(
-            trilhoDisciplinaCombo.getValue(),
-            newValue
-        ));
-        configurarTrilhoAdaptacaoBloqueado("Disponivel depois do primeiro diagnostico real.");
+        trilhoSubtopicoCombo.valueProperty().addListener((obs, oldValue, newValue) ->
+            atualizarDetalheTrilho(
+                trilhoDisciplinaCombo.getValue(),
+                newValue
+            ));
+    }
+
+    private List<String> carregarDisciplinasTrilho() {
+        LinkedHashSet<String> disciplinas = new LinkedHashSet<>();
+
+        if (service != null) {
+            try {
+                disciplinas.addAll(service.carregarDisciplinasDisponiveis());
+            } catch (Exception e) {
+                System.err.println("Erro ao carregar disciplinas do trilho: " + e.getMessage());
+            }
+        }
+
+        if (disciplinas.isEmpty()) {
+            disciplinas.addAll(
+                DisciplinaService.discCategoria().stream()
+                    .map(disciplina -> disciplina.nome())
+                    .filter(nome -> nome != null && !nome.isBlank())
+                    .toList()
+            );
+        }
+
+        return new ArrayList<>(disciplinas);
     }
 
     private void atualizarTrilhoDisciplinas(List<String> disciplinas) {
@@ -1274,8 +1298,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             0d,
             respondidoEm
         );
-        double consistenciaQuestao = CalculoStats.calcularConsistenciaQuestao(reacao, reacaoAtual);
-        double resilienciaQuestao = CalculoStats.calcularResilienciaQuestao(reacao, reacaoAtual);
+        ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
+        double consistenciaQuestao = CalculoStats.calcularConsistenciaQuestao(reacao, reacaoAtual, adaptacao);
+        double resilienciaQuestao = CalculoStats.calcularResilienciaQuestao(reacao, reacaoAtual, adaptacao);
         reacao.add(
             new ReacaoTeste(
                 q,
@@ -1347,7 +1372,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void ajustarNivelAdaptativo(boolean acertou, long tempoResposta) {
-        AdaptacaoDto adaptacao = getAdaptacaoDto();
+        ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
         boolean foiRapido = tempoResposta <= resolverLimiteRapidoMs();
         boolean foiMuitoLento = tempoResposta >= resolverLimiteLentoMs();
 
@@ -1376,12 +1401,13 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void atualizarIndicadoresDesempenhoTempoReal() {
+        ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
         double precisaoAtual = reacao.isEmpty()
             ? 0d
             : CalculoStats.calcularPrecisaoMediaRespostas(reacao) * 100d;
         double consistenciaAtual = reacao.isEmpty()
             ? 0d
-            : CalculoStats.calcularConsistenciaTeste(reacao) * 100d;
+            : CalculoStats.calcularConsistenciaTeste(reacao, adaptacao) * 100d;
         double velocidadeAtual = calcularVelocidadeTempoReal();
 
         aplicarPercentual(nivelAtual23, precisaoAtual);
@@ -1414,7 +1440,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         int totalSegundosInt = totalSegundos > Integer.MAX_VALUE
             ? Integer.MAX_VALUE
             : (int) totalSegundos;
-        return CalculoStats.calcularVelocidade(totalSegundosInt, totalQuestoesRespondidas) * 100d;
+        return CalculoStats.calcularVelocidade(totalSegundosInt, totalQuestoesRespondidas, getConfigCadidato()) * 100d;
     }
 
     private void aplicarPercentual(Label label, double valor) {
@@ -1547,7 +1573,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private String determinarPerfil(double porcentagem, double tempoMedio) {
-        AdaptacaoDto adaptacao = getAdaptacaoDto();
+        ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
         double tempoMedioSegundos = tempoMedio / 1000d;
         if (porcentagem >= 80 && tempoMedioSegundos <= adaptacao.tempAdapt()) return "Estas mais rapido e preciso";
         if (porcentagem >= 80) return "Reduziste a tua velocidade normal porem ainda preciso mas lento";
@@ -1805,26 +1831,26 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         return configCandidato;
     }
 
-    private AdaptacaoDto getAdaptacaoDto(){
+    private ConfiguracaoTesteAdaptativoDto getConfiguracaoTesteAdaptativoDto(){
         if (adaptacaoDto==null) {
             try {
-                this.adaptacaoDto= adaptacaoRepository.findOrCreateByUserId(Authentication.getCurrentUserId());
+                this.adaptacaoDto= adaptacaoRepository.findAtiva();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
         if (adaptacaoDto == null) {
-            adaptacaoDto = AdaptacaoDto.padrao(Authentication.getCurrentUserId());
+            adaptacaoDto = ConfiguracaoTesteAdaptativoDto.padrao(Authentication.getCurrentUserId());
         }
         return adaptacaoDto;
     }
 
     private long resolverLimiteRapidoMs() {
-        return Math.max(1000L, Math.round(getAdaptacaoDto().tempAdapt() * 1000d));
+        return Math.max(1000L, Math.round(getConfiguracaoTesteAdaptativoDto().tempAdapt() * 1000d));
     }
 
     private long resolverLimiteLentoMs() {
-        AdaptacaoDto adaptacao = getAdaptacaoDto();
+        ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
         return Math.max(
             resolverLimiteRapidoMs() + 1000L,
             Math.round(adaptacao.tempAdapt() * adaptacao.tempoLentoFator() * 1000d)

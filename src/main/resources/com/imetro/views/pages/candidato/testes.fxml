@@ -8,6 +8,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -44,66 +46,76 @@
                <!-- TELA DE SELECAO (START) -->
                <VBox fx:id="start" prefHeight="650.0" prefWidth="782.0" spacing="20.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                   <children>
-                     <Label styleClass="h3-thin" text="Selecione uma disciplina para iniciar ou configurar o teste adaptativo" />
-                     <Label styleClass="muted" text="O teste nunca vai dar perguntas fora do escopo que escolheste. Se ainda nao houver perguntas num topico, o sistema mostra isso claramente." wrapText="true" />
-                     <VBox fx:id="trilhoAdaptacaoCard" minHeight="0.0" prefHeight="0.0" prefWidth="956.0" spacing="14.0" styleClass="adaptation-trail-card" visible="false">
-                        <children>
-                           <VBox spacing="5.0">
-                              <children>
-                                 <Label styleClass="h3-thin" text="Trilho de adaptacao" />
-                                 <Label styleClass="muted" text="Escolha um subtopico para ver avancos, quedas e a leitura guiada antes da proxima rodada." wrapText="true" />
-                              </children>
-                           </VBox>
-                           <HBox spacing="12.0">
-                              <children>
-                                 <JFXComboBox fx:id="trilhoDisciplinaCombo" prefHeight="40.0" prefWidth="240.0" promptText="Disciplina" />
-                                 <JFXComboBox fx:id="trilhoSubtopicoCombo" prefHeight="40.0" prefWidth="280.0" promptText="Subtopico" />
-                              </children>
-                           </HBox>
-                           <HBox alignment="CENTER_LEFT" spacing="16.0">
-                              <children>
-                                 <VBox spacing="6.0">
+                     <TabPane prefHeight="709.0" prefWidth="956.0" rotateGraphic="true" tabClosingPolicy="UNAVAILABLE">
+                       <tabs>
+                         <Tab text="Trilho de estudo">
+                           <content>
+                                 <VBox fx:id="trilhoAdaptacaoCard" prefWidth="956.0" spacing="14.0" styleClass="adaptation-trail-card">
                                     <children>
-                                       <Label fx:id="trilhoStatusValue" styleClass="h3-thin" text="Sem selecao" />
-                                       <Label fx:id="trilhoResumoValue" styleClass="muted" text="Selecione uma disciplina e um subtopico para ver o comportamento recente." wrapText="true" />
+                                       <VBox spacing="5.0">
+                                          <children>
+                                             <Label styleClass="h3-thin" text="Trilho de adaptacao" />
+                                             <Label styleClass="muted" text="Escolha um subtopico para ver avancos, quedas e a leitura guiada antes da proxima rodada." wrapText="true" />
+                                          </children>
+                                       </VBox>
+                                       <HBox spacing="12.0">
+                                          <children>
+                                             <JFXComboBox fx:id="trilhoDisciplinaCombo" prefHeight="40.0" prefWidth="240.0" promptText="Disciplina" />
+                                             <JFXComboBox fx:id="trilhoSubtopicoCombo" prefHeight="40.0" prefWidth="280.0" promptText="Subtopico" />
+                                          </children>
+                                       </HBox>
+                                       <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                          <children>
+                                             <VBox spacing="6.0">
+                                                <children>
+                                                   <Label fx:id="trilhoStatusValue" styleClass="h3-thin" text="Sem selecao" />
+                                                   <Label fx:id="trilhoResumoValue" styleClass="muted" text="Selecione uma disciplina e um subtopico para ver o comportamento recente." wrapText="true" />
+                                                </children>
+                                             </VBox>
+                                             <Region prefHeight="36.0" prefWidth="183.0" HBox.hgrow="ALWAYS" />
+                                             <VBox prefHeight="36.0" prefWidth="295.0" spacing="6.0">
+                                                <children>
+                                                   <Label fx:id="trilhoLivroValue" styleClass="question-side-copy" text="Livro: -" wrapText="true" />
+                                                   <Label fx:id="trilhoPaginasValue" styleClass="question-side-copy" text="Paginas: -" wrapText="true" />
+                                                </children>
+                                             </VBox>
+                                          </children>
+                                       </HBox>
+                                       <VBox spacing="8.0">
+                                          <children>
+                                             <HBox spacing="14.0">
+                                                <children>
+                                                   <Label fx:id="trilhoAvancosValue" styleClass="question-side-copy" text="Avancos: 0" />
+                                                   <Label fx:id="trilhoQuedasValue" styleClass="question-side-copy" text="Quedas: 0" />
+                                                   <Label fx:id="trilhoDificuldadeValue" styleClass="question-side-copy" text="Dificuldade media: 0%" />
+                                                </children>
+                                             </HBox>
+                                             <ProgressBar fx:id="trilhoProgressoBar" prefHeight="8.0" prefWidth="740.0" progress="0.0" styleClass="result-trail-progress" />
+                                             <Label fx:id="trilhoProgressoValue" styleClass="question-side-caption" text="Progresso 0% | Rigor atual 0% de 0%" />
+                                          </children>
+                                       </VBox>
                                     </children>
+                                    <padding>
+                                       <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                                    </padding>
                                  </VBox>
-                                 <Region prefHeight="36.0" prefWidth="183.0" HBox.hgrow="ALWAYS" />
-                                 <VBox prefHeight="36.0" prefWidth="295.0" spacing="6.0">
-                                    <children>
-                                       <Label fx:id="trilhoLivroValue" styleClass="question-side-copy" text="Livro: -" wrapText="true" />
-                                       <Label fx:id="trilhoPaginasValue" styleClass="question-side-copy" text="Paginas: -" wrapText="true" />
-                                    </children>
-                                 </VBox>
-                              </children>
-                           </HBox>
-                           <VBox spacing="8.0">
-                              <children>
-                                 <HBox spacing="14.0">
-                                    <children>
-                                       <Label fx:id="trilhoAvancosValue" styleClass="question-side-copy" text="Avancos: 0" />
-                                       <Label fx:id="trilhoQuedasValue" styleClass="question-side-copy" text="Quedas: 0" />
-                                       <Label fx:id="trilhoDificuldadeValue" styleClass="question-side-copy" text="Dificuldade media: 0%" />
-                                    </children>
-                                 </HBox>
-                                 <ProgressBar fx:id="trilhoProgressoBar" prefHeight="8.0" prefWidth="740.0" progress="0.0" styleClass="result-trail-progress" />
-                                 <Label fx:id="trilhoProgressoValue" styleClass="question-side-caption" text="Progresso 0% | Rigor atual 0% de 0%" />
-                              </children>
-                           </VBox>
-                        </children>
-                        <padding>
-                           <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
-                        </padding>
-                     </VBox>
-                     <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="550.0" VBox.vgrow="ALWAYS">
-                        <content>
-                           <VBox fx:id="disciplinasContainer" spacing="16.0">
-                              <padding>
-                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                              </padding>
-                           </VBox>
-                        </content>
-                     </ScrollPane>
+                           </content>
+                         </Tab>
+                         <Tab text="Seus testes">
+                           <content>
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="550.0">
+                                    <content>
+                                       <VBox fx:id="disciplinasContainer" spacing="16.0">
+                                          <padding>
+                                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                          </padding>
+                                       </VBox>
+                                    </content>
+                                 </ScrollPane>
+                           </content>
+                         </Tab>
+                       </tabs>
+                     </TabPane>
                   </children>
                </VBox>
 

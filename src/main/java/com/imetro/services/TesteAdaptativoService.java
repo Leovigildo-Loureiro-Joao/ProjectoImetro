@@ -186,7 +186,9 @@ public class TesteAdaptativoService {
                     String subtopico = normalizarChaveSubtopico(rs.getString("subtopico"), null, null);
                     double rigorAtual = rs.getObject("rigor_atual") instanceof Number number
                         ? Math.max(0d, Math.min(1d, number.doubleValue()))
-                        : 0.12d; // TODO CONFIG_ADAPTATIVA: fallback de rigor atual ainda fixo quando a BD nao devolve valor.
+                        : (rigorBaseFallback == null
+                            ? NivelDificuldadeAdaptativa.padrao().rigorBase()
+                            : Math.max(0d, Math.min(1d, rigorBaseFallback)));
                     if (!subtopico.isBlank()) {
                         rigoresPersistidos.put(subtopico, rigorAtual);
                     }
