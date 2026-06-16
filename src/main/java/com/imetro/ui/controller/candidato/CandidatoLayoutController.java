@@ -165,12 +165,7 @@ public class CandidatoLayoutController implements Initializable {
         Platform.runLater(this::atualizarBannerPlaneamento);
     }
 
-    private void FirstDiagnostic(){
-        UUID candidatoId = Authentication.getCurrentUserId();
-        if (candidatoId != null && !diagnosticoService.temHistoricoDiagnostico(candidatoId)) {
-            navigate("diagnostico");
-        }
-    }
+
 
     private void configureBootstrapBanner() {
         if (bootstrapBanner == null) {
@@ -241,13 +236,6 @@ public class CandidatoLayoutController implements Initializable {
     }
 
     private void configureTopBar() {
-        if (sidebarLogo != null) {
-            Image logo = loadSidebarLogo();
-            if (logo != null) {
-                sidebarLogo.setImage(logo);
-            }
-        }
-
         updateTopBarAvatar();
     }
 
@@ -383,17 +371,6 @@ public class CandidatoLayoutController implements Initializable {
         }
     }
 
-    private Image loadSidebarLogo() {
-        return loadImage("/com/imetro/assets/imgs/icone_solid.png");
-    }
-
-    private Image loadImage(String resourcePath) {
-        URL resource = App.class.getResource(resourcePath);
-        if (resource == null) {
-            return null;
-        }
-        return new Image(resource.toExternalForm());
-    }
 
     private void updateTopBarAvatar() {
         if (topbarAvatarImage == null && topbarAvatarInitialsLabel == null) {

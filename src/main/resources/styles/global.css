@@ -38,7 +38,7 @@
 }
 /* ==================== FUNDO ==================== */
 .root, .page, .content {
-    -fx-background-color: -color-bg;
+    -fx-background-color: transparent;
 }
 
 /* ==================== CARDS ==================== */
@@ -533,12 +533,12 @@
 }
 
 .loading-progress {
-    -fx-progress-color: #2563eb;
+    -fx-progress-color: #eb8525;
 }
 
 /* ==================== CIRCLE PROGRESS ==================== */
 .circle-progress {
-    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.14), 8, 0.1, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(235, 133, 37, 0.14), 8, 0.1, 0, 4);
 }
 
 .arc-background {
@@ -546,7 +546,7 @@
 }
 
 .arc-progress {
-    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.28), 6, 0.2, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(235, 133, 37, 0.28), 6, 0.2, 0, 2);
 }
 
 .percent-label {
@@ -562,20 +562,20 @@
 
 /* ==================== PROGRESSBAR VARIAÇÕES ==================== */
 .progress-bar-green .bar {
-    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
+    -fx-background-color: linear-gradient(to right, #d8711d, #eb7e25, #f6953b);
 }
 
 .progress-bar-orange .bar {
-    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
+    -fx-background-color: linear-gradient(to right, #d8811d, #eb8525, #f6953b);
 }
 
 .progress-bar-purple .bar {
-    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
+    -fx-background-color: linear-gradient(to right, #d8771d, #eb8525, #f6953b);
 }
 
 /* ==================== MISC ==================== */
 .shadow {
-    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.11), 28, 0.16, 0, 12);
+    -fx-effect: dropshadow(gaussian, rgba(42, 30, 15, 0.11), 28, 0.16, 0, 12);
 }
 
 .desc-text {
@@ -665,7 +665,7 @@
 }
 
 .loading-progress-bar .bar {
-    -fx-background-color: linear-gradient(to right, #1d4ed8, #2563eb, #3b82f6);
+    -fx-background-color: linear-gradient(to right, #d8771d, #eb8f25, #f69f3b);
     -fx-background-radius: 4;
 }
 

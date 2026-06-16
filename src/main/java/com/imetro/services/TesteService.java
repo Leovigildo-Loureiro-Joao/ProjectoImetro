@@ -430,7 +430,7 @@ public class TesteService {
                     int totalErros = Math.max(0, totalQuestoes - totalAcertos);
                     double tempoMedioSegundos = totalQuestoes == 0 ? 0d : totalSeg / (double) totalQuestoes;
                     double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
-                    String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+                    String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto,true);
                     double precisao = CalculoStats.calcularPrecisaoMediaRespostas(reacoesDisciplina);
                     double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina, adaptacaoUsuario);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
@@ -593,7 +593,7 @@ public class TesteService {
         int totalErros = Math.max(0, totalQuestoes - totalAcertos);
         double tempoMedioSegundos = totalQuestoes == 0 ? 0d : totalSeg / (double) totalQuestoes;
         double percentualAcerto = totalQuestoes == 0 ? 0d : (totalAcertos * 100.0) / totalQuestoes;
-        String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+        String nivelFinal = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto,true);
         double precisao = CalculoStats.calcularPrecisaoMediaRespostas(reacoesDisciplina);
         double consistencia = CalculoStats.calcularConsistenciaTeste(reacoesDisciplina, adaptacaoUsuario);
         double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
@@ -865,7 +865,8 @@ public class TesteService {
                 precisaRevisao,
                 progresso == null ? null : progresso.recomendacaoLivro(),
                 progresso == null ? null : progresso.recomendacaoPaginas(),
-                observacao
+                observacao,
+                progresso != null
             ));
         }
 

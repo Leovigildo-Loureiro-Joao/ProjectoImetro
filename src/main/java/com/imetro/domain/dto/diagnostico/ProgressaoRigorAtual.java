@@ -6,7 +6,7 @@ public record ProgressaoRigorAtual(
     UUID id,
     double rigorAtual,
     double rigorAlvo,
-    int tentativasNoNivel,
+    int tentativasNoNivel,  
     int acertosConsecutivos,
     int errosConsecutivos
 ) {

@@ -1,7 +1,11 @@
 package com.imetro.persistence.repository;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.imetro.util.CalculoStats;
@@ -98,4 +102,13 @@ public class ProgressaoRigorRepository extends JdbcBasicSqlRepository{
         }
     }
 
+    public List<Map<String,Object>> findByCandidato(UUID candidato) throws SQLException{
+         String sql = "select * from progressao_rigor where aluno_id=?";
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1,candidato);
+            ResultSet rs = stmt.executeQuery()
+            return readAllRows(rs);
+        }
+    }
 }

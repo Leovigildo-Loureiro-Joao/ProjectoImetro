@@ -965,7 +965,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         if (bancoQuestoes.isEmpty()) {
             bancoQuestoes = diagnosticoService.carregarQuestoesReais();
         }
-        questoes = aplicarConfiguracaoAoBanco(Reorganizar(bancoQuestoes));
+        questoes = aplicarConfiguracaoAoBanco(bancoQuestoes);
         totalQuestoes = questoes.size();
         resetarEstadoDiagnostico();
     }
@@ -978,7 +978,7 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         for (String subtop : subtopicos) {
             List<Questao>  resultTemp=base.stream().filter(q -> q.getSubtopico().equals(subtop)).toList();
             Set<Integer> valueSet=new HashSet<>();
-            while (valueSet.size()<2 &&  valueSet.size()<resultTemp.size()) {
+            while (valueSet.size()<6 &&  valueSet.size()<resultTemp.size()) {
                 valueSet.add(new Random().nextInt(0, resultTemp.size()));
             }
             for (Integer res : valueSet) {
@@ -997,7 +997,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         DiagnosticoCoordinator.DiagnosticoConfig config = DiagnosticoCoordinator.getConfiguracaoAtual();
 
         if (config == null) {
-            return base;
+            String topico= planeamentoService.gerarResumo().focoAtual().trim().split("·")[1].toLowerCase();
+            return base.stream().filter(filt -> filt.getSubtopico().toLowerCase().contains(topico.trim())).toList();
         }
         List<Questao> filtradas = List.of();
         int limite=0;

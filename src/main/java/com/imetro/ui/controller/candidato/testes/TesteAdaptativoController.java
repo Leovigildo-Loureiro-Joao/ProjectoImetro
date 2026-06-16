@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,21 +21,27 @@ import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDto;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
+import com.imetro.domain.dto.stats.Stats;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
+import com.imetro.domain.dto.test.TrilhoDTO;
 import com.imetro.domain.enums.NivelDificuldadeAdaptativa;
+import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.persistence.repository.ConfiguracoesTesteAdaptativoRespository;
 import com.imetro.persistence.repository.ConfiguracoesRepository;
+import com.imetro.services.CandidatoService;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.services.TesteAdaptativoService;
 import com.imetro.services.TesteService;
 import com.imetro.services.TesteService.ResumoHistoricoDisciplina;
+import com.imetro.ui.components.CircleProgress;
 import com.imetro.ui.components.PlanoCartesianoPane;
 import com.imetro.ui.components.TesteCard;
+import com.imetro.ui.components.testes.TrilhoCard;
 import com.imetro.ui.controller.candidato.resultados.ResultadoAvaliacaoController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.model.Questao;
@@ -123,10 +130,19 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private JFXButton btnConfirmar;
 
     @FXML
+    private JFXButton btnPausa;
+
+    @FXML
     private JFXButton btnProximo;
 
     @FXML
-    private JFXButton btnPausa;
+    private Label continua;
+
+    @FXML
+    private Label desafui;
+
+    @FXML
+    private Label dica_estudo;
 
     @FXML
     private Label dificuldadeAtual;
@@ -147,6 +163,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private Label feedbackMessage;
 
     @FXML
+    private StackPane graficoPane;
+
+    @FXML
     private Label loadingMessage;
 
     @FXML
@@ -156,10 +175,16 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private ProgressBar loadingProgress;
 
     @FXML
+    private Label media_acerto;
+
+    @FXML
     private StackPane modalPai;
 
     @FXML
     private Label nPergunta;
+
+    @FXML
+    private Label next_level;
 
     @FXML
     private Label nivelAtual;
@@ -189,7 +214,19 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private Label nomeDisc;
 
     @FXML
+    private Label percent_test;
+
+    @FXML
     private Label planHintLabel;
+
+    @FXML
+    private ProgressBar progress;
+
+    @FXML
+    private Label progressText;
+
+    @FXML
+    private StackPane progresso;
 
     @FXML
     private ProgressBar questionProgressBar;
@@ -207,10 +244,10 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private VBox testeContainer;
 
     @FXML
-    private StackPane graficoPane;
+    private AnchorPane testeField;
 
     @FXML
-    private AnchorPane testeField;
+    private Label teste_realizado;
 
     @FXML
     private JFXToggleNode toggleA;
@@ -234,41 +271,15 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private JFXToggleNode toggleG;
 
     @FXML
+    private VBox trilho;
+
+    @FXML
     private VBox trilhoAdaptacaoCard;
-
-    @FXML
-    private Label trilhoAvancosValue;
-
-    @FXML
-    private Label trilhoDificuldadeValue;
 
     @FXML
     private JFXComboBox<String> trilhoDisciplinaCombo;
 
-    @FXML
-    private Label trilhoLivroValue;
-
-    @FXML
-    private Label trilhoPaginasValue;
-
-    @FXML
-    private ProgressBar trilhoProgressoBar;
-
-    @FXML
-    private Label trilhoProgressoValue;
-
-    @FXML
-    private Label trilhoQuedasValue;
-
-    @FXML
-    private Label trilhoResumoValue;
-
-    @FXML
-    private Label trilhoStatusValue;
-
-    @FXML
-    private JFXComboBox<String> trilhoSubtopicoCombo;
-
+    private double PROGRESSO_TARGET = 0d;
     private ConfiguracaoDto configCandidato;
     private List<String> disciplinas = List.of();
     private Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
@@ -306,6 +317,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private ModalController cont;
     private TesteService testeService;
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
+    private final CandidatoService candidatoService = new CandidatoService();
+
     private HBox linhaQuestaoPane;
     private VBox textoQuestaoPane;
     private VBox apoioVisualBox;
@@ -343,6 +356,43 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         atualizarEstadoBotaoPausa();
         atualizarIndicadoresNivel();
         Platform.runLater(this::atualizarEstadoPlanejamento);
+
+
+        if (progresso != null) {
+            Stats stats = candidatoService.CalcularStats();
+            double VELOCIDADE_TARGET = stats.velocidade();
+            double LOGICA_TARGET = stats.logica();
+            double PRECISAO_TARGET = stats.precisao();
+            double RESILIENCIA_TARGET = stats.resiliencia();
+            double CONSISTENCIA_TARGET = stats.consistencia();
+            PROGRESSO_TARGET = (VELOCIDADE_TARGET + LOGICA_TARGET + PRECISAO_TARGET + RESILIENCIA_TARGET + CONSISTENCIA_TARGET) / 5.0;
+            progresso.getChildren().clear();
+            CircleProgress circleProgress = new CircleProgress(50, 50);
+            circleProgress.setValue(PROGRESSO_TARGET);
+            next_level.setText(resolveLevel(PROGRESSO_TARGET));
+
+            progresso.getChildren().add(circleProgress);
+        }
+    }
+
+     private String resolveLevel(double media) {
+        double percentual = clamp(media * 100d, 0d, 100d);
+        if (percentual < 35d) {
+            return NivelDisciplina.INICIANTE.getDescricao().toUpperCase();
+        }
+        if (percentual < 70d) {
+            return NivelDisciplina.INTERMEDIARIO.getDescricao().toUpperCase();
+        }
+        return NivelDisciplina.AVANCADO.getDescricao().toUpperCase();
+    }
+
+    private void CarregarDataTrilho(){
+        var plano = planeamentoService.gerarResumo();
+        desafui.setText("Faça um teste adaptativo sobre "+plano.focoAtual()+"para reforcar seu aprendizado");
+    }
+
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private void atualizarEstadoPlanejamento() {
@@ -359,16 +409,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void configurarTrilhoAdaptacao() {
-        if (trilhoDisciplinaCombo == null || trilhoSubtopicoCombo == null) {
+        if (trilhoDisciplinaCombo == null) {
             return;
         }
         atualizarTrilhoDisciplinas(carregarDisciplinasTrilho());
-        trilhoDisciplinaCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarTrilhoSubtopicos(newValue));
-        trilhoSubtopicoCombo.valueProperty().addListener((obs, oldValue, newValue) ->
-            atualizarDetalheTrilho(
-                trilhoDisciplinaCombo.getValue(),
-                newValue
-            ));
+        trilhoDisciplinaCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarTrilhoDisciplina(newValue));
+
     }
 
     private List<String> carregarDisciplinasTrilho() {
@@ -383,144 +429,56 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }
 
         if (disciplinas.isEmpty()) {
-            disciplinas.addAll(
-                DisciplinaService.discCategoria().stream()
-                    .map(disciplina -> disciplina.nome())
-                    .filter(nome -> nome != null && !nome.isBlank())
-                    .toList()
-            );
+            try {
+                disciplinas.addAll(
+                    DisciplinaService.getProgressoDisciplinasCandidato().stream()
+                        .map(disciplina -> disciplina.disciplina())
+                        .filter(nome -> nome != null && !nome.isBlank())
+                        .toList()
+                );
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 
         return new ArrayList<>(disciplinas);
     }
 
     private void atualizarTrilhoDisciplinas(List<String> disciplinas) {
-        if (trilhoDisciplinaCombo == null || trilhoSubtopicoCombo == null) {
+        if (trilhoDisciplinaCombo == null) {
             return;
         }
 
         trilhoAdaptacaoCache.clear();
         trilhoDisciplinaCombo.getItems().setAll(disciplinas == null ? List.of() : disciplinas);
         trilhoDisciplinaCombo.setDisable(disciplinas == null || disciplinas.isEmpty());
-        trilhoSubtopicoCombo.setDisable(true);
-
-        if (disciplinas == null || disciplinas.isEmpty()) {
-            resetarTrilhoDetalhe("Sem trilho disponivel", "Ainda nao encontramos progresso adaptativo por subtópico.");
-            return;
-        }
-
         trilhoDisciplinaCombo.getSelectionModel().selectFirst();
-        atualizarTrilhoSubtopicos(trilhoDisciplinaCombo.getValue());
+        atualizarTrilhoDisciplina(disciplinaSelecionada);
     }
 
-    private void atualizarTrilhoSubtopicos(String disciplina) {
-        if (trilhoSubtopicoCombo == null) {
-            return;
-        }
-        if (disciplina == null || disciplina.isBlank()) {
-            trilhoSubtopicoCombo.getItems().clear();
-            trilhoSubtopicoCombo.setDisable(true);
-            resetarTrilhoDetalhe("Sem selecao", "Escolha uma disciplina para abrir o trilho.");
+
+    private void atualizarTrilhoDisciplina(String disciplinaSelecionada) {
+        if (trilhoDisciplinaCombo == null) {
             return;
         }
 
-        List<TrilhaAdaptacaoSubtopico> itens = trilhoAdaptacaoCache.computeIfAbsent(
-            disciplina,
-            testeService::carregarTrilhaAdaptacao
-        );
-
-        if (itens.isEmpty()) {
-            trilhoSubtopicoCombo.getItems().clear();
-            trilhoSubtopicoCombo.setDisable(true);
-            resetarTrilhoDetalhe("Sem dados", "Esta disciplina ainda nao tem trilho suficiente por subtópico.");
+        trilhoAdaptacaoCache.clear();
+        List <TrilhaAdaptacaoSubtopico> trilhoSubtopico=testeService.carregarTrilhaAdaptacao(disciplinaSelecionada);
+        trilho.getChildren().clear();
+        int o = 0;
+        if(trilhoSubtopico.isEmpty())
             return;
-        }
-
-        trilhoSubtopicoCombo.getItems().setAll(itens.stream().map(TrilhaAdaptacaoSubtopico::subtopico).toList());
-        trilhoSubtopicoCombo.setDisable(false);
-        trilhoSubtopicoCombo.getSelectionModel().selectFirst();
-        atualizarDetalheTrilho(disciplina, trilhoSubtopicoCombo.getValue());
-    }
-
-    private void atualizarDetalheTrilho(String disciplina, String subtopico) {
-        if (disciplina == null || disciplina.isBlank() || subtopico == null || subtopico.isBlank()) {
-            resetarTrilhoDetalhe("Sem selecao", "Escolha um subtópico para ver a leitura guiada.");
-            return;
-        }
-
-        List<TrilhaAdaptacaoSubtopico> itens = trilhoAdaptacaoCache.getOrDefault(disciplina, List.of());
-        TrilhaAdaptacaoSubtopico item = itens.stream()
-            .filter(valor -> subtopico.equalsIgnoreCase(valor.subtopico()))
-            .findFirst()
-            .orElse(null);
-
-        if (item == null) {
-            resetarTrilhoDetalhe("Sem dados", "Nao encontramos detalhes para este subtópico.");
-            return;
-        }
-
-        trilhoStatusValue.setText(item.precisaRevisao() ? "Revisao recomendada" : "Em adaptacao");
-        trilhoResumoValue.setText(item.observacao());
-        trilhoLivroValue.setText("Livro: " + firstNonBlank(item.recomendacaoLivro(), "Sem livro definido"));
-        trilhoPaginasValue.setText("Paginas: " + firstNonBlank(item.recomendacaoPaginas(), "Paginas por definir"));
-        trilhoAvancosValue.setText("Avancos: " + item.avancosRecentes());
-        trilhoQuedasValue.setText("Quedas: " + item.quedasRecentes());
-        trilhoDificuldadeValue.setText("Dificuldade media: " + Math.round(item.dificuldadeMediaPercentual()) + "%");
-        trilhoProgressoBar.setProgress(QuestaoUtil.limitarPercentual(item.progressoPercentual()));
-        trilhoProgressoValue.setText(String.format(
-            java.util.Locale.ROOT,
-            "Progresso %.0f%% | Rigor atual %.0f%% de %.0f%%",
-            item.progressoPercentual(),
-            item.rigorAtualPercentual(),
-            item.rigorAlvoPercentual()
-        ));
-    }
-
-    private void configurarTrilhoAdaptacaoBloqueado(String mensagem) {
-        if (trilhoDisciplinaCombo != null) {
-            trilhoDisciplinaCombo.getItems().clear();
-            trilhoDisciplinaCombo.setDisable(true);
-        }
-        if (trilhoSubtopicoCombo != null) {
-            trilhoSubtopicoCombo.getItems().clear();
-            trilhoSubtopicoCombo.setDisable(true);
-        }
-        resetarTrilhoDetalhe("Trilho bloqueado", mensagem);
-    }
-
-    private void resetarTrilhoDetalhe(String status, String resumo) {
-        if (trilhoStatusValue != null) {
-            trilhoStatusValue.setText(status);
-        }
-        if (trilhoResumoValue != null) {
-            trilhoResumoValue.setText(resumo);
-        }
-        if (trilhoLivroValue != null) {
-            trilhoLivroValue.setText("Livro: -");
-        }
-        if (trilhoPaginasValue != null) {
-            trilhoPaginasValue.setText("Paginas: -");
-        }
-        if (trilhoAvancosValue != null) {
-            trilhoAvancosValue.setText("Avancos: 0");
-        }
-        if (trilhoQuedasValue != null) {
-            trilhoQuedasValue.setText("Quedas: 0");
-        }
-        if (trilhoDificuldadeValue != null) {
-            trilhoDificuldadeValue.setText("Dificuldade media: 0%");
-        }
-        if (trilhoProgressoBar != null) {
-            trilhoProgressoBar.setProgress(0);
-        }
-        if (trilhoProgressoValue != null) {
-            trilhoProgressoValue.setText("Progresso 0% | Rigor atual 0% de 0%");
+        for (TrilhaAdaptacaoSubtopico trilhoBruto :
+            trilhoSubtopico.stream().sorted((tri1, tri2) ->
+            Double.compare( tri2.progressoPercentual(),tri1.progressoPercentual())).toList()) {
+            o++;
+            trilho.getChildren().add(new TrilhoCard(new TrilhoDTO(o, trilhoBruto)));
         }
     }
+
 
     private void carregarBloqueioPrimeiroDiagnostico() {
         botoesDisciplinasBox.getChildren().clear();
-        configurarTrilhoAdaptacaoBloqueado("Fica disponivel depois do primeiro diagnostico concluido.");
 
         Label badge = new Label("Fluxo inicial");
         badge.getStyleClass().add("diagnostico-first-badge");
@@ -1878,5 +1836,20 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             cronometro.stop();
         }
         abrirMenuPausa();
+    }
+
+    @FXML
+    void Continuar(ActionEvent event) {
+
+    }
+
+    @FXML
+    void Fazer_Teste(ActionEvent event) {
+
+    }
+
+    @FXML
+    void Ver_Livros(ActionEvent event) {
+
     }
 }

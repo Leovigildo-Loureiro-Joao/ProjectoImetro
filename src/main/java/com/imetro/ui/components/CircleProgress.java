@@ -38,9 +38,9 @@ public class CircleProgress extends Group {
     private Timeline animationTimeline;
 
     // Propriedades para customização
-    private ObjectProperty<Color> progressColor = new SimpleObjectProperty<>(Color.web("#3b82f6"));
-    private ObjectProperty<Color> backgroundColor = new SimpleObjectProperty<>(Color.web("#e5e7eb"));
-    private ObjectProperty<Color> textColor = new SimpleObjectProperty<>(Color.web("#1d4ed8"));
+    private ObjectProperty<Color> progressColor = new SimpleObjectProperty<>(Color.web("#f68f3b"));
+    private ObjectProperty<Color> backgroundColor = new SimpleObjectProperty<>(Color.web("#fcdcb2"));
+    private ObjectProperty<Color> textColor = new SimpleObjectProperty<>(Color.web("#d8711d"));
 
     private static final PseudoClass PSEUDO_CLASS_DETERMINATE =
           PseudoClass.getPseudoClass("determinate");
@@ -121,9 +121,9 @@ public class CircleProgress extends Group {
         // Gradiente para o arco de progresso
         LinearGradient gradient = new LinearGradient(
             0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
-            new Stop(0, Color.web("#93c5fd")),
-            new Stop(0.5, Color.web("#3b82f6")),
-            new Stop(1, Color.web("#2563eb"))
+            new Stop(0, Color.web("#fdf9f6")),
+            new Stop(0.5, Color.web("#f69f3b")),
+            new Stop(1, Color.web("#eb7e25"))
         );
         progressArc.setStroke(gradient);
     }
@@ -132,22 +132,22 @@ public class CircleProgress extends Group {
         if (progressValue > 0.8) {
             // Azul forte para >80%
             LinearGradient gradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
-                new Stop(0, Color.web("#60a5fa")),
-                new Stop(1, Color.web("#2563eb"))
+                new Stop(0, Color.web("#faaa60")),
+                new Stop(1, Color.web("#eb8525"))
             );
             progressArc.setStroke(gradient);
         } else if (progressValue > 0.5) {
             // Azul medio para 50-80%
             LinearGradient gradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
-                new Stop(0, Color.web("#93c5fd")),
-                new Stop(1, Color.web("#3b82f6"))
+                new Stop(0, Color.web("#fdcb93")),
+                new Stop(1, Color.web("#f6953b"))
             );
             progressArc.setStroke(gradient);
         } else {
             // Âmbar para <50%
             LinearGradient gradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
-                new Stop(0, Color.web("#bfdbfe")),
-                new Stop(1, Color.web("#60a5fa"))
+                new Stop(0, Color.web("#feddbf")),
+                new Stop(1, Color.web("#fab260"))
             );
             progressArc.setStroke(gradient);
         }
@@ -235,11 +235,11 @@ public class CircleProgress extends Group {
 
             // Atualizar cor baseada no percentual
             if (percentValue >= 80) {
-                percentLabel.setStyle("-fx-text-fill: #2563eb;");
+                percentLabel.setStyle("-fx-text-fill: #b9711f;");
             } else if (percentValue >= 50) {
-                percentLabel.setStyle("-fx-text-fill: #3b82f6;");
+                percentLabel.setStyle("-fx-text-fill: #b66727;");
             } else {
-                percentLabel.setStyle("-fx-text-fill: #60a5fa;");
+                percentLabel.setStyle("-fx-text-fill: #a16725;");
             }
         }
     }

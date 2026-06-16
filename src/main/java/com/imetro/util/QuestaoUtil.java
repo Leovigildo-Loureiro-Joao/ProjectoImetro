@@ -134,17 +134,17 @@ public class QuestaoUtil {
         return UUID.nameUUIDFromBytes(("disciplina:" + disciplinaNormalizada).getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String resolverNivelDiagnostico(double percentualAcerto) {
+    public static String resolverNivelDiagnostico(double percentualAcerto, boolean tipo) {
         if (percentualAcerto >= 85d) {
             return "EXPERT";
         }
         if (percentualAcerto >= 65d) {
-            return "AVANCADO";
+            return tipo?"AVANCADO":"DIFICIL" ;
         }
         if (percentualAcerto >= 40d) {
-            return "INTERMEDIARIO";
+            return tipo?"INTERMEDIARIO":"MEDIO";
         }
-        return "INICIANTE";
+        return tipo?"INICIANTE":"FACIL";
     }
 
     public static String construirJsonRespostas(

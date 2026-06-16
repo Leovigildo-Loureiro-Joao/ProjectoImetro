@@ -675,7 +675,7 @@ public class DiagnosticoService {
                     Double ultimoPercentual = diagnosticoRepository.buscarUltimoPercentualDiagnostico(conn, candidatoId, disciplinaId, nomeDisciplina);
 
                     Double evolucao = ultimoPercentual == null ? null : percentualAcerto - ultimoPercentual;
-                    String nivel = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto);
+                    String nivel = QuestaoUtil.resolverNivelDiagnostico(percentualAcerto,true);
                     double precisao = CalculoStats.calcularPrecisaoMedia(indices, questoes, respostasUsuario);
                     double consistencia = CalculoStats.calcularConsistencia(ultimoPercentual, percentualAcerto);
                     double logica = CalculoStats.calcularLogica(indices, questoes, respostasUsuario);
@@ -695,7 +695,7 @@ public class DiagnosticoService {
                         totalErros,
                         percentualAcerto,
                         evolucao,
-                        nivel,
+                        QuestaoUtil.resolverNivelDiagnostico(percentualAcerto,false),
                         velocidade,
                         precisao,
                         logica,
@@ -727,7 +727,7 @@ public class DiagnosticoService {
                         indices,
                         questoes,
                         respostasUsuario,
-                        nivel
+                        QuestaoUtil.resolverNivelDiagnostico(percentualAcerto,false)
                     );
                 }
 
@@ -808,7 +808,7 @@ public class DiagnosticoService {
             porTopico.computeIfAbsent(questao.getSubtopico(), ignored -> new ArrayList<>())
                 .add(new QuestaoRigorResultado(questao, acertou));
         }
-
+        System.out.println(codigo);
         ConfiguracaoTesteAdaptativoNivelDto config=configTesteAdaptNiv.findByCodigo(codigo);
 
         for (Map.Entry<String, ArrayList<QuestaoRigorResultado>> entry : porTopico.entrySet()) {

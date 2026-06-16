@@ -12,6 +12,7 @@ public record TrilhaAdaptacaoSubtopico(
     boolean precisaRevisao,
     String recomendacaoLivro,
     String recomendacaoPaginas,
-    String observacao
+    String observacao,
+    boolean existis
 ) {
 }
