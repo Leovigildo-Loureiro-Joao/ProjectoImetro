@@ -71,6 +71,21 @@ public class DisciplinaService {
         return suportadas;
     }
 
+    public static List<String> DisciplinaCandidato(){
+        List<String> disc= new ArrayList<>();
+        ArrayList<DisciplinaDto> disciplinas = carregarDisciplinasPersistidas();
+        for (DisciplinaDto disciplinaDto : disciplinas) {
+            try {
+                progressoRepository.getDto(Authentication.getCurrentUserId(), disciplinaDto.id()).disciplina();
+                disc.add(disciplinaDto.nome());
+            } catch (Exception e) {
+
+            }
+
+        }
+        return disc;
+    }
+
     public static String findByNomeIdSearch(UUID id){
         return discCategoria().stream()
             .filter(disciplina -> disciplina.id() != null && disciplina.id().equals(id))

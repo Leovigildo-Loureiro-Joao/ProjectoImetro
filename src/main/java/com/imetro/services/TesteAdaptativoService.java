@@ -28,7 +28,6 @@ public class TesteAdaptativoService {
     }
 
     public List<String> carregarDisciplinasDisponiveis() {
-        diagnosticoService.agendarSincronizacaoSeNecessario(Authentication.getCurrentUserId());
         return diagnosticoService.carregarQuestoesReais().stream()
             .map(Questao::getDisciplina)
             .filter(disciplina -> disciplina != null && !disciplina.isBlank())

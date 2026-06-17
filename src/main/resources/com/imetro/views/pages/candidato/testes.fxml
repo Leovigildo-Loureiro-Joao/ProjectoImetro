@@ -187,7 +187,7 @@
                                                             </padding>
                                                          </VBox>
                                                       </children></HBox>
-                                                   <VBox minHeight="268.0" prefHeight="326.0" prefWidth="469.0" styleClass="card-blur" VBox.vgrow="ALWAYS">
+                                                   <VBox minHeight="268.0" prefHeight="381.0" prefWidth="469.0" styleClass="card-blur" VBox.vgrow="ALWAYS">
                                                       <children>
                                                          <Label style="-fx-font-size: 14; -fx-font-weight: 800;" text="Proximo passos do trilho" />
                                                          <VBox prefHeight="238.0" prefWidth="378.0" spacing="20.0">

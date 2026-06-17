@@ -3,6 +3,7 @@ package com.imetro.services;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.imetro.config.RuntimeConfig;
+import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.diagnostico.DiagnosticoDisciplinaResumo;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
@@ -34,8 +36,12 @@ import com.imetro.domain.dto.planejamento.PlaneamentoEstudoRegistro;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
+import com.imetro.domain.enums.Foco;
 import com.imetro.persistence.repository.PlaneamentoEstudoRepository;
 import com.imetro.persistence.repository.TesteRepository;
+import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator;
+import com.imetro.ui.modals.FluxoModalContext;
 import com.imetro.util.Authentication;
 import com.imetro.util.ParseTimeStampLocalDate;
 import com.imetro.util.QuestaoUtil;
@@ -48,20 +54,16 @@ public class  PlaneamentoEstudoService {
 
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final TesteRepository testeRepository = new TesteRepository();
+    private Map<String, Double> progressoPorSubtopico = Map.of();
     private final PlaneamentoEstudoRepository planeamentoRepository = new PlaneamentoEstudoRepository();
 
     public PlaneamentoEstudoResumo gerarResumo(UUID candidatoId) {
-        if (candidatoId == null || !RuntimeConfig.isDbEnabled()) {
-            return resumoFallback();
-        }
+
 
         List<ProgressoAlunoDisciplinaDto> progressos = DisciplinaService.getProgressoDisciplinasCandidatoSafe();
         List<DiagnosticoDisciplinaResumo> diagnosticos = carregarDiagnosticosSeguros(candidatoId);
         List<Map<String, Object>> testesRows = carregarTestesSeguros(candidatoId);
 
-        if (progressos.isEmpty() && diagnosticos.isEmpty() && testesRows.isEmpty()) {
-            return resumoFallback();
-        }
 
         Map<String, DisciplinaDto> disciplinasBase = DisciplinaService.discCategoria().stream()
             .collect(Collectors.toMap(
@@ -114,9 +116,6 @@ public class  PlaneamentoEstudoService {
             .sorted(Comparator.comparingDouble(PlaneamentoEstudoDisciplina::prioridade).reversed())
             .toList();
 
-        if (disciplinas.isEmpty()) {
-            return resumoFallback();
-        }
 
         PlaneamentoEstudoDisciplina foco = disciplinas.getFirst();
         PlaneamentoEstudoDisciplina segundo = disciplinas.size() > 1 ? disciplinas.get(1) : foco;
@@ -126,6 +125,9 @@ public class  PlaneamentoEstudoService {
         String acertoMedio = formatarPercentual(calcularMedia(disciplinas.stream().mapToDouble(PlaneamentoEstudoDisciplina::precisao).boxed().toList()));
         String ritmoMedio = formatarTempoMedio(testesRows);
         String consistenciaMedia = classificarConsistencia(calcularMedia(disciplinas.stream().mapToDouble(PlaneamentoEstudoDisciplina::consistencia).boxed().toList()));
+        String focoPrincipal = montarFocoPrincipal(foco);
+        String focoSecundario = montarFocoPrincipal(segundo);
+
         String focoAtual = montarFocoAtual(foco);
         String focoAtual2 = montarFocoAtual(segundo);
 
@@ -140,6 +142,8 @@ public class  PlaneamentoEstudoService {
             acertoMedio,
             ritmoMedio,
             consistenciaMedia,
+            focoPrincipal,
+            focoSecundario,
             focoAtual,
             focoAtual2,
             insights,
@@ -161,7 +165,7 @@ public class  PlaneamentoEstudoService {
             return false;
         }
 
-        if (!RuntimeConfig.isDbEnabled()) {   
+        if (!RuntimeConfig.isDbEnabled()) {
             return true;
         }
 
@@ -438,45 +442,6 @@ return List.of(
         return evolucao;
     }
 
-    private PlaneamentoEstudoResumo resumoFallback() {
-        return new PlaneamentoEstudoResumo(
-            81d,
-            "O sistema ainda nao tem base suficiente para um plano personalizado completo, mas já deixa a rotina organizada com blocos curtos e revisão espaçada.",
-            "84%",
-            "42 s",
-            "Alta",
-            "Matemática · Álgebra",
-            "Sem foco secundario",
-            List.of(
-                new PlaneamentoEstudoInsight("Primeiro passo", "Começa com blocos curtos e foco numa unica area para reduzir dispersao."),
-                new PlaneamentoEstudoInsight("Regra de ritmo", "Divide o estudo em ciclos curtos, correcao imediata e uma revisao 24h depois."),
-                new PlaneamentoEstudoInsight("Confirmacao final", "Fecha a semana com um teste curto para medir o que realmente ficou.")
-            ),
-            List.of(
-                new PlaneamentoEstudoEtapa("Hoje", "Bloco curto", "25 min em Álgebra, 10 min de revisão e uma pausa curta."),
-                new PlaneamentoEstudoEtapa("Amanhã", "Bloco leve", "Reforça Fisica com problemas simples e correção imediata."),
-                new PlaneamentoEstudoEtapa("48h", "Treino misto", "Mistura Matematica e Fisica para consolidar sem cansar."),
-                new PlaneamentoEstudoEtapa("Fim da semana", "Teste curto", "Valida a evolução com um diagnóstico pequeno e objetivo.")
-            ),
-            List.of(
-                new PlaneamentoEstudoRegistro("Teste adaptativo", "Matemática", "84% de acerto, consistência alta e ritmo estável.", "Há 2 dias", "pill-good"),
-                new PlaneamentoEstudoRegistro("Diagnóstico", "Física", "Base boa, mas o tempo ainda precisa de ajuste.", "Há 5 dias", "pill-warn"),
-                new PlaneamentoEstudoRegistro("Teste adaptativo", "Português", "Leitura firme e menos erros sob pressão.", "Há 8 dias", "pill-good")
-            ),
-            List.of(
-                new PlaneamentoEstudoDisciplina("Matemática", 86d, 84d, 78d, 82d, 2, "Álgebra", "Base sólida com espaço para ganhar rapidez", 14d),
-                new PlaneamentoEstudoDisciplina("Física", 71d, 68d, 64d, 66d, 5, "Mecânica", "Precisa de mais repetição em duas etapas", 29d)
-            ),
-            List.of(
-                new PlaneamentoEstudoPonto("Sem 1", 56d),
-                new PlaneamentoEstudoPonto("Sem 2", 61d),
-                new PlaneamentoEstudoPonto("Sem 3", 68d),
-                new PlaneamentoEstudoPonto("Sem 4", 66d),
-                new PlaneamentoEstudoPonto("Sem 5", 74d),
-                new PlaneamentoEstudoPonto("Sem 6", 81d)
-            )
-        );
-    }
 
     private PlaneamentoEstudoResumo finalizarResumo(UUID candidatoId, PlaneamentoEstudoResumo resumo) {
         persistirResumo(candidatoId, resumo);
@@ -771,12 +736,136 @@ return List.of(
         return clamp(somaPonderada / somaPesos, 0d, 100d);
     }
 
-    private String montarFocoAtual(PlaneamentoEstudoDisciplina foco) {
-        if (foco == null) {
+    private String montarFocoPrincipal(PlaneamentoEstudoDisciplina foco) {
+        if (foco == null || foco.foco() == null) {
             return "—";
         }
-        String base = primeiroNaoVazio(foco.foco(), foco.disciplina());
-        return foco.disciplina() + " · " + base;
+
+        Foco focoObj = foco.foco();
+        String base = primeiroNaoVazio(
+            focoObj.subtopico() != null ? focoObj.topico().topicos() + " > ." + focoObj.subtopico() : null,
+            focoObj.topico().topicos(),
+            foco.disciplina()
+        );
+
+        return foco.disciplina() + " . " + base;
+    }
+
+    private String montarFocoAtual(PlaneamentoEstudoDisciplina foco) {
+        if (foco == null || foco.foco() == null) {
+            return "—";
+        }
+
+        Foco focoObj = foco.foco();
+        Topico topico = focoObj.topico();
+        String subtopicoAtual = focoObj.subtopico();
+
+        try {
+            // Atualiza o progresso dos subtópicos
+            progressoPorSubtopico = diagnosticoService.carregarProgressoSubtopicos(
+                Authentication.getCurrentUserId(),
+                CacheService.get("nivel").toString().toLowerCase(),
+                topico
+            );
+
+            // Se já temos um subtópico definido, mostra o progresso atual dele
+            if (subtopicoAtual != null && !subtopicoAtual.isBlank()) {
+                String chave = chaveSubtopico(topico.disciplina(), subtopicoAtual);
+                Double progresso = progressoPorSubtopico.get(chave);
+
+                if (progresso != null) {
+                    double percentual = progresso * 100;
+                    return foco.disciplina() + "-" + topico.topicos() + "-" +
+                           subtopicoAtual + "-(" + String.format("%.0f%%", percentual) + ")";
+                }
+
+                return foco.disciplina() + "-" + topico.topicos() + "-" + subtopicoAtual;
+            }
+
+            // Se não tem subtópico definido, encontra o de menor progresso
+            if (!progressoPorSubtopico.isEmpty()) {
+                String subtopicoFoco = encontrarSubtopicoMenorProgresso(progressoPorSubtopico, topico);
+                return foco.disciplina() + "-" + topico.topicos() + "-" + subtopicoFoco;
+            }
+
+            // Fallback: primeiro subtópico
+            String primeiroSubtopico = extrairPrimeiroSubtopico(topico);
+            return foco.disciplina() + "-" + topico.topicos() + "-" + primeiroSubtopico;
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar progresso dos subtópicos: " + e.getMessage());
+            String fallback = subtopicoAtual != null ? subtopicoAtual : topico.topicos();
+            return foco.disciplina() + "-" + topico.topicos() + "-" + fallback;
+        }
+    }
+
+    /**
+     * Encontra o subtópico com menor percentagem de progresso (maior que 0).
+     * Se todos forem 0, retorna o primeiro subtópico disponível.
+     */
+    private String encontrarSubtopicoMenorProgresso(Map<String, Double> progressos, Topico topico) {
+        if (topico.subTopicos() == null || topico.subTopicos().length == 0) {
+            return topico.topicos();
+        }
+
+        String disciplina = topico.disciplina();
+        String subtopicoMenorProgresso = null;
+        double menorProgresso = Double.MAX_VALUE;
+        boolean todosZero = true;
+
+        for (String subtopico : topico.subTopicos()) {
+            String chave = chaveSubtopico(disciplina, subtopico);
+            Double progresso = progressos.get(chave);
+
+            if (progresso == null) {
+                if (subtopicoMenorProgresso == null) {
+                    subtopicoMenorProgresso = subtopico;
+                }
+                continue;
+            }
+
+            double progressoValor = progresso * 100;
+
+            if (progressoValor > 0) {
+                todosZero = false;
+                if (progressoValor < menorProgresso) {
+                    menorProgresso = progressoValor;
+                    subtopicoMenorProgresso = subtopico;
+                }
+            }
+        }
+
+        if (todosZero) {
+            for (String subtopico : topico.subTopicos()) {
+                String chave = chaveSubtopico(disciplina, subtopico);
+                Double progresso = progressos.get(chave);
+
+                if (progresso == null || progresso == 0.0) {
+                    return subtopico; // Primeiro não iniciado
+                }
+            }
+            return topico.subTopicos()[0];
+        }
+
+        if (subtopicoMenorProgresso != null) {
+            return subtopicoMenorProgresso + " (" + String.format("%.0f%%", menorProgresso) + ")";
+        }
+
+        return topico.subTopicos()[0];
+    }
+
+
+    private String extrairPrimeiroSubtopico(Topico topico) {
+        if (topico.subTopicos() != null && topico.subTopicos().length > 0) {
+            return topico.subTopicos()[0];
+        }
+        return topico.topicos();
+    }
+
+
+    private String chaveSubtopico(String disciplina, String subtopico) {
+        return QuestaoUtil.normalizar(disciplina) + "::" +
+               QuestaoUtil.normalizar(QuestaoUtil.safeText(subtopico, "Geral"));
     }
 
     private double calcularMedia(List<Double> valores) {
@@ -986,7 +1075,7 @@ return List.of(
             double velocidade = calcularVelocidade();
             double consistencia = calcularConsistencia();
             int diasSemEstudo = calcularDiasSemEstudo();
-            String foco = extrairFoco();
+            Foco foco = extrairFoco();
             String observacao = extrairObservacao();
             double pontuacao = calcularPontuacao(precisao, velocidade, consistencia, diasSemEstudo);
             double prioridade = calcularPrioridade(pontuacao, diasSemEstudo);
@@ -1049,28 +1138,93 @@ return List.of(
             return (int) Math.max(0, ChronoUnit.DAYS.between(ultimo.toLocalDate(), LocalDate.now()));
         }
 
-        private String extrairFoco() {
+        private Foco extrairFoco() {
             if (diagnostico != null) {
                 if (diagnostico.topicos() != null && !diagnostico.topicos().isEmpty()) {
                     Topico topico = diagnostico.topicos().getFirst();
-                    if (topico.subTopicos() != null && topico.subTopicos().length > 0) {
-                        String subtopico = topico.subTopicos()[0];
-                        if (subtopico != null && !subtopico.isBlank()) {
-                            return subtopico;
+                    if (topico.topicos() != null && !topico.topicos().isBlank()) {
+
+                        // Identifica o subtópico principal (menor progresso > 0 ou primeiro disponível)
+                        String subtopicoPrincipal = identificarSubtopicoPrincipal(topico);
+
+                        return new Foco(topico, subtopicoPrincipal);
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Identifica o subtópico principal baseado no progresso.
+         * Prioriza o de menor progresso > 0, ou o primeiro subtópico se todos forem 0.
+         */
+        private String identificarSubtopicoPrincipal(Topico topico) {
+            if (topico.subTopicos() == null || topico.subTopicos().length == 0) {
+                return topico.topicos(); // Retorna o nome do tópico se não houver subtópicos
+            }
+
+            try {
+                // Tenta carregar o progresso dos subtópicos
+                Map<String, Double> progressos = diagnosticoService.carregarProgressoSubtopicos(
+                    Authentication.getCurrentUserId(),
+                    CacheService.get("nivel").toString().toLowerCase(),
+                    topico
+                );
+
+                if (progressos.isEmpty()) {
+                    // Sem dados de progresso, retorna o primeiro subtópico
+                    return topico.subTopicos()[0];
+                }
+
+                // Encontra o subtópico com menor progresso (maior que 0)
+                String subtopicoMenorProgresso = null;
+                double menorProgresso = Double.MAX_VALUE;
+                boolean todosZero = true;
+
+                for (String subtopico : topico.subTopicos()) {
+                    String chave = chaveSubtopico(topico.disciplina(), subtopico);
+                    Double progresso = progressos.get(chave);
+
+                    if (progresso == null) {
+                        // Subtópico sem registro - candidato a primeiro não iniciado
+                        if (subtopicoMenorProgresso == null) {
+                            subtopicoMenorProgresso = subtopico;
+                        }
+                        continue;
+                    }
+
+                    double progressoValor = progresso * 100; // Converte para percentagem
+
+                    if (progressoValor > 0) {
+                        todosZero = false;
+                        if (progressoValor < menorProgresso) {
+                            menorProgresso = progressoValor;
+                            subtopicoMenorProgresso = subtopico;
                         }
                     }
-                    if (topico.topicos() != null && !topico.topicos().isBlank()) {
-                        return topico.topicos();
+                }
+
+                if (todosZero) {
+                    // Todos com 0% - retorna o primeiro não iniciado ou o primeiro da lista
+                    for (String subtopico : topico.subTopicos()) {
+                        String chave = chaveSubtopico(topico.disciplina(), subtopico);
+                        Double progresso = progressos.get(chave);
+
+                        if (progresso == null || progresso == 0.0) {
+                            return subtopico; // Primeiro não iniciado
+                        }
                     }
+                    return topico.subTopicos()[0]; // Fallback: primeiro da lista
                 }
-                if (diagnostico.objectivo() != null && !diagnostico.objectivo().isBlank()) {
-                    return diagnostico.objectivo();
-                }
+
+                // Retorna o subtópico com menor progresso (maior que 0)
+                return subtopicoMenorProgresso != null ? subtopicoMenorProgresso : topico.subTopicos()[0];
+
+            } catch (SQLException e) {
+                System.err.println("Erro ao identificar subtópico principal: " + e.getMessage());
+                // Em caso de erro, retorna o primeiro subtópico
+                return topico.subTopicos().length > 0 ? topico.subTopicos()[0] : topico.topicos();
             }
-            if (definicao != null && definicao.objectivo() != null && !definicao.objectivo().isBlank()) {
-                return definicao.objectivo();
-            }
-            return disciplinaNomeCurto();
         }
 
         private String extrairObservacao() {

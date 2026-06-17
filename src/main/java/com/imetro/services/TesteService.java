@@ -49,6 +49,7 @@ import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.CalculoStats;
 import com.imetro.util.ConversorTempo;
+import com.imetro.util.ParseObject;
 import com.imetro.util.QuestaoUtil;
 
 public class TesteService {
@@ -265,8 +266,8 @@ public class TesteService {
 
                         builder.totalTestes = safeInt(rs.getObject("total_testes"));
                         builder.totalQuestoes = safeInt(rs.getObject("total_questoes"));
-                        builder.acertoMedio = limitarUnitario(parseDouble(rs.getObject("acerto_medio")));
-                        builder.precisaoMedia = limitarUnitario(parseDouble(rs.getObject("precisao_media")));
+                        builder.acertoMedio = limitarUnitario(ParseObject.parseDouble(rs.getObject("acerto_medio")));
+                        builder.precisaoMedia = limitarUnitario(ParseObject.parseDouble(rs.getObject("precisao_media")));
                     }
                 }
             }
@@ -569,7 +570,7 @@ public class TesteService {
         }
 
         Questao questaoBase = questoes.getFirst();
-        String nomeDisciplina = firstNonBlank(
+        String nomeDisciplina = ParseObject.firstNonBlank(
             bolsa.disciplinaFoco(),
             QuestaoUtil.formatarDisciplina(questaoBase.getDisciplina()),
             "Bolsa Semanal"
@@ -700,7 +701,7 @@ public class TesteService {
                     bolsa.id(),
                     testeId,
                     calcularScoreBolsa(percentualAcerto, precisao, velocidade),
-                    "Simulado de " + firstNonBlank(bolsa.nome(), "bolsa") + " com " + totalAcertos + "/" + totalQuestoes + " acertos.",
+                    "Simulado de " + ParseObject.firstNonBlank(bolsa.nome(), "bolsa") + " com " + totalAcertos + "/" + totalQuestoes + " acertos.",
                     totalQuestoes,
                     totalAcertos,
                     percentualAcerto,
@@ -770,14 +771,14 @@ public class TesteService {
         }
 
         return "{"
-            + "\"disciplinaFoco\":\"" + QuestaoUtil.escapeJson(firstNonBlank(bolsa.disciplinaFoco(), "")) + "\","
+            + "\"disciplinaFoco\":\"" + QuestaoUtil.escapeJson(ParseObject.firstNonBlank(bolsa.disciplinaFoco(), "")) + "\","
             + "\"duracaoMinutos\":" + safeInt(bolsa.duracaoMinutos()) + ","
             + "\"medalhasMin\":" + safeInt(bolsa.criterioMedalhasMin()) + ","
             + "\"desempenhoMin\":" + safeInt(bolsa.criterioDesempenhoMin()) + ","
             + "\"evolucaoMin\":" + safeInt(bolsa.criterioEvolucaoMin()) + ","
             + "\"precisaoMin\":" + safeInt(bolsa.criterioPrecisaoMin()) + ","
             + "\"velocidadeMin\":" + safeInt(bolsa.criterioVelocidadeMin()) + ","
-            + "\"modoResposta\":\"" + QuestaoUtil.escapeJson(firstNonBlank(bolsa.modoResposta(), "TEXTFIELD")) + "\""
+            + "\"modoResposta\":\"" + QuestaoUtil.escapeJson(ParseObject.firstNonBlank(bolsa.modoResposta(), "TEXTFIELD")) + "\""
             + "}";
     }
 
@@ -800,7 +801,7 @@ public class TesteService {
     public List<Melhorias> buscarMelhorias(UUID candidatoId, UUID disciplinaId) {
         ArrayList<Melhorias> itens = new ArrayList<>();
         for (String json : carregarStatsJson(candidatoId, disciplinaId, "melhorias")) {
-            itens.addAll(parseMelhoriasJson(json));
+            itens.addAll(ParseObject.parseMelhoriasJson(json));
         }
         return itens;
     }
@@ -827,13 +828,13 @@ public class TesteService {
         LinkedHashSet<String> chaves = new LinkedHashSet<>();
         chaves.addAll(progressoPorSubtopico.keySet());
         chaves.addAll(historicoPorSubtopico.keySet());
-
+        System.out.println(chaves.size());
         ArrayList<TrilhaAdaptacaoSubtopico> itens = new ArrayList<>();
         for (String chave : chaves) {
             TrilhaProgressaoRow progresso = progressoPorSubtopico.get(chave);
             TrilhaHistoricoBuilder historico = historicoPorSubtopico.get(chave);
 
-            String subtopico = firstNonBlank(
+            String subtopico = ParseObject.firstNonBlank(
                 progresso == null ? null : progresso.subtopico(),
                 historico == null ? null : historico.displayName,
                 "Geral"
@@ -895,7 +896,7 @@ public class TesteService {
 
         try {
             for (Map<String, Object> row : testeStatsRepository.findByDisciplinaId(disciplinaId)) {
-                if (!Objects.equals(candidatoId, parseUuid(row.get("candidato_id")))) {
+                if (!Objects.equals(candidatoId, ParseObject.parseUuid(row.get("candidato_id")))) {
                     continue;
                 }
                 String observacao = QuestaoUtil.safeText(row.get("observacoes"), "");
@@ -912,15 +913,15 @@ public class TesteService {
 
     public List<ErrosComuns> parseErrosComunsJson(String json) {
         ArrayList<ErrosComuns> itens = new ArrayList<>();
-        for (Map<String, String> valores : parseJsonObjectArray(json)) {
+        for (Map<String, String> valores : ParseObject.parseJsonObjectArray(json)) {
             itens.add(
                 new ErrosComuns(
-                    parseUuid(valores.get("questaoId")),
-                    firstNonBlank(valores.get("enuciado"), valores.get("enunciado")),
-                    firstNonBlank(valores.get("marcada"), valores.get("resposta")),
+                    ParseObject.parseUuid(valores.get("questaoId")),
+                    ParseObject.firstNonBlank(valores.get("enuciado"), valores.get("enunciado")),
+                    ParseObject.firstNonBlank(valores.get("marcada"), valores.get("resposta")),
                     valores.get("topico"),
                     valores.get("subtopico"),
-                    firstNonBlank(valores.get("resposta"), valores.get("correta")),
+                    ParseObject.firstNonBlank(valores.get("resposta"), valores.get("correta")),
                     resolverPercentualDificuldadeErro(valores)
                 )
             );
@@ -928,28 +929,7 @@ public class TesteService {
         return itens;
     }
 
-    public List<Melhorias> parseMelhoriasJson(String json) {
-        ArrayList<Melhorias> itens = new ArrayList<>();
-        for (Map<String, String> valores : parseJsonObjectArray(json)) {
-            itens.add(
-                new Melhorias(
-                    parseUuid(valores.get("questaoId")),
-                    firstNonBlank(valores.get("enuciado"), valores.get("enunciado")),
-                    valores.get("correta"),
-                    firstNonBlank(valores.get("resposta"), valores.get("marcada")),
-                    parseInteger(valores.get("tempoSegundos")),
-                    valores.get("topico"),
-                    valores.get("subtopico"),
-                    parseInteger(valores.get("qtdAcerto")),
-                    parseInteger(valores.get("qtdErros")),
-                    parseDouble(valores.get("precisaoAnteriorPercentual")),
-                    parseDouble(valores.get("precisaoAtualPercentual")),
-                    parseDouble(valores.get("melhoriaPercentual"))
-                )
-            );
-        }
-        return itens;
-    }
+
 
     public String construirJsonMelhorias(
         UUID candidatoId,
@@ -975,7 +955,7 @@ public class TesteService {
             char marcada = respostasUsuario.get(indice);
             boolean acertou = QuestaoUtil.respostaEstaCorreta(questao, marcada);
 
-            UUID questaoId = parseUuid(questao.getId());
+            UUID questaoId = ParseObject.parseUuid(questao.getId());
             HistoricoQuestao historico = historicoPorQuestao.getOrDefault(
                 questaoId,
                 new HistoricoQuestao(0, 0, 0, 0d, 0)
@@ -1025,7 +1005,7 @@ public class TesteService {
         try {
             ArrayList<String> jsons = new ArrayList<>();
             for (Map<String, Object> row : testeStatsRepository.findByDisciplinaId(disciplinaId)) {
-                if (!Objects.equals(candidatoId, parseUuid(row.get("candidato_id")))) {
+                if (!Objects.equals(candidatoId, ParseObject.parseUuid(row.get("candidato_id")))) {
                     continue;
                 }
 
@@ -1069,8 +1049,8 @@ public class TesteService {
 
             try (var rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    UUID perguntaId = parseUuid(rs.getObject("pergunta_id"));
-                    Boolean acertou = parseBoolean(rs.getObject("acertou"));
+                    UUID perguntaId = ParseObject.parseUuid(rs.getObject("pergunta_id"));
+                    Boolean acertou = ParseObject.parseBoolean(rs.getObject("acertou"));
                     if (perguntaId == null || acertou == null) {
                         continue;
                     }
@@ -1082,7 +1062,7 @@ public class TesteService {
                     int qtdErros = atual.qtdErros() + (acertou ? 0 : 1);
                     int qtdAcertos = atual.qtdAcertos() + (acertou ? 1 : 0);
                     int tempoAcumulado = atual.tempoSegundos() + safeInt(rs.getObject("tempo_segundos"));
-                    double somaPrecisao = atual.somaPrecisao() + parseDouble(rs.getObject("precisao"));
+                    double somaPrecisao = atual.somaPrecisao() + ParseObject.parseDouble(rs.getObject("precisao"));
                     int tentativas = atual.tentativas() + 1;
 
                     historico.put(perguntaId, new HistoricoQuestao(qtdErros, qtdAcertos, tempoAcumulado, somaPrecisao, tentativas));
@@ -1216,23 +1196,23 @@ public class TesteService {
         LinkedHashMap<String, TrilhaHistoricoBuilder> historico = new LinkedHashMap<>();
         try {
             for (Map<String, Object> row : testeStatsRepository.findByDisciplinaId(disciplinaId)) {
-                if (!Objects.equals(candidatoId, parseUuid(row.get("candidato_id")))) {
+                if (!Objects.equals(candidatoId, ParseObject.parseUuid(row.get("candidato_id")))) {
                     continue;
                 }
 
                 for (ErrosComuns erro : parseErrosComunsJson(QuestaoUtil.safeText(row.get("erros_comuns"), "[]"))) {
                     String chave = normalizarChaveSubtopico(erro.subtopico());
                     TrilhaHistoricoBuilder builder = historico.computeIfAbsent(chave, ignored -> new TrilhaHistoricoBuilder());
-                    builder.displayName = firstNonBlank(erro.subtopico(), erro.topico(), "Geral");
+                    builder.displayName = ParseObject.firstNonBlank(erro.subtopico(), erro.topico(), "Geral");
                     builder.quedas++;
                     builder.somaDificuldade += QuestaoUtil.limitarPercentualFaixaCem(erro.percentualDificuldade());
                     builder.totalDificuldades++;
                 }
 
-                for (Melhorias melhoria : parseMelhoriasJson(QuestaoUtil.safeText(row.get("melhorias"), "[]"))) {
+                for (Melhorias melhoria : ParseObject.parseMelhoriasJson(QuestaoUtil.safeText(row.get("melhorias"), "[]"))) {
                     String chave = normalizarChaveSubtopico(melhoria.subtopico());
                     TrilhaHistoricoBuilder builder = historico.computeIfAbsent(chave, ignored -> new TrilhaHistoricoBuilder());
-                    builder.displayName = firstNonBlank(melhoria.subtopico(), melhoria.topico(), "Geral");
+                    builder.displayName = ParseObject.firstNonBlank(melhoria.subtopico(), melhoria.topico(), "Geral");
                     if (melhoria.melhoriaPercentual() > 0d) {
                         builder.avancos++;
                     }
@@ -1269,18 +1249,18 @@ public class TesteService {
 
             try (var rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    String subtopico = firstNonBlank(rs.getString("subtopico"), "Geral");
+                    String subtopico = ParseObject.firstNonBlank(rs.getString("subtopico"), "Geral");
                     progresso.put(
                         normalizarChaveSubtopico(subtopico),
                         new TrilhaProgressaoRow(
                             subtopico,
-                            limitarRigor(parseDouble(rs.getObject("rigor_atual"))),
-                            limitarRigor(parseDouble(rs.getObject("rigor_alvo"))),
+                            limitarRigor(ParseObject.parseDouble(rs.getObject("rigor_atual"))),
+                            limitarRigor(ParseObject.parseDouble(rs.getObject("rigor_alvo"))),
                             safeInt(rs.getObject("acertos_consecutivos")),
                             safeInt(rs.getObject("erros_consecutivos")),
-                            parseBoolean(rs.getObject("precisa_revisao")) == Boolean.TRUE,
-                            firstNonBlank(rs.getString("recomendacao_livro"), null),
-                            firstNonBlank(rs.getString("recomendacao_paginas"), null)
+                            ParseObject.parseBoolean(rs.getObject("precisa_revisao")) == Boolean.TRUE,
+                            ParseObject.firstNonBlank(rs.getString("recomendacao_livro"), null),
+                            ParseObject.firstNonBlank(rs.getString("recomendacao_paginas"), null)
                         )
                     );
                 }
@@ -1293,7 +1273,7 @@ public class TesteService {
     }
 
     private String normalizarChaveSubtopico(String subtopico) {
-        return QuestaoUtil.normalizar(firstNonBlank(subtopico, "Geral"));
+        return QuestaoUtil.normalizar(ParseObject.firstNonBlank(subtopico, "Geral"));
     }
 
     private double limitarRigor(double valor) {
@@ -1337,236 +1317,27 @@ public class TesteService {
         return "Sem oscilacoes recentes suficientes para fechar uma tendencia.";
     }
 
-    private List<Map<String, String>> parseJsonObjectArray(String json) {
-        if (json == null || json.isBlank()) {
-            return List.of();
-        }
-
-        ArrayList<Map<String, String>> itens = new ArrayList<>();
-        int cursor = skipWhitespace(json, 0);
-        if (cursor >= json.length() || json.charAt(cursor) != '[') {
-            return List.of();
-        }
-
-        cursor++;
-        while (cursor < json.length()) {
-            cursor = skipWhitespace(json, cursor);
-            if (cursor >= json.length() || json.charAt(cursor) == ']') {
-                break;
-            }
-            if (json.charAt(cursor) == ',') {
-                cursor++;
-                continue;
-            }
-            if (json.charAt(cursor) != '{') {
-                cursor++;
-                continue;
-            }
-
-            ParsedJsonObject parsed = parseJsonObject(json, cursor);
-            itens.add(parsed.values());
-            cursor = parsed.nextIndex();
-        }
-
-        return itens;
-    }
-
-    private ParsedJsonObject parseJsonObject(String json, int startIndex) {
-        LinkedHashMap<String, String> valores = new LinkedHashMap<>();
-        int cursor = startIndex + 1;
-
-        while (cursor < json.length()) {
-            cursor = skipWhitespace(json, cursor);
-            if (cursor >= json.length()) {
-                break;
-            }
-
-            char atual = json.charAt(cursor);
-            if (atual == '}') {
-                return new ParsedJsonObject(valores, cursor + 1);
-            }
-            if (atual == ',') {
-                cursor++;
-                continue;
-            }
-            if (atual != '"') {
-                cursor++;
-                continue;
-            }
-
-            ParsedJsonToken chave = parseJsonStringToken(json, cursor);
-            cursor = skipWhitespace(json, chave.nextIndex());
-            if (cursor < json.length() && json.charAt(cursor) == ':') {
-                cursor++;
-            }
-            cursor = skipWhitespace(json, cursor);
-
-            ParsedJsonToken valor = cursor < json.length() && json.charAt(cursor) == '"'
-                ? parseJsonStringToken(json, cursor)
-                : parseJsonLiteralToken(json, cursor);
-
-            valores.put(chave.value(), valor.value());
-            cursor = skipWhitespace(json, valor.nextIndex());
-            if (cursor < json.length() && json.charAt(cursor) == ',') {
-                cursor++;
-            }
-        }
-
-        return new ParsedJsonObject(valores, cursor);
-    }
-
-    private ParsedJsonToken parseJsonStringToken(String json, int startIndex) {
-        StringBuilder out = new StringBuilder();
-        int cursor = startIndex + 1;
-
-        while (cursor < json.length()) {
-            char atual = json.charAt(cursor);
-            if (atual == '"') {
-                return new ParsedJsonToken(out.toString(), cursor + 1);
-            }
-            if (atual == '\\' && cursor + 1 < json.length()) {
-                char proximo = json.charAt(++cursor);
-                switch (proximo) {
-                    case '"' -> out.append('"');
-                    case '\\' -> out.append('\\');
-                    case '/' -> out.append('/');
-                    case 'b' -> out.append('\b');
-                    case 'f' -> out.append('\f');
-                    case 'n' -> out.append('\n');
-                    case 'r' -> out.append('\r');
-                    case 't' -> out.append('\t');
-                    case 'u' -> {
-                        if (cursor + 4 < json.length()) {
-                            String hex = json.substring(cursor + 1, cursor + 5);
-                            out.append((char) Integer.parseInt(hex, 16));
-                            cursor += 4;
-                        }
-                    }
-                    default -> out.append(proximo);
-                }
-            } else {
-                out.append(atual);
-            }
-            cursor++;
-        }
-
-        return new ParsedJsonToken(out.toString(), json.length());
-    }
-
-    private ParsedJsonToken parseJsonLiteralToken(String json, int startIndex) {
-        int cursor = startIndex;
-        while (cursor < json.length()) {
-            char atual = json.charAt(cursor);
-            if (atual == ',' || atual == '}') {
-                break;
-            }
-            cursor++;
-        }
-
-        String literal = json.substring(startIndex, cursor).trim();
-        if (literal.isBlank() || "null".equalsIgnoreCase(literal)) {
-            return new ParsedJsonToken(null, cursor);
-        }
-        return new ParsedJsonToken(literal, cursor);
-    }
-
-    private int skipWhitespace(String value, int startIndex) {
-        int cursor = startIndex;
-        while (cursor < value.length() && Character.isWhitespace(value.charAt(cursor))) {
-            cursor++;
-        }
-        return cursor;
-    }
-
-    private UUID parseUuid(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof UUID uuid) {
-            return uuid;
-        }
-
-        String text = value.toString().trim();
-        if (text.isBlank()) {
-            return null;
-        }
-
-        try {
-            return UUID.fromString(text);
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
-    }
-
-    private Boolean parseBoolean(Object value) {
-        if (value instanceof Boolean bool) {
-            return bool;
-        }
-        if (value == null) {
-            return null;
-        }
-
-        String text = value.toString().trim();
-        if (text.isBlank()) {
-            return null;
-        }
-
-        return Boolean.parseBoolean(text);
-    }
-
-    private int parseInteger(String value) {
-        if (value == null || value.isBlank()) {
-            return 0;
-        }
-
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException ignored) {
-            return 0;
-        }
-    }
-
-    private double parseDouble(Object value) {
-        if (value instanceof Number number) {
-            return number.doubleValue();
-        }
-        if (value == null) {
-            return 0d;
-        }
-
-        String text = value.toString().trim();
-        if (text.isBlank()) {
-            return 0d;
-        }
-
-        try {
-            return Double.parseDouble(text);
-        } catch (NumberFormatException ignored) {
-            return 0d;
-        }
-    }
-
     private double resolverPercentualDificuldadeErro(Map<String, String> valores) {
-        String percentual = firstNonBlank(
+        String percentual = ParseObject.firstNonBlank(
             valores.get("percentualDificuldade"),
             valores.get("dificuldadePercentual"),
             valores.get("percentual_dificuldade")
         );
         if (percentual != null) {
-            return QuestaoUtil.limitarPercentualFaixaCem(parseDouble(percentual));
+            return QuestaoUtil.limitarPercentualFaixaCem(ParseObject.parseDouble(percentual));
         }
 
-        String rigor = firstNonBlank(valores.get("rigor"), valores.get("rigorBase"));
+        String rigor = ParseObject.firstNonBlank(valores.get("rigor"), valores.get("rigorBase"));
         if (rigor != null) {
-            double percentualPorRigor = parseDouble(rigor) * 100d;
+            double percentualPorRigor = ParseObject.parseDouble(rigor) * 100d;
             if (percentualPorRigor > 0d) {
                 return QuestaoUtil.limitarPercentualFaixaCem(percentualPorRigor);
             }
         }
 
-        String nivel = firstNonBlank(valores.get("nivelDificuldade"), valores.get("nivel_dificuldade"));
+        String nivel = ParseObject.firstNonBlank(valores.get("nivelDificuldade"), valores.get("nivel_dificuldade"));
         if (nivel != null) {
-            return QuestaoUtil.calcularPercentualDificuldade(parseInteger(nivel), null);
+            return QuestaoUtil.calcularPercentualDificuldade(ParseObject.parseInteger(nivel), null);
         }
 
         return 0d;
@@ -1586,17 +1357,10 @@ public class TesteService {
         if (value == null) {
             return 0;
         }
-        return parseInteger(value.toString());
+        return ParseObject.parseInteger(value.toString());
     }
 
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return null;
-    }
+
 
     private String formatJsonDouble(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
@@ -1659,11 +1423,6 @@ public class TesteService {
         }
     }
 
-    private record ParsedJsonObject(Map<String, String> values, int nextIndex) {
-    }
-
-    private record ParsedJsonToken(String value, int nextIndex) {
-    }
 
     private static final class TrilhaHistoricoBuilder {
         private String displayName;

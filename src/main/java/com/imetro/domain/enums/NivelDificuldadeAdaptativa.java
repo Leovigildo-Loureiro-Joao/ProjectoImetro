@@ -19,6 +19,7 @@ public enum NivelDificuldadeAdaptativa {
         "easy",
         "basico",
         "INICIANTE",
+        "iniciante",
         "básico",
         "leve"
     ),

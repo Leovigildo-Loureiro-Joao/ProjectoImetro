@@ -126,7 +126,7 @@ public class QuestaoUtil {
     public static UUID resolverDisciplinaId(String disciplina) {
         String disciplinaNormalizada = normalizar(disciplina);
         for (DisciplinaDto disciplinaDto : DisciplinaService.discCategoria()) {
-            if (disciplinaDto.id() != null && normalizar(disciplinaDto.nome()).equals(disciplinaNormalizada)) {
+            if (disciplinaDto.id() != null && normalizar(disciplinaDto.nome()).equalsIgnoreCase(disciplinaNormalizada)) {
                 return disciplinaDto.id();
             }
         }

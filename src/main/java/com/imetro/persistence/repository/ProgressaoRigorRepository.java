@@ -107,7 +107,7 @@ public class ProgressaoRigorRepository extends JdbcBasicSqlRepository{
         try (Connection conn = openRequiredConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1,candidato);
-            ResultSet rs = stmt.executeQuery()
+            ResultSet rs = stmt.executeQuery();
             return readAllRows(rs);
         }
     }

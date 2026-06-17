@@ -321,7 +321,7 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
         Label tituloLabel = new Label(safeText(disciplina.disciplina(), "Disciplina"));
         tituloLabel.getStyleClass().add("h3-thin-big");
 
-        Label focoLabel = new Label("Foco: " + safeText(disciplina.foco(), "Sem foco"));
+        Label focoLabel = new Label("Foco: " + safeText(disciplina.foco().topico().topicos() +" em "+disciplina.foco().subtopico(), "Sem foco"));
         focoLabel.getStyleClass().add("muted");
         focoLabel.setWrapText(true);
 

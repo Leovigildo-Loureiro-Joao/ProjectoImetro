@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.domain.CacheService;
+import com.imetro.domain.dto.Desafio;
 import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.configuracao.ConfiguracaoTesteAdaptativoDto;
 import com.imetro.domain.dto.configuracao.ConfiguracaoDto;
@@ -32,6 +33,7 @@ import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.persistence.repository.ConfiguracoesTesteAdaptativoRespository;
 import com.imetro.persistence.repository.ConfiguracoesRepository;
 import com.imetro.services.CandidatoService;
+import com.imetro.services.DesafioService;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.PlaneamentoEstudoService;
@@ -316,6 +318,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private FXMLLoader modFxml;
     private ModalController cont;
     private TesteService testeService;
+    private DesafioService desafioService;
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final CandidatoService candidatoService = new CandidatoService();
 
@@ -330,6 +333,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     public void initialize() {
         TesteAdaptativoCoordinator.setHost(this);
         testeService=new TesteService();
+        desafioService=new DesafioService();
         service = new TesteAdaptativoService();
         configurarPainelApoioVisual();
         configurarTrilhoAdaptacao();
@@ -388,7 +392,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void CarregarDataTrilho(){
         var plano = planeamentoService.gerarResumo();
-        desafui.setText("Faça um teste adaptativo sobre "+plano.focoAtual()+"para reforcar seu aprendizado");
+        try {
+            Desafio desafio=desafioService.gerarDesafio(plano);
+            desafui.setText(desafio.descricao());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private double clamp(double value, double min, double max) {
@@ -414,7 +423,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         }
         atualizarTrilhoDisciplinas(carregarDisciplinasTrilho());
         trilhoDisciplinaCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarTrilhoDisciplina(newValue));
-
+        CarregarDataTrilho();
     }
 
     private List<String> carregarDisciplinasTrilho() {
@@ -422,7 +431,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         if (service != null) {
             try {
-                disciplinas.addAll(service.carregarDisciplinasDisponiveis());
+                disciplinas.addAll(DisciplinaService.DisciplinaCandidato());
             } catch (Exception e) {
                 System.err.println("Erro ao carregar disciplinas do trilho: " + e.getMessage());
             }

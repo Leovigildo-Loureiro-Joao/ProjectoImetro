@@ -262,6 +262,135 @@ public class DiagnosticoService {
         return Map.copyOf(progressoFinal);
     }
 
+
+    public double carregarProgressoSubtopico(
+        UUID candidatoId,
+        String nivel,
+        Topico topico,
+        String subtopico
+) throws SQLException {
+
+    if (candidatoId == null || topico == null || subtopico == null || subtopico.isBlank()) {
+        return 0d;
+    }
+
+    String chave = chaveSubtopico(topico.disciplina(), subtopico);
+
+    Double progressoRigor = null;
+    Double progressoDiagnostico = null;
+    boolean precisaRevisao = false;
+    boolean precisaNovoDiagnostico = false;
+
+    String sqlRigor = """
+        select coalesce(d.nome, '') as disciplina_nome,
+               pr.subtopico,
+               pr.rigor_atual,
+               pr.rigor_alvo,
+               pr.precisa_revisao
+        from progressao_rigor pr
+        left join disciplinas d on d.id = pr.disciplina_id
+        where pr.aluno_id = ?
+          and pr.subtopico = ?
+    """;
+
+    String sqlDiagnostico = """
+        select distinct on (
+            lower(coalesce(dg.disciplina_nome, '')),
+            lower(coalesce(rr.subtopico, ''))
+        )
+            dg.disciplina_nome,
+            rr.subtopico,
+            rr.progresso_atingido,
+            rr.precisa_novo_diagnostico
+        from recomendacoes_rigor rr
+        join diagnosticos dg on dg.id = rr.diagnostico_id
+        where dg.candidato_id = ?
+          and rr.subtopico = ?
+        order by lower(coalesce(dg.disciplina_nome, '')),
+                 lower(coalesce(rr.subtopico, '')),
+                 coalesce(dg.concluido_em, dg.iniciado_em) desc,
+                 rr.criado_em desc
+    """;
+
+    try (Connection conn = JdbcBasicSqlRepository.openRequiredConnection()) {
+
+        try (PreparedStatement stmt = conn.prepareStatement(sqlRigor)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setString(2, subtopico);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double rigorAtual = rs.getObject("rigor_atual") instanceof Number n ? n.doubleValue() : 0d;
+                    double rigorAlvo = rs.getObject("rigor_alvo") instanceof Number n ? n.doubleValue() : 0d;
+
+                    progressoRigor = calcularProgressoPorRigor(rigorAtual, rigorAlvo);
+                    precisaRevisao = rs.getBoolean("precisa_revisao");
+
+                    CacheService.put(
+                            chave,
+                            NivelDificuldadeAdaptativa.resolverNivelPorRigor(rigorAtual)
+                    );
+                }
+            }
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement(sqlDiagnostico)) {
+            stmt.setObject(1, candidatoId);
+            stmt.setString(2, subtopico);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Object raw = rs.getObject("progresso_atingido");
+                    if (raw instanceof Number n) {
+                        progressoDiagnostico = QuestaoUtil.limitarPercentualUnitario(n.doubleValue());
+                    }
+                    precisaNovoDiagnostico = rs.getBoolean("precisa_novo_diagnostico");
+                }
+            }
+        }
+
+    } catch (Exception e) {
+        System.err.println("Erro ao carregar progresso subtopico: " + e.getMessage());
+        return 0d;
+    }
+
+    return resolverProgressoSubtopico(
+            progressoRigor,
+            progressoDiagnostico,
+            precisaRevisao,
+            precisaNovoDiagnostico,
+            configTesteAdaptNiv.findByCodigo(
+                    NivelDificuldadeAdaptativa.fromTexto(nivel).codigo()
+            )
+    );
+}
+
+public Map<String, Double> carregarProgressoSubtopicos(
+    UUID candidatoId,
+    String nivel,
+    Topico topico
+) throws SQLException {
+
+if (topico == null || topico.subTopicos() == null) {
+    return Map.of();
+}
+
+Map<String, Double> resultado = new LinkedHashMap<>();
+
+for (String subtopico : topico.subTopicos()) {
+    double progresso = carregarProgressoSubtopico(
+            candidatoId,
+            nivel,
+            topico,
+            subtopico
+    );
+
+    resultado.put(chaveSubtopico(topico.disciplina(), subtopico), progresso);
+}
+
+return Map.copyOf(resultado);
+}
+
     public boolean temHistoricoDiagnostico(UUID candidatoId) {
         if (candidatoId == null) {
             return false;

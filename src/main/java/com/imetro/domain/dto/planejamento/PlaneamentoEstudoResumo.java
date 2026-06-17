@@ -8,6 +8,8 @@ public record PlaneamentoEstudoResumo(
     String acertoMedio,
     String ritmoMedio,
     String consistenciaMedia,
+    String focoPrincipal,
+    String focoSecundario,
     String focoAtual,
     String focoAtual2,
     List<PlaneamentoEstudoInsight> insights,

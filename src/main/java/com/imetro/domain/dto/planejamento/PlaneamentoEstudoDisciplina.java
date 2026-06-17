@@ -1,5 +1,8 @@
 package com.imetro.domain.dto.planejamento;
 
+import com.imetro.domain.dto.Topico;
+import com.imetro.domain.enums.Foco;
+
 public record PlaneamentoEstudoDisciplina(
     String disciplina,
     double pontuacao,
@@ -7,7 +10,7 @@ public record PlaneamentoEstudoDisciplina(
     double velocidade,
     double consistencia,
     int diasSemEstudo,
-    String foco,
+    Foco foco,
     String observacao,
     double prioridade
 ) {

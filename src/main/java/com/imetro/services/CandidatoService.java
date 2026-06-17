@@ -33,6 +33,7 @@ import com.imetro.persistence.repository.TesteStatsRepository;
 import com.imetro.persistence.repository.UserRepository;
 import com.imetro.ui.components.ResultData;
 import com.imetro.util.Authentication;
+import com.imetro.util.ParseObject;
 
 public class CandidatoService implements User {
 
@@ -152,7 +153,7 @@ public class CandidatoService implements User {
                     ? LocalDate.now()
                     : stats.criado_em().toLocalDate();
 
-                for (Melhorias melhoria : testeService.parseMelhoriasJson(stats.melhorias())) {
+                for (Melhorias melhoria : ParseObject.parseMelhoriasJson(stats.melhorias())) {
                     somaMelhorias += melhoria.melhoriaPercentual();
                     totalMelhorias++;
 

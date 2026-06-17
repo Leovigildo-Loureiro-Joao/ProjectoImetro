@@ -256,7 +256,7 @@ public class CandidatoLayoutController implements Initializable {
                 String diasText = diasPraticados + "/7";
                 String matchText = Math.round(clamp(melhoriaResumo.taxaSucessoPercentual(), 0d, 100d)) + "%";
                 String levelText = resolveSidebarLevel(stats);
-
+                CacheService.put("nivel", levelText);
                 Platform.runLater(() -> {
                     if (sidebarDaysValue != null) {
                         sidebarDaysValue.setText(diasText);
