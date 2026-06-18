@@ -360,7 +360,7 @@ return List.of(
             "Hoje",
             "Missão principal",
             "25 minutos focados em "
-                    + principal.foco()
+                    + principal.foco().subtopico()
                     + ". O objetivo é recuperar confiança rapidamente."
     ),
 

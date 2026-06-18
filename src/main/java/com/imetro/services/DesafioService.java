@@ -33,7 +33,7 @@ public class DesafioService {
         var candidato=Authentication.getCurrentUserId();
         List<ProgressaoRigorDto> progresso = progressoRepository.findByCandidato(candidato).stream().map(ProgressaoRigorDto::fromMap).toList();
         List<Teste_Stat> testStats = statsRepository.findByCandidatoId(candidato).stream().map(Teste_Stat::ParseDto).toList();
-        System.out.println(resumo.focoAtual().split("-").length);
+
         String foco=resumo.focoAtual().split("-")[2].trim();
         String disciplina=resumo.focoAtual().split("-")[0].trim();
         if(progresso.isEmpty() || testStats.isEmpty()){

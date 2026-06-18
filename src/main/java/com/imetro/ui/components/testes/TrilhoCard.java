@@ -1,5 +1,7 @@
 package com.imetro.ui.components.testes;
 
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import com.imetro.domain.dto.test.TrilhoDTO;
 import com.imetro.domain.enums.TrilhoStatus;
 
@@ -11,441 +13,318 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 
-public class TrilhoCard extends HBox {
+public class TrilhoCard extends VBox {
 
-    private final TrilhoDTO dto;
+    private final VBox detalhes = new VBox(12);
+    private HBox metricas;
+    private boolean expandido;
+    private FontIcon arrow;
+    private VBox livro;
 
     public TrilhoCard(TrilhoDTO dto) {
-        this.dto = dto;
+        this.expandido = false;
+        metricas=criarMetricas(dto);
+        livro=criarLivro(dto);
+        Expanded(false);
 
-        definirStatus();
-        configurarCard();
-        construirLayout();
-    }
+        getStyleClass().add("trilho-card");
 
-
-    private void definirStatus() {
-
-        if (!dto.getTrilho().existis()) {
-            dto.setStatus(TrilhoStatus.SEM_DADOS);
-            return;
-        }
-
-        double progresso = dto.getTrilho().progressoPercentual();
-
-        if (progresso >= 100) {
-            dto.setStatus(TrilhoStatus.CONCLUIDO);
-        }
-        else if (progresso <= 0) {
-            dto.setStatus(TrilhoStatus.BLOQUEADO);
-        }
-        else {
-            dto.setStatus(TrilhoStatus.EM_PROGRESSO);
-        }
-    }
-
-
-    private void configurarCard() {
-
-        setSpacing(18);
-        setAlignment(Pos.CENTER_LEFT);
-
-        setPadding(new Insets(16));
-
-        setStyle("""
-            -fx-background-color: white;
-            -fx-background-radius: 14;
-            -fx-border-radius: 14;
-            -fx-border-color: #E8E8E8;
-        """);
-    }
-
-
-    private void construirLayout() {
+        setSpacing(16);
+        setPadding(new Insets(20));
 
         getChildren().addAll(
-                criarNumeroEtapa(), 
-                criarConteudo(),
-                criarStatus()
+                criarHeader(dto),
+                criarProgresso(dto),
+                metricas,
+                livro,
+                detalhes
+        );
+
+        detalhes.getChildren().add(
+                criarDetalhes(dto)
         );
     }
 
+    private void Expanded(boolean expa){
+        this.detalhes.setVisible(expa);
+        this.detalhes.setManaged(expa);
+        this.metricas.setVisible(expa);
+        this.metricas.setManaged(expa);
+        this.livro.setVisible(expa);
+        this.livro.setManaged(expa);
+    }
 
-    private Label criarNumeroEtapa() {
+    private HBox criarHeader(TrilhoDTO dto) {
+        arrow = new FontIcon("fas-chevron-down");
+        arrow.getStyleClass().add("trilho-arrow");
+        arrow.setRotate(0);
 
-        Label numero = new Label(
+        HBox root = new HBox(12);
+
+        Label etapa = new Label(
                 String.valueOf(dto.getEtapa())
         );
 
-        numero.setMinSize(28, 28);
-        numero.setMaxSize(28, 28);
-
-        numero.setAlignment(Pos.CENTER);
-
-        numero.setStyle("""
-            -fx-background-color: #FA7602;
-            -fx-background-radius: 100;
-            -fx-text-fill: white;
-            -fx-font-weight: bold;
-            -fx-font-size: 12;
-        """);
-
-        return numero;
-    }
-
-
-    private StackPane criarIcone() {
-
-        StackPane caixa = new StackPane();
-
-        caixa.setPrefSize(42, 42);
-
-        String cor = switch (dto.getStatus()) {
-
-            case CONCLUIDO -> "#FA7602";
-
-            case EM_PROGRESSO -> "#2962FF";
-
-            case BLOQUEADO -> "#9E9E9E";
-
-            case SEM_DADOS -> "#E0E0E0";
-        };
-
-
-        caixa.setStyle("""
-            -fx-background-color: %s;
-            -fx-background-radius: 10;
-        """.formatted(cor));
-
-
-        ImageView icone = new ImageView(
-                new Image(
-                    getClass()
-                    .getResourceAsStream(
-                        "/com/imetro/assets/imgs/marker_48px.png"
-                    )
-                )
+        etapa.getStyleClass().add(
+                "trilho-etapa"
         );
 
+        StackPane iconBox = new StackPane();
 
-        icone.setFitWidth(22);
-        icone.setFitHeight(22);
+        iconBox.getStyleClass().add(
+                "trilho-icon-box"
+        );
 
+        FontIcon icon;
 
-        if (dto.getStatus() == TrilhoStatus.SEM_DADOS) {
-            icone.setOpacity(0.45);
+        if (
+            !dto.getTrilho().existis()
+            || dto.getTrilho().progressoPercentual() <= 0
+        ) {
+
+            icon = new FontIcon(
+                "fas-lock"
+            );
+
+            iconBox.getStyleClass()
+                   .add("trilho-icon-locked");
+
+        }
+        else {
+
+            icon = new FontIcon(
+                "fas-chart-line"
+            );
         }
 
+        icon.getStyleClass().add(
+                "trilho-icon"
+        );
 
-        caixa.getChildren().add(icone);
+        iconBox.getChildren().add(icon);
 
-        return caixa;
-    }
-
-
-    private VBox criarConteudo() {
-
-        if (!dto.getTrilho().existis()) {
-            return criarConteudoSemDados();
-        }
-
-        return criarConteudoCompleto();
-    }
-
-
-    private VBox criarConteudoSemDados() {
-
-        VBox box = new VBox(6);
+        VBox textos = new VBox(4);
 
         Label titulo = new Label(
                 dto.getTrilho().subtopico()
         );
 
-
-        titulo.setStyle("""
-            -fx-font-size: 15;
-            -fx-font-weight: bold;
-            -fx-text-fill: #555;
-        """);
-
-
-        Label mensagem = new Label(
-            "Faça um teste adaptativo para que o KBols "
-          + "consiga criar o seu trilho personalizado."
+        titulo.getStyleClass().add(
+                "trilho-title"
         );
 
-
-        mensagem.setWrapText(true);
-
-
-        mensagem.setStyle("""
-            -fx-text-fill: #888;
-            -fx-font-style: italic;
-            -fx-max-width:250;
-            -fx-max-height: 80;
-        """);
-
-
-        box.getChildren().addAll(
-                titulo,
-                mensagem
-        );
-
-
-        HBox.setHgrow(
-                box,
-                Priority.ALWAYS
-        );
-
-
-        return box;
-    }
-
-    private VBox criarConteudoCompleto() {
-
-        VBox principal = new VBox(10);
-
-        // Cabeçalho
-        HBox cabecalho = new HBox(16);
-
-        VBox detalhes = new VBox(5);
-
-
-        Label subtopico = new Label(
-                dto.getTrilho().subtopico()
-        );
-
-        subtopico.setStyle("""
-            -fx-font-size: 15;
-            -fx-font-weight: bold;
-            -fx-text-fill: #212121;
-        """);
-
-
-        Label observacao = new Label(
+        Label desc = new Label(
                 dto.getTrilho().observacao()
         );
 
-        observacao.setWrapText(true);
-
-        observacao.setStyle("""
-            -fx-text-fill: #666;
-            -fx-font-size: 12;
-        """);
-
-
-        detalhes.getChildren().addAll(
-                subtopico,
-                observacao
+        desc.getStyleClass().add(
+                "trilho-description"
         );
 
+        textos.getChildren().addAll(
+                titulo,
+                desc
+        );
 
-        Region espaco = new Region();
+        Region spacer = new Region();
 
         HBox.setHgrow(
-                espaco,
+                spacer,
                 Priority.ALWAYS
         );
 
-
-        VBox livroBox = new VBox(4);
-
-
-        Label livro = new Label(
-                dto.getTrilho().recomendacaoLivro()
-        );
-
-
-        Label paginas = new Label(
-                "Páginas: "
-                + dto.getTrilho().recomendacaoPaginas()
-        );
-
-
-        livro.setStyle("-fx-text-fill:#555;");
-        paginas.setStyle("-fx-text-fill:#555;");
-
-
-        livroBox.getChildren().addAll(
-                livro,
-                paginas
-        );
-
-
-        cabecalho.getChildren().addAll(
-                detalhes,
-                espaco,
-                livroBox
-        );
-
-
-        // Estatísticas
-        HBox estatisticas = new HBox(18);
-
-
-        Label avancos = new Label(
-                "Avanços: "
-                + dto.getTrilho().avancosRecentes()
-        );
-
-
-        Label quedas = new Label(
-                "Quedas: "
-                + dto.getTrilho().quedasRecentes()
-        );
-
-
-        Label dificuldade = new Label(
-                "Dificuldade: "
-                + dto.getTrilho().dificuldadeMediaPercentual()
-                + "%"
-        );
-
-
-        avancos.setStyle("-fx-text-fill:#444;");
-        quedas.setStyle("-fx-text-fill:#444;");
-        dificuldade.setStyle("-fx-text-fill:#444;");
-
-
-        estatisticas.getChildren().addAll(
-                avancos,
-                quedas,
-                dificuldade
-        );
-
-
-        // Barra de progresso
-        ProgressBar progresso = new ProgressBar(
-                dto.getTrilho().progressoPercentual() / 100.0
-        );
-
-
-        progresso.setPrefHeight(8);
-        progresso.setMaxWidth(Double.MAX_VALUE);
-
-
-        VBox.setVgrow(
-                progresso,
-                Priority.NEVER
-        );
-
-
-        Label progressoTexto = new Label(
-                "Progresso "
-                + String.format(
-                    "%.0f",
-                    dto.getTrilho().progressoPercentual()
+        Label percent = new Label(
+                String.format(
+                        "%.0f%%",
+                        dto.getTrilho()
+                           .progressoPercentual()
                 )
-                + "% | Rigor atual "
-                + String.format(
-                    "%.0f",
-                    dto.getTrilho().rigorAtualPercentual()
-                )
-                + "% de "
-                + String.format(
-                    "%.0f",
-                    dto.getTrilho().rigorAlvoPercentual()
-                )
-                + "%"
         );
 
-
-        progressoTexto.setStyle("""
-            -fx-text-fill:#666;
-            -fx-font-size:11;
-        """);
-
-
-        principal.getChildren().addAll(
-                cabecalho,
-                estatisticas,
-                progresso,
-                progressoTexto
+        percent.getStyleClass().add(
+                "trilho-percent"
         );
 
+        root.setOnMouseClicked(e -> {
+                expandido = !expandido;
+                Expanded(expandido);
+                arrow.setRotate(expandido ? 180 : 0);
+        });
 
-        HBox.setHgrow(
-                principal,
-                Priority.ALWAYS
+        root.getChildren().addAll(
+                etapa,
+                iconBox,
+                textos,
+                spacer,
+                percent,
+                arrow
+
         );
 
-
-        return principal;
+        return root;
     }
 
+    private HBox criarMetricas(TrilhoDTO dto) {
 
+        HBox box = new HBox(10);
 
-    private StackPane criarStatus() {
+        box.getChildren().addAll(
 
-        StackPane caixa = new StackPane();
+            miniCard(
+                    "+" +
+                    dto.getTrilho()
+                       .avancosRecentes(),
+                    "Avanços"
+            ),
 
+            miniCard(
+                    String.format(
+                            "%.0f%%",
+                            dto.getTrilho()
+                               .dificuldadeMediaPercentual()
+                    ),
+                    "Domínio"
+            ),
 
-        Label status = new Label();
+            miniCard(
+                    String.format(
+                            "%.0f%%",
+                            dto.getTrilho()
+                               .rigorAtualPercentual()
+                    ),
+                    "Rigor"
+            )
+    );
 
+    return box;
+}
 
-        switch (dto.getStatus()) {
+    private VBox criarProgresso(TrilhoDTO dto) {
 
+        ProgressBar progresso =
+        new ProgressBar(
+                dto.getTrilho()
+                   .progressoPercentual()
+                        / 100.0
+        );
 
-            case CONCLUIDO -> {
+        progresso.getStyleClass().add(
+                "trilho-progress"
+        );
 
-                status.setText("Concluído");
+        Label texto = new Label(
+                String.format(
+                        "%.0f%% concluído",
+                        dto.getTrilho()
+                        .progressoPercentual()
+                )
+        );
 
-                status.setStyle("""
-                    -fx-background-color:#FFF0E4;
-                    -fx-text-fill:#FA7602;
-                    -fx-font-weight:bold;
-                    -fx-background-radius:8;
-                    -fx-padding:8 12;
-                """);
-            }
+        texto.getStyleClass().add(
+                "trilho-progress-text"
+        );
 
-
-            case EM_PROGRESSO -> {
-
-                status.setText("Estudando");
-
-                status.setStyle("""
-                    -fx-background-color:#EAF1FF;
-                    -fx-text-fill:#2962FF;
-                    -fx-font-weight:bold;
-                    -fx-background-radius:8;
-                    -fx-padding:8 12;
-                """);
-            }
-
-
-            case BLOQUEADO -> {
-
-                status.setText("Bloqueado");
-
-                status.setStyle("""
-                    -fx-background-color:#EEEEEE;
-                    -fx-text-fill:#757575;
-                    -fx-font-weight:bold;
-                    -fx-background-radius:8;
-                    -fx-padding:8 12;
-                """);
-            }
-
-
-            case SEM_DADOS -> {
-
-                status.setText("Diagnóstico");
-
-                status.setStyle("""
-                    -fx-background-color:#F5F5F5;
-                    -fx-text-fill:#9E9E9E;
-                    -fx-font-weight:bold;
-                    -fx-background-radius:8;
-                    -fx-padding:8 12;
-                """);
-            }
+        return new VBox(
+                6,
+                progresso,
+                texto
+        );
         }
 
+private VBox miniCard(
+    String valor,
+    String label
+) {
 
-        caixa.getChildren().add(status);
+Label v = new Label(valor);
 
-        return caixa;
-    }
+v.getStyleClass().add(
+        "trilho-stat-value"
+);
 
+Label l = new Label(label);
+
+l.getStyleClass().add(
+        "trilho-stat-label"
+);
+
+VBox box = new VBox(
+        4,
+        v,
+        l
+);
+
+box.getStyleClass().add("trilho-stat-card");
+
+return box;
+}
+
+        private VBox criarLivro(TrilhoDTO dto) {
+
+                VBox box = new VBox(4);
+
+                String livroNome =dto.getTrilho().recomendacaoLivro();
+
+                if(livroNome == null|| livroNome.isBlank()){
+                        livroNome = "Sem referência";
+                }
+                HBox livroRow = new HBox(8);
+
+                FontIcon livroIcon =new FontIcon("fas-book-open");
+
+                livroIcon.getStyleClass().add("trilho-book-icon");
+
+                Label livro =new Label(livroNome);
+
+                livro.getStyleClass().add("trilho-book-title");
+
+                livroRow.getChildren().addAll(
+                    livroIcon,
+                    livro
+                );
+
+                String paginasTexto =dto.getTrilho().recomendacaoPaginas();
+
+                if(paginasTexto == null|| paginasTexto.isBlank()){
+                        paginasTexto = "Sem páginas recomendadas";
+                }
+
+                livro.getStyleClass().add("trilho-book-title");
+
+                HBox paginaRow = new HBox(8);
+
+                FontIcon paginaIcon =new FontIcon("fas-file");
+                paginaIcon.getStyleClass().add("trilho-book-icon");
+
+                Label paginas =new Label(paginasTexto);
+
+                paginas.getStyleClass().add("trilho-book-pages");
+
+                paginaRow.getChildren().addAll(paginaIcon,paginas);
+
+                box.getChildren().addAll(livroRow,paginaRow);
+
+                return box;
+        }
+
+        private VBox criarDetalhes(TrilhoDTO dto) {
+
+        VBox box = new VBox(8);
+
+        Label titulo =
+                new Label("Próximo objetivo");
+
+        titulo.getStyleClass().add("trilho-detail-title");
+
+        Label conteudo =new Label(dto.getTrilho().observacao());
+
+        conteudo.setWrapText(true);
+
+        box.getChildren().addAll(
+                titulo,
+                conteudo
+        );
+
+        return box;
+        }
 }

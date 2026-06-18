@@ -60,6 +60,11 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <dependency> 
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
          <dependency>
             <groupId>org.rationalityfrontline.workaround</groupId>
             <artifactId>jfoenix</artifactId>

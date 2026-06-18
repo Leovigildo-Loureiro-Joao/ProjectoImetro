@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="tela" prefHeight="982.0" prefWidth="1211.0" spacing="20.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.DashboardOrientadoController">
+<VBox fx:id="tela" minHeight="982.0" prefHeight="982.0" prefWidth="1211.0" spacing="20.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.DashboardOrientadoController">
     <padding>
         <Insets bottom="18" left="18" right="18" top="18" />
     </padding>
@@ -146,7 +146,7 @@
                   </children>
                </HBox>
                <Label fx:id="achievementTitle" styleClass="h1-thin" text="Próxima conquista" wrapText="true" />
-               <Label fx:id="achievementSummary" styleClass="compact-copy" text="As três mais próximas de desbloquear aparecem aqui, sem scroll." wrapText="true" />
+               <Label fx:id="achievementSummary" styleClass="compact-copy" text="As três mais próximas de desbloquear aparecem aqui." wrapText="true" />
                <HBox fx:id="achievementCardsBox" alignment="CENTER_LEFT" spacing="8.0" styleClass="achievement-cards-box" />
                <Label fx:id="achievementMeta" styleClass="muted" text="Cada card mostra a medalha, o objetivo e o que falta." wrapText="true" />
             </children>
@@ -169,7 +169,7 @@
                </HBox>
                <Label fx:id="planTitle" styleClass="h1-thin" text="Bloco de arranque" wrapText="true" />
                <Label fx:id="planSummary" styleClass="compact-copy" text="O teu plano diário aparece aqui com base no histórico." wrapText="true" />
-               <VBox fx:id="planStepsBox" spacing="8.0" styleClass="plan-steps-box" />
+               <VBox fx:id="planStepsBox" spacing="10.0" styleClass="plan-steps-box" />
                <VBox spacing="4.0">
                   <children>
                      <Label fx:id="planFocus" styleClass="muted" text="Foco actual: -" wrapText="true" />
@@ -194,8 +194,8 @@
                      <Label fx:id="disciplineBadge" styleClass="badge-new" text="0 disciplinas" />
                   </children>
                </HBox>
-               <Label fx:id="disciplineSummary" styleClass="compact-copy" text="Progressão actual por disciplina. Só progresso, sem métricas extra." wrapText="true" />
-               <ListView fx:id="status_disciplina" prefHeight="200.0" prefWidth="340.0" styleClass="discipline-progress-list" />
+               <Label fx:id="disciplineSummary" styleClass="compact-copy" text="Progressão actual por disciplina." wrapText="true" />
+               <ListView fx:id="status_disciplina" prefHeight="422.0" prefWidth="327.0" styleClass="discipline-progress-list" />
             </children>
             <padding>
                <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />

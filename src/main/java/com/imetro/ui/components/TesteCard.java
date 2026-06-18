@@ -2,242 +2,338 @@ package com.imetro.ui.components;
 
 import java.util.List;
 
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
 import com.jfoenix.controls.JFXButton;
 
+import javafx.animation.RotateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.shape.SVGPath;
+import javafx.util.Duration;
 
 public class TesteCard extends VBox {
-    private static final double CARD_PREF_WIDTH = 680;
-    private static final double CARD_MAX_WIDTH = 720;
 
-    private final ProgressBar acertoBar = new ProgressBar();
-    private final ProgressBar precisaoBar = new ProgressBar();
-    private final ProgressBar coberturaBar = new ProgressBar();
-    private final FlowPane topicoBadge;
+    private final VBox expandedContent = new VBox(16);
+    private boolean expanded = false;
 
     public TesteCard(
-        TesteDto teste,
-        boolean inteligenteDisponivel,
-        Runnable onPadrao,
-        Runnable onInteligente
+            TesteDto teste,
+            boolean inteligenteDisponivel,
+            Runnable onPadrao,
+            Runnable onInteligente
     ) {
+
         getStyleClass().addAll("card", "teste-card");
-        setPadding(new Insets(16));
+
         setSpacing(14);
-        setAlignment(Pos.TOP_LEFT);
-        setFillWidth(true);
-        setPrefWidth(CARD_PREF_WIDTH);
-        setMaxWidth(CARD_MAX_WIDTH);
+        setPadding(new Insets(18));
 
-        Label disciplina = new Label(teste.disciplina());
-        disciplina.getStyleClass().add("teste-card-title");
+        // =====================================================
+        // HEADER
+        // =====================================================
 
-        Label subtitulo = new Label(construirSubtitulo(teste));
-        subtitulo.getStyleClass().add("teste-card-subtitle");
-        subtitulo.setWrapText(true);
-
-        VBox tituloBox = new VBox(2, disciplina, subtitulo);
-        tituloBox.setAlignment(Pos.CENTER_LEFT);
-
-        FlowPane badges = new FlowPane(6, 6);
-        badges.getChildren().addAll(
-            criarBadge(teste.totalSubtopicos() + " testes"),
-            criarBadge(teste.totalQuestoes() + " questoes respondidas"),
-            criarBadge(teste.topicos().size() + " topicos testados")
-        );
-        badges.setAlignment(Pos.CENTER_LEFT);
-        badges.setPrefWrapLength(CARD_PREF_WIDTH - 36);
-
-        VBox header = new VBox(10, tituloBox, badges);
+        HBox header = new HBox(12);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        CircleProgress progresso = new CircleProgress(50, 50);
-        progresso.setValue(limitar(teste.percent()));
-        VBox hero = criarHero(teste, progresso);
+        StackPane iconBox = new StackPane();
+        iconBox.getStyleClass().add("teste-icon-box");
+        iconBox.setPrefSize(48, 48);
 
-        VBox indicadores = new VBox(
-            10,
-            indicador(
-                "Acerto medio",
-                teste.ritmoEvolutivo(),
-                acertoBar
-            ),
-            indicador(
-                "Precisao media",
-                teste.errosComuns(),
-                precisaoBar
-            ),
-            indicador(
-                "Cobertura de topicos",
-                teste.melhoria(),
-                coberturaBar
-            )
+        FontIcon icon = new FontIcon("fas-book");
+        icon.getStyleClass().add("teste-icon");
+
+        iconBox.getChildren().add(icon);
+
+        VBox titleBox = new VBox(4);
+
+        Label disciplina = new Label(teste.disciplina());
+        disciplina.getStyleClass().add("teste-title");
+
+        Label resumo = new Label(
+                teste.totalSubtopicos() +
+                        " testes • " +
+                        teste.totalQuestoes() +
+                        " questões"
         );
-        indicadores.getStyleClass().add("teste-card-surface");
-        indicadores.setPadding(new Insets(14));
-        indicadores.setMaxWidth(Double.MAX_VALUE);
+        resumo.getStyleClass().add("teste-subtitle");
 
-        JFXButton buttonPadrao = new JFXButton("Seguir plano ativo");
-        buttonPadrao.getStyleClass().add("btn-primary-two");
-        buttonPadrao.setMaxWidth(Double.MAX_VALUE);
-        buttonPadrao.setPrefHeight(38);
-        buttonPadrao.setOnAction(event -> onPadrao.run());
-
-        JFXButton buttonInteligente = new JFXButton("Abrir foco inteligente");
-        buttonInteligente.getStyleClass().add("btn-primary");
-        buttonInteligente.setMaxWidth(Double.MAX_VALUE);
-        buttonInteligente.setPrefHeight(38);
-        buttonInteligente.setDisable(!inteligenteDisponivel);
-        buttonInteligente.setOnAction(event -> onInteligente.run());
-
-        Label actionTitle = new Label("Iniciar teste");
-        actionTitle.getStyleClass().add("teste-card-section-title");
-
-        Label actionNote = new Label(
-            "A rota padrao segue o teu plano semanal e costuma ser a escolha mais produtiva para ganhar consistencia."
-        );
-        actionNote.getStyleClass().add("teste-card-action-note");
-        actionNote.setWrapText(true);
-
-        VBox acoes = new VBox(10, actionTitle, actionNote, buttonPadrao, buttonInteligente);
-        acoes.getStyleClass().add("teste-card-surface");
-        acoes.setPadding(new Insets(14));
-        acoes.setPrefWidth(220);
-        acoes.setMaxWidth(220);
-
-        VBox resumoPrincipal = new VBox(12, hero, indicadores);
-        resumoPrincipal.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(resumoPrincipal, Priority.ALWAYS);
-
-        HBox resumo = new HBox(12, resumoPrincipal, acoes);
-        resumo.setAlignment(Pos.TOP_LEFT);
-
-        Label topicosTitulo = new Label("Topicos ja testados");
-        topicosTitulo.getStyleClass().add("teste-card-section-title");
-
-        Label topicosSubtitulo = new Label(
-            "Mostramos apenas os topicos que ja entraram nos teus testes e a evolucao de acerto."
-        );
-        topicosSubtitulo.getStyleClass().add("teste-card-section-subtitle");
-        topicosSubtitulo.setWrapText(true);
-
-        topicoBadge = new FlowPane(8, 8);
-        topicoBadge.getStyleClass().add("teste-card-topics-wrap");
-        topicoBadge.setPrefWrapLength(CARD_PREF_WIDTH - 64);
-        adicionarTopicos(teste.topicos());
-
-        VBox topicosBox = new VBox(8, topicosTitulo, topicosSubtitulo, topicoBadge);
-        topicosBox.getStyleClass().add("teste-card-surface");
-        topicosBox.setPadding(new Insets(14));
-        topicosBox.setMaxWidth(Double.MAX_VALUE);
-        getChildren().addAll(header, resumo, topicosBox);
-    }
-
-    private VBox criarHero(TesteDto teste, CircleProgress progresso) {
-        Label titulo = new Label("Evolucao geral");
-        titulo.getStyleClass().add("teste-card-hero-title");
-
-        Label valor = new Label(formatPercent(teste.percent()));
-        valor.getStyleClass().add("teste-card-hero-value");
-
-        Label descricao = new Label("Resumo baseado no historico ja realizado nesta disciplina.");
-        descricao.getStyleClass().add("teste-card-hero-copy");
-        descricao.setWrapText(true);
-
-        VBox infoBox = new VBox(4, titulo, valor, descricao);
-        infoBox.setAlignment(Pos.CENTER_LEFT);
-        infoBox.setMaxWidth(Double.MAX_VALUE);
-
-        HBox heroConteudo = new HBox(12, progresso, infoBox);
-        heroConteudo.setAlignment(Pos.CENTER_LEFT);
-
-        VBox hero = new VBox(heroConteudo);
-        hero.getStyleClass().add("teste-card-hero");
-        hero.setPadding(new Insets(14));
-        hero.setAlignment(Pos.CENTER_LEFT);
-        hero.setMaxWidth(Double.MAX_VALUE);
-        return hero;
-    }
-
-    private Label criarBadge(String texto) {
-        Label badge = new Label(texto);
-        badge.getStyleClass().add("teste-card-badge");
-        return badge;
-    }
-
-    private VBox indicador(String titulo, float valor, ProgressBar barra) {
-        Label tituloLabel = new Label(titulo);
-        tituloLabel.getStyleClass().add("teste-card-metric-title");
-
-        Label valorLabel = new Label(formatPercent(valor));
-        valorLabel.getStyleClass().add("teste-card-metric-value");
+        titleBox.getChildren().addAll(disciplina, resumo);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox topo = new HBox(10, tituloLabel, spacer, valorLabel);
-        topo.setAlignment(Pos.CENTER_LEFT);
+        Label percent = new Label(formatPercent(teste.percent()));
+        percent.getStyleClass().add("teste-percent");
 
-        barra.setProgress(limitar(valor));
-        barra.setMaxWidth(Double.MAX_VALUE);
+        FontIcon arrow = new FontIcon("fas-chevron-down");
+        arrow.getStyleClass().add("teste-arrow");
 
-        VBox box = new VBox(6, topo, barra);
-        box.getStyleClass().add("teste-card-metric");
+        header.getChildren().addAll(
+                iconBox,
+                titleBox,
+                spacer,
+                percent,
+                arrow
+        );
+
+        // =====================================================
+        // QUICK STATS
+        // =====================================================
+
+        HBox stats = new HBox(12);
+
+        stats.getChildren().addAll(
+                statCard(
+                        "Acerto Médio",
+                        formatPercent(teste.ritmoEvolutivo())
+                ),
+                statCard(
+                        "Precisão",
+                        formatPercent(teste.errosComuns())
+                ),
+                statCard(
+                        "Cobertura",
+                        formatPercent(teste.melhoria())
+                )
+        );
+
+        // =====================================================
+        // EXPANDED CONTENT
+        // =====================================================
+
+        VBox metricas = buildMetricas(teste);
+
+        VBox topicos = buildTopicos(teste.topicos());
+
+        HBox actions = buildActions(
+                inteligenteDisponivel,
+                onPadrao,
+                onInteligente
+        );
+
+        expandedContent.getChildren().addAll(
+                metricas,
+                topicos,
+                actions
+        );
+
+        expandedContent.setVisible(false);
+        expandedContent.setManaged(false);
+
+        header.setOnMouseClicked(e ->
+                toggle(expandedContent, arrow));
+
+        getChildren().addAll(
+                header,
+                stats,
+                expandedContent
+        );
+    }
+
+    private VBox buildMetricas(TesteDto t) {
+
+        VBox box = new VBox(12);
+
+        box.getChildren().addAll(
+
+                metricRow(
+                        "Acerto médio",
+                        t.ritmoEvolutivo()
+                ),
+
+                metricRow(
+                        "Precisão média",
+                        t.errosComuns()
+                ),
+
+                metricRow(
+                        "Cobertura curricular",
+                        t.melhoria()
+                )
+        );
+
+        box.getStyleClass().add("teste-metrics");
+
         return box;
     }
 
-    private void adicionarTopicos(List<Percent> topicos) {
-        topicoBadge.getChildren().clear();
+    private VBox metricRow(
+            String title,
+            float value
+    ) {
 
-        if (topicos == null || topicos.isEmpty()) {
-            Label vazio = new Label("Sem topicos testados nesta disciplina ainda.");
-            vazio.getStyleClass().add("teste-card-section-subtitle");
-            vazio.setWrapText(true);
-            topicoBadge.getChildren().add(vazio);
-            return;
-        }
+        Label left = new Label(title);
 
-        int limite = Math.min(3, topicos.size());
-        for (int i = 0; i < limite; i++) {
-            Percent topico = topicos.get(i);
-            Label label = new Label(topico.topico() + "  " + formatPercentualTopico(topico.evolucao()));
-            label.getStyleClass().add("teste-card-topic");
-            topicoBadge.getChildren().add(label);
-        }
+        Label right = new Label(
+                formatPercent(value)
+        );
 
-        if (topicos.size() > limite) {
-            Label extra = new Label("+" + (topicos.size() - limite) + " focos");
-            extra.getStyleClass().add("teste-card-topic");
-            topicoBadge.getChildren().add(extra);
-        }
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox top = new HBox(
+                left,
+                spacer,
+                right
+        );
+
+        ProgressBar bar =
+                new ProgressBar(limit(value));
+
+        bar.setMaxWidth(Double.MAX_VALUE);
+
+        VBox box = new VBox(
+                6,
+                top,
+                bar
+        );
+
+        box.getStyleClass().add("teste-metric-row");
+
+        return box;
     }
 
-    private String construirSubtitulo(TesteDto teste) {
-        if (teste.totalSubtopicos() <= 0) {
-            return "Ainda sem historico de teste nesta disciplina.";
-        }
-        return teste.totalSubtopicos() + " testes concluidos nesta disciplina.";
+    private VBox buildTopicos(
+            List<Percent> topicos
+    ) {
+
+        Label title = new Label("Focos sugeridos");
+        title.getStyleClass().add("teste-section-title");
+
+        FlowPane flow = new FlowPane();
+        flow.setHgap(8);
+        flow.setVgap(8);
+
+        topicos.stream()
+                .limit(8)
+                .forEach(t -> {
+
+                    Label chip =
+                            new Label(
+                                    t.topico() +
+                                    " • " +
+                                    Math.round(
+                                            t.evolucao() * 100
+                                    ) + "%"
+                            );
+
+                    chip.getStyleClass()
+                            .add("teste-chip");
+
+                    flow.getChildren()
+                            .add(chip);
+                });
+
+        VBox box =
+                new VBox(8, title, flow);
+
+        box.getStyleClass()
+                .add("teste-section");
+
+        return box;
     }
 
-    private String formatPercent(float valor) {
-        return Math.round(limitar(valor) * 100f) + "%";
+    private HBox buildActions(
+            boolean intel,
+            Runnable padrao,
+            Runnable inteligente
+    ) {
+
+        JFXButton continuar =
+                new JFXButton(
+                        "Continuar Plano"
+                );
+
+        continuar.getStyleClass()
+                .add("teste-primary-btn");
+
+        continuar.setOnAction(
+                e -> padrao.run()
+        );
+
+        JFXButton inteligenteBtn =
+                new JFXButton(
+                        "Foco Inteligente"
+                );
+
+        inteligenteBtn.getStyleClass()
+                .add("teste-secondary-btn");
+
+        inteligenteBtn.setDisable(!intel);
+
+        inteligenteBtn.setOnAction(
+                e -> inteligente.run()
+        );
+
+        HBox box =
+                new HBox(
+                        10,
+                        continuar,
+                        inteligenteBtn
+                );
+
+        return box;
     }
 
-    private String formatPercentualTopico(float valor) {
-        return Math.round(Math.max(0f, Math.min(100f, valor))) + "%";
+    private VBox statCard(
+            String title,
+            String value
+    ) {
+
+        Label t = new Label(title);
+        t.getStyleClass()
+                .add("teste-stat-title");
+
+        Label v = new Label(value);
+        v.getStyleClass()
+                .add("teste-stat-value");
+
+        VBox box =
+                new VBox(4, t, v);
+
+        box.getStyleClass()
+                .add("teste-stat-card");
+
+        return box;
     }
 
-    private float limitar(float valor) {
-        return Math.max(0f, Math.min(1f, valor));
+    private void toggle(
+            VBox content,
+            FontIcon arrow
+    ) {
+
+        expanded = !expanded;
+
+        content.setVisible(expanded);
+        content.setManaged(expanded);
+
+        RotateTransition rt =
+                new RotateTransition(
+                        Duration.millis(200),
+                        arrow
+                );
+
+        rt.setToAngle(
+                expanded ? 180 : 0
+        );
+
+        rt.play();
+    }
+
+    private String formatPercent(float v) {
+        return Math.round(limit(v) * 100) + "%";
+    }
+
+    private float limit(float v) {
+        return Math.max(
+                0f,
+                Math.min(1f, v)
+        );
     }
 }

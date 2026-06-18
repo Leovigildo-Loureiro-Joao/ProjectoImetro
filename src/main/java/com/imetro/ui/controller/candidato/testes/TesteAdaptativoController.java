@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.imetro.App;
@@ -97,197 +98,78 @@ import javafx.util.Duration;
 public class TesteAdaptativoController implements DisposableController, TesteAdaptativoCoordinator.TesteHost {
 
     private static final String SESSAO_PAUSA_CACHE_PREFIX = "teste.adaptativo.pause.";
+    private static final long CACHE_TTL_SECONDS = 300;
+    private static final double MAX_PROGRESS = 100.0;
 
-    @FXML
-    private Label ResA;
-
-    @FXML
-    private Label ResB;
-
-    @FXML
-    private Label ResC;
-
-    @FXML
-    private Label ResD;
-
-    @FXML
-    private Label ResE;
-
-    @FXML
-    private Label ResF;
-
-    @FXML
-    private Label ResG;
-
-    @FXML
-    private ToggleGroup alternativas;
-
-    @FXML
-    private Label bloco1;
-
-    @FXML
-    private Label bloco2;
-
-    @FXML
-    private JFXButton btnConfirmar;
-
-    @FXML
-    private JFXButton btnPausa;
-
-    @FXML
-    private JFXButton btnProximo;
-
-    @FXML
-    private Label continua;
-
-    @FXML
-    private Label desafui;
-
-    @FXML
-    private Label dica_estudo;
-
-    @FXML
-    private Label dificuldadeAtual;
-
-    @FXML
-    private VBox disciplinasContainer;
-
-    @FXML
-    private VBox feedbackContainer;
-
-    @FXML
-    private Label feedbackIcon;
-
-    @FXML
-    private ImageView feedbackImg;
-
-    @FXML
-    private Label feedbackMessage;
-
-    @FXML
-    private StackPane graficoPane;
-
-    @FXML
-    private Label loadingMessage;
-
-    @FXML
-    private StackPane loadingOverlay;
-
-    @FXML
-    private ProgressBar loadingProgress;
-
-    @FXML
-    private Label media_acerto;
-
-    @FXML
-    private StackPane modalPai;
-
-    @FXML
-    private Label nPergunta;
-
-    @FXML
-    private Label next_level;
-
-    @FXML
-    private Label nivelAtual;
-
-    @FXML
-    private Label nivelAtual1;
-
-    @FXML
-    private Label nivelAtual11;
-
-    @FXML
-    private Label nivelAtual12;
-
-    @FXML
-    private Label nivelAtual2;
-
-    @FXML
-    private Label nivelAtual23;
-
-    @FXML
-    private Label nivelAtual231;
-
-    @FXML
-    private Label nivelAtual232;
-
-    @FXML
-    private Label nomeDisc;
-
-    @FXML
-    private Label percent_test;
-
-    @FXML
-    private Label planHintLabel;
-
-    @FXML
-    private ProgressBar progress;
-
-    @FXML
-    private Label progressText;
-
-    @FXML
-    private StackPane progresso;
-
-    @FXML
-    private ProgressBar questionProgressBar;
-
-    @FXML
-    private VBox start;
-
-    @FXML
-    private VBox tela;
-
-    @FXML
-    private Label tempo;
-
-    @FXML
-    private VBox testeContainer;
-
-    @FXML
-    private AnchorPane testeField;
-
-    @FXML
-    private Label teste_realizado;
-
-    @FXML
-    private JFXToggleNode toggleA;
-
-    @FXML
-    private JFXToggleNode toggleB;
-
-    @FXML
-    private JFXToggleNode toggleC;
-
-    @FXML
-    private JFXToggleNode toggleD;
-
-    @FXML
-    private JFXToggleNode toggleE;
-
-    @FXML
-    private JFXToggleNode toggleF;
-
-    @FXML
-    private JFXToggleNode toggleG;
-
-    @FXML
-    private VBox trilho;
-
-    @FXML
-    private VBox trilhoAdaptacaoCard;
-
-    @FXML
-    private JFXComboBox<String> trilhoDisciplinaCombo;
+    @FXML private Label ResA;
+    @FXML private Label ResB;
+    @FXML private Label ResC;
+    @FXML private Label ResD;
+    @FXML private Label ResE;
+    @FXML private Label ResF;
+    @FXML private Label ResG;
+    @FXML private ToggleGroup alternativas;
+    @FXML private Label bloco1;
+    @FXML private Label bloco2;
+    @FXML private JFXButton btnConfirmar;
+    @FXML private JFXButton btnPausa;
+    @FXML private JFXButton btnProximo;
+    @FXML private Label continua;
+    @FXML private Label desafui;
+    @FXML private Label dica_estudo;
+    @FXML private Label dificuldadeAtual;
+    @FXML private VBox disciplinasContainer;
+    @FXML private VBox feedbackContainer;
+    @FXML private Label feedbackIcon;
+    @FXML private ImageView feedbackImg;
+    @FXML private Label feedbackMessage;
+    @FXML private StackPane graficoPane;
+    @FXML private Label loadingMessage;
+    @FXML private StackPane loadingOverlay;
+    @FXML private ProgressBar loadingProgress;
+    @FXML private Label media_acerto;
+    @FXML private StackPane modalPai;
+    @FXML private Label nPergunta;
+    @FXML private Label next_level;
+    @FXML private Label nivelAtual;
+    @FXML private Label nivelAtual1;
+    @FXML private Label nivelAtual11;
+    @FXML private Label nivelAtual12;
+    @FXML private Label nivelAtual2;
+    @FXML private Label nivelAtual23;
+    @FXML private Label nivelAtual231;
+    @FXML private Label nivelAtual232;
+    @FXML private Label nomeDisc;
+    @FXML private Label percent_test;
+    @FXML private Label planHintLabel;
+    @FXML private ProgressBar progress;
+    @FXML private Label progressText;
+    @FXML private StackPane progresso;
+    @FXML private ProgressBar questionProgressBar;
+    @FXML private VBox start;
+    @FXML private VBox tela;
+    @FXML private Label tempo;
+    @FXML private VBox testeContainer;
+    @FXML private AnchorPane testeField;
+    @FXML private Label teste_realizado;
+    @FXML private JFXToggleNode toggleA;
+    @FXML private JFXToggleNode toggleB;
+    @FXML private JFXToggleNode toggleC;
+    @FXML private JFXToggleNode toggleD;
+    @FXML private JFXToggleNode toggleE;
+    @FXML private JFXToggleNode toggleF;
+    @FXML private JFXToggleNode toggleG;
+    @FXML private VBox trilho;
+    @FXML private VBox trilhoAdaptacaoCard;
+    @FXML private JFXComboBox<String> trilhoDisciplinaCombo;
 
     private double PROGRESSO_TARGET = 0d;
     private ConfiguracaoDto configCandidato;
     private List<String> disciplinas = List.of();
     private Map<String, ResumoHistoricoDisciplina> resumos = Map.of();
-    private ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
+    private final ConfiguracoesRepository configuracoesRepository = new ConfiguracoesRepository();
     private ConfiguracaoTesteAdaptativoDto adaptacaoDto;
-    private ConfiguracoesTesteAdaptativoRespository adaptacaoRepository = new ConfiguracoesTesteAdaptativoRespository();
+    private final ConfiguracoesTesteAdaptativoRespository adaptacaoRepository = new ConfiguracoesTesteAdaptativoRespository();
     private final VBox botoesDisciplinasBox = new VBox(12);
     private final List<Character> respostasUsuario = new ArrayList<>();
     private final List<Long> temposResposta = new ArrayList<>();
@@ -329,19 +211,13 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private StackPane planoCartesianoContainer;
     private PlanoCartesianoPane planoCartesianoPane;
     private boolean sessaoAtiva;
+
     @FXML
     public void initialize() {
         TesteAdaptativoCoordinator.setHost(this);
-        testeService=new TesteService();
-        desafioService=new DesafioService();
-        service = new TesteAdaptativoService();
-        configurarPainelApoioVisual();
-        configurarTrilhoAdaptacao();
-        configurarListenerAlternativas();
-
-        botoesDisciplinasBox.setFillWidth(false);
-        botoesDisciplinasBox.setAlignment(Pos.TOP_LEFT);
-        disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
+        initializeServices();
+        configureUIComponents();
+        configureListeners();
 
         if (restaurarSessaoPausada()) {
             Platform.runLater(this::atualizarEstadoPlanejamento);
@@ -354,32 +230,66 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             carregarBloqueioPrimeiroDiagnostico();
         }
 
+        initializeUIState();
+        updateHeroProgress();
+    }
+
+    private void initializeServices() {
+        testeService = new TesteService();
+        desafioService = new DesafioService();
+        service = new TesteAdaptativoService();
+    }
+
+    private void configureUIComponents() {
+        configurarPainelApoioVisual();
+        configurarTrilhoAdaptacao();
+        configurarListenerAlternativas();
+
+        botoesDisciplinasBox.setFillWidth(false);
+        botoesDisciplinasBox.setAlignment(Pos.TOP_LEFT);
+        disciplinasContainer.getChildren().setAll(botoesDisciplinasBox);
+    }
+
+    private void configureListeners() {
+        // Listener para o combo do trilho
+        trilhoDisciplinaCombo.valueProperty().addListener(
+            (obs, oldValue, newValue) -> {
+                if (newValue != null && !newValue.isBlank()) {
+                    this.disciplinaSelecionada = newValue;
+                    atualizarTrilhoDisciplina(newValue);
+                }
+            }
+        );
+    }
+
+    private void initializeUIState() {
         feedbackContainer.setVisible(false);
         testeContainer.setVisible(false);
         start.setVisible(true);
         atualizarEstadoBotaoPausa();
         atualizarIndicadoresNivel();
         Platform.runLater(this::atualizarEstadoPlanejamento);
-
-
-        if (progresso != null) {
-            Stats stats = candidatoService.CalcularStats();
-            double VELOCIDADE_TARGET = stats.velocidade();
-            double LOGICA_TARGET = stats.logica();
-            double PRECISAO_TARGET = stats.precisao();
-            double RESILIENCIA_TARGET = stats.resiliencia();
-            double CONSISTENCIA_TARGET = stats.consistencia();
-            PROGRESSO_TARGET = (VELOCIDADE_TARGET + LOGICA_TARGET + PRECISAO_TARGET + RESILIENCIA_TARGET + CONSISTENCIA_TARGET) / 5.0;
-            progresso.getChildren().clear();
-            CircleProgress circleProgress = new CircleProgress(50, 50);
-            circleProgress.setValue(PROGRESSO_TARGET);
-            next_level.setText(resolveLevel(PROGRESSO_TARGET));
-
-            progresso.getChildren().add(circleProgress);
-        }
     }
 
-     private String resolveLevel(double media) {
+    private void updateHeroProgress() {
+        if (progresso == null) return;
+
+        Stats stats = candidatoService.CalcularStats();
+        PROGRESSO_TARGET = calculateAverageProgress(stats);
+
+        progresso.getChildren().clear();
+        CircleProgress circleProgress = new CircleProgress(50, 50);
+        circleProgress.setValue(PROGRESSO_TARGET);
+        next_level.setText(resolveLevel(PROGRESSO_TARGET));
+        progresso.getChildren().add(circleProgress);
+    }
+
+    private double calculateAverageProgress(Stats stats) {
+        return (stats.velocidade() + stats.logica() + stats.precisao() +
+                stats.resiliencia() + stats.consistencia()) / 5.0;
+    }
+
+    private String resolveLevel(double media) {
         double percentual = clamp(media * 100d, 0d, 100d);
         if (percentual < 35d) {
             return NivelDisciplina.INICIANTE.getDescricao().toUpperCase();
@@ -390,10 +300,10 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         return NivelDisciplina.AVANCADO.getDescricao().toUpperCase();
     }
 
-    private void CarregarDataTrilho(){
+    private void CarregarDataTrilho() {
         var plano = planeamentoService.gerarResumo();
         try {
-            Desafio desafio=desafioService.gerarDesafio(plano);
+            Desafio desafio = desafioService.gerarDesafio(plano);
             desafui.setText(desafio.descricao());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -405,9 +315,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void atualizarEstadoPlanejamento() {
-        if (planHintLabel == null) {
-            return;
-        }
+        if (planHintLabel == null) return;
 
         PlaneamentoEstudoEstado estado = planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId());
         String texto = estado.titulo();
@@ -418,73 +326,93 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void configurarTrilhoAdaptacao() {
-        if (trilhoDisciplinaCombo == null) {
-            return;
-        }
-        atualizarTrilhoDisciplinas(carregarDisciplinasTrilho());
-        trilhoDisciplinaCombo.valueProperty().addListener((obs, oldValue, newValue) -> atualizarTrilhoDisciplina(newValue));
+        if (trilhoDisciplinaCombo == null) return;
+
+        List<String> disciplinasTrilho = carregarDisciplinasTrilho();
+        atualizarTrilhoDisciplinas(disciplinasTrilho);
         CarregarDataTrilho();
     }
 
     private List<String> carregarDisciplinasTrilho() {
         LinkedHashSet<String> disciplinas = new LinkedHashSet<>();
 
-        if (service != null) {
-            try {
-                disciplinas.addAll(DisciplinaService.DisciplinaCandidato());
-            } catch (Exception e) {
-                System.err.println("Erro ao carregar disciplinas do trilho: " + e.getMessage());
+        try {
+            List<String> fromService = DisciplinaService.DisciplinaCandidato();
+            if (fromService != null && !fromService.isEmpty()) {
+                disciplinas.addAll(fromService);
+                System.out.println("✅ Disciplinas carregadas de DisciplinaCandidato: " + disciplinas.size());
             }
+        } catch (Exception e) {
+            System.err.println("❌ Erro em DisciplinaCandidato: " + e.getMessage());
         }
 
         if (disciplinas.isEmpty()) {
             try {
-                disciplinas.addAll(
-                    DisciplinaService.getProgressoDisciplinasCandidato().stream()
+                var progresso = DisciplinaService.getProgressoDisciplinasCandidato();
+                if (progresso != null) {
+                    progresso.stream()
                         .map(disciplina -> disciplina.disciplina())
                         .filter(nome -> nome != null && !nome.isBlank())
-                        .toList()
-                );
+                        .forEach(disciplinas::add);
+                    System.out.println("✅ Disciplinas carregadas de getProgressoDisciplinasCandidato: " + disciplinas.size());
+                }
             } catch (SQLException e) {
-                e.printStackTrace();
+                System.err.println("❌ Erro em getProgressoDisciplinasCandidato: " + e.getMessage());
             }
         }
 
+        if (disciplinas.isEmpty()) {
+            System.out.println("⚠️ Nenhuma disciplina encontrada, usando fallback");
+            disciplinas.addAll(List.of("Matemática", "Português", "Física", "Química"));
+        }
+
+        System.out.println("📚 Disciplinas finais para trilho: " + disciplinas);
         return new ArrayList<>(disciplinas);
     }
 
     private void atualizarTrilhoDisciplinas(List<String> disciplinas) {
-        if (trilhoDisciplinaCombo == null) {
-            return;
-        }
+        if (trilhoDisciplinaCombo == null) return;
 
         trilhoAdaptacaoCache.clear();
         trilhoDisciplinaCombo.getItems().setAll(disciplinas == null ? List.of() : disciplinas);
         trilhoDisciplinaCombo.setDisable(disciplinas == null || disciplinas.isEmpty());
-        trilhoDisciplinaCombo.getSelectionModel().selectFirst();
-        atualizarTrilhoDisciplina(disciplinaSelecionada);
+
+        if (disciplinas != null && !disciplinas.isEmpty()) {
+            String primeiraDisciplina = disciplinas.get(0);
+            this.disciplinaSelecionada = primeiraDisciplina;
+            trilhoDisciplinaCombo.getSelectionModel().select(primeiraDisciplina);
+            atualizarTrilhoDisciplina(primeiraDisciplina);
+        }
     }
 
-
-    private void atualizarTrilhoDisciplina(String disciplinaSelecionada) {
-        if (trilhoDisciplinaCombo == null) {
+    private void atualizarTrilhoDisciplina(String disciplina) {
+        if (trilhoDisciplinaCombo == null || disciplina == null || disciplina.isBlank()) {
             return;
         }
 
         trilhoAdaptacaoCache.clear();
-        List <TrilhaAdaptacaoSubtopico> trilhoSubtopico=testeService.carregarTrilhaAdaptacao(disciplinaSelecionada);
+        this.disciplinaSelecionada = disciplina;
+
+        List<TrilhaAdaptacaoSubtopico> trilhoSubtopico = testeService.carregarTrilhaAdaptacao(disciplina);
+
         trilho.getChildren().clear();
-        int o = 0;
-        if(trilhoSubtopico.isEmpty())
+
+        if (trilhoSubtopico == null || trilhoSubtopico.isEmpty()) {
+            Label vazio = new Label("Nenhum dado de trilho disponível para " + disciplina);
+            vazio.setStyle("-fx-text-fill: #6b7280; -fx-padding: 16; -fx-font-style: italic;");
+            trilho.getChildren().add(vazio);
             return;
+        }
+
+        int o = 0;
         for (TrilhaAdaptacaoSubtopico trilhoBruto :
-            trilhoSubtopico.stream().sorted((tri1, tri2) ->
-            Double.compare( tri2.progressoPercentual(),tri1.progressoPercentual())).toList()) {
+            trilhoSubtopico.stream()
+                .sorted((tri1, tri2) -> Double.compare(tri2.progressoPercentual(), tri1.progressoPercentual()))
+                .toList()) {
             o++;
             trilho.getChildren().add(new TrilhoCard(new TrilhoDTO(o, trilhoBruto)));
         }
     }
-
 
     private void carregarBloqueioPrimeiroDiagnostico() {
         botoesDisciplinasBox.getChildren().clear();
@@ -510,9 +438,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         JFXButton iniciar = new JFXButton("Ir para o primeiro diagnostico");
         iniciar.getStyleClass().addAll("btn-primary", "diagnostico-first-action");
         iniciar.setOnAction(event -> {
-            StackPane contentHost = testeField == null || testeField.getScene() == null
-                ? null
-                : (StackPane) testeField.getScene().lookup("#contentHost");
+            StackPane contentHost = getContentHost();
             if (contentHost != null) {
                 App.swapContent(contentHost, "views/pages/candidato/diagnostico");
             }
@@ -536,54 +462,58 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         titulo.getStyleClass().add("h3-thin");
         titulo.setWrapText(true);
         titulo.setMaxWidth(720);
+
         botoesDisciplinasBox.getChildren().add(Loading.load());
+
         CompletableFuture.supplyAsync(() -> service.carregarDisciplinasDisponiveis())
-        .thenAcceptAsync(disciplinasDisponiveis -> {
-            disciplinas=disciplinasDisponiveis;
-            resumos=testeService.carregarResumoHistoricoDisciplinas(disciplinasDisponiveis, 4);
-        })
-        .whenComplete((t, u) -> {
-            Platform.runLater(() -> {
+            .thenAcceptAsync(disciplinasDisponiveis -> {
+                disciplinas = disciplinasDisponiveis;
+                resumos = testeService.carregarResumoHistoricoDisciplinas(disciplinasDisponiveis, 4);
+            })
+            .whenComplete((t, u) -> Platform.runLater(() -> {
                 botoesDisciplinasBox.getChildren().clear();
                 botoesDisciplinasBox.getChildren().add(titulo);
-                boolean encontrouTopicos = false;
-                for (String disciplina :  disciplinas ) {
-                    List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
-                    if (topicos == null || topicos.isEmpty()) {
-                        continue;
-                    }
-                    encontrouTopicos = true;
-                    String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
-                    TesteService.ResumoHistoricoDisciplina historico = resumos.getOrDefault(
-                        chaveResumo,
-                        TesteService.ResumoHistoricoDisciplina.vazio()
-                    );
-                    TesteCard teste = new TesteCard(
-                        construirResumoDisciplina(disciplina, topicos, historico),
-                        topicos != null && !topicos.isEmpty(),
-                        () -> iniciarTestePadrao(disciplina, topicos),
-                        () -> abrirConfiguracaoInteligente(disciplina, topicos)
-                    );
-                    botoesDisciplinasBox.getChildren().add(teste);
-                }
+                renderDisciplineCards();
+            }));
+    }
 
-                if (!encontrouTopicos) {
-                    Label vazio = new Label("Nenhum foco selecionado no onboarding para os testes.");
-                    vazio.getStyleClass().add("h3-thin");
-                    vazio.setWrapText(true);
-                    botoesDisciplinasBox.getChildren().add(vazio);
-                }
-            });
-        });
+    private void renderDisciplineCards() {
+        boolean encontrouTopicos = false;
+
+        for (String disciplina : disciplinas) {
+            List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplina);
+            if (topicos == null || topicos.isEmpty()) continue;
+
+            encontrouTopicos = true;
+            String chaveResumo = QuestaoUtil.normalizar(formatarDisciplina(disciplina));
+            ResumoHistoricoDisciplina historico = resumos.getOrDefault(
+                chaveResumo,
+                ResumoHistoricoDisciplina.vazio()
+            );
+
+            TesteCard teste = new TesteCard(
+                construirResumoDisciplina(disciplina, topicos, historico),
+                true,
+                () -> iniciarTestePadrao(disciplina, topicos),
+                () -> abrirConfiguracaoInteligente(disciplina, topicos)
+            );
+            botoesDisciplinasBox.getChildren().add(teste);
+        }
+
+        if (!encontrouTopicos) {
+            Label vazio = new Label("Nenhum foco selecionado no onboarding para os testes.");
+            vazio.getStyleClass().add("h3-thin");
+            vazio.setWrapText(true);
+            botoesDisciplinasBox.getChildren().add(vazio);
+        }
     }
 
     private TesteDto construirResumoDisciplina(
         String disciplina,
         List<Topico> topicos,
-        TesteService.ResumoHistoricoDisciplina historico
-    ) {
-        String nomeDisciplina = formatarDisciplina(disciplina);
+        ResumoHistoricoDisciplina historico) {
 
+        String nomeDisciplina = formatarDisciplina(disciplina);
         List<Percent> percentuaisTopicos = historico.topicosTestados();
         float coberturaTopicos = topicos == null || topicos.isEmpty()
             ? 0f
@@ -617,7 +547,6 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             mostrarAlerta("Atencao", mensagemSemPerguntasNoEscopo());
             return;
         }
-
         TesteAdaptativoCoordinator.requestStart(disciplina, new ArrayList<>(topicos));
     }
 
@@ -656,9 +585,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         for (Topico topico : topicosDisponiveis) {
             List<String> selecionados = subtopicosPorTopico.get(topico.topicos());
-            if (selecionados == null || selecionados.isEmpty()) {
-                continue;
-            }
+            if (selecionados == null || selecionados.isEmpty()) continue;
 
             topicosSelecionados.add(topico.topicos());
             subtopicosSelecionados.addAll(selecionados);
@@ -668,17 +595,18 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private void iniciarTesteComConfiguracao(TesteAdaptativoCoordinator.TesteConfig config) {
         limparSessaoPausada();
         nivelAtualAdaptativo = resolverNivelInicial(config);
+
         focoQuestoes = service.carregarQuestoesDisponiveis(
             disciplinaSelecionada,
             topicosSelecionados,
             subtopicosSelecionados,
             nivelAtualAdaptativo.nivel()
         );
+
         if (focoQuestoes.isEmpty()) {
             mostrarAlerta("Atencao", mensagemSemPerguntasNoEscopo());
             return;
         }
-
 
         questoes.clear();
         totalQuestoes = Math.min(resolverLimiteQuestoes(config, focoQuestoes.size()), focoQuestoes.size());
@@ -710,10 +638,9 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private int resolverLimiteQuestoes(TesteAdaptativoCoordinator.TesteConfig config, int totalDisponivel) {
-        configCandidato=getConfigCadidato();
+        configCandidato = getConfigCadidato();
 
         if (config == null || config.duracao() == null) {
-
             return Math.min(configCandidato.norm_test_q(), totalDisponivel);
         }
 
@@ -725,9 +652,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void iniciarLoading(TesteAdaptativoCoordinator.TesteConfig config) {
-        if (loadingTimeline != null) {
-            loadingTimeline.stop();
-        }
+        if (loadingTimeline != null) loadingTimeline.stop();
 
         tela.setVisible(false);
         loadingOverlay.setVisible(true);
@@ -766,9 +691,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private String buildResumoTopicos() {
-        if (topicosSelecionados.isEmpty()) {
-            return "todos os topicos";
-        }
+        if (topicosSelecionados.isEmpty()) return "todos os topicos";
         return topicosSelecionados.stream().limit(4).collect(Collectors.joining(", "));
     }
 
@@ -797,13 +720,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void iniciarCronometro(int minutosIniciais, int segundosIniciais) {
-        if (cronometro != null) {
-            cronometro.stop();
-        }
+        if (cronometro != null) cronometro.stop();
 
         segundos = Math.max(0, segundosIniciais);
         minutos = Math.max(0, minutosIniciais);
         tempo.setText(String.format("%02d:%02d", minutos, segundos));
+
         cronometro = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             segundos++;
             if (segundos == 60) {
@@ -832,9 +754,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void setSidebarVisible(boolean visible) {
         Platform.runLater(() -> {
-            if (testeField == null || testeField.getScene() == null) {
-                return;
-            }
+            if (testeField == null || testeField.getScene() == null) return;
 
             Node sidebarNode = testeField.getScene().lookup("#sidebar");
             if (sidebarNode != null) {
@@ -845,9 +765,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void abrirMenuPausa() {
-        if (modalPai == null) {
-            return;
-        }
+        if (modalPai == null) return;
 
         try {
             PauseSessionContext.setRequest(new PauseSessionContext.PauseRequest(
@@ -960,6 +878,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         linhaQuestaoPane = linhaQuestao;
         textoQuestaoPane = textoPane;
         apoioVisualSeparator = separator;
+
         textoQuestaoPane.setFillWidth(true);
         textoQuestaoPane.setMinWidth(0);
         textoQuestaoPane.setPrefWidth(0);
@@ -984,13 +903,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         apoioVisualBox.setManaged(false);
         HBox.setHgrow(apoioVisualBox, Priority.ALWAYS);
 
-
-
         apoioVisualSeparator.setVisible(false);
         apoioVisualSeparator.setManaged(false);
-        linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator,
-            apoioVisualBox);
-            graficoPane.getChildren().set(0, linhaQuestaoPane);
+
+        linhaQuestaoPane.getChildren().setAll(textoQuestaoPane, apoioVisualSeparator, apoioVisualBox);
+        graficoPane.getChildren().set(0, linhaQuestaoPane);
     }
 
     private void atualizarApoioVisual(Questao questao) {
@@ -1005,9 +922,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void setNodeVisivel(Node node, boolean visivel) {
-        if (node == null) {
-            return;
-        }
+        if (node == null) return;
         node.setVisible(visivel);
         node.setManaged(visivel);
     }
@@ -1085,25 +1000,17 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private boolean restaurarSessaoPausada() {
         String chave = resolverChaveSessaoPausa();
-        if (chave == null) {
-            return false;
-        }
+        if (chave == null) return false;
 
         Object estadoBruto = CacheService.get(chave);
-        if (!(estadoBruto instanceof SessaoTestePausada estado)) {
-            return false;
-        }
+        if (!(estadoBruto instanceof SessaoTestePausada estado)) return false;
 
         CacheService.remove(chave);
-        if (estado.questoes() == null || estado.questoes().isEmpty()) {
-            return false;
-        }
+        if (estado.questoes() == null || estado.questoes().isEmpty()) return false;
 
         disciplinaSelecionada = estado.disciplinaSelecionada();
-
         topicosSelecionados.clear();
         topicosSelecionados.addAll(estado.topicosSelecionados());
-
         subtopicosSelecionados.clear();
         subtopicosSelecionados.addAll(estado.subtopicosSelecionados());
 
@@ -1158,9 +1065,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private void restaurarRespostaQuestaoAtual(char respostaSalva) {
-        if (questaoAtual < 0 || questaoAtual >= questoes.size()) {
-            return;
-        }
+        if (questaoAtual < 0 || questaoAtual >= questoes.size()) return;
 
         char respostaRestaurada = questaoAtual < respostasUsuario.size()
             ? respostasUsuario.get(questaoAtual)
@@ -1234,8 +1139,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         int segundos,
         int minutos,
         long pausadoEm
-    ) {
-    }
+    ) {}
 
     @FXML
     private void confirmarResposta() {
@@ -1256,6 +1160,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         char alternativaCorreta = QuestaoUtil.resolverAlternativaCorreta(q);
         boolean acertou = QuestaoUtil.respostaEstaCorreta(q, respostaSelecionada);
         LocalDateTime respondidoEm = LocalDateTime.now();
+
         ReacaoTeste reacaoAtual = new ReacaoTeste(
             q,
             questaoAtual,
@@ -1265,19 +1170,21 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             0d,
             respondidoEm
         );
+
         ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
         double consistenciaQuestao = CalculoStats.calcularConsistenciaQuestao(reacao, reacaoAtual, adaptacao);
         double resilienciaQuestao = CalculoStats.calcularResilienciaQuestao(reacao, reacaoAtual, adaptacao);
-        reacao.add(
-            new ReacaoTeste(
-                q,
-                questaoAtual,
-                respostaSelecionada,
-                tempoRespostaSegundos,
-                consistenciaQuestao,
-                resilienciaQuestao,
-                respondidoEm)
-            );
+
+        reacao.add(new ReacaoTeste(
+            q,
+            questaoAtual,
+            respostaSelecionada,
+            tempoRespostaSegundos,
+            consistenciaQuestao,
+            resilienciaQuestao,
+            respondidoEm
+        ));
+
         if (acertou) {
             acertos++;
             sequenciaAcertos++;
@@ -1303,6 +1210,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private void mostrarFeedbackAdaptativo(boolean acertou, long tempoResposta, char alternativaCorreta) {
         boolean foiRapido = tempoResposta <= resolverLimiteRapidoMs();
         boolean foiMuitoLento = tempoResposta >= resolverLimiteLentoMs();
+
         feedbackContainer.setVisible(true);
         feedbackContainer.setOpacity(1);
 
@@ -1369,12 +1277,15 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void atualizarIndicadoresDesempenhoTempoReal() {
         ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
+
         double precisaoAtual = reacao.isEmpty()
             ? 0d
             : CalculoStats.calcularPrecisaoMediaRespostas(reacao) * 100d;
+
         double consistenciaAtual = reacao.isEmpty()
             ? 0d
             : CalculoStats.calcularConsistenciaTeste(reacao, adaptacao) * 100d;
+
         double velocidadeAtual = calcularVelocidadeTempoReal();
 
         aplicarPercentual(nivelAtual23, precisaoAtual);
@@ -1383,9 +1294,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     private double calcularVelocidadeTempoReal() {
-        if (temposResposta.isEmpty()) {
-            return 0d;
-        }
+        if (temposResposta.isEmpty()) return 0d;
 
         long totalMillis = 0L;
         for (Long tempoResposta : temposResposta) {
@@ -1394,26 +1303,21 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             }
         }
 
-        if (totalMillis <= 0L) {
-            return 0d;
-        }
+        if (totalMillis <= 0L) return 0d;
 
         long totalSegundos = Math.max(1L, Math.round(totalMillis / 1000.0));
         int totalQuestoesRespondidas = Math.min(reacao.size(), respostasUsuario.size());
-        if (totalQuestoesRespondidas <= 0) {
-            return 0d;
-        }
+        if (totalQuestoesRespondidas <= 0) return 0d;
 
         int totalSegundosInt = totalSegundos > Integer.MAX_VALUE
             ? Integer.MAX_VALUE
             : (int) totalSegundos;
+
         return CalculoStats.calcularVelocidade(totalSegundosInt, totalQuestoesRespondidas, getConfigCadidato()) * 100d;
     }
 
     private void aplicarPercentual(Label label, double valor) {
-        if (label == null) {
-            return;
-        }
+        if (label == null) return;
         label.setText(Math.round(Math.max(0d, Math.min(100d, valor))) + "%");
     }
 
@@ -1479,12 +1383,10 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         sessaoAtiva = false;
         pausaUsada = false;
         limparSessaoPausada();
-        if (cronometro != null) {
-            cronometro.stop();
-        }
-        if (loadingTimeline != null) {
-            loadingTimeline.stop();
-        }
+
+        if (cronometro != null) cronometro.stop();
+        if (loadingTimeline != null) loadingTimeline.stop();
+
         setSidebarVisible(true);
         atualizarEstadoBotaoPausa();
 
@@ -1492,12 +1394,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         double porcentagemAcertos = totalQuestoes == 0 ? 0 : (acertos * 100.0) / totalQuestoes;
         String perfil = determinarPerfil(porcentagemAcertos, mediaTempo);
         String recomendacao = getRecomendacao(porcentagemAcertos);
-        UUID candidatoID= Authentication.getCurrentUserId();
+        UUID candidatoID = Authentication.getCurrentUserId();
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
-        DiagnosticoDto diagnos;
+
         try {
             UUID disciplinaId = QuestaoUtil.resolverDisciplinaId(disciplinaSelecionada);
-            diagnos = diagnosticoService.getDiagnosticoRepository()
+            DiagnosticoDto diagnos = diagnosticoService.getDiagnosticoRepository()
                 .buscarUltimoDiagnostico(candidatoID, disciplinaId, disciplinaSelecionada);
 
             testeService.registrarTesteConcluido(
@@ -1542,11 +1444,22 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private String determinarPerfil(double porcentagem, double tempoMedio) {
         ConfiguracaoTesteAdaptativoDto adaptacao = getConfiguracaoTesteAdaptativoDto();
         double tempoMedioSegundos = tempoMedio / 1000d;
-        if (porcentagem >= 80 && tempoMedioSegundos <= adaptacao.tempAdapt()) return "Estas mais rapido e preciso";
-        if (porcentagem >= 80) return "Reduziste a tua velocidade normal porem ainda preciso mas lento";
-        if (porcentagem >= 60 && tempoMedioSegundos <= adaptacao.tempAdapt() * 1.15d) return "Seguro e agil";
-        if (porcentagem >= 60) return "Cauteloso como sempre";
-        if (porcentagem >= 40) return "Intermediario se dedica mais";
+
+        if (porcentagem >= 80 && tempoMedioSegundos <= adaptacao.tempAdapt()) {
+            return "Estas mais rapido e preciso";
+        }
+        if (porcentagem >= 80) {
+            return "Reduziste a tua velocidade normal porem ainda preciso mas lento";
+        }
+        if (porcentagem >= 60 && tempoMedioSegundos <= adaptacao.tempAdapt() * 1.15d) {
+            return "Seguro e agil";
+        }
+        if (porcentagem >= 60) {
+            return "Cauteloso como sempre";
+        }
+        if (porcentagem >= 40) {
+            return "Intermediario se dedica mais";
+        }
         return "Em consolidacao";
     }
 
@@ -1555,11 +1468,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             ? "os topicos escolhidos"
             : topicosSelecionados.stream().limit(3).collect(Collectors.joining(", "));
 
-        if (porcentagem >= 80) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (80%).
+        if (porcentagem >= 80) {
             return "Parabens! Voce esta pronto para desafios mais avancados em " + foco + ".";
-        } else if (porcentagem >= 60) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (60%).
+        } else if (porcentagem >= 60) {
             return "Bom trabalho! Continue praticando " + foco + " para subir de nivel.";
-        } else if (porcentagem >= 40) { // TODO CONFIG_ADAPTATIVA: faixa fixa de recomendacao (40%).
+        } else if (porcentagem >= 40) {
             return "Vamos melhorar! Foque nos topicos " + foco + ".";
         } else {
             return "Vale revisar os fundamentos de " + foco + " antes da proxima tentativa.";
@@ -1629,6 +1542,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
     private void resetarMetricas() {
         sessaoAtiva = false;
+
         if (cronometro != null) {
             cronometro.stop();
             cronometro = null;
@@ -1637,6 +1551,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             loadingTimeline.stop();
             loadingTimeline = null;
         }
+
         acertos = 0;
         erros = 0;
         sequenciaAcertos = 0;
@@ -1649,12 +1564,14 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         minutos = 0;
         tempoInicioQuestao = 0L;
         tempo.setText("00:00");
+
         atualizarIndicadoresNivel();
         limparEstilosToggles();
         alternativas.selectToggle(null);
         btnConfirmar.setDisable(false);
         btnProximo.setDisable(true);
         atualizarEstadoBotaoPausa();
+
         if (questionProgressBar != null) {
             questionProgressBar.setProgress(0);
         }
@@ -1668,23 +1585,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         return Math.max(0f, Math.min(1f, valor));
     }
 
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return "";
-    }
-
     private void abrirCelebracaoResultado(
         ResultadoPayload payload,
         ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary,
-        Runnable fallback
-    ) {
-        StackPane contentHost = testeField == null || testeField.getScene() == null
-            ? null
-            : (StackPane) testeField.getScene().lookup("#contentHost");
+        Runnable fallback) {
+
+        StackPane contentHost = getContentHost();
 
         Runnable onContinue = () -> {
             ResultadoAvaliacaoController.setResultado(payload);
@@ -1777,9 +1683,11 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @Override
     public void dispose() {
         TesteAdaptativoCoordinator.clearHost(this);
+
         if (sessaoAtiva) {
             salvarSessaoPausada();
         }
+
         if (cronometro != null) {
             cronometro.stop();
             cronometro = null;
@@ -1788,20 +1696,21 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             loadingTimeline.stop();
             loadingTimeline = null;
         }
+
         setSidebarVisible(true);
     }
 
-    private ConfiguracaoDto getConfigCadidato(){
-        if (configCandidato==null) {
-            this.configCandidato= configuracoesRepository.findByCandidato(Authentication.getCurrentUserId());
+    private ConfiguracaoDto getConfigCadidato() {
+        if (configCandidato == null) {
+            configCandidato = configuracoesRepository.findByCandidato(Authentication.getCurrentUserId());
         }
         return configCandidato;
     }
 
-    private ConfiguracaoTesteAdaptativoDto getConfiguracaoTesteAdaptativoDto(){
-        if (adaptacaoDto==null) {
+    private ConfiguracaoTesteAdaptativoDto getConfiguracaoTesteAdaptativoDto() {
+        if (adaptacaoDto == null) {
             try {
-                this.adaptacaoDto= adaptacaoRepository.findAtiva();
+                adaptacaoDto = adaptacaoRepository.findAtiva();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -1824,6 +1733,12 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         );
     }
 
+    private StackPane getContentHost() {
+        if (testeField == null || testeField.getScene() == null) return null;
+        Node host = testeField.getScene().lookup("#contentHost");
+        return host instanceof StackPane ? (StackPane) host : null;
+    }
+
     @FXML
     void desisitir(ActionEvent event) {
         limparSessaoPausada();
@@ -1841,24 +1756,20 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         pausaUsada = true;
         atualizarEstadoBotaoPausa();
         salvarSessaoPausada();
+
         if (cronometro != null) {
             cronometro.stop();
         }
+
         abrirMenuPausa();
     }
 
     @FXML
-    void Continuar(ActionEvent event) {
-
-    }
+    void Continuar(ActionEvent event) {}
 
     @FXML
-    void Fazer_Teste(ActionEvent event) {
-
-    }
+    void Fazer_Teste(ActionEvent event) {}
 
     @FXML
-    void Ver_Livros(ActionEvent event) {
-
-    }
+    void Ver_Livros(ActionEvent event) {}
 }

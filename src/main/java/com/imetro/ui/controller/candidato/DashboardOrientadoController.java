@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.imetro.App;
 import com.imetro.config.RuntimeConfig;
@@ -34,6 +37,7 @@ import com.imetro.util.Authentication;
 import com.imetro.util.MedalSupport;
 
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -61,86 +65,39 @@ public class DashboardOrientadoController implements Initializable {
     private static final DateTimeFormatter HEADER_DATE_FORMAT = DateTimeFormatter.ofPattern("HH:mm EEEE dd MMM yyyy", LOCALE_PT);
     private static final DateTimeFormatter CARD_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy", LOCALE_PT);
     private static final DateTimeFormatter CHART_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM", LOCALE_PT);
+    private static final long CACHE_TTL_SECONDS = 60;
+    private static final double MAX_PROGRESS = 100.0;
 
-    @FXML
-    private Label welcome;
+    private static final Map<UUID, CacheEntry<PlaneamentoEstudoResumo>> PLAN_CACHE = new HashMap<>();
+    private static final Map<UUID, CacheEntry<DashboardMelhoriaResumo>> MELHORIA_CACHE = new HashMap<>();
 
-    @FXML
-    private Label localDate;
-
-    @FXML
-    private Label progressText;
-
-    @FXML
-    private Label next_level;
-
-    @FXML
-    private StackPane progresso;
-
-    @FXML
-    private Label heroSummary;
-
-    @FXML
-    private Label heroFocus;
-
-    @FXML
-    private Label achievementBadge;
-
-    @FXML
-    private Label achievementTitle;
-
-    @FXML
-    private Label achievementSummary;
-
-    @FXML
-    private Label achievementMeta;
-
-    @FXML
-    private Label planBadge;
-
-    @FXML
-    private Label planTitle;
-
-    @FXML
-    private Label planSummary;
-
-    @FXML
-    private Label planFocus;
-
-    @FXML
-    private Label planMeta;
-
-    @FXML
-    private VBox planStepsBox;
-
-    @FXML
-    private Label disciplineBadge;
-
-    @FXML
-    private Label disciplineSummary;
-
-    @FXML
-    private HBox achievementCardsBox;
-
-    @FXML
-    private ListView<ProgressoAlunoDisciplinaDto> status_disciplina;
-
-    @FXML
-    private Label sequenceBadge;
-    @FXML
-    private Label desc;
-
-    @FXML
-    private Label sequenceTitle;
-
-    @FXML
-    private Label sequenceSummary;
-
-    @FXML
-    private AreaChart<String, Number> areaActivityChart;
-
-    @FXML
-    private VBox tela;
+    @FXML private Label welcome;
+    @FXML private Label localDate;
+    @FXML private Label progressText;
+    @FXML private Label next_level;
+    @FXML private StackPane progresso;
+    @FXML private Label heroSummary;
+    @FXML private Label heroFocus;
+    @FXML private Label achievementBadge;
+    @FXML private Label achievementTitle;
+    @FXML private Label achievementSummary;
+    @FXML private Label achievementMeta;
+    @FXML private Label planBadge;
+    @FXML private Label planTitle;
+    @FXML private Label planSummary;
+    @FXML private Label planFocus;
+    @FXML private Label planMeta;
+    @FXML private VBox planStepsBox;
+    @FXML private Label disciplineBadge;
+    @FXML private Label disciplineSummary;
+    @FXML private HBox achievementCardsBox;
+    @FXML private ListView<ProgressoAlunoDisciplinaDto> status_disciplina;
+    @FXML private Label sequenceBadge;
+    @FXML private Label desc;
+    @FXML private Label sequenceTitle;
+    @FXML private Label sequenceSummary;
+    @FXML private AreaChart<String, Number> areaActivityChart;
+    @FXML private VBox tela;
 
     private final CandidatoService candidatoService = new CandidatoService();
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
@@ -150,12 +107,15 @@ public class DashboardOrientadoController implements Initializable {
     private PlaneamentoEstudoResumo planeamentoResumo;
     private DashboardMelhoriaResumo dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
 
-    private double VELOCIDADE_TARGET = 0d;
-    private double LOGICA_TARGET = 0d;
-    private double PRECISAO_TARGET = 0d;
-    private double RESILIENCIA_TARGET = 0d;
-    private double CONSISTENCIA_TARGET = 0d;
-    private double PROGRESSO_TARGET = 0d;
+    private record CacheEntry<T>(T data, long timestamp) {
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > CACHE_TTL_SECONDS * 1000;
+        }
+    }
+
+    private record ChartStats(int activeDays, double averageRate) {}
+
+    private record AchievementCardData(String badge, String title, String summary, String meta) {}
 
     @FXML
     public void StartDiagnostic(javafx.event.ActionEvent event) {
@@ -184,14 +144,25 @@ public class DashboardOrientadoController implements Initializable {
             candidato.setNome("Candidato");
             candidato.setEmail(email == null ? "" : email);
         }
-
         setup();
     }
 
     private void setup() {
+        UUID candidatoId = candidato.getIdCandidato();
+
+        CompletableFuture.allOf(
+            CompletableFuture.runAsync(() -> planeamentoResumo = getPlaneamentoCached(candidatoId)),
+            CompletableFuture.runAsync(() -> dashboardMelhoriaResumo = getMelhoriaCached(candidatoId))
+        ).thenRunAsync(() -> Platform.runLater(this::renderDashboard))
+         .exceptionally(throwable -> {
+            System.err.println("Erro ao carregar dados do dashboard: " + throwable.getMessage());
+            Platform.runLater(this::renderFallback);
+            return null;
+        });
+    }
+
+    private void renderDashboard() {
         updateHeader();
-        dashboardMelhoriaResumo = candidatoService.calcularResumoMelhorias(candidato.getIdCandidato());
-        planeamentoResumo = planeamentoService.gerarResumo(candidato.getIdCandidato());
         setupHeroProgress();
         setupHeroCopy();
         setupAchievementCard();
@@ -201,25 +172,48 @@ public class DashboardOrientadoController implements Initializable {
         animateSections();
     }
 
+    private void renderFallback() {
+        planeamentoResumo = new PlaneamentoEstudoResumo();
+        dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
+        renderDashboard();
+    }
+
+    private PlaneamentoEstudoResumo getPlaneamentoCached(UUID candidatoId) {
+        CacheEntry<PlaneamentoEstudoResumo> entry = PLAN_CACHE.get(candidatoId);
+        if (entry == null || entry.isExpired()) {
+            PlaneamentoEstudoResumo novo = planeamentoService.gerarResumo(candidatoId);
+            PLAN_CACHE.put(candidatoId, new CacheEntry<>(novo, System.currentTimeMillis()));
+            return novo;
+        }
+        return entry.data();
+    }
+
+    private DashboardMelhoriaResumo getMelhoriaCached(UUID candidatoId) {
+        CacheEntry<DashboardMelhoriaResumo> entry = MELHORIA_CACHE.get(candidatoId);
+        if (entry == null || entry.isExpired()) {
+            DashboardMelhoriaResumo novo = candidatoService.calcularResumoMelhorias(candidatoId);
+            MELHORIA_CACHE.put(candidatoId, new CacheEntry<>(novo, System.currentTimeMillis()));
+            return novo;
+        }
+        return entry.data();
+    }
+
     private void updateHeader() {
         if (welcome != null) {
-            int hour=LocalTime.now().getHour();
-            if (hour>=0 && hour<=5) {
+            int hour = LocalTime.now().getHour();
+            String nome = safeName(candidato.getNome());
+            if (hour >= 0 && hour <= 5) {
                 welcome.setText("Oi Batman dos estudos!");
                 desc.setText("Humm! vejo que estas bem disposto hoje.");
-
-            }
-            if (hour>=6 && hour<=11) {
-                welcome.setText("Ola " + safeName(candidato.getNome()) + "!");
+            } else if (hour >= 6 && hour <= 11) {
+                welcome.setText("Ola " + nome + "!");
                 desc.setText("Pronto para mais um salto de conhecimento.");
-            }
-            if (hour>=12 && hour<=18) {
-                welcome.setText("Dobre a Rotina " + safeName(candidato.getNome()) + "!");
+            } else if (hour >= 12 && hour <= 18) {
+                welcome.setText("Dobre a Rotina " + nome + "!");
                 desc.setText("Seja preciso seu tempo é valioso.");
-            }
-            if (hour>=19 && hour<=23) {
-                welcome.setText("Boa noite! " + safeName(candidato.getNome()) + "!");
-                desc.setText("Seja rquilibrado consiguo mesmo se foque no necessario ");
+            } else {
+                welcome.setText("Boa noite! " + nome + "!");
+                desc.setText("Seja equilibrado consigo mesmo se foque no necessario.");
             }
         }
         if (localDate != null) {
@@ -229,25 +223,26 @@ public class DashboardOrientadoController implements Initializable {
 
     private void setupHeroProgress() {
         Stats stats = candidatoService.CalcularStats();
-        VELOCIDADE_TARGET = stats.velocidade();
-        LOGICA_TARGET = stats.logica();
-        PRECISAO_TARGET = stats.precisao();
-        RESILIENCIA_TARGET = stats.resiliencia();
-        CONSISTENCIA_TARGET = stats.consistencia();
-        PROGRESSO_TARGET = (VELOCIDADE_TARGET + LOGICA_TARGET + PRECISAO_TARGET + RESILIENCIA_TARGET + CONSISTENCIA_TARGET) / 5.0;
+        double progresso = calculateAverageProgress(stats);
+        updateHeroProgressUI(progresso);
+    }
 
+    private double calculateAverageProgress(Stats stats) {
+        return (stats.velocidade() + stats.logica() + stats.precisao() +
+                stats.resiliencia() + stats.consistencia()) / 5.0;
+    }
+
+    private void updateHeroProgressUI(double progressos) {
         if (progressText != null) {
-            progressText.setText(formatPercent(PROGRESSO_TARGET) + " progresso");
+            progressText.setText(Math.round(clamp(progressos, 0, 1) * 100) + "% progresso");
         }
-
         if (next_level != null) {
-            next_level.setText(resolveNextLevel(PROGRESSO_TARGET));
+            next_level.setText(resolveNextLevel(progressos));
         }
-
         if (progresso != null) {
             progresso.getChildren().clear();
             CircleProgress circleProgress = new CircleProgress(60, 60);
-            circleProgress.setValue(PROGRESSO_TARGET);
+            circleProgress.setValue(progressos);
             progresso.getChildren().add(circleProgress);
         }
     }
@@ -257,38 +252,77 @@ public class DashboardOrientadoController implements Initializable {
             heroSummary.setText(planeamentoResumo.resumoHero());
         }
         if (heroFocus != null) {
-            heroFocus.setText("Foco actual: " + safeText(planeamentoResumo.focoAtual(), "—") + " · ritmo " + safeText(planeamentoResumo.ritmoMedio(), "—"));
+            heroFocus.setText("Foco actual: " + safeText(planeamentoResumo.focoAtual(), "—") +
+                " · ritmo " + safeText(planeamentoResumo.ritmoMedio(), "—"));
         }
     }
 
     private void setupAchievementCard() {
         UUID userId = Authentication.getCurrentUserId();
-        List<MedalSupport.MedalViewModel> upcoming = buildUpcomingAchievementModels(userId);
-        Optional<MedalSupport.MedalAward> recentAward = findRecentAward(userId);
-        AchievementCardData data = buildAchievementCardData(upcoming, recentAward);
+        if (userId == null) {
+            setAchievementEmptyState();
+            return;
+        }
 
-        if (achievementBadge != null) {
-            achievementBadge.setText(data.badge());
+        List<MedalSupport.MedalAward> awards = medalhaRepository.findAwardsByUserId(userId);
+        List<MedalSupport.MedalViewModel> viewModels = buildMedalViewModels(userId, awards);
+        Optional<MedalSupport.MedalAward> recentAward = findRecentAward(awards);
+
+        List<MedalSupport.MedalViewModel> upcoming = viewModels.stream()
+            .filter(medal -> !medal.unlocked())
+            .limit(3)
+            .collect(Collectors.toList());
+
+        if (upcoming.size() < 3) {
+            upcoming = mergeUpcomingWithOthers(upcoming, viewModels);
         }
-        if (achievementTitle != null) {
-            achievementTitle.setText(data.title());
-        }
-        if (achievementSummary != null) {
-            achievementSummary.setText(data.summary());
-        }
-        if (achievementMeta != null) {
-            achievementMeta.setText(data.meta());
-        }
-        if (achievementCardsBox != null) {
-            achievementCardsBox.getChildren().setAll(buildAchievementCards(upcoming));
-        }
+
+        AchievementCardData data = buildAchievementCardData(upcoming, recentAward);
+        applyAchievementData(data);
+        achievementCardsBox.getChildren().setAll(buildAchievementCards(upcoming));
     }
 
-    private AchievementCardData buildAchievementCardData(List<MedalSupport.MedalViewModel> upcoming, Optional<MedalSupport.MedalAward> recentAward) {
+    private void setAchievementEmptyState() {
+        applyAchievementData(new AchievementCardData(
+            "Conquistas", "Sem medalhas ainda",
+            "A tua primeira conquista vai aparecer assim que o histórico começar.",
+            "Liga uma sessão para alimentar este card."
+        ));
+        achievementCardsBox.getChildren().clear();
+    }
+
+    private void applyAchievementData(AchievementCardData data) {
+        if (achievementBadge != null) achievementBadge.setText(data.badge());
+        if (achievementTitle != null) achievementTitle.setText(data.title());
+        if (achievementSummary != null) achievementSummary.setText(data.summary());
+        if (achievementMeta != null) achievementMeta.setText(data.meta());
+    }
+
+    private List<MedalSupport.MedalViewModel> mergeUpcomingWithOthers(
+        List<MedalSupport.MedalViewModel> upcoming,
+        List<MedalSupport.MedalViewModel> all) {
+        List<MedalSupport.MedalViewModel> merged = new ArrayList<>(upcoming);
+        var existingCodes = upcoming.stream()
+            .map(m -> m.definition().code())
+            .collect(Collectors.toSet());
+
+        for (MedalSupport.MedalViewModel medal : all) {
+            if (merged.size() >= 3) break;
+            if (!existingCodes.contains(medal.definition().code())) {
+                merged.add(medal);
+                existingCodes.add(medal.definition().code());
+            }
+        }
+        return merged;
+    }
+
+    private AchievementCardData buildAchievementCardData(
+        List<MedalSupport.MedalViewModel> upcoming,
+        Optional<MedalSupport.MedalAward> recentAward) {
+
         if (upcoming.isEmpty()) {
             return new AchievementCardData(
-                "Conquistas",
-                "Sem medalhas ainda",
+                "Conquistas", "Sem medalhas ainda",
                 "A tua primeira conquista vai aparecer assim que o histórico começar.",
                 "Liga uma sessão para alimentar este card."
             );
@@ -300,8 +334,7 @@ public class DashboardOrientadoController implements Initializable {
             if (definition != null) {
                 String recordText = award.recordValue() == null ? "" : " · recorde " + award.recordValue();
                 return new AchievementCardData(
-                    "Conquista recente",
-                    "Próximas conquistas",
+                    "Conquista recente", "Próximas conquistas",
                     "A última medalha foi " + definition.title() + ". As três próximas aparecem abaixo, sem scroll.",
                     "Actualizada em " + formatDate(award.actualizadaAt()) + recordText
                 );
@@ -313,96 +346,58 @@ public class DashboardOrientadoController implements Initializable {
         String badge = upcoming.size() + (upcoming.size() == 1 ? " meta" : " metas");
         String title = "Próximas conquistas";
         String summary = "As três mais próximas de desbloquear aparecem abaixo, sem scroll.";
-        String meta = "Primeira meta: " + definition.title() + " · faltam " + first.remainingToUnlock() + " " + definition.targetUnit();
+        String meta = "Primeira meta: " + definition.title() + " · faltam " +
+            first.remainingToUnlock() + " " + definition.targetUnit();
 
         return new AchievementCardData(badge, title, summary, meta);
     }
 
-    private List<MedalSupport.MedalViewModel> buildUpcomingAchievementModels(UUID userId) {
-        List<MedalSupport.MedalViewModel> medals = buildMedalViewModels(userId);
-        List<MedalSupport.MedalViewModel> upcoming = medals.stream()
-            .filter(medal -> !medal.unlocked())
-            .limit(3)
-            .toList();
+    private List<MedalSupport.MedalViewModel> buildMedalViewModels(
+        UUID userId,
+        List<MedalSupport.MedalAward> awards) {
 
-        if (upcoming.size() >= 3) {
-            return upcoming;
-        }
+        Map<String, MedalSupport.MedalAward> awardsByCode = awards.stream()
+            .collect(Collectors.toMap(MedalSupport.MedalAward::medalCode, Function.identity()));
 
-        List<MedalSupport.MedalViewModel> merged = new ArrayList<>(upcoming);
-        for (MedalSupport.MedalViewModel medal : medals) {
-            if (merged.size() >= 3) {
-                break;
-            }
-            if (!merged.contains(medal)) {
-                merged.add(medal);
-            }
-        }
+        Map<MedalSupport.MedalSkill, Integer> previewProgress = RuntimeConfig.isDbEnabled()
+            ? Map.of()
+            : MedalSupport.navigationPreviewProgress();
 
-        return merged;
+        return MedalSupport.catalog().stream()
+            .map(definition -> {
+                MedalSupport.MedalAward award = awardsByCode.get(definition.code());
+                boolean unlocked = award != null;
+                int progressValue = unlocked ? Math.max(award.progressValue(), definition.targetValue())
+                                             : previewProgress.getOrDefault(definition.skill(), 0);
+                boolean previewUnlocked = !unlocked && progressValue >= definition.targetValue();
+
+                return new MedalSupport.MedalViewModel(
+                    definition,
+                    unlocked || previewUnlocked,
+                    progressValue,
+                    award != null ? award.recordValue() : null,
+                    award != null ? award.earnedAt() : null
+                );
+            })
+            .collect(Collectors.toList());
+    }
+
+    private Optional<MedalSupport.MedalAward> findRecentAward(List<MedalSupport.MedalAward> awards) {
+        if (awards.isEmpty()) return Optional.empty();
+
+        LocalDate hoje = LocalDate.now();
+        return awards.stream()
+            .filter(a -> a.actualizadaAt() != null && a.actualizadaAt().toLocalDate().equals(hoje))
+            .max(Comparator.comparing(MedalSupport.MedalAward::actualizadaAt));
     }
 
     private List<Node> buildAchievementCards(List<MedalSupport.MedalViewModel> upcoming) {
         List<Node> cards = new ArrayList<>();
         for (int index = 0; index < 3; index++) {
             MedalSupport.MedalViewModel medal = index < upcoming.size() ? upcoming.get(index) : null;
-            cards.add(buildAchievementCard(index + 1, medal));
+            cards.add(AchievementCardFactory.create(index + 1, medal));
         }
         return cards;
-    }
-
-    private VBox buildAchievementCard(int position, MedalSupport.MedalViewModel medal) {
-        StackPane imageShell = new StackPane();
-        imageShell.getStyleClass().add("achievement-mini-shell");
-
-        Label badge = new Label(String.format("%02d", position));
-        badge.getStyleClass().addAll("achievement-mini-badge", "achievement-mini-badge-" + position);
-
-        Label title = new Label();
-        title.getStyleClass().add("achievement-mini-title");
-        title.setWrapText(true);
-        title.setMinWidth(0);
-        title.setMaxWidth(Double.MAX_VALUE);
-
-        Label detail = new Label();
-        detail.getStyleClass().add("achievement-mini-copy");
-        detail.setWrapText(true);
-        detail.setMinWidth(0);
-        detail.setMaxWidth(Double.MAX_VALUE);
-
-        VBox textBox = new VBox(3.0, title, detail);
-        textBox.setFillWidth(true);
-        textBox.setMaxWidth(Double.MAX_VALUE);
-
-        if (medal != null) {
-            MedalSupport.MedalDefinition definition = medal.definition();
-            Image image = MedalSupport.loadMedalImage(definition.imageRef());
-            if (image != null) {
-                ImageView icon = new ImageView(image);
-                icon.setFitHeight(44.0);
-                icon.setFitWidth(44.0);
-                icon.setPreserveRatio(true);
-                icon.setSmooth(true);
-                imageShell.getChildren().add(icon);
-            }
-
-            title.setText(definition.title());
-            detail.setText(medal.unlocked()
-                ? "Já desbloqueada"
-                : "Faltam " + medal.remainingToUnlock() + " " + definition.targetUnit());
-        } else {
-            title.setText("Mais por vir");
-            detail.setText("Liga uma sessão para revelar a próxima conquista.");
-        }
-
-        VBox card = new VBox(6.0, badge, imageShell, textBox);
-        card.getStyleClass().addAll("achievement-mini-card", "achievement-mini-card-" + position);
-        card.setAlignment(Pos.TOP_LEFT);
-        card.setFillWidth(true);
-        card.setMinWidth(0);
-        card.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(card, Priority.ALWAYS);
-        return card;
     }
 
     private void setupPlanCard() {
@@ -425,7 +420,8 @@ public class DashboardOrientadoController implements Initializable {
             planFocus.setText("Foco actual: " + safeText(planeamentoResumo.focoAtual(), "—"));
         }
         if (planMeta != null) {
-            planMeta.setText("Acerto médio " + safeText(planeamentoResumo.acertoMedio(), "—") + " · ritmo " + safeText(planeamentoResumo.ritmoMedio(), "—"));
+            planMeta.setText("Acerto médio " + safeText(planeamentoResumo.acertoMedio(), "—") +
+                " · ritmo " + safeText(planeamentoResumo.ritmoMedio(), "—"));
         }
         if (planStepsBox != null) {
             planStepsBox.getChildren().setAll(buildPlanStepCards(etapas));
@@ -436,92 +432,29 @@ public class DashboardOrientadoController implements Initializable {
         List<Node> cards = new ArrayList<>();
         for (int index = 0; index < 3; index++) {
             PlaneamentoEstudoEtapa etapa = index < etapas.size() ? etapas.get(index) : null;
-            cards.add(buildPlanStepCard(index + 1, etapa));
+            cards.add(PlanStepCardFactory.create(index + 1, etapa, planeamentoResumo));
         }
         return cards;
     }
 
-    private HBox buildPlanStepCard(int number, PlaneamentoEstudoEtapa etapa) {
-        String window = etapa == null ? fallbackPlanWindow(number) : safeText(etapa.janela(), fallbackPlanWindow(number));
-        String title = etapa == null ? fallbackPlanTitle(number) : safeText(etapa.acao(), fallbackPlanTitle(number));
-        String detail = etapa == null ? fallbackPlanDetail(number) : safeText(etapa.detalhe(), fallbackPlanDetail(number));
-
-        Label stepNumber = new Label(String.valueOf(number));
-        stepNumber.getStyleClass().addAll("plan-step-number", "plan-step-number-" + number);
-        stepNumber.setAlignment(Pos.CENTER);
-        stepNumber.setMinSize(38.0, 38.0);
-        stepNumber.setPrefSize(38.0, 38.0);
-        stepNumber.setMaxSize(38.0, 38.0);
-
-        Label windowLabel = new Label(window);
-        windowLabel.getStyleClass().add("plan-step-window");
-        windowLabel.setWrapText(true);
-        windowLabel.setMaxWidth(Double.MAX_VALUE);
-        windowLabel.setMinWidth(0);
-
-        Label titleLabel = new Label(title);
-        titleLabel.getStyleClass().add("plan-step-title");
-        titleLabel.setWrapText(true);
-        titleLabel.setMaxWidth(Double.MAX_VALUE);
-        titleLabel.setMinWidth(0);
-
-        Label detailLabel = new Label(detail);
-        detailLabel.getStyleClass().add("plan-step-detail");
-        detailLabel.setWrapText(true);
-        detailLabel.setMaxWidth(Double.MAX_VALUE);
-        detailLabel.setMinWidth(0);
-
-        VBox textBox = new VBox(2.0, windowLabel, titleLabel, detailLabel);
-        textBox.setFillWidth(true);
-        textBox.setMaxWidth(Double.MAX_VALUE);
-        textBox.setMinWidth(0);
-
-        HBox card = new HBox(10.0, stepNumber, textBox);
-        card.getStyleClass().addAll("plan-step-card", "plan-step-card-" + number);
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setFillHeight(false);
-        card.setMinWidth(0);
-        card.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(textBox, Priority.ALWAYS);
-        return card;
-    }
-
-    private String fallbackPlanWindow(int number) {
-        return switch (number) {
-            case 1 -> "Agora";
-            case 2 -> "Depois";
-            case 3 -> "Fecho";
-            default -> "Passo " + number;
-        };
-    }
-
-    private String fallbackPlanTitle(int number) {
-        return switch (number) {
-            case 1 -> "Arranque";
-            case 2 -> "Ritmo";
-            case 3 -> "Revisao";
-            default -> "Bloco " + number;
-        };
-    }
-
-    private String fallbackPlanDetail(int number) {
-        return switch (number) {
-            case 1 -> safeText(planeamentoResumo.resumoHero(), "Comeca com o plano base do dia.");
-            case 2 -> "Mantem a execucao com um bloco curto e focado.";
-            case 3 -> "Fecha o dia com uma revisao rapida e mede o progresso.";
-            default -> "Mantem a sequencia do dia.";
-        };
-    }
-
     private void setupSequenceChart() {
-        if (sequenceTitle != null) {
-            sequenceTitle.setText("Ritmo dos últimos 7 dias");
-        }
+        if (areaActivityChart == null) return;
 
-        if (areaActivityChart == null) {
-            return;
-        }
+        configureChartAxis();
 
+        List<DashboardMelhoriaDia> semana = dashboardMelhoriaResumo.semana();
+        XYChart.Series<String, Number> series = buildChartSeries(semana);
+
+        areaActivityChart.getData().clear();
+        areaActivityChart.getData().add(series);
+
+        ChartStats stats = calculateChartStats(semana);
+        updateSequenceLabels(stats);
+
+        fadeIn(areaActivityChart);
+    }
+
+    private void configureChartAxis() {
         areaActivityChart.setAnimated(false);
         areaActivityChart.setLegendVisible(false);
         areaActivityChart.setCreateSymbols(true);
@@ -533,45 +466,72 @@ public class DashboardOrientadoController implements Initializable {
             eixoY.setUpperBound(100d);
             eixoY.setTickUnit(20d);
         }
+    }
 
+    private XYChart.Series<String, Number> buildChartSeries(List<DashboardMelhoriaDia> semana) {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Taxa de sucesso");
-
-        List<DashboardMelhoriaDia> semana = dashboardMelhoriaResumo.semana();
-        int activeDays = 0;
-        double totalRate = 0d;
 
         for (DashboardMelhoriaDia dia : semana) {
             String rotulo = dia.data().format(CHART_DATE_FORMAT);
             double valor = dia.melhorias() <= 0 ? 0d : (dia.sucessos() * 100.0) / dia.melhorias();
-            if (dia.melhorias() > 0) {
-                activeDays++;
-                totalRate += valor;
-            }
             series.getData().add(new XYChart.Data<>(rotulo, valor));
         }
 
-        areaActivityChart.getData().clear();
-        areaActivityChart.getData().add(series);
+        return series;
+    }
 
+    private ChartStats calculateChartStats(List<DashboardMelhoriaDia> semana) {
+        int activeDays = 0;
+        double totalRate = 0d;
+
+        for (DashboardMelhoriaDia dia : semana) {
+            if (dia.melhorias() > 0) {
+                activeDays++;
+                totalRate += (dia.sucessos() * 100.0) / dia.melhorias();
+            }
+        }
+
+        return new ChartStats(activeDays, activeDays > 0 ? totalRate / activeDays : 0);
+    }
+
+    private void updateSequenceLabels(ChartStats stats) {
         if (sequenceBadge != null) {
-            sequenceBadge.setText(activeDays + (activeDays == 1 ? " dia activo" : " dias activos"));
+            sequenceBadge.setText(stats.activeDays + (stats.activeDays == 1 ? " dia activo" : " dias activos"));
         }
         if (sequenceSummary != null) {
-            if (activeDays > 0) {
-                long average = Math.round(totalRate / activeDays);
-                sequenceSummary.setText("Taxa média de sucesso de " + average + "% nos últimos 7 dias. O gráfico destaca a continuidade do ritmo.");
+            if (stats.activeDays > 0) {
+                sequenceSummary.setText("Taxa média de sucesso de " + Math.round(stats.averageRate) +
+                    "% nos últimos 7 dias. O gráfico destaca a continuidade do ritmo.");
             } else {
-                sequenceSummary.setText("Ainda não há sessões suficientes para medir a sequência. Faz o primeiro teste e este gráfico ganha vida.");
+                sequenceSummary.setText("Ainda não há sessões suficientes para medir a sequência. " +
+                    "Faz o primeiro teste e este gráfico ganha vida.");
             }
+        }
+        if (sequenceTitle != null) {
+            sequenceTitle.setText("Ritmo dos últimos 7 dias");
         }
     }
 
     private void setupDisciplineProgress() {
-        List<ProgressoAlunoDisciplinaDto> progressos = new ArrayList<>(DisciplinaService.getProgressoDisciplinasCandidatoSafe());
-        progressos.sort(Comparator.comparingDouble((ProgressoAlunoDisciplinaDto item) -> normalizeProgress(item.progresso())).reversed()
-            .thenComparing(item -> safeText(item.disciplina(), ""), String.CASE_INSENSITIVE_ORDER));
+        List<ProgressoAlunoDisciplinaDto> progressos = DisciplinaService.getProgressoDisciplinasCandidatoSafe()
+            .stream()
+            .sorted(Comparator.comparingDouble((ProgressoAlunoDisciplinaDto item) ->
+                normalizeProgress(item.progresso())).reversed()
+                .thenComparing(item -> safeText(item.disciplina(), ""), String.CASE_INSENSITIVE_ORDER))
+            .collect(Collectors.toList());
 
+        updateDisciplineLabels(progressos);
+
+        if (status_disciplina != null) {
+            status_disciplina.setCellFactory(list -> new DisciplineProgressCell());
+            status_disciplina.setItems(FXCollections.observableArrayList(progressos));
+            status_disciplina.setPlaceholder(buildEmptyPlaceholder("Ainda não há progresso por disciplina."));
+            fadeIn(status_disciplina);
+        }
+    }
+
+    private void updateDisciplineLabels(List<ProgressoAlunoDisciplinaDto> progressos) {
         if (disciplineBadge != null) {
             disciplineBadge.setText(progressos.size() + (progressos.size() == 1 ? " disciplina" : " disciplinas"));
         }
@@ -579,13 +539,6 @@ public class DashboardOrientadoController implements Initializable {
             disciplineSummary.setText(progressos.isEmpty()
                 ? "Ainda não há disciplina activa no histórico."
                 : "Progressão actual por disciplina. Só progresso, sem consistência, velocidade ou métricas extra.");
-        }
-
-        if (status_disciplina != null) {
-            status_disciplina.setCellFactory(list -> new DisciplineProgressCell());
-            status_disciplina.setItems(FXCollections.observableArrayList(progressos));
-            status_disciplina.setPlaceholder(buildEmptyPlaceholder("Ainda não há progresso por disciplina."));
-            status_disciplina.setOpacity(0d);
         }
     }
 
@@ -596,74 +549,17 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void fadeIn(Node node) {
-        if (node == null) {
-            return;
-        }
-
+        if (node == null) return;
         FadeTransition fade = new FadeTransition(Duration.millis(700), node);
         fade.setFromValue(0d);
         fade.setToValue(1d);
         fade.play();
     }
 
-    private Optional<MedalSupport.MedalAward> findRecentAward(UUID userId) {
-        if (userId == null || !RuntimeConfig.isDbEnabled()) {
-            return Optional.empty();
-        }
-
-        List<MedalSupport.MedalAward> awards = medalhaRepository.findAwardsByUserId(userId);
-        if (awards.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return awards.stream()
-            .filter(award -> award.actualizadaAt() != null && award.actualizadaAt().toLocalDate().equals(LocalDate.now()))
-            .max(Comparator.comparing(MedalSupport.MedalAward::actualizadaAt));
-    }
-
-    private List<MedalSupport.MedalViewModel> buildMedalViewModels(UUID userId) {
-        Map<String, MedalSupport.MedalAward> awardsByCode = new HashMap<>();
-        Map<MedalSupport.MedalSkill, Integer> previewProgress = RuntimeConfig.isDbEnabled()
-            ? Map.of()
-            : MedalSupport.navigationPreviewProgress();
-
-        if (RuntimeConfig.isDbEnabled() && userId != null) {
-            for (MedalSupport.MedalAward award : medalhaRepository.findAwardsByUserId(userId)) {
-                awardsByCode.put(award.medalCode(), award);
-            }
-        }
-
-        return MedalSupport.catalog().stream()
-            .map(definition -> {
-                MedalSupport.MedalAward award = awardsByCode.get(definition.code());
-                int progressValue = 0;
-                boolean unlocked = false;
-                Integer recordValue = null;
-                LocalDateTime earnedAt = null;
-
-                if (award != null) {
-                    progressValue = Math.max(award.progressValue(), definition.targetValue());
-                    unlocked = true;
-                    recordValue = award.recordValue();
-                    earnedAt = award.earnedAt();
-                } else if (!RuntimeConfig.isDbEnabled()) {
-                    progressValue = previewProgress.getOrDefault(definition.skill(), 0);
-                    unlocked = progressValue >= definition.targetValue();
-                }
-
-                return new MedalSupport.MedalViewModel(definition, unlocked, progressValue, recordValue, earnedAt);
-            })
-            .toList();
-    }
-
     private String resolveNextLevel(double progressRatio) {
         double percent = clamp(progressRatio * 100d, 0d, 100d);
-        if (percent < 35d) {
-            return "INTERMEDIÁRIO";
-        }
-        if (percent < 70d) {
-            return "AVANÇADO";
-        }
+        if (percent < 35d) return "INTERMEDIÁRIO";
+        if (percent < 70d) return "AVANÇADO";
         return "EXCELENTE";
     }
 
@@ -675,12 +571,8 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private double normalizeProgress(double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return 0d;
-        }
-        if (value <= 1d) {
-            return clamp(value * 100d, 0d, 100d);
-        }
+        if (Double.isNaN(value) || Double.isInfinite(value)) return 0d;
+        if (value <= 1d) return clamp(value * 100d, 0d, 100d);
         return clamp(value, 0d, 100d);
     }
 
@@ -688,15 +580,8 @@ public class DashboardOrientadoController implements Initializable {
         return Math.max(min, Math.min(max, value));
     }
 
-    private String formatPercent(double ratio) {
-        return Math.round(clamp(ratio, 0d, 1d) * 100d) + "%";
-    }
-
     private String formatDate(LocalDateTime value) {
-        if (value == null) {
-            return "sem data";
-        }
-        return value.format(CARD_DATE_FORMAT);
+        return value == null ? "sem data" : value.format(CARD_DATE_FORMAT);
     }
 
     private String safeName(String value) {
@@ -704,23 +589,170 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private String safeText(String value, String fallback) {
-        if (value == null || value.isBlank()) {
-            return fallback;
-        }
-        return value;
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     private StackPane getContentHost() {
-        if (tela == null || tela.getParent() == null) {
-            return null;
-        }
-        if (tela.getParent() instanceof StackPane host) {
-            return host;
-        }
+        if (tela == null || tela.getParent() == null) return null;
+        if (tela.getParent() instanceof StackPane host) return host;
         return null;
     }
 
-    private record AchievementCardData(String badge, String title, String summary, String meta) {
+    private static final class AchievementCardFactory {
+        private static final String[] COLORS = {"success", "warning", "primary"};
+
+        private AchievementCardFactory() {}
+
+        static VBox create(int position, MedalSupport.MedalViewModel medal) {
+            StackPane imageShell = new StackPane();
+            imageShell.getStyleClass().add("achievement-mini-shell");
+
+            Label badge = createBadge(position);
+            Label title = new Label();
+            Label detail = new Label();
+
+            configureLabels(title, detail, medal);
+
+            VBox textBox = new VBox(3.0, title, detail);
+            textBox.setFillWidth(true);
+            textBox.setMaxWidth(Double.MAX_VALUE);
+
+            if (medal != null) {
+                setMedalImage(imageShell, medal.definition());
+            }
+
+            VBox card = new VBox(6.0, badge, imageShell, textBox);
+            card.getStyleClass().addAll("achievement-mini-card", "achievement-mini-card-" + COLORS[position % COLORS.length]);
+            card.setAlignment(Pos.TOP_LEFT);
+            card.setFillWidth(true);
+            card.setMinWidth(0);
+            card.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(card, Priority.ALWAYS);
+
+            return card;
+        }
+
+        private static Label createBadge(int position) {
+            Label badge = new Label(String.format("%02d", position));
+            badge.getStyleClass().addAll("achievement-mini-badge", "achievement-mini-badge-" + position);
+            return badge;
+        }
+
+        private static void configureLabels(Label title, Label detail, MedalSupport.MedalViewModel medal) {
+            title.getStyleClass().add("achievement-mini-title");
+            title.setWrapText(true);
+            title.setMinWidth(0);
+            title.setMaxWidth(Double.MAX_VALUE);
+
+            detail.getStyleClass().add("achievement-mini-copy");
+            detail.setWrapText(true);
+            detail.setMinWidth(0);
+            detail.setMaxWidth(Double.MAX_VALUE);
+
+            if (medal != null) {
+                title.setText(medal.definition().title());
+                detail.setText(medal.unlocked()
+                    ? "Já desbloqueada"
+                    : "Faltam " + medal.remainingToUnlock() + " " + medal.definition().targetUnit());
+            } else {
+                title.setText("Mais por vir");
+                detail.setText("Liga uma sessão para revelar a próxima conquista.");
+            }
+        }
+
+        private static void setMedalImage(StackPane container, MedalSupport.MedalDefinition definition) {
+            Image image = MedalSupport.loadMedalImage(definition.imageRef());
+            if (image != null) {
+                ImageView icon = new ImageView(image);
+                icon.setFitHeight(44.0);
+                icon.setFitWidth(44.0);
+                icon.setPreserveRatio(true);
+                icon.setSmooth(true);
+                container.getChildren().add(icon);
+            }
+        }
+    }
+
+    private static final class PlanStepCardFactory {
+        private PlanStepCardFactory() {}
+
+        static HBox create(int number, PlaneamentoEstudoEtapa etapa, PlaneamentoEstudoResumo resumo) {
+            String window = etapa == null ? fallbackWindow(number) : safeText(etapa.janela(), fallbackWindow(number));
+            String title = etapa == null ? fallbackTitle(number) : safeText(etapa.acao(), fallbackTitle(number));
+            String detail = etapa == null ? fallbackDetail(number, resumo) : safeText(etapa.detalhe(), fallbackDetail(number, resumo));
+
+            Label stepNumber = new Label(String.valueOf(number));
+            stepNumber.getStyleClass().addAll("plan-step-number", "plan-step-number-" + number);
+            stepNumber.setAlignment(Pos.CENTER);
+            stepNumber.setMinSize(38.0, 38.0);
+            stepNumber.setPrefSize(38.0, 38.0);
+            stepNumber.setMaxSize(38.0, 38.0);
+
+            Label windowLabel = new Label(window);
+            windowLabel.getStyleClass().add("plan-step-window");
+            windowLabel.setWrapText(true);
+            windowLabel.setMaxWidth(Double.MAX_VALUE);
+            windowLabel.setMinWidth(0);
+
+            Label titleLabel = new Label(title);
+            titleLabel.getStyleClass().add("plan-step-title");
+            titleLabel.setWrapText(true);
+            titleLabel.setMaxWidth(Double.MAX_VALUE);
+            titleLabel.setMinWidth(0);
+
+            Label detailLabel = new Label(detail);
+            detailLabel.getStyleClass().add("plan-step-detail");
+            detailLabel.setWrapText(true);
+            detailLabel.setMaxWidth(Double.MAX_VALUE);
+            detailLabel.setMinWidth(0);
+
+            VBox textBox = new VBox(2.0, windowLabel, titleLabel, detailLabel);
+            textBox.setFillWidth(true);
+            textBox.setMaxWidth(Double.MAX_VALUE);
+            textBox.setMinWidth(0);
+
+            HBox card = new HBox(10.0, stepNumber, textBox);
+            card.getStyleClass().addAll("plan-step-card", "plan-step-card-" + number);
+            card.setAlignment(Pos.CENTER_LEFT);
+            card.setFillHeight(false);
+            card.setMinWidth(0);
+            card.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(textBox, Priority.ALWAYS);
+
+            return card;
+        }
+
+        private static String fallbackWindow(int number) {
+            return switch (number) {
+                case 1 -> "Agora";
+                case 2 -> "Depois";
+                case 3 -> "Fecho";
+                default -> "Passo " + number;
+            };
+        }
+
+        private static String fallbackTitle(int number) {
+            return switch (number) {
+                case 1 -> "Arranque";
+                case 2 -> "Ritmo";
+                case 3 -> "Revisao";
+                default -> "Bloco " + number;
+            };
+        }
+
+        private static String fallbackDetail(int number, PlaneamentoEstudoResumo resumo) {
+            String hero = resumo == null ? "Comeca com o plano base do dia." : safeText(resumo.resumoHero(), "Comeca com o plano base do dia.");
+            return switch (number) {
+                case 1 -> hero;
+                case 2 -> "Mantem a execucao com um bloco curto e focado.";
+                case 3 -> "Fecha o dia com uma revisao rapida e mede o progresso.";
+                default -> "Mantem a sequencia do dia.";
+            };
+        }
+
+        private static String safeText(String value, String fallback) {
+            return value == null || value.isBlank() ? fallback : value;
+        }
     }
 
     private static final class DisciplineProgressCell extends ListCell<ProgressoAlunoDisciplinaDto> {
@@ -731,10 +763,18 @@ public class DashboardOrientadoController implements Initializable {
         private final HBox header = new HBox(10, name, spacer, percent);
         private final VBox root = new VBox(8, header, bar);
 
-        private DisciplineProgressCell() {
+        DisciplineProgressCell() {
+            configureStyles();
+            configureLayout();
+        }
+
+        private void configureStyles() {
             root.getStyleClass().add("discipline-progress-row");
             name.getStyleClass().add("discipline-progress-title");
             percent.getStyleClass().add("discipline-progress-percent");
+        }
+
+        private void configureLayout() {
             header.setAlignment(Pos.CENTER_LEFT);
             root.setFillWidth(true);
             HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -746,27 +786,24 @@ public class DashboardOrientadoController implements Initializable {
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
-                setText(null);
                 return;
             }
 
-            double progressoNormalizado = normalize(item.progresso());
-            name.setText(item.disciplina() == null || item.disciplina().isBlank() ? "Disciplina" : item.disciplina());
+            double progressoNormalizado = clamp(normalizeProgress(item.progresso()), 0, 100);
+            name.setText(safeText(item.disciplina(), "Disciplina"));
             percent.setText(Math.round(progressoNormalizado) + "%");
-            bar.setProgress(clamp(progressoNormalizado / 100d, 0d, 1d));
+            bar.setProgress(progressoNormalizado / 100d);
 
-            setText(null);
             setGraphic(root);
         }
 
-        private double normalize(double value) {
-            if (Double.isNaN(value) || Double.isInfinite(value)) {
-                return 0d;
-            }
-            if (value <= 1d) {
-                return Math.max(0d, Math.min(100d, value * 100d));
-            }
-            return Math.max(0d, Math.min(100d, value));
+        private double normalizeProgress(double value) {
+            if (Double.isNaN(value) || Double.isInfinite(value)) return 0;
+            return value <= 1 ? value * 100 : Math.max(0, Math.min(MAX_PROGRESS, value));
+        }
+
+        private String safeText(String value, String fallback) {
+            return value == null || value.isBlank() ? fallback : value;
         }
 
         private double clamp(double value, double min, double max) {

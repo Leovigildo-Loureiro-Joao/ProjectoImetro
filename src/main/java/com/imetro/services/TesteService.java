@@ -816,7 +816,7 @@ public class TesteService {
 
     public List<TrilhaAdaptacaoSubtopico> carregarTrilhaAdaptacao(
         UUID candidatoId,
-        UUID disciplinaId,
+        UUID disciplinaId,  
         String disciplinaNome
     ) {
         if (candidatoId == null || disciplinaId == null || disciplinaNome == null || disciplinaNome.isBlank()) {
