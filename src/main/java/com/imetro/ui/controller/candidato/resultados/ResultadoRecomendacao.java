@@ -10,7 +10,7 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import com.imetro.App;
-import com.imetro.ui.controller.candidato.AddLivroController;
+import com.imetro.ui.controller.candidato.BibliotecaController;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.util.QuestaoResultado;
 import com.imetro.util.ResultadoPayload;
@@ -41,6 +41,7 @@ public class ResultadoRecomendacao implements Initializable, DisposableControlle
 
     @FXML
     private Label leituraDetalheValue;
+    
 
     @FXML
     private Label observacoesDetalheValue;
@@ -93,7 +94,7 @@ public class ResultadoRecomendacao implements Initializable, DisposableControlle
     @FXML
     private void abrirBibliotecaDisciplina() {
         if (resultado != null && textoReal(resultado.getDisciplina())) {
-            AddLivroController.definirDisciplinaPreferida(resultado.getDisciplina());
+            BibliotecaController.definirDisciplinaPreferida(resultado.getDisciplina());
         }
 
         if (abrirBibliotecaButton == null || abrirBibliotecaButton.getScene() == null) {
@@ -105,7 +106,7 @@ public class ResultadoRecomendacao implements Initializable, DisposableControlle
             return;
         }
 
-        App.swapContent(contentHost, "views/pages/candidato/add-livro");
+        App.swapContent(contentHost, "views/pages/candidato/livro");
     }
 
     @Override

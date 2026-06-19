@@ -145,7 +145,8 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
         long tamanhoBytes,
         String checksumSha256,
         String sourcePath,
-        byte[] conteudoPdf
+        byte[] conteudoPdf,
+        byte[] capaThumbnail
     ) throws SQLException {
         String sql = """
             insert into biblioteca_livros (
@@ -182,6 +183,7 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
             stmt.setString(6, checksumSha256);
             stmt.setString(7, sourcePath);
             stmt.setBytes(8, conteudoPdf);
+            stmt.setBytes(9, capaThumbnail);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (!rs.next()) {
                     throw new SQLException("Nao foi possivel guardar o livro na biblioteca.");
@@ -268,6 +270,7 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
             rs.getString("nome_arquivo"),
             rs.getString("mime_type"),
             rs.getLong("tamanho_bytes"),
+            rs.getBytes("capa_thumbnail"),
             rs.getString("checksum_sha256"),
             rs.getString("source_path"),
             rs.getBoolean("ativo"),

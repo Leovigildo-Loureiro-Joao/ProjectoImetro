@@ -5,6 +5,8 @@ import com.imetro.domain.dto.biblioteca.BibliotecaLivroPaginaDto;
 import com.imetro.persistence.repository.BibliotecaLivroRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.util.AppLogger;
+import com.imetro.util.PdfUtils;
+
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -79,6 +81,7 @@ public class BibliotecaLivroService {
         }
 
         byte[] conteudoPdf = Files.readAllBytes(normalizado);
+        byte[] capaThumbnail = PdfUtils.gerarThumbnail(conteudoPdf);
         String checksum = sha256Hex(conteudoPdf);
         String titulo = derivarTitulo(nomeArquivo);
 
@@ -107,7 +110,8 @@ public class BibliotecaLivroService {
                     tamanhoBytes,
                     checksum,
                     normalizado.toString(),
-                    conteudoPdf
+                    conteudoPdf,
+                    capaThumbnail
                 );
 
                 if (precisaExtrairPaginas) {
@@ -155,6 +159,8 @@ public class BibliotecaLivroService {
             throw new IOException("Falha ao listar os livros da biblioteca.", e);
         }
     }
+
+    
 
     public List<BibliotecaLivroPaginaDto> listarPaginas(UUID livroId) throws IOException {
         try {

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXComboBox?>
+<?import java.lang.String?>
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="modal" maxHeight="479.0" maxWidth="518.0" prefHeight="479.0" prefWidth="518.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.modals.AddLivroModalController">
+   <children>
+      <HBox alignment="CENTER">
+         <children>
+            <VBox prefHeight="30.0" prefWidth="426.0" spacing="5.0">
+               <children>
+                  <Label styleClass="h2" text="Enviar novo livro" />
+                  <Label prefHeight="24.0" prefWidth="424.0" styleClass="muted" text="Escolhe a disciplina, aponta os PDFs e depois lanca a leitura automatica." wrapText="true" />
+               </children>
+            </VBox>
+            <Region prefHeight="35.0" prefWidth="129.0" HBox.hgrow="ALWAYS" />
+            <JFXButton buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" onAction="#Close" prefHeight="35.0" prefWidth="32.0">
+               <graphic>
+                  <ImageView fitHeight="17.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../assets/imgs/delete_50px.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </JFXButton>
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" top="10.0" />
+         </VBox.margin>
+         <padding>
+            <Insets left="20.0" right="20.0" />
+         </padding>
+      </HBox>
+      <VBox prefHeight="413.0" prefWidth="684.0" spacing="18.0">
+         <padding>
+            <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+         </padding>
+         <children>
+            <HBox spacing="16.0">
+               <children>
+                  <VBox prefHeight="38.0" prefWidth="424.0" spacing="6.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="h3-thin-big" text="Disciplina" />
+                        <JFXComboBox fx:id="disciplinaCombo" maxWidth="1.7976931348623157E308" prefHeight="42.0" promptText="Seleciona a disciplina" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <VBox prefHeight="202.0" prefWidth="405.0" spacing="12.0">
+               <padding>
+                  <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+               </padding>
+               <styleClass>
+                  <String fx:value="sub-card" />
+                  <String fx:value="upload-picker-card" />
+               </styleClass>
+               <children>
+                  <Label styleClass="h3-thin-big" text="Livro em PDF" />
+                  <TextField fx:id="selectedFilesField" editable="false" prefHeight="42.0" promptText="Nenhum PDF selecionado" />
+                  <HBox spacing="12.0">
+                     <children>
+                        <JFXButton fx:id="selecionarArquivosButton" onAction="#selecionarArquivos" prefHeight="40.0" styleClass="btn-primary" text="Selecionar PDF(s)" />
+                        <JFXButton fx:id="limparSelecaoButton" onAction="#limparSelecao" prefHeight="40.0" styleClass="btn-secondary" text="Limpar" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <JFXButton fx:id="lancarButton" onAction="#lancarGeracao" prefHeight="39.0" prefWidth="144.0" styleClass="btn-primary-two" text="Lancar" />
+                     </children>
+                  </HBox>
+                  <Label fx:id="selectionSummaryLabel" styleClass="compact-copy" text="Seleciona um ou mais PDFs." wrapText="true" />
+                  <Label fx:id="launchHintLabel" styleClass="muted" text="Ao lancar, a geracao corre em segundo plano." wrapText="true" />
+               </children>
+            </VBox>
+            <Label fx:id="feedbackLabel" text="Feedback do carregamento." wrapText="true">
+               <styleClass>
+                  <String fx:value="profile-feedback" />
+                  <String fx:value="profile-feedback-info" />
+               </styleClass>
+            </Label>
+         </children>
+      </VBox>
+   </children>
+   <stylesheets>
+      <URL value="@../../../../styles/global.css" />
+      <URL value="@../../../../styles/candidato-layout.css" />
+   </stylesheets>
+   <styleClass>
+      <String fx:value="card-blur" />
+      <String fx:value="card" />
+      <String fx:value="upload-main-card" />
+   </styleClass>
+</VBox>

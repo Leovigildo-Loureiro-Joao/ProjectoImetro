@@ -141,7 +141,7 @@ public class CandidatoLayoutController implements Initializable {
 
         menu.getItems().setAll(
             new MenuEntry("dashboard", "Dashboard", RemixiconAL.LAYOUT_GRID_FILL),
-            new MenuEntry("add_livro", "Atualizar Biblioteca", FontAwesomeSolid.FILE_ALT),
+            new MenuEntry("livro", "Atualizar Biblioteca", FontAwesomeSolid.FILE_ALT),
             new MenuEntry("diagnostico", "Diagnóstico", FontAwesomeSolid.BOLT),
             new MenuEntry("exame_adaptativo", "Exame Adaptativo", FontAwesomeSolid.FIRE),
             new MenuEntry("relatorios", "Relatórios", FontAwesomeSolid.CHART_LINE),
@@ -339,7 +339,7 @@ public class CandidatoLayoutController implements Initializable {
     private void navigate(String key) {
         List<String> keys= List.of(
             "dashboard",
-            "add_livro",
+            "livro",
             "diagnostico",
             "exame_adaptativo",
             "relatorios",
@@ -352,7 +352,7 @@ public class CandidatoLayoutController implements Initializable {
         try {
             switch (key) {
                 case "dashboard" -> openDashboard();
-                case "add_livro" -> App.swapContent(contentHost, "views/pages/candidato/add-livro");
+                case "livro" -> App.swapContent(contentHost, "views/pages/candidato/livro");
                 case "diagnostico" -> App.swapContent(contentHost, "views/pages/candidato/diagnostico");
                 case "exame_adaptativo" -> openTestes();
                 case "relatorios" -> App.swapContent(contentHost, "views/pages/candidato/relatorios");

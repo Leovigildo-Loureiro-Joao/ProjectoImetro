@@ -61,6 +61,7 @@ import javafx.util.Duration;
 
 public class DashboardOrientadoController implements Initializable {
 
+    @SuppressWarnings("deprecation")
     private static final Locale LOCALE_PT = new Locale("pt", "AO");
     private static final DateTimeFormatter HEADER_DATE_FORMAT = DateTimeFormatter.ofPattern("HH:mm EEEE dd MMM yyyy", LOCALE_PT);
     private static final DateTimeFormatter CARD_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy", LOCALE_PT);

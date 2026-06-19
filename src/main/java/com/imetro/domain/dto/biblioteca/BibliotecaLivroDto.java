@@ -11,6 +11,7 @@ public record BibliotecaLivroDto(
     String nomeArquivo,
     String mimeType,
     long tamanhoBytes,
+    byte[] capaThumbnail,
     String checksumSha256,
     String sourcePath,
     boolean ativo,
