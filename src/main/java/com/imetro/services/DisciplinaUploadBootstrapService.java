@@ -238,7 +238,7 @@ public class DisciplinaUploadBootstrapService {
         if (copiados.isEmpty()) {
             throw new IllegalArgumentException("Nenhum PDF valido foi selecionado.");
         }
-
+        System.out.println("Cheguei");
         bibliotecaLivroService.sincronizarArquivos(disciplina.id(), copiados);
         return List.copyOf(copiados);
     }

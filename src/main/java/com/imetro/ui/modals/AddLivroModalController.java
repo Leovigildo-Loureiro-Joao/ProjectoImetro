@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
+import com.imetro.services.BibliotecaLivroService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.DisciplinaUploadBootstrapService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
@@ -51,14 +52,16 @@ public class AddLivroModalController extends ModalController{
 
     @FXML
     private Label selectionSummaryLabel;
+    private BibliotecaLivroService service;
 
-        private final DisciplinaUploadBootstrapService uploadService = new DisciplinaUploadBootstrapService();
+    private final DisciplinaUploadBootstrapService uploadService = new DisciplinaUploadBootstrapService();
     private final PerguntasBootstrapAsyncService bootstrapAsyncService = PerguntasBootstrapAsyncService.getInstance();
     private final List<Path> arquivosSelecionados = new ArrayList<>();
 
 
     @Override
     public void init() {
+        service=new BibliotecaLivroService();
         // TODO Auto-generated method stub
         super.init();
         selectedFilesField.setText("Nenhum PDF selecionado");
@@ -149,7 +152,7 @@ public class AddLivroModalController extends ModalController{
             }
 
 
-            boolean iniciado = bootstrapAsyncService.startDisciplina(candidatoId, disciplina.id(), true, true);
+          /*   boolean iniciado = bootstrapAsyncService.startDisciplina(candidatoId, disciplina.id(), true, true);
             if (!iniciado) {
                 aplicarFeedback(
                     "Nao foi possivel iniciar agora porque ja existe outro processamento ativo no momento.",
@@ -165,6 +168,7 @@ public class AddLivroModalController extends ModalController{
                 prefixo + "A leitura dos livros e a geracao das perguntas ja estao a correr em segundo plano.",
                 "success"
             );
+            */
         } catch (Exception e) {
             aplicarFeedback(
                 "Falha ao enviar ou processar os livros: " + firstNonBlank(e.getMessage(), "erro inesperado"),
@@ -173,22 +177,6 @@ public class AddLivroModalController extends ModalController{
         } finally {
             atualizarEstadoAcoes();
         }
-    }
-
-    private void refletirResumoBootstrap() {
-        String resumo = bootstrapAsyncService.summaryProperty().get();
-        if (resumo == null || resumo.isBlank()) {
-            return;
-        }
-
-        switch (bootstrapAsyncService.getState()) {
-            case SUCCESS -> aplicarFeedback(resumo, "success");
-            case WARNING -> aplicarFeedback(resumo, "info");
-            case ERROR -> aplicarFeedback(resumo, "error");
-            default -> {
-            }
-        }
-
     }
 
     private void atualizarSelecaoArquivos() {

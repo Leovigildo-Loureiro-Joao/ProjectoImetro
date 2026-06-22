@@ -14,6 +14,7 @@ import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.modals.AddLivroModalController;
 import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
+import com.imetro.ui.modals.AddLivroModalController.DisciplinaOption;
 import com.imetro.util.Authentication;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
@@ -148,7 +149,7 @@ public class BibliotecaController implements Initializable  {
         pdfViewer.setVisible(false);
         biblioteca.setVisible(true);
         modalPai.setVisible(false);
-        
+
         servoce=new BibliotecaLivroService();
         sublist.setCellFactory(list -> new ListCell<>() {
             @Override
@@ -160,8 +161,12 @@ public class BibliotecaController implements Initializable  {
         });
         carregarDisciplinas();
         try {
-            servoce.listarLivros(disciplinaCombo.getSelectionModel().getSelectedItem().id());
-            carregarLivros(servoce.listarLivros(disciplinaCombo.getSelectionModel().getSelectedItem().id()));
+            DisciplinaOption dis=disciplinaCombo.getSelectionModel().getSelectedItem();
+            if (dis!=null) {
+                servoce.listarLivros(disciplinaCombo.getSelectionModel().getSelectedItem().id());
+                carregarLivros(servoce.listarLivros(disciplinaCombo.getSelectionModel().getSelectedItem().id()));
+            }
+
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
