@@ -29,6 +29,7 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
           l.ativo,
           l.criado_em,
           l.atualizado_em,
+          l.capa_thumbnail,
           coalesce(pg.total_paginas, 0) as total_paginas,
           coalesce(pg.paginas_com_texto, 0) as paginas_com_texto
         from biblioteca_livros l
@@ -147,7 +148,7 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
         String sourcePath,
         byte[] conteudoPdf,
         byte[] capaThumbnail
-    ) throws SQLException {
+    ) {
         String sql = """
             insert into biblioteca_livros (
               disciplina_id,
@@ -160,8 +161,9 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
               conteudo_pdf,
               ativo,
               criado_em,
-              atualizado_em
-            ) values (?, ?, ?, ?, ?, ?, ?, ?, true, now(), now())
+              atualizado_em,
+              capa_thumbnail
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, true, now(), now(),?)
             on conflict (disciplina_id, checksum_sha256) do update set
               titulo = excluded.titulo,
               nome_arquivo = excluded.nome_arquivo,
@@ -172,6 +174,7 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
               conteudo_pdf = excluded.conteudo_pdf,
               ativo = true,
               atualizado_em = now()
+              capa_thumbnail = excluded.capa_thumbnail,  
             returning id
             """;
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -194,8 +197,14 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
                 }
                 return UUID.fromString(String.valueOf(value));
             }
-        }
-    }
+             catch (Exception e) {
+             e.printStackTrace();
+            }
+        }  catch (Exception e) {
+             e.printStackTrace();
+            }
+ 
+        return null;   }
 
     public int substituirPaginas(Connection conn, UUID livroId, List<BibliotecaLivroPaginaDto> paginas)
         throws SQLException {

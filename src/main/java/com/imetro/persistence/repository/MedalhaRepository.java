@@ -5,12 +5,9 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-import com.imetro.config.RuntimeConfig;
 import com.imetro.util.MedalSupport;
 import com.imetro.util.MedalSupport.MedalDefinition;
 import com.imetro.util.MedalSupport.MedalSkill;

@@ -6,76 +6,87 @@ import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.services.BibliotecaLivroService;
 import com.imetro.services.DisciplinaService;
-import com.imetro.services.DisciplinaUploadBootstrapService;
-import com.imetro.services.PerguntasBootstrapAsyncService;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.biblioteca.LivroCard;
-import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.ui.modals.AddLivroModalController;
-import com.imetro.ui.modals.ModalAlert;
 import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.AddLivroModalController.DisciplinaOption;
-import com.imetro.util.Authentication;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
-import java.awt.Desktop;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import java.awt.image.BufferedImage;
+
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
-
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 
 public class BibliotecaController implements Initializable  {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private final ExecutorService executor =
+            Executors.newFixedThreadPool(2);
+    private PDDocument document;
+    private PDFRenderer renderer;
     private static String disciplinaPreferida;
 
     private FXMLLoader modFxml;
     private Node mod;
     private Node modTop;
     private ModalController cont;
+    private BibliotecaLivroDto livro;
+    private final Map<Integer, Image> cache =
+            Collections.synchronizedMap(
+                    new LinkedHashMap<>(50, 0.75f, true) {
+                        @Override
+                        protected boolean removeEldestEntry(Map.Entry<Integer, Image> eldest) {
+                            return size() > 50; // cache LRU
+                        }
+                    }
+            );
+
+    private double zoom = 1.5;
+    private int currentPage = 0;
+
+    @FXML private ScrollPane scrollPane;
 
     @FXML
     private JFXButton btnAnterior;
+    @FXML
+    private VBox pageContainer;
 
     @FXML
     private JFXComboBox<AddLivroModalController.DisciplinaOption> disciplinaCombo;
@@ -111,9 +122,6 @@ public class BibliotecaController implements Initializable  {
     @FXML
     private ProgressBar questionProgressBar;
 
-    @FXML
-    private ScrollPane scrollPdf;
-
 
     @FXML
     private VBox biblioteca;
@@ -135,7 +143,7 @@ public class BibliotecaController implements Initializable  {
     @FXML
     private StackPane modalPai;
     private BibliotecaLivroService servoce;
-
+    private byte[] dados;
 
 
 
@@ -168,7 +176,6 @@ public class BibliotecaController implements Initializable  {
             }
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -186,7 +193,22 @@ public class BibliotecaController implements Initializable  {
         });
 
         sublist.getSelectionModel().selectFirst();
+        scrollPane.vvalueProperty().addListener((obs, oldVal, newVal) -> {
 
+                for (Node node : pageContainer.getChildren()) {
+                    Bounds bounds = node.localToScene(node.getBoundsInLocal());
+
+                    if (bounds.getMinY() >= 0 && bounds.getMinY() < 300) {
+                        int page = (int) node.getUserData();
+
+                        if (page != currentPage) {
+                            currentPage = page;
+                            preloadPages(page);
+                        }
+                        break;
+                    }
+                }
+            });
 
     }
 
@@ -227,7 +249,7 @@ public class BibliotecaController implements Initializable  {
             );
 
             card.getBtnLer().setOnAction(e -> {
-               // abrirLivro(livro);
+               abrirLivro(livro);
             });
 
             pdfList.getChildren().add(card);
@@ -247,6 +269,168 @@ public class BibliotecaController implements Initializable  {
             System.out.println(ex.getMessage());
         }
     }
+
+    private void abrirLivro(BibliotecaLivroDto livro) {
+
+        biblioteca.setVisible(false);
+        pdfViewer.setVisible(true);
+
+        Task<byte[]> task = new Task<>() {
+            @Override
+            protected byte[] call() throws Exception {
+                return servoce.carregarPdf(livro.id())
+                        .orElseThrow(() -> new IOException("PDF vazio"));
+            }
+
+            @Override
+            protected void succeeded() {
+                dados = getValue();
+                open(dados);
+            }
+
+            @Override
+            protected void failed() {
+                getException().printStackTrace();
+            }
+        };
+
+        new Thread(task).start();
+    }
+
+   public void open(byte[] pdfBytes) {
+
+        executor.submit(() -> {
+            try {
+
+                this.document = Loader.loadPDF(pdfBytes);
+                this.renderer = new PDFRenderer(document);
+
+                int pages = document.getNumberOfPages();
+
+                Platform.runLater(() -> {
+                    pageContainer.getChildren().clear();
+
+                    for (int i = 0; i < pages; i++) {
+                        ImageView view = createPageView(i);
+                        pageContainer.getChildren().add(view);
+                    }
+
+                    preloadPages(0);
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private ImageView createPageView(int pageIndex) {
+
+        ImageView view = new ImageView();
+
+        view.setPreserveRatio(true);
+        view.setFitWidth(500 * zoom);
+
+        view.setUserData(pageIndex);
+
+        view.imageProperty().set(null);
+
+        view.viewportProperty();
+
+        // render assíncrono ao aparecer
+        view.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                renderPageAsync(pageIndex, view);
+            }
+        });
+
+        return view;
+    }
+
+
+    private void renderPageAsync(int page, ImageView view) {
+
+        if (cache.containsKey(page)) {
+            view.setImage(cache.get(page));
+            return;
+        }
+
+        executor.submit(() -> {
+            try {
+
+                BufferedImage buffered =
+                        renderer.renderImageWithDPI(page, (int)(150 * zoom));
+
+                Image fxImage =
+                        SwingFXUtils.toFXImage(buffered, null);
+
+                cache.put(page, fxImage);
+
+                Platform.runLater(() -> {
+                    if ((int) view.getUserData() == page) {
+                        view.setImage(fxImage);
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void preloadPages(int page) {
+
+        int[] targets = { page - 1, page + 1, page + 2 };
+
+        for (int p : targets) {
+            if (p < 0 || p >= document.getNumberOfPages()) continue;
+            if (cache.containsKey(p)) continue;
+
+            executor.submit(() -> {
+                try {
+                    BufferedImage buffered =
+                            renderer.renderImageWithDPI(p, (int)(150 * zoom));
+
+                    Image img = SwingFXUtils.toFXImage(buffered, null);
+                    cache.put(p, img);
+
+                } catch (Exception ignored) {}
+            });
+        }
+    }
+
+    private void navegarPagina(int pag, BibliotecaLivroDto livro) {
+
+        Task<Image> task = new Task<>() {
+            @Override
+            protected Image call() throws Exception {
+
+                try (PDDocument document = Loader.loadPDF(dados)) {
+
+                    PDFRenderer renderer = new PDFRenderer(document);
+
+                    BufferedImage bufferedImage =
+                            renderer.renderImageWithDPI(pag, 150);
+
+                    return SwingFXUtils.toFXImage(bufferedImage, null);
+                }
+            }
+
+            @Override
+            protected void succeeded() {
+                imgPagina.setImage(getValue());
+            }
+
+            @Override
+            protected void failed() {
+                getException().printStackTrace();
+            }
+        };
+
+        new Thread(task).start();
+    }
+
+    
 
     @FXML
     private void Procurar(ActionEvent event) {
@@ -306,7 +490,27 @@ public class BibliotecaController implements Initializable  {
     }
 
 
+    @FXML
+    private void InitPag(ActionEvent event) {
+        if(livro!=null)
+            navegarPagina(0, livro);
+    }
 
+    @FXML
+    private void LastPag(ActionEvent event) {
+      
+            
+    }
+
+    @FXML
+    private void PagAnterior(ActionEvent event) {
+      
+    }
+
+    @FXML
+    private void PagSeguinte(ActionEvent event) {
+      
+    }
 
 
     private String construirResumoBiblioteca(String disciplinaNome, int totalLivros) {

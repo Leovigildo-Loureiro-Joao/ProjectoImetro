@@ -35,8 +35,6 @@ public final class PerguntasBootstrapAsyncService {
     private final ObjectProperty<BootstrapUiState> state = new SimpleObjectProperty<>(BootstrapUiState.IDLE);
 
     private volatile UUID activeCandidateId;
-    private volatile UUID autoStartSuppressedCandidateId;
-    private volatile String autoStartSuppressedReason;
     private Task<List<BootstrapResult>> currentTask;
 
     private PerguntasBootstrapAsyncService() {
@@ -48,17 +46,6 @@ public final class PerguntasBootstrapAsyncService {
 
     public synchronized boolean startIfNeeded(UUID candidatoId) {
         if (candidatoId == null) {
-            return false;
-        }
-
-        if (isAutoStartSuppressed(candidatoId)) {
-            LOGGER.info(
-                "Auto bootstrap suspenso para o candidato "
-                    + candidatoId
-                    + ". Motivo: "
-                    + autoStartSuppressedReason
-                    + "."
-            );
             return false;
         }
 
@@ -81,8 +68,6 @@ public final class PerguntasBootstrapAsyncService {
             LOGGER.warning("Tentativa de iniciar o bootstrap automatico sem candidatoId.");
             return false;
         }
-
-        clearAutoStartSuppression(candidatoId);
 
         if (currentTask != null && currentTask.isRunning()) {
             if (candidatoId.equals(activeCandidateId)) {
@@ -146,8 +131,6 @@ public final class PerguntasBootstrapAsyncService {
             LOGGER.warning("Tentativa de iniciar o processamento de livro sem candidatoId ou disciplinaId.");
             return false;
         }
-
-        clearAutoStartSuppression(candidatoId);
 
         if (currentTask != null && currentTask.isRunning()) {
             if (candidatoId.equals(activeCandidateId)) {
@@ -279,7 +262,6 @@ public final class PerguntasBootstrapAsyncService {
         detail.set(resumo);
         summary.set(resumo);
         showBanner.set(true);
-        atualizarSupensaoAutoarranque(results, null);
         LOGGER.info("Bootstrap automatico concluido para o candidato " + activeCandidateId + ". " + resumo);
     }
 
@@ -297,7 +279,6 @@ public final class PerguntasBootstrapAsyncService {
         detail.set(detalheComLog);
         summary.set(detalheComLog);
         showBanner.set(true);
-        atualizarSupensaoAutoarranque(null, error);
         LOGGER.log(Level.SEVERE, "Bootstrap automatico falhou para o candidato " + activeCandidateId + ".", error);
     }
 
@@ -329,7 +310,6 @@ public final class PerguntasBootstrapAsyncService {
             .anyMatch(result ->
                 result.status() == BootstrapStatus.SEM_PDFS
                     || result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO
-                    || result.status() == BootstrapStatus.GROQ_NAO_CONFIGURADO
             );
 
         if (hasErrors) {
@@ -339,105 +319,6 @@ public final class PerguntasBootstrapAsyncService {
             return hasProcessed ? BootstrapUiState.SUCCESS : BootstrapUiState.WARNING;
         }
         return hasProcessed || hasExisting ? BootstrapUiState.SUCCESS : BootstrapUiState.WARNING;
-    }
-
-    private void atualizarSupensaoAutoarranque(List<BootstrapResult> results, Throwable error) {
-        UUID candidatoId = activeCandidateId;
-        if (candidatoId == null) {
-            return;
-        }
-
-        if (error != null) {
-            suspenderAutoarranque(candidatoId, mensagemDeErro(error));
-            return;
-        }
-
-        if (deveSuspenderAutoarranque(results)) {
-            suspenderAutoarranque(candidatoId, construirMotivoSuspensao(results));
-            return;
-        }
-
-        if (candidatoId.equals(autoStartSuppressedCandidateId)) {
-            autoStartSuppressedCandidateId = null;
-            autoStartSuppressedReason = null;
-        }
-    }
-
-    private boolean deveSuspenderAutoarranque(List<BootstrapResult> results) {
-        if (results == null || results.isEmpty()) {
-            return false;
-        }
-
-        return results.stream().anyMatch(result ->
-            result != null
-                && (result.status() == BootstrapStatus.ERRO
-                    || result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO
-                    || result.status() == BootstrapStatus.GROQ_NAO_CONFIGURADO)
-        );
-    }
-
-    private void suspenderAutoarranque(UUID candidatoId, String motivo) {
-        autoStartSuppressedCandidateId = candidatoId;
-        autoStartSuppressedReason = motivo == null || motivo.isBlank()
-            ? "A ultima tentativa falhou."
-            : motivo.trim();
-        LOGGER.warning(
-            "Auto bootstrap suspenso para o candidato " + candidatoId + ". Motivo: " + autoStartSuppressedReason + "."
-        );
-    }
-
-    private void clearAutoStartSuppression(UUID candidatoId) {
-        if (candidatoId == null) {
-            return;
-        }
-
-        if (candidatoId.equals(autoStartSuppressedCandidateId)) {
-            autoStartSuppressedCandidateId = null;
-            autoStartSuppressedReason = null;
-        }
-    }
-
-    private boolean isAutoStartSuppressed(UUID candidatoId) {
-        return candidatoId != null && candidatoId.equals(autoStartSuppressedCandidateId);
-    }
-
-    private String construirMotivoSuspensao(List<BootstrapResult> results) {
-        if (results == null || results.isEmpty()) {
-            return "Nenhum resultado valido foi devolvido.";
-        }
-
-        long erros = results.stream()
-            .filter(result -> result != null && result.status() == BootstrapStatus.ERRO)
-            .count();
-        long semGemini = results.stream()
-            .filter(result -> result != null && result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO)
-            .count();
-        long semGroq = results.stream()
-            .filter(result -> result != null && result.status() == BootstrapStatus.GROQ_NAO_CONFIGURADO)
-            .count();
-
-        if (erros > 0 && (semGemini > 0 || semGroq > 0)) {
-            return "Houve " + erros + " erro(s), " + semGemini + " disciplina(s) sem Gemini configurado e "
-                + semGroq + " disciplina(s) sem Groq configurado.";
-        }
-        if (erros > 0) {
-            return "Houve " + erros + " erro(s) no processamento.";
-        }
-        if (semGemini > 0) {
-            return "O Gemini nao esta configurado.";
-        }
-        if (semGroq > 0) {
-            return "O Groq nao esta configurado.";
-        }
-        return "A ultima tentativa nao concluiu com sucesso.";
-    }
-
-    private String mensagemDeErro(Throwable error) {
-        if (error == null || error.getMessage() == null || error.getMessage().isBlank()) {
-            return "Falha inesperada no bootstrap automatico.";
-        }
-
-        return error.getMessage().trim();
     }
 
     private String resolveTitle(BootstrapUiState state) {
@@ -466,9 +347,6 @@ public final class PerguntasBootstrapAsyncService {
             .count();
         long semGemini = results.stream()
             .filter(result -> result.status() == BootstrapStatus.GEMINI_NAO_CONFIGURADO)
-            .count();
-        long semGroq = results.stream()
-            .filter(result -> result.status() == BootstrapStatus.GROQ_NAO_CONFIGURADO)
             .count();
         long jaExistentes = results.stream()
             .filter(result -> result.status() == BootstrapStatus.JA_EXISTENTE)
@@ -501,10 +379,6 @@ public final class PerguntasBootstrapAsyncService {
         if (semGemini > 0) {
             resumo.append(" ").append(semGemini).append(' ')
                 .append(semGemini == 1 ? "precisa da chave do Gemini." : "precisam da chave do Gemini.");
-        }
-        if (semGroq > 0) {
-            resumo.append(" ").append(semGroq).append(' ')
-                .append(semGroq == 1 ? "precisa da chave do Groq." : "precisam da chave do Groq.");
         }
         if (erros > 0) {
             resumo.append(" ").append(erros).append(' ')

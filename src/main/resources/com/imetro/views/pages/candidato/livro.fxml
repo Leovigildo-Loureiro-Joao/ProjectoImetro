@@ -20,9 +20,9 @@
 <?import javafx.scene.layout.VBox?>
 
 <StackPane prefHeight="919.0" prefWidth="980.0" styleClass="page" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.BibliotecaController">
-   <VBox fx:id="biblioteca">
+   <VBox fx:id="biblioteca" visible="false">
       <children>
-         <HBox spacing="20.0">
+         <HBox alignment="BOTTOM_LEFT" prefHeight="106.0" prefWidth="940.0" spacing="20.0">
             <children>
                <VBox>
                   <children>
@@ -31,7 +31,10 @@
                   </children>
                </VBox>
                <Region prefHeight="4.0" prefWidth="127.0" HBox.hgrow="ALWAYS" />
-               <JFXButton fx:id="lancarButton2" minWidth="144.0" onAction="#AdicionarLivro" prefHeight="39.0" prefWidth="144.0" styleClass="btn-primary-two" text="Adicionar Livro" />
+               <JFXButton fx:id="lancarButton2" minWidth="144.0" onAction="#AdicionarLivro" prefHeight="39.0" prefWidth="144.0" styleClass="btn-primary-two" text="Adicionar Livro">
+                  <HBox.margin>
+                     <Insets top="20.0" />
+                  </HBox.margin></JFXButton>
             </children>
          </HBox>
          <ListView fx:id="sublist" maxHeight="48.0" minHeight="48.0" orientation="HORIZONTAL" prefHeight="48.0" prefWidth="1125.0">
@@ -61,19 +64,22 @@
                </HBox>
             </children>
          </HBox>
-         <FlowPane fx:id="pdfList" prefHeight="812.0" prefWidth="944.0" />
+         <FlowPane fx:id="pdfList" prefHeight="688.0" prefWidth="940.0" />
       </children>
+      <StackPane.margin>
+         <Insets bottom="20.0" left="20.0" right="20.0" top="40.0" />
+      </StackPane.margin>
    </VBox>
-   <StackPane fx:id="pdfViewer" prefHeight="897.0" prefWidth="944.0" visible="false">
+   <StackPane fx:id="pdfViewer" prefHeight="897.0" prefWidth="944.0">
       <children>
-         <BorderPane styleClass="pdf-viewer" visible="false">
+         <BorderPane styleClass="pdf-viewer">
             <top>
                <HBox alignment="CENTER_LEFT" spacing="15" styleClass="viewer-header">
                   <padding>
                      <Insets bottom="15" left="20" right="20" top="15" />
                   </padding>
                   <children>
-                     <JFXButton fx:id="btnVoltar" styleClass="btn-primary" text="Voltar para a biblioteca">
+                     <JFXButton fx:id="btnVoltar" contentDisplay="GRAPHIC_ONLY" styleClass="btn-primary">
                         <graphic>
                            <ImageView fitHeight="30.0" fitWidth="23.0" pickOnBounds="true" preserveRatio="true">
                               <image>
@@ -102,13 +108,17 @@
             <center>
                <StackPane styleClass="pdf-container">
                   <children>
-                     <ScrollPane fx:id="scrollPdf" fitToHeight="true" fitToWidth="true" pannable="true" styleClass="pdf-scroll">
+                     <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" pannable="true" styleClass="pdf-scroll">
                         <content>
-                           <StackPane alignment="CENTER" styleClass="page-area">
+                           <VBox fx:id="pageContainer" alignment="TOP_CENTER">
                               <children>
-                                 <ImageView fx:id="imgPagina" fitWidth="850" preserveRatio="true" smooth="true" styleClass="pdf-page" />
+                                 <StackPane alignment="CENTER" styleClass="page-area">
+                                    <children>
+                                       <ImageView fx:id="imgPagina" fitWidth="850" preserveRatio="true" smooth="true" styleClass="pdf-page" />
+                                    </children>
+                                 </StackPane>
                               </children>
-                           </StackPane>
+                           </VBox>
                         </content>
                      </ScrollPane>
                   </children>
@@ -122,7 +132,7 @@
                            <Insets bottom="15" left="20" right="20" top="15" />
                         </padding>
                         <children>
-                           <JFXButton fx:id="btnAnterior1" styleClass="btn-primary" text="Primeira Página ">
+                           <JFXButton fx:id="btnAnterior1" onAction="#InitPag" styleClass="btn-primary" text="Primeira Página ">
                               <graphic>
                                  <ImageView fitHeight="16.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true" translateX="-5.0">
                                     <image>
@@ -135,7 +145,7 @@
                               </opaqueInsets>
                            </JFXButton>
                            <Region prefHeight="39.0" prefWidth="13.0" HBox.hgrow="ALWAYS" />
-                           <JFXButton fx:id="btnAnterior" styleClass="btn-primary" text="Página Anterior">
+                           <JFXButton fx:id="btnAnterior" onAction="#PagAnterior" styleClass="btn-primary" text="Página Anterior">
                               <graphic>
                                  <ImageView fitHeight="17.0" fitWidth="14.0" pickOnBounds="true" preserveRatio="true" translateX="-5.0">
                                     <image>
@@ -153,7 +163,7 @@
                                  <String fx:value="h3-bold" />
                               </styleClass>
                            </Label>
-                           <JFXButton fx:id="btnProxima" contentDisplay="RIGHT" styleClass="btn-primary" text="Página Seguinte">
+                           <JFXButton fx:id="btnProxima" contentDisplay="RIGHT" onAction="#PagSeguinte" styleClass="btn-primary" text="Página Seguinte">
                               <graphic>
                                  <ImageView fitHeight="24.0" fitWidth="14.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
@@ -163,7 +173,7 @@
                               </graphic>
                            </JFXButton>
                            <Region prefHeight="39.0" prefWidth="36.0" HBox.hgrow="ALWAYS" />
-                           <JFXButton fx:id="btnProxima1" contentDisplay="RIGHT" styleClass="btn-primary" text="Ultima Página">
+                           <JFXButton fx:id="btnProxima1" contentDisplay="RIGHT" onAction="#LastPag" styleClass="btn-primary" text="Ultima Página">
                               <graphic>
                                  <ImageView fitHeight="17.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true" translateX="5.0">
                                     <image>
@@ -178,6 +188,13 @@
                   </children>
                </VBox>
             </bottom>
+            <left>
+               <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
+                  <content>
+                     <VBox prefHeight="759.0" prefWidth="184.0" />
+                  </content>
+               </ScrollPane>
+            </left>
          </BorderPane>
       </children>
    </StackPane>
@@ -192,7 +209,4 @@
       <URL value="@../../../../../styles/candidato-layout.css" />
       <URL value="@../../../../../styles/biblioteca.css" />
    </stylesheets>
-   <padding>
-      <Insets bottom="20.0" left="20.0" right="20.0" top="40.0" />
-   </padding>
 </StackPane>

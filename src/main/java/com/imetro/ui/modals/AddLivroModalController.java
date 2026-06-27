@@ -92,15 +92,11 @@ public class AddLivroModalController extends ModalController{
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
 
         List<File> files = chooser.showOpenMultipleDialog(window);
-        if (files == null || files.isEmpty()) {
-            return;
-        }
+        if (files == null || files.isEmpty()) return;
 
         LinkedHashMap<String, Path> unicos = new LinkedHashMap<>();
         for (File file : files) {
-            if (file == null) {
-                continue;
-            }
+            if (file == null) continue;
             Path path = file.toPath().toAbsolutePath().normalize();
             unicos.put(path.toString(), path);
         }
@@ -113,7 +109,6 @@ public class AddLivroModalController extends ModalController{
             "info"
         );
     }
-
     @FXML
     private void limparSelecao() {
         arquivosSelecionados.clear();
@@ -253,20 +248,13 @@ public class AddLivroModalController extends ModalController{
 
     private void atualizarEstadoAcoes() {
         boolean disciplinaSelecionada = disciplinaCombo.getValue() != null;
-        boolean running = bootstrapAsyncService.runningProperty().get();
+       // boolean running = bootstrapAsyncService.runningProperty().get();
+       
         boolean temSelecao = !arquivosSelecionados.isEmpty();
 
-        selecionarArquivosButton.setDisable(!disciplinaSelecionada || running);
-        limparSelecaoButton.setDisable(!temSelecao || running);
-        lancarButton.setDisable(!disciplinaSelecionada || (!temSelecao) || running);
-
-        if (running) {
-            launchHintLabel.setText("Existe um processamento ativo. Podes acompanhar a barra de progresso no topo.");
-        } else if (temSelecao) {
-            launchHintLabel.setText("Ao atualizar, os PDFs selecionados entram na biblioteca e a geracao arranca.");
-        } else {
-            launchHintLabel.setText("A biblioteca ainda esta vazia. Seleciona pelo menos um PDF para comecar.");
-        }
+        selecionarArquivosButton.setDisable(!disciplinaSelecionada);
+        limparSelecaoButton.setDisable(!temSelecao);
+        lancarButton.setDisable(!disciplinaSelecionada || (!temSelecao) );
     }
 
     private void aplicarFeedback(String mensagem, String tipo) {

@@ -3,14 +3,9 @@ package com.imetro.ui.components.testes;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import com.imetro.domain.dto.test.TrilhoDTO;
-import com.imetro.domain.enums.TrilhoStatus;
-
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 
 public class TrilhoCard extends VBox {

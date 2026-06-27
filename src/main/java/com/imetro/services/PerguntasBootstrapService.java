@@ -9,7 +9,6 @@ import com.imetro.domain.dto.perguntas.GeracaoLoteResultado;
 import com.imetro.domain.dto.perguntas.GeracaoQuestoesEmLotes;
 import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.enums.BootstrapStatus;
-import com.imetro.domain.enums.TopicoExame;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.util.AppLogger;
 import com.imetro.util.QuestaoUtil;
@@ -25,7 +24,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -44,7 +42,7 @@ public class PerguntasBootstrapService {
     private static final int TOTAL_NIVEIS_PADRAO = 4;
     private static final int QUESTOES_POR_SUBTOPICO = QUESTOES_POR_NIVEL_E_SUBTOPICO * TOTAL_NIVEIS_PADRAO;
     private static final int DEFAULT_QUESTOES_INICIAIS = QUESTOES_POR_SUBTOPICO * 2;
-    private static final int MAX_GROQ_WORKERS = 1;
+    private static final int MAX_GEMINI_WORKERS = 2;
     private static final int MAX_LOTES_POR_DISCIPLINA = 8;
     private static final int MIN_SUBTOPICOS_POR_LOTE = 4;
     private static final String GENERATED_QUESTIONS_FILE = "questoes-geradas.json";
@@ -53,11 +51,11 @@ public class PerguntasBootstrapService {
     private static final Pattern JSON_STRING_PATTERN = Pattern.compile("\"((?:\\\\.|[^\"\\\\])*)\"");
     private static final Logger LOGGER = AppLogger.getLogger(PerguntasBootstrapService.class);
 
-    private final GroqService groqService;
+    private final GeminiService geminiService;
     private final DisciplinaUploadBootstrapService uploadBootstrapService;
 
     public PerguntasBootstrapService() {
-        this.groqService = new GroqService();
+        this.geminiService = new GeminiService();
         this.uploadBootstrapService = new DisciplinaUploadBootstrapService();
     }
 
@@ -313,50 +311,43 @@ public class PerguntasBootstrapService {
                 );
             }
 
+            if (!geminiService.isConfigured()) {
+                LOGGER.warning("Gemini nao configurado ao processar a disciplina " + disciplina.nome() + ".");
+                return new BootstrapResult(
+                    disciplina.id(),
+                    disciplina.nome(),
+                    BootstrapStatus.GEMINI_NAO_CONFIGURADO,
+                    pdfs.size(),
+                    0,
+                    "Define GEMINI_API_KEY para gerar perguntas e topicos reais a partir dos livros."
+                );
+            }
+
             emitirProgresso(
                 progressListener,
                 calcularProgresso(indiceDisciplina, totalDisciplinas, 0.48),
                 true,
-                "A preparar o material de " + disciplina.nome(),
-                "O conteúdo está a ser organizado para gerar perguntas. Esta etapa pode demorar alguns minutos."
+                "A extrair topicos de " + disciplina.nome(),
+                "O Gemini esta a resumir os topicos principais dos livros. Esta etapa pode demorar alguns minutos."
             );
 
             DisciplinaUploadBootstrapService.DisciplinaTopicosBootstrapResult topicosResult =
                 uploadBootstrapService.processarCargaInicial(disciplina.id(), sobrescreverTopicos);
             LOGGER.info(
-                "Conteudo preparado para a disciplina " + disciplina.nome()
+                "Topicos extraidos para a disciplina " + disciplina.nome()
+                    + ". Arquivo: " + topicosResult.arquivoTopicos()
             );
-
-            if (!groqService.isConfigured()) {
-                LOGGER.warning("Groq nao configurado ao gerar perguntas para a disciplina " + disciplina.nome() + ".");
-                emitirProgresso(
-                    progressListener,
-                    calcularProgresso(indiceDisciplina, totalDisciplinas, 0.66),
-                    false,
-                    "Material preparado",
-                    "O conteúdo foi preparado, mas falta a chave do Groq para gerar as perguntas."
-                );
-                return new BootstrapResult(
-                    disciplina.id(),
-                    disciplina.nome(),
-                    BootstrapStatus.GROQ_NAO_CONFIGURADO,
-                    pdfs.size(),
-                    contarPerguntasPorDisciplina(disciplina.nome()),
-                    topicosResult.detalhe()
-                        + " Falta a chave do Groq para gerar as perguntas reais a partir dos livros."
-                );
-            }
 
             emitirProgresso(
                 progressListener,
                 calcularProgresso(indiceDisciplina, totalDisciplinas, 0.72),
                 true,
                 "A gerar perguntas de " + disciplina.nome(),
-                "O material preparado está a ser convertido em perguntas iniciais. Esta etapa pode demorar alguns minutos."
+                "Os topicos extraidos estao a ser convertidos em questoes iniciais. Esta etapa pode demorar alguns minutos."
             );
 
             String jsonTopicos = Files.readString(topicosResult.arquivoTopicos(), StandardCharsets.UTF_8);
-            int totalSubtopicos = contarSubtopicos(jsonTopicos, disciplina);
+            int totalSubtopicos = contarSubtopicos(jsonTopicos);
             int quantidadeInicial = calcularQuantidadeInicial(totalSubtopicos);
             GeracaoQuestoesEmLotes geracao = gerarQuestoesEmLotes(
                 disciplina,
@@ -379,7 +370,7 @@ public class PerguntasBootstrapService {
                 StandardOpenOption.TRUNCATE_EXISTING,
                 StandardOpenOption.WRITE
             );
-            LOGGER.info("Questoes geradas para a disciplina " + disciplina.nome() + ".");
+            LOGGER.info("Questoes geradas em JSON para a disciplina " + disciplina.nome() + ": " + arquivoQuestoes);
 
             emitirProgresso(
                 progressListener,
@@ -469,12 +460,12 @@ public class PerguntasBootstrapService {
         int indiceDisciplina,
         int totalDisciplinas
     ) throws InterruptedException, IOException {
-        List<GeracaoLote> lotes = construirLotesGeracao(disciplina, jsonTopicos, quantidadeInicial);
+        List<GeracaoLote> lotes = construirLotesGeracao(jsonTopicos, quantidadeInicial);
         if (lotes.isEmpty()) {
             throw new IOException("Nao foi possivel montar lotes de geracao para a disciplina " + disciplina.nome() + ".");
         }
 
-        ExecutorService executor = criarExecutorLotesGroq();
+        ExecutorService executor = criarExecutorLotesGemini();
         ExecutorCompletionService<GeracaoLoteResultado> completionService = new ExecutorCompletionService<>(executor);
         ArrayList<String> jsonLotesComSucesso = new ArrayList<>();
         int concluidos = 0;
@@ -493,72 +484,33 @@ public class PerguntasBootstrapService {
                 concluidos++;
 
                 if (resultado.sucesso()) {
-                    String jsonQuestoes = resultado.jsonQuestoes();
+                    jsonLotesComSucesso.add(resultado.jsonQuestoes());
+                    sucessos++;
+
                     int inseridasLote = 0;
-                    Exception ultimaFalhaInsercao = null;
-
                     try {
-                        inseridasLote = inserirPerguntasGeradas(disciplina, pdfs, jsonQuestoes);
-                    } catch (Exception e) {
-                        ultimaFalhaInsercao = e;
-                    }
-
-                    if (inseridasLote <= 0 && ultimaFalhaInsercao != null && isJsonInvalido(ultimaFalhaInsercao)) {
-                        LOGGER.warning(
-                            "JSON invalido ao inserir o lote "
-                                + resultado.lote().indice()
-                                + "/"
-                                + resultado.lote().totalLotes()
-                                + " para "
-                                + disciplina.nome()
-                                + ". A tentar regenerar uma vez."
-                        );
-
-                        GeracaoLoteResultado tentativaExtra = executarGeracaoLote(
-                            disciplina,
-                            pdfs,
-                            jsonTopicos,
-                            resultado.lote(),
-                            totalSubtopicos
-                        );
-
-                        if (tentativaExtra.sucesso()) {
-                            jsonQuestoes = tentativaExtra.jsonQuestoes();
-                            ultimaFalhaInsercao = null;
-                            try {
-                                inseridasLote = inserirPerguntasGeradas(disciplina, pdfs, jsonQuestoes);
-                            } catch (Exception e) {
-                                ultimaFalhaInsercao = e;
-                            }
-                        } else {
-                            ultimaFalhaInsercao = new IllegalStateException(tentativaExtra.erro());
-                        }
-                    }
-
-                    if (inseridasLote > 0) {
-                        jsonLotesComSucesso.add(jsonQuestoes);
-                        sucessos++;
+                        inseridasLote = inserirPerguntasGeradas(disciplina, pdfs, resultado.jsonQuestoes());
                         perguntasInseridas += inseridasLote;
-                        LOGGER.info(
-                            "Lote " + resultado.lote().indice() + "/" + resultado.lote().totalLotes()
-                                + " concluido para " + disciplina.nome() + " com "
-                                + inseridasLote
-                                + " perguntas inseridas."
-                        );
-                    } else {
-                        falhas++;
+                    } catch (Exception e) {
                         LOGGER.log(
                             Level.WARNING,
-                            "Falha ao inserir as perguntas do lote "
+                            "Falha ao inserir imediatamente as perguntas do lote "
                                 + resultado.lote().indice()
                                 + "/"
                                 + resultado.lote().totalLotes()
                                 + " para "
                                 + disciplina.nome()
                                 + ".",
-                            ultimaFalhaInsercao
+                            e
                         );
                     }
+
+                    LOGGER.info(
+                        "Lote " + resultado.lote().indice() + "/" + resultado.lote().totalLotes()
+                            + " concluido para " + disciplina.nome() + " com "
+                            + inseridasLote
+                            + " perguntas inseridas."
+                    );
                 } else {
                     falhas++;
                     LOGGER.warning(
@@ -582,7 +534,7 @@ public class PerguntasBootstrapService {
 
         if (jsonLotesComSucesso.isEmpty()) {
             throw new IOException(
-                "O Groq nao conseguiu devolver nenhum lote de perguntas aproveitavel para " + disciplina.nome() + "."
+                "O Gemini nao conseguiu devolver nenhum lote de perguntas aproveitavel para " + disciplina.nome() + "."
             );
         }
 
@@ -608,14 +560,14 @@ public class PerguntasBootstrapService {
         }
     }
 
-    private ExecutorService criarExecutorLotesGroq() {
+    private ExecutorService criarExecutorLotesGemini() {
         AtomicInteger contador = new AtomicInteger(1);
-        return Executors.newFixedThreadPool(MAX_GROQ_WORKERS, runnable -> {
+        return Executors.newFixedThreadPool(MAX_GEMINI_WORKERS, runnable -> {
             Thread thread = new Thread(runnable);
-            thread.setName("imetro-groq-lote-" + contador.getAndIncrement());
+            thread.setName("imetro-gemini-lote-" + contador.getAndIncrement());
             thread.setDaemon(true);
             thread.setUncaughtExceptionHandler((worker, throwable) ->
-                LOGGER.log(Level.SEVERE, "Excecao nao tratada num worker de lotes do Groq.", throwable)
+                LOGGER.log(Level.SEVERE, "Excecao nao tratada num worker de lotes do Gemini.", throwable)
             );
             return thread;
         });
@@ -633,8 +585,8 @@ public class PerguntasBootstrapService {
                 throw new InterruptedException("Lote interrompido antes de iniciar.");
             }
 
-            String jsonQuestoes = groqService.gerarSimuladoJsonAPartirDeTopicosEmLote(
-                jsonTopicos,
+            String jsonQuestoes = geminiService.gerarSimuladoJson(
+                pdfs,
                 new GeracaoSimuladoRequest(
                     disciplina.nome(),
                     "pt-AO",
@@ -642,13 +594,14 @@ public class PerguntasBootstrapService {
                     "MISTO",
                     construirInstrucaoBaseInicial(totalSubtopicos, lote.quantidadeQuestoes())
                         + construirInstrucaoCatalogoLivros(pdfs)
+                        + construirInstrucaoTopicosValidados(jsonTopicos)
                         + construirInstrucaoFocoDoLote(lote)
                 )
             );
             return new GeracaoLoteResultado(lote, jsonQuestoes, null);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new GeracaoLoteResultado(lote, null, "Lote interrompido antes de concluir a chamada ao Groq.");
+            return new GeracaoLoteResultado(lote, null, "Lote interrompido antes de concluir a chamada ao Gemini.");
         } catch (Exception e) {
             return new GeracaoLoteResultado(
                 lote,
@@ -660,8 +613,8 @@ public class PerguntasBootstrapService {
         }
     }
 
-    private List<GeracaoLote> construirLotesGeracao(DisciplinaDto disciplina, String jsonTopicos, int quantidadeInicial) {
-        ArrayList<TopicoSubtopico> focos = extrairTopicosSubtopicos(jsonTopicos, disciplina);
+    private List<GeracaoLote> construirLotesGeracao(String jsonTopicos, int quantidadeInicial) {
+        ArrayList<TopicoSubtopico> focos = extrairTopicosSubtopicos(jsonTopicos);
         if (focos.isEmpty()) {
             return List.of(new GeracaoLote(1, 1, List.of(), quantidadeInicial));
         }
@@ -707,7 +660,8 @@ public class PerguntasBootstrapService {
         if (totalFocos <= 0) {
             return 0;
         }
-        return 1;
+        int sugerido = (int) Math.ceil((double) totalFocos / MAX_LOTES_POR_DISCIPLINA);
+        return Math.max(1, Math.min(totalFocos, Math.max(MIN_SUBTOPICOS_POR_LOTE, sugerido)));
     }
 
     private ArrayList<List<TopicoSubtopico>> particionarSubtopicos(
@@ -727,15 +681,11 @@ public class PerguntasBootstrapService {
         return grupos;
     }
 
-    private ArrayList<TopicoSubtopico> extrairTopicosSubtopicos(String jsonTopicos, DisciplinaDto disciplina) {
+    private ArrayList<TopicoSubtopico> extrairTopicosSubtopicos(String jsonTopicos) {
         String topicosArray = extrairCampoArrayJson(jsonTopicos, "topicos");
         if (topicosArray == null || topicosArray.isBlank()) {
             return new ArrayList<>();
         }
-
-        TopicoExame.Disciplina disciplinaEnum = disciplina == null
-            ? null
-            : TopicoExame.resolverDisciplina(disciplina.nome()).orElse(null);
 
         LinkedHashSet<String> chaves = new LinkedHashSet<>();
         ArrayList<TopicoSubtopico> pares = new ArrayList<>();
@@ -747,10 +697,7 @@ public class PerguntasBootstrapService {
             }
 
             for (String subtopico : subtopicos) {
-                String nomeTopico = resolverTopicoCanonico(disciplinaEnum, topico);
-                if (nomeTopico == null) {
-                    continue;
-                }
+                String nomeTopico = topico == null || topico.isBlank() ? "Geral" : topico.trim();
                 String nomeSubtopico = subtopico == null || subtopico.isBlank() ? null : subtopico.trim();
                 if (nomeSubtopico == null) {
                     continue;
@@ -765,18 +712,6 @@ public class PerguntasBootstrapService {
         }
 
         return pares;
-    }
-
-    private String resolverTopicoCanonico(TopicoExame.Disciplina disciplina, String valor) {
-        if (disciplina == null || valor == null || valor.isBlank()) {
-            return null;
-        }
-
-        return TopicoExame.resolverTopicoModoInteligente(disciplina, valor)
-            .map(TopicoExame::getLabel)
-            .orElseGet(() -> disciplina == TopicoExame.Disciplina.FISICA
-                ? null
-                : QuestaoUtil.safeText(valor, null));
     }
 
     private String extrairCampoStringJson(String json, String campo) {
@@ -912,8 +847,15 @@ public class PerguntasBootstrapService {
         instrucao.append('\n');
         instrucao.append("Este e o lote ").append(lote.indice()).append(" de ").append(lote.totalLotes()).append(".\n");
         instrucao.append("Gera aproximadamente ").append(lote.quantidadeQuestoes()).append(" questoes.\n");
-        instrucao.append("Gera aproximadamente ").append(lote.quantidadeQuestoes()).append(" questoes no total.\n");
-        instrucao.append("Distribui as questoes pelos focos abaixo sem ultrapassar o total pedido.\n");
+        instrucao.append("Para cada subtopico listado abaixo, segue o mesmo padrao: ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" FACIL, ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" MEDIO, ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" DESAFIANTE e ")
+            .append(QUESTOES_POR_NIVEL_E_SUBTOPICO)
+            .append(" EXTRA.\n");
         instrucao.append("Foca o lote apenas nestes pares topico/subtopico:\n");
         for (TopicoSubtopico foco : lote.focos()) {
             instrucao.append("- ").append(foco.topico()).append(" -> ").append(foco.subtopico()).append('\n');
@@ -930,7 +872,7 @@ public class PerguntasBootstrapService {
         if (falhas > 0) {
             detalhe.append(" Falhas toleradas: ").append(falhas).append('.');
         }
-        detalhe.append(" No maximo ").append(MAX_GROQ_WORKERS).append(" chamadas ao Groq em paralelo.");
+        detalhe.append(" No maximo ").append(MAX_GEMINI_WORKERS).append(" chamadas ao Gemini em paralelo.");
         return detalhe.toString();
     }
 
@@ -962,7 +904,7 @@ public class PerguntasBootstrapService {
 
         String fonteResumo = lotesFalha > 0
             ? "Base inicial gerada em " + lotesSucesso + " lotes com " + lotesFalha + " falhas toleradas."
-            : "Base inicial gerada em " + lotesSucesso + " lotes com ate " + MAX_GROQ_WORKERS + " workers.";
+            : "Base inicial gerada em " + lotesSucesso + " lotes com ate " + MAX_GEMINI_WORKERS + " workers.";
 
         return new StringBuilder()
             .append("{\"titulo\":\"Base inicial de estudo - ").append(QuestaoUtil.escapeJson(disciplina.nome())).append("\",")
@@ -979,7 +921,7 @@ public class PerguntasBootstrapService {
         }
         if (geracao.lotesFalha() <= 0) {
             return "A geracao foi repartida em " + geracao.totalLotes()
-                + " lotes com no maximo " + MAX_GROQ_WORKERS + " chamadas paralelas e inseriu "
+                + " lotes com no maximo " + MAX_GEMINI_WORKERS + " chamadas paralelas e inseriu "
                 + geracao.perguntasInseridas() + " perguntas reais.";
         }
         return "A geracao foi repartida em " + geracao.totalLotes()
@@ -1300,28 +1242,20 @@ public class PerguntasBootstrapService {
         }
     }
 
-    private int contarSubtopicos(String jsonTopicos, DisciplinaDto disciplina) {
+    private int contarSubtopicos(String jsonTopicos) {
         if (jsonTopicos == null || jsonTopicos.isBlank()) {
             return 0;
         }
 
-        return extrairTopicosSubtopicos(jsonTopicos, disciplina).size();
-    }
-
-    private boolean isJsonInvalido(Throwable throwable) {
-        Throwable atual = throwable;
-        while (atual != null) {
-            String mensagem = atual.getMessage();
-            if (mensagem != null) {
-                String normalizada = mensagem.toLowerCase(Locale.ROOT);
-                if (normalizada.contains("invalid input syntax for type json")
-                    || normalizada.contains("invalid input syntax for type jsonb")) {
-                    return true;
-                }
+        int total = 0;
+        Matcher arrays = SUBTOPICOS_ARRAY_PATTERN.matcher(jsonTopicos);
+        while (arrays.find()) {
+            Matcher strings = JSON_STRING_PATTERN.matcher(arrays.group(1));
+            while (strings.find()) {
+                total++;
             }
-            atual = atual.getCause();
         }
-        return false;
+        return total;
     }
 
     private int calcularQuantidadeInicial(int totalSubtopicos) {
@@ -1375,22 +1309,16 @@ public class PerguntasBootstrapService {
         return instrucao.toString();
     }
 
-    private String construirInstrucaoTopicosValidados(String jsonTopicos, DisciplinaDto disciplina) {
+    private String construirInstrucaoTopicosValidados(String jsonTopicos) {
         if (jsonTopicos == null || jsonTopicos.isBlank()) {
             return "";
         }
 
-        TopicoExame.Disciplina disciplinaEnum = disciplina == null
-            ? null
-            : TopicoExame.resolverDisciplina(disciplina.nome()).orElse(null);
-
-        String instrucoesCanonicas = TopicoExame.instrucoesModoInteligente(disciplinaEnum);
         return """
 
             JSON_BASE_DE_TOPICOS_VALIDADA:
             """
             + jsonTopicos
-            + (instrucoesCanonicas.isBlank() ? "" : "\n" + instrucoesCanonicas + "\n")
             + "\nUsa este JSON apenas como guia de foco e nao saias destes topicos/subtopicos.\n";
     }
 

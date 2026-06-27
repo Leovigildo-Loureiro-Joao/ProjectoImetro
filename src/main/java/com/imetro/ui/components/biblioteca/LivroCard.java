@@ -62,15 +62,14 @@ public class LivroCard extends VBox {
         //-------------------------
 
         HBox disciplinaBox = criarInfo(
-                "ri-book-open-line",
+                "fas-book-open",
                 disciplina
         );
 
         HBox paginasBox = criarInfo(
-                "ri-file-list-3-line",
+                "fas-file-alt",
                 paginas + " páginas"
         );
-
 
         //-------------------------
         // PROGRESSO

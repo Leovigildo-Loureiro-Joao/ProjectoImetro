@@ -39,9 +39,6 @@ import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.enums.Foco;
 import com.imetro.persistence.repository.PlaneamentoEstudoRepository;
 import com.imetro.persistence.repository.TesteRepository;
-import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
-import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator;
-import com.imetro.ui.modals.FluxoModalContext;
 import com.imetro.util.Authentication;
 import com.imetro.util.ParseTimeStampLocalDate;
 import com.imetro.util.QuestaoUtil;
@@ -353,7 +350,15 @@ PlaneamentoEstudoDisciplina secundario =
         disciplinas.size() > 1
                 ? disciplinas.get(1)
                 : principal;
-
+if(principal.foco()!=null&& principal.foco().topico()==null){
+     return  List.of(  new PlaneamentoEstudoEtapa(
+            "Agora",
+            "Missão principal",
+            "Realizar o primeiro diagnostico "
+                    + ". O objetivo é ver qual é o teu nivel actual nos subtopicos selecionados."
+    )
+    ); 
+}
 return List.of(
 
     new PlaneamentoEstudoEtapa(
@@ -691,7 +696,7 @@ return List.of(
     private String construirResumoHero(List<PlaneamentoEstudoDisciplina> disciplinas, double heroScore) {
 
         PlaneamentoEstudoDisciplina principal = disciplinas.getFirst();
-
+        CacheService.put("disciplina_principal", principal.disciplina());
         String impacto = calcularImpacto(principal.prioridade());
 
         if (heroScore >= 80) {
@@ -737,8 +742,8 @@ return List.of(
     }
 
     private String montarFocoPrincipal(PlaneamentoEstudoDisciplina foco) {
-        if (foco == null || foco.foco() == null) {
-            return "—";
+        if (foco == null || (foco.foco() == null&&foco.foco().topico() == null)) {
+            return "-"; 
         }
 
         Foco focoObj = foco.foco();
@@ -1150,6 +1155,9 @@ return List.of(
                         return new Foco(topico, subtopicoPrincipal);
                     }
                 }
+            }
+            if (CacheService.get("disciplina_principal")!=null) {
+                return new Foco(null, CacheService.get("disciplina_principal").toString());
             }
             return null;
         }

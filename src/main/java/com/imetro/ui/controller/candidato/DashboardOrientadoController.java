@@ -23,10 +23,15 @@ import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaDia;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoDisciplina;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEtapa;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoInsight;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoPonto;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoRegistro;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.dto.stats.Stats;
+import com.imetro.domain.enums.Foco;
 import com.imetro.domain.model.Candidato;
 import com.imetro.persistence.repository.MedalhaRepository;
 import com.imetro.services.CandidatoService;
@@ -174,7 +179,46 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void renderFallback() {
-        planeamentoResumo = new PlaneamentoEstudoResumo();
+        planeamentoResumo =  new PlaneamentoEstudoResumo(
+            0,
+            "O sistema ainda nao tem base suficiente para um plano personalizado completo, mas já deixa a rotina organizada com blocos curtos e revisão espaçada.",
+            "0",
+            "0 s",
+            "Sem dados para medir",
+            "Realizar um diagnostico",
+            "Sem foco secundario",
+            "",
+            "",
+            List.of(
+                new PlaneamentoEstudoInsight("Primeiro passo", "Começa com blocos curtos e foco numa unica area para reduzir dispersao."),
+                new PlaneamentoEstudoInsight("Regra de ritmo", "Divide o estudo em ciclos curtos, correcao imediata e uma revisao 24h depois."),
+                new PlaneamentoEstudoInsight("Confirmacao final", "Fecha a semana com um teste curto para medir o que realmente ficou.")
+            ),
+            List.of(
+                new PlaneamentoEstudoEtapa("Hoje", "Bloco curto", "25 min em Álgebra, 10 min de revisão e uma pausa curta."),
+                new PlaneamentoEstudoEtapa("Amanhã", "Bloco leve", "Reforça Fisica com problemas simples e correção imediata."),
+                new PlaneamentoEstudoEtapa("48h", "Treino misto", "Mistura Matematica e Fisica para consolidar sem cansar."),
+                new PlaneamentoEstudoEtapa("Fim da semana", "Teste curto", "Valida a evolução com um diagnóstico pequeno e objetivo.")
+            ),
+            List.of(
+                new PlaneamentoEstudoRegistro("Teste adaptativo", "Matemática", "84% de acerto, consistência alta e ritmo estável.", "Há 2 dias", "pill-good"),
+                new PlaneamentoEstudoRegistro("Diagnóstico", "Física", "Base boa, mas o tempo ainda precisa de ajuste.", "Há 5 dias", "pill-warn"),
+                new PlaneamentoEstudoRegistro("Teste adaptativo", "Português", "Leitura firme e menos erros sob pressão.", "Há 8 dias", "pill-good")
+            ),
+            List.of(
+                new PlaneamentoEstudoDisciplina("Matemática", 0, 0, 0, 0, 0, new Foco(null,null), "Otima iniciativa! desenvolva sua base", 14d),
+                new PlaneamentoEstudoDisciplina("Física", 0, 0, 0, 0, 0, new Foco(null,null), "Otima decisao para melhor desempenho!", 29d)
+            ),
+            List.of(
+                new PlaneamentoEstudoPonto("Sem 1", 56d),
+                new PlaneamentoEstudoPonto("Sem 2", 61d),
+                new PlaneamentoEstudoPonto("Sem 3", 68d),
+                new PlaneamentoEstudoPonto("Sem 4", 66d),
+                new PlaneamentoEstudoPonto("Sem 5", 74d),
+                new PlaneamentoEstudoPonto("Sem 6", 81d)
+            )
+        );
+        
         dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
         renderDashboard();
     }

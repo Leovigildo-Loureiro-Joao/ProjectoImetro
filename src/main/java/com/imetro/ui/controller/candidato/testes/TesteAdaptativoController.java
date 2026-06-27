@@ -340,10 +340,10 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
             List<String> fromService = DisciplinaService.DisciplinaCandidato();
             if (fromService != null && !fromService.isEmpty()) {
                 disciplinas.addAll(fromService);
-                System.out.println("✅ Disciplinas carregadas de DisciplinaCandidato: " + disciplinas.size());
+                System.out.println("Disciplinas carregadas de DisciplinaCandidato: " + disciplinas.size());
             }
         } catch (Exception e) {
-            System.err.println("❌ Erro em DisciplinaCandidato: " + e.getMessage());
+            System.err.println("Erro em DisciplinaCandidato: " + e.getMessage());
         }
 
         if (disciplinas.isEmpty()) {
@@ -354,19 +354,19 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                         .map(disciplina -> disciplina.disciplina())
                         .filter(nome -> nome != null && !nome.isBlank())
                         .forEach(disciplinas::add);
-                    System.out.println("✅ Disciplinas carregadas de getProgressoDisciplinasCandidato: " + disciplinas.size());
+                    System.out.println("Disciplinas carregadas de getProgressoDisciplinasCandidato: " + disciplinas.size());
                 }
             } catch (SQLException e) {
-                System.err.println("❌ Erro em getProgressoDisciplinasCandidato: " + e.getMessage());
+                System.err.println("Erro em getProgressoDisciplinasCandidato: " + e.getMessage());
             }
         }
 
         if (disciplinas.isEmpty()) {
-            System.out.println("⚠️ Nenhuma disciplina encontrada, usando fallback");
+            System.out.println("Nenhuma disciplina encontrada, usando fallback");
             disciplinas.addAll(List.of("Matemática", "Português", "Física", "Química"));
         }
 
-        System.out.println("📚 Disciplinas finais para trilho: " + disciplinas);
+        System.out.println("Disciplinas finais para trilho: " + disciplinas);
         return new ArrayList<>(disciplinas);
     }
 

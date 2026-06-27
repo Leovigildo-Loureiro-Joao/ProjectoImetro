@@ -42,8 +42,9 @@ public class BibliotecaLivroService {
     }
 
     public List<BibliotecaLivroDto> sincronizarArquivos(UUID disciplinaId, List<Path> arquivosOrigem)
-        throws IOException {
-        if (arquivosOrigem == null || arquivosOrigem.isEmpty()) {
+        {
+      try {
+          if (arquivosOrigem == null || arquivosOrigem.isEmpty()) {
             return List.of();
         }
 
@@ -52,6 +53,10 @@ public class BibliotecaLivroService {
             livros.add(sincronizarArquivo(disciplinaId, arquivo));
         }
         return List.copyOf(livros);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      return List.of();
     }
 
     public BibliotecaLivroDto sincronizarArquivo(UUID disciplinaId, Path arquivoPdf) throws IOException {
@@ -204,12 +209,30 @@ public class BibliotecaLivroService {
             for (int pagina = 1; pagina <= totalPaginas; pagina++) {
                 stripper.setStartPage(pagina);
                 stripper.setEndPage(pagina);
-                String texto = stripper.getText(document);
-                texto = texto == null ? "" : texto.strip();
+                String texto = sanitizarTextoPdf(stripper.getText(document));
+                if (texto == null) {
+                    texto = "";
+                }
+
+                // 🚨 REMOVE NULL BYTES E CARACTERES INVÁLIDOS
+                texto = texto
+                    .replace("\u0000", "")                // CRÍTICO
+                    .replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "") // controla chars perigosos
+                    .strip();
                 paginas.add(new BibliotecaLivroPaginaDto(null, null, pagina, texto, null));
             }
         }
         return List.copyOf(paginas);
+    }
+
+    private String sanitizarTextoPdf(String texto) {
+        if (texto == null) return "";
+
+        return texto
+            .replace("\u0000", "")
+            .replaceAll("[\\p{Cc}&&[^\r\n\t]]", "")
+            .replaceAll("\\s{3,}", " ")
+            .trim();
     }
 
     private String derivarTitulo(String nomeArquivo) {

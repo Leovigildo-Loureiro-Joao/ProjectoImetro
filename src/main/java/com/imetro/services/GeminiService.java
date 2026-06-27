@@ -1,7 +1,6 @@
 package com.imetro.services;
 
 import com.imetro.config.Env;
-import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
 import com.imetro.domain.dto.gemini.GeracaoSimuladoRequest;
 import com.imetro.domain.dto.gemini.ParsedJsonString;
@@ -52,7 +51,6 @@ public class GeminiService {
     private final String defaultModel;
 
     public GeminiService() {
-
         this(
             HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
@@ -71,7 +69,7 @@ public class GeminiService {
     }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank() && !RuntimeConfig.isBlockedIA();
+        return apiKey != null && !apiKey.isBlank();
     }
 
     public String getDefaultModel() {
@@ -173,7 +171,6 @@ public class GeminiService {
 
     public String extrairTopicosJson(List<Path> pdfPaths, ExtracaoTopicosRequest request)
         throws IOException, InterruptedException {
-
         ExtracaoTopicosRequest requestFinal = request == null ? ExtracaoTopicosRequest.padrao() : request;
         LOGGER.info(
             "A extrair topicos com o Gemini para a disciplina " + requestFinal.disciplina()
@@ -388,16 +385,13 @@ public class GeminiService {
         for (String documentPart : documentParts) {
             body.append(",").append(documentPart);
         }
+
         body.append("]}],\"generationConfig\":{");
         body.append("\"temperature\":0.2,");
+        body.append("\"responseMimeType\":\"").append(escapeJson(responseMimeType)).append("\"");
+
         if (responseJsonSchema != null && !responseJsonSchema.isBlank()) {
-            body.append("\"responseFormat\":{");
-            body.append("\"text\":{");
-            body.append("\"mimeType\":\"").append(escapeJson(responseMimeType)).append("\",");
-            body.append("\"schema\":").append(responseJsonSchema);
-            body.append("}}");
-        } else {
-            body.append("\"responseMimeType\":\"").append(escapeJson(responseMimeType)).append("\"");
+            body.append(",\"responseJsonSchema\":").append(responseJsonSchema);
         }
 
         body.append("}}");
