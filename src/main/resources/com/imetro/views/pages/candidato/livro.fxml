@@ -50,7 +50,7 @@
                <JFXComboBox fx:id="disciplinaCombo" prefHeight="35.0" prefWidth="173.0" promptText="Todas as disiciplinas" />
                <HBox spacing="10.0">
                   <children>
-                     <TextField prefHeight="37.0" prefWidth="250.0" promptText="Procurar Livro" />
+                     <TextField fx:id="search" prefHeight="37.0" prefWidth="250.0" promptText="Procurar Livro" />
                      <JFXButton contentDisplay="GRAPHIC_ONLY" prefHeight="35.0" prefWidth="18.0" styleClass="btn-secondary">
                         <graphic>
                            <ImageView fitHeight="16.0" fitWidth="14.0" pickOnBounds="true" preserveRatio="true">
