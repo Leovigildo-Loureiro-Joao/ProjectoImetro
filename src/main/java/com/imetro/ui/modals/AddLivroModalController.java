@@ -147,7 +147,7 @@ public class AddLivroModalController extends ModalController{
             }
 
 
-          /*   boolean iniciado = bootstrapAsyncService.startDisciplina(candidatoId, disciplina.id(), true, true);
+             boolean iniciado = bootstrapAsyncService.startDisciplina(candidatoId, disciplina.id(), true, true);
             if (!iniciado) {
                 aplicarFeedback(
                     "Nao foi possivel iniciar agora porque ja existe outro processamento ativo no momento.",
@@ -163,7 +163,7 @@ public class AddLivroModalController extends ModalController{
                 prefixo + "A leitura dos livros e a geracao das perguntas ja estao a correr em segundo plano.",
                 "success"
             );
-            */
+            
         } catch (Exception e) {
             aplicarFeedback(
                 "Falha ao enviar ou processar os livros: " + firstNonBlank(e.getMessage(), "erro inesperado"),

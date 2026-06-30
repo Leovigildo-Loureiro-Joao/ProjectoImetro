@@ -1,6 +1,5 @@
 package com.imetro.services;
 
-import com.imetro.App;
 import com.imetro.domain.dto.perguntas.BootstrapResult;
 import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.util.AppLogger;
@@ -17,6 +16,8 @@ import javafx.concurrent.Task;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,6 +25,12 @@ public final class PerguntasBootstrapAsyncService {
 
     private static final PerguntasBootstrapAsyncService INSTANCE = new PerguntasBootstrapAsyncService();
     private static final Logger LOGGER = AppLogger.getLogger(PerguntasBootstrapAsyncService.class);
+    private static final ExecutorService BOOTSTRAP_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("imetro-bootstrap-executor");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private final PerguntasBootstrapService bootstrapService = new PerguntasBootstrapService();
     private final BooleanProperty running = new SimpleBooleanProperty(false);
@@ -117,7 +124,7 @@ public final class PerguntasBootstrapAsyncService {
         task.setOnFailed(event -> finishWithFailure(task.getException()));
         task.setOnCancelled(event -> finishCancelled());
 
-        App.getExecutorService().execute(task);
+        BOOTSTRAP_EXECUTOR.execute(task);
         return true;
     }
 
@@ -189,7 +196,7 @@ public final class PerguntasBootstrapAsyncService {
         task.setOnFailed(event -> finishWithFailure(task.getException()));
         task.setOnCancelled(event -> finishCancelled());
 
-        App.getExecutorService().execute(task);
+        BOOTSTRAP_EXECUTOR.execute(task);
         return true;
     }
 

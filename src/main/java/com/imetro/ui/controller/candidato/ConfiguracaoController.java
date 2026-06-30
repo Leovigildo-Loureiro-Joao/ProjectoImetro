@@ -135,16 +135,23 @@ public class ConfiguracaoController implements Initializable{
     @FXML
     private void Alterar(ActionEvent event) throws NumberFormatException, SQLException {
         JFXButton bt = (JFXButton) event.getSource();
-        boolean entrarModoEdicao = bt.getText().equals("Editar alterações");
-        bt.setText(entrarModoEdicao ? "Salvar alterações" : "Editar alterações");
-        DisableTog(!entrarModoEdicao);
-        configRepository.updateById(config.id(),new ConfiguracaoDto(config.id(), config.user_id(), Integer.parseInt(tempAdapt.getText()), varTempAdapt.getSelectionModel().getSelectedItem(), Integer.parseInt(speedTemp.getText()), varSpeedTemp.getSelectionModel().getSelectedItem(), Integer.parseInt(longTest.getText()), Integer.parseInt(normTest.getText()), Integer.parseInt(desafTest.getText()), "MEDIO", "DIAGNOSTICAS", Integer.parseInt(velociDiag.getText()),  Integer.parseInt(resiliDiag.getText()),  Integer.parseInt(precisDiag.getText()),  Integer.parseInt(logDiag.getText()),  Double.parseDouble(consisDiag.getText()), config.criado_em() , LocalDateTime.now()).toMapUpdate());
+        boolean modoEdicaoAtivo = bt.getText().equals("Salvar alterações");
 
+        if (modoEdicaoAtivo) {
+            // Salvar alterações
+            configRepository.updateById(config.id(),new ConfiguracaoDto(config.id(), config.user_id(), Integer.parseInt(tempAdapt.getText()), varTempAdapt.getSelectionModel().getSelectedItem(), Integer.parseInt(speedTemp.getText()), varSpeedTemp.getSelectionModel().getSelectedItem(), Integer.parseInt(longTest.getText()), Integer.parseInt(normTest.getText()), Integer.parseInt(desafTest.getText()), "MEDIO", "DIAGNOSTICAS", Integer.parseInt(velociDiag.getText()),  Integer.parseInt(resiliDiag.getText()),  Integer.parseInt(precisDiag.getText()),  Integer.parseInt(logDiag.getText()),  Double.parseDouble(consisDiag.getText()), config.criado_em() , LocalDateTime.now()).toMapUpdate());
+            bt.setText("Editar alterações");
+            DisableTog(true);
+        } else {
+            // Entrar em modo de edição
+            bt.setText("Salvar alterações");
+            DisableTog(false);
+        }
     }
 
     @FXML
     private void Reiniciar(ActionEvent event) throws NumberFormatException, SQLException {
-        configRepository.updateById(config.id(),new ConfiguracaoDto(config.id(), config.user_id(),20,"MINUTOS", 60, "SEGUNDOS", 10,7, 5, "MEDIO", "DIAGNOSTICAS", 120,  2,  3,  2, 70, config.criado_em() , LocalDateTime.now()).toMap());
+        configRepository.updateById(config.id(),new ConfiguracaoDto(config.id(), config.user_id(),20,"MINUTOS", 60, "SEGUNDOS", 10,7, 5, "MEDIO", "DIAGNOSTICAS", 120,  2,  3,  2, 70.0, config.criado_em() , LocalDateTime.now()).toMap());
         InitConfigs();
     }
 

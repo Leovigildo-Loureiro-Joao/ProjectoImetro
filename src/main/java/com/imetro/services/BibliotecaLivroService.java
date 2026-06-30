@@ -157,6 +157,28 @@ public class BibliotecaLivroService {
         }
     }
 
+    public Optional<BibliotecaLivroDto> encontrarLivroPorNome(UUID disciplinaId, String nomeLivro) throws IOException {
+        if (nomeLivro == null || nomeLivro.isBlank()) return Optional.empty();
+        try {
+            return repository.listarPorDisciplina(disciplinaId).stream()
+                .filter(l -> l.titulo() != null && l.titulo().toLowerCase().contains(nomeLivro.toLowerCase()))
+                .findFirst();
+        } catch (SQLException e) {
+            throw new IOException("Falha ao procurar livro por nome.", e);
+        }
+    }
+
+    public Optional<BibliotecaLivroDto> encontrarLivroPorNome(String nomeLivro) throws IOException {
+        if (nomeLivro == null || nomeLivro.isBlank()) return Optional.empty();
+        try {
+            return repository.listarTodos().stream()
+                .filter(l -> l.titulo() != null && l.titulo().toLowerCase().contains(nomeLivro.toLowerCase()))
+                .findFirst();
+        } catch (SQLException e) {
+            throw new IOException("Falha ao procurar livro por nome.", e);
+        }
+    }
+
     public List<BibliotecaLivroDto> listarLivros(UUID disciplinaId) throws IOException {
         try {
             return repository.listarPorDisciplina(disciplinaId);

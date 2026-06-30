@@ -161,7 +161,7 @@ public class DashboardOrientadoController implements Initializable {
             CompletableFuture.runAsync(() -> dashboardMelhoriaResumo = getMelhoriaCached(candidatoId))
         ).thenRunAsync(() -> Platform.runLater(this::renderDashboard))
          .exceptionally(throwable -> {
-            System.err.println("Erro ao carregar dados do dashboard: " + throwable.getMessage());
+            System.err.println("Erro ao carregar dados do dashboard: " + throwable);
             Platform.runLater(this::renderFallback);
             return null;
         });

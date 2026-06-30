@@ -14,6 +14,9 @@ public  class QuestaoResultado {
     private final String textoRespostaUsuario;
     private final String textoRespostaCorreta;
     private final boolean acertou;
+    private final String referenciaLivro;
+    private final int paginaInicio;
+    private final int paginaFim;
 
     public QuestaoResultado(
             int ordem,
@@ -26,7 +29,10 @@ public  class QuestaoResultado {
             char respostaCorreta,
             String textoRespostaUsuario,
             String textoRespostaCorreta,
-            boolean acertou
+            boolean acertou,
+            String referenciaLivro,
+            int paginaInicio,
+            int paginaFim
     ) {
         this.ordem = ordem;
         this.disciplina = disciplina;
@@ -39,12 +45,18 @@ public  class QuestaoResultado {
         this.textoRespostaUsuario = textoRespostaUsuario;
         this.textoRespostaCorreta = textoRespostaCorreta;
         this.acertou = acertou;
+        this.referenciaLivro = referenciaLivro;
+        this.paginaInicio = paginaInicio;
+        this.paginaFim = paginaFim;
     }
 
     public static QuestaoResultado fromQuestao(int ordem, Questao questao, char respostaUsuario) {
         char usuario = Character.toUpperCase(respostaUsuario);
         char correta = QuestaoUtil.resolverAlternativaCorreta(questao);
         boolean acertou = QuestaoUtil.respostaEstaCorreta(questao, usuario);
+        String refLivro = questao.getReferenciaLivro();
+        int pagInicio = questao.getPaginaInicio() != null ? questao.getPaginaInicio() : 0;
+        int pagFim = questao.getPaginaFim() != null ? questao.getPaginaFim() : 0;
         return new QuestaoResultado(
             ordem,
             valueOrDash(questao.getDisciplina()),
@@ -56,7 +68,10 @@ public  class QuestaoResultado {
             correta == '\0' ? '-' : correta,
             resolveTextoOpcao(questao, usuario),
             resolveTextoOpcao(questao, correta),
-            acertou
+            acertou,
+            refLivro != null && !refLivro.isBlank() ? refLivro : null,
+            pagInicio,
+            pagFim
         );
     }
 
@@ -115,6 +130,18 @@ public  class QuestaoResultado {
 
     public boolean isAcertou() {
         return acertou;
+    }
+
+    public String getReferenciaLivro() {
+        return referenciaLivro;
+    }
+
+    public int getPaginaInicio() {
+        return paginaInicio;
+    }
+
+    public int getPaginaFim() {
+        return paginaFim;
     }
 
      private static String valueOrDash(String value) {

@@ -79,7 +79,7 @@
                      <Insets bottom="15" left="20" right="20" top="15" />
                   </padding>
                   <children>
-                     <JFXButton fx:id="btnVoltar" contentDisplay="GRAPHIC_ONLY" styleClass="btn-primary">
+                     <JFXButton fx:id="btnVoltar" contentDisplay="GRAPHIC_ONLY" onAction="#voltarBiblioteca" styleClass="btn-primary">
                         <graphic>
                            <ImageView fitHeight="30.0" fitWidth="23.0" pickOnBounds="true" preserveRatio="true">
                               <image>

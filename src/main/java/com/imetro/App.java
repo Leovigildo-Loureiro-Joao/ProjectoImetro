@@ -44,6 +44,7 @@ public class App extends Application {
         Thread thread = new Thread(runnable);
         thread.setName("imetro-app-executor");
         thread.setDaemon(true);
+        thread.setPriority(Thread.NORM_PRIORITY - 1);
         thread.setUncaughtExceptionHandler((worker, throwable) ->
             LOGGER.log(Level.SEVERE, "Excecao nao tratada no executor da aplicacao.", throwable)
         );

@@ -337,18 +337,7 @@ public class CandidatoLayoutController implements Initializable {
     }
 
     private void navigate(String key) {
-        List<String> keys= List.of(
-            "dashboard",
-            "livro",
-            "diagnostico",
-            "exame_adaptativo",
-            "relatorios",
-            "bolsas",
-            "perfil",
-            "configuracao",
-            "logout"
-        );
-        menu.getSelectionModel().select(keys.indexOf(key));
+        menu.getItems().stream().filter(item -> item.key().equals(key)).findFirst().ifPresent(item -> menu.getSelectionModel().select(item));
         try {
             switch (key) {
                 case "dashboard" -> openDashboard();

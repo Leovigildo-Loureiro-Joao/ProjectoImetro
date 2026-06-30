@@ -78,6 +78,20 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
         );
     }
 
+    public List<BibliotecaLivroDto> listarTodos() throws SQLException {
+        try (Connection conn = openRequiredConnection()) {
+            String sql = LIVRO_QUERY + " order by l.titulo asc, l.nome_arquivo asc";
+            try (PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+                ArrayList<BibliotecaLivroDto> livros = new ArrayList<>();
+                while (rs.next()) {
+                    livros.add(mapLivro(rs));
+                }
+                return List.copyOf(livros);
+            }
+        }
+    }
+
     public List<BibliotecaLivroDto> listarPorDisciplina(UUID disciplinaId) throws SQLException {
         try (Connection conn = openRequiredConnection()) {
             return listarPorDisciplina(conn, disciplinaId);

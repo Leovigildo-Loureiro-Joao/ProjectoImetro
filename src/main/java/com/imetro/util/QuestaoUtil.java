@@ -172,6 +172,7 @@ public class QuestaoUtil {
                 .append("\"correta\":\"").append(questao.getRespostaCorreta()).append("\",")
                 .append("\"precisao\":").append(String.format(Locale.ROOT, "%.4f", precisaoResposta)).append(",")
                 .append("\"percentualAcerto\":").append(String.format(Locale.ROOT, "%.2f", precisaoResposta * 100d)).append(",")
+                .append("\"paginaReferencia\":").append(Math.max(0, questao.getPaginaInicio())).append(",")
                 .append("\"acertou\":").append(acertou)
                 .append("}");
         }
@@ -214,6 +215,7 @@ public class QuestaoUtil {
                 .append("\"nivelDificuldade\":").append(Math.max(0, questao.getNivelDificuldade())).append(",")
                 .append("\"rigor\":").append(String.format(Locale.ROOT, "%.4f", rigor)).append(",")
                 .append("\"percentualDificuldade\":").append(String.format(Locale.ROOT, "%.2f", percentualDificuldade)).append(",")
+                .append("\"paginaReferencia\":").append(Math.max(0, questao.getPaginaInicio())).append(",")
                 .append("\"enuciado\":\"").append(escapeJson(QuestaoUtil.safeText(questao.getEnunciado(), ""))).append("\",")
                 .append("\"resposta\":\"").append(questao.getRespostaCorreta()).append("\"")
                 .append("}");

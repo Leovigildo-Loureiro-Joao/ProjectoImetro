@@ -45,10 +45,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -57,11 +57,11 @@ import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
 
 public class BibliotecaController implements Initializable  {
 
-    private final ExecutorService executor =
-            Executors.newFixedThreadPool(2);
     private PDDocument document;
     private PDFRenderer renderer;
     private static String disciplinaPreferida;
+    private static UUID livroParaAbrir;
+    private static int paginaParaAbrir = -1;
 
     private FXMLLoader modFxml;
     private Node mod;
@@ -78,7 +78,7 @@ public class BibliotecaController implements Initializable  {
                     }
             );
 
-    private double zoom = 1.5;
+    private double zoom = 1;
     private int currentPage = 0;
 
     @FXML private ScrollPane scrollPane;
@@ -103,7 +103,6 @@ public class BibliotecaController implements Initializable  {
     @FXML
     private JFXButton btnVoltar;
 
-
     @FXML
     private ImageView imgPagina;
 
@@ -121,7 +120,6 @@ public class BibliotecaController implements Initializable  {
 
     @FXML
     private ProgressBar questionProgressBar;
-
 
     @FXML
     private VBox biblioteca;
@@ -144,6 +142,8 @@ public class BibliotecaController implements Initializable  {
     private StackPane modalPai;
     private BibliotecaLivroService servoce;
     private byte[] dados;
+    private List<BibliotecaLivroDto> listaLivrosAtual;
+    private String filtroAtual = "mybooks";
 
 
 
@@ -157,6 +157,9 @@ public class BibliotecaController implements Initializable  {
         pdfViewer.setVisible(false);
         biblioteca.setVisible(true);
         modalPai.setVisible(false);
+        
+        pdfList.setVisible(false);
+        questionProgressBar.setVisible(true);
 
         servoce=new BibliotecaLivroService();
         sublist.setCellFactory(list -> new ListCell<>() {
@@ -168,17 +171,26 @@ public class BibliotecaController implements Initializable  {
             }
         });
         carregarDisciplinas();
-        try {
-            DisciplinaOption dis=disciplinaCombo.getSelectionModel().getSelectedItem();
-            if (dis!=null) {
-                servoce.listarLivros(disciplinaCombo.getSelectionModel().getSelectedItem().id());
-                carregarLivros(servoce.listarLivros(disciplinaCombo.getSelectionModel().getSelectedItem().id()));
+
+        disciplinaCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                carregarLivrosDaDisciplina(newVal.id());
             }
+        });
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        Platform.runLater(() -> {
+            UUID pendingId = livroParaAbrir;
+            int pendingPagina = paginaParaAbrir;
+            if (pendingId != null) {
+                livroParaAbrir = null;
+                paginaParaAbrir = -1;
+                try {
+                    servoce.encontrarLivro(pendingId).ifPresent(livro -> abrirLivro(livro, pendingPagina));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         sublist.getItems().setAll(
             new MenuEntry("mybooks", "Meus Livros", FontAwesomeSolid.BOOK),
@@ -193,6 +205,9 @@ public class BibliotecaController implements Initializable  {
         });
 
         sublist.getSelectionModel().selectFirst();
+
+        search.textProperty().addListener((obs, oldVal, newVal) -> aplicarFiltro());
+
         scrollPane.vvalueProperty().addListener((obs, oldVal, newVal) -> {
 
                 for (Node node : pageContainer.getChildren()) {
@@ -203,6 +218,7 @@ public class BibliotecaController implements Initializable  {
 
                         if (page != currentPage) {
                             currentPage = page;
+                            lblPaginaAtual.setText("Página " + (currentPage + 1));
                             preloadPages(page);
                         }
                         break;
@@ -214,31 +230,73 @@ public class BibliotecaController implements Initializable  {
 
 
     private void navigate(String key) {
+        filtroAtual = key;
         switch (key) {
-            case "mybooks" :
+            case "mybooks":
                 textTitle.setText("Meus Livros");
                 break;
-
             case "download":
-                 textTitle.setText("Baixados");
-            break;
-
-            case "recomendados" :
+                textTitle.setText("Baixados");
+                break;
+            case "recomendados":
                 textTitle.setText("Recomendados");
-            break;
-            }
+                break;
+        }
+        aplicarFiltro();
     }
 
+    private void carregarLivrosDaDisciplina(UUID disciplinaId) {
+        pdfList.setVisible(false);
+        questionProgressBar.setVisible(true);
+
+        Task<List<BibliotecaLivroDto>> task = new Task<>() {
+        @Override
+        protected List<BibliotecaLivroDto> call() {
+            try {
+                return servoce.listarLivros(disciplinaId);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return List.of();
+        }
+
+        @Override
+        protected void succeeded() {
+            questionProgressBar.setVisible(false); // Esconder aqui também
+            carregarLivros(getValue());
+        }
+
+        @Override
+        protected void failed() {
+            questionProgressBar.setVisible(false); // Esconder aqui também
+            getException().printStackTrace();              // TODO: Mostrar feedback de erro para o usuário
+        }
+    };
+        App.getExecutorService().execute(task);
+    }
     private void carregarLivros(List<BibliotecaLivroDto> livros) {
+        this.listaLivrosAtual = livros;
+        aplicarFiltro();
+    }
+
+    private void aplicarFiltro() {
+        if (listaLivrosAtual == null) return;
 
         pdfList.getChildren().clear();
 
-        for (BibliotecaLivroDto livro : livros) {
-            Image capa = new Image(
-                new ByteArrayInputStream(
-                    livro.capaThumbnail()
-                )
-            );
+        List<BibliotecaLivroDto> filtrados = listaLivrosAtual.stream()
+            .filter(livro -> passarFiltro(livro))
+            .filter(livro -> passarBusca(livro))
+            .toList();
+
+        for (BibliotecaLivroDto livro : filtrados) {
+            Image capa;
+            byte[] thumb = livro.capaThumbnail();
+            if (thumb != null) {
+                capa = new Image(new ByteArrayInputStream(thumb));
+            } else {
+                capa = null;
+            }
             LivroCard card = new LivroCard(
                 capa,
                 livro.titulo(),
@@ -254,6 +312,30 @@ public class BibliotecaController implements Initializable  {
 
             pdfList.getChildren().add(card);
         }
+
+        if (filtrados.isEmpty()) {
+            Label vazio = new Label("Nenhum livro encontrado.");
+            vazio.getStyleClass().add("muted");
+            pdfList.getChildren().add(vazio);
+        }
+
+        pdfList.setVisible(true);
+    }
+
+    private boolean passarFiltro(BibliotecaLivroDto livro) {
+        if ("mybooks".equals(filtroAtual)) return true;
+        if ("recomendados".equals(filtroAtual)) return true;
+        if ("download".equals(filtroAtual)) return true;
+        return true;
+    }
+
+    private boolean passarBusca(BibliotecaLivroDto livro) {
+        String termo = search.getText();
+        if (termo == null || termo.isBlank()) return true;
+        String q = termo.toLowerCase();
+        if (livro.titulo() != null && livro.titulo().toLowerCase().contains(q)) return true;
+        if (livro.nomeArquivo() != null && livro.nomeArquivo().toLowerCase().contains(q)) return true;
+        return false;
     }
 
     @FXML
@@ -271,6 +353,10 @@ public class BibliotecaController implements Initializable  {
     }
 
     private void abrirLivro(BibliotecaLivroDto livro) {
+        abrirLivro(livro, -1);
+    }
+
+    private void abrirLivro(BibliotecaLivroDto livro, int pagina) {
 
         biblioteca.setVisible(false);
         pdfViewer.setVisible(true);
@@ -285,42 +371,81 @@ public class BibliotecaController implements Initializable  {
             @Override
             protected void succeeded() {
                 dados = getValue();
-                open(dados);
+                abrirDocumento(dados, pagina);
             }
 
             @Override
             protected void failed() {
                 getException().printStackTrace();
+                voltarBiblioteca();
             }
         };
 
-        new Thread(task).start();
+        App.getExecutorService().execute(task);
     }
 
-   public void open(byte[] pdfBytes) {
+    public static void abrirLivroNaPagina(UUID disciplinaId, String nomeLivro, int pagina) {
+        try {
+            BibliotecaLivroService svc = new BibliotecaLivroService();
+            Optional<BibliotecaLivroDto> opt = disciplinaId != null
+                ? svc.encontrarLivroPorNome(disciplinaId, nomeLivro)
+                : svc.encontrarLivroPorNome(nomeLivro);
+            opt.ifPresent(livro -> {
+                definirDisciplinaPreferida(livro.disciplinaNome());
+                livroParaAbrir = livro.id();
+                paginaParaAbrir = pagina < 0 ? 0 : pagina - 1;
+                Platform.runLater(() -> {
+                    StackPane contentHost = (StackPane) com.imetro.App.scene.lookup("#contentHost");
+                    if (contentHost != null) {
+                        try {
+                            com.imetro.App.swapContent(contentHost, "views/pages/candidato/livro");
+                        } catch (Exception ignored) {}
+                    }
+                });
+            });
+        } catch (Exception ignored) {}
+    }
 
-        executor.submit(() -> {
+    public void abrirDocumento(byte[] pdfBytes) {
+        abrirDocumento(pdfBytes, -1);
+    }
+
+    public void abrirDocumento(byte[] pdfBytes, int paginaParaIr) {
+        CompletableFuture.runAsync(() -> {
             try {
-
+                if (this.document != null) {
+                    this.document.close();
+                }
                 this.document = Loader.loadPDF(pdfBytes);
                 this.renderer = new PDFRenderer(document);
-
-                int pages = document.getNumberOfPages();
-
-                Platform.runLater(() -> {
-                    pageContainer.getChildren().clear();
-
-                    for (int i = 0; i < pages; i++) {
-                        ImageView view = createPageView(i);
-                        pageContainer.getChildren().add(view);
-                    }
-
-                    preloadPages(0);
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException("Falha ao carregar o documento PDF", e);
             }
+        }, App.getExecutorService()).thenRun(() -> {
+            Platform.runLater(() -> {
+                if (document == null) return;
+                int total = document.getNumberOfPages();
+                pageContainer.getChildren().clear();
+                for (int i = 0; i < total; i++) {
+                    StackPane wrapper = new StackPane();
+                    wrapper.setAlignment(javafx.geometry.Pos.CENTER);
+                    wrapper.getStyleClass().add("page-area");
+                    wrapper.setUserData(i);
+                    ImageView view = createPageView(i);
+                    wrapper.getChildren().add(view);
+                    pageContainer.getChildren().add(wrapper);
+                }
+                int paginaDestino = paginaParaIr >= 0 && paginaParaIr < total ? paginaParaIr : 0;
+                preloadPages(paginaDestino);
+                if (paginaDestino > 0 && total > 1) {
+                    scrollPane.setVvalue((double) paginaDestino / (total - 1));
+                }
+                lblPaginaAtual.setText("Página " + (paginaDestino + 1));
+                lblInfo.setText("Total de " + total + " páginas");
+            });
+        }).exceptionally(ex -> {
+            ex.printStackTrace();
+            return null;
         });
     }
 
@@ -337,7 +462,7 @@ public class BibliotecaController implements Initializable  {
 
         view.viewportProperty();
 
-        // render assíncrono ao aparecer
+        // Renderiza a página quando a view entra na cena
         view.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 renderPageAsync(pageIndex, view);
@@ -355,7 +480,7 @@ public class BibliotecaController implements Initializable  {
             return;
         }
 
-        executor.submit(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
 
                 BufferedImage buffered =
@@ -375,7 +500,7 @@ public class BibliotecaController implements Initializable  {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }, App.getExecutorService());
     }
 
     private void preloadPages(int page) {
@@ -386,7 +511,7 @@ public class BibliotecaController implements Initializable  {
             if (p < 0 || p >= document.getNumberOfPages()) continue;
             if (cache.containsKey(p)) continue;
 
-            executor.submit(() -> {
+            CompletableFuture.runAsync(() -> {
                 try {
                     BufferedImage buffered =
                             renderer.renderImageWithDPI(p, (int)(150 * zoom));
@@ -395,7 +520,7 @@ public class BibliotecaController implements Initializable  {
                     cache.put(p, img);
 
                 } catch (Exception ignored) {}
-            });
+            }, App.getExecutorService());
         }
     }
 
@@ -403,17 +528,12 @@ public class BibliotecaController implements Initializable  {
 
         Task<Image> task = new Task<>() {
             @Override
-            protected Image call() throws Exception {
-
-                try (PDDocument document = Loader.loadPDF(dados)) {
-
-                    PDFRenderer renderer = new PDFRenderer(document);
-
-                    BufferedImage bufferedImage =
-                            renderer.renderImageWithDPI(pag, 150);
-
-                    return SwingFXUtils.toFXImage(bufferedImage, null);
+            protected Image call() throws IOException {
+                if (renderer == null) {
+                    throw new IOException("PDF Renderer não foi inicializado.");
                 }
+                BufferedImage bufferedImage = renderer.renderImageWithDPI(pag, 150);
+                return SwingFXUtils.toFXImage(bufferedImage, null);
             }
 
             @Override
@@ -427,14 +547,28 @@ public class BibliotecaController implements Initializable  {
             }
         };
 
-        new Thread(task).start();
+        App.getExecutorService().execute(task);
     }
 
     
 
     @FXML
-    private void Procurar(ActionEvent event) {
+    private void voltarBiblioteca() {
+        pdfViewer.setVisible(false);
+        biblioteca.setVisible(true);
+        if (document != null) {
+            try {
+                document.close();
+            } catch (IOException ignored) {}
+            document = null;
+            renderer = null;
+        }
+        cache.clear();
+    }
 
+    @FXML
+    private void Procurar(ActionEvent event) {
+        aplicarFiltro();
     }
 
     private void carregarDisciplinas() {
@@ -457,11 +591,20 @@ public class BibliotecaController implements Initializable  {
 
         disciplinaCombo.setItems(FXCollections.observableArrayList(opcoes.values()));
         if (disciplinaCombo.getItems().isEmpty()) {
+            questionProgressBar.setVisible(false);
+            pdfList.getChildren().setAll(new Label("Nenhuma disciplina disponível."));
+            pdfList.setVisible(true);
             return;
         }
 
         disciplinaCombo.getSelectionModel().selectFirst();
         aplicarDisciplinaPreferidaSeExistir();
+
+        // Garante o carregamento inicial dos livros para a disciplina selecionada.
+        DisciplinaOption disciplinaInicial = disciplinaCombo.getSelectionModel().getSelectedItem();
+        if (disciplinaInicial != null) {
+            carregarLivrosDaDisciplina(disciplinaInicial.id());
+        }
     }
 
     private String firstNonBlank(String first, String second) {
@@ -492,24 +635,35 @@ public class BibliotecaController implements Initializable  {
 
     @FXML
     private void InitPag(ActionEvent event) {
-        if(livro!=null)
-            navegarPagina(0, livro);
+        if (document != null) {
+            scrollPane.setVvalue(0);
+        }
     }
 
     @FXML
     private void LastPag(ActionEvent event) {
-      
-            
+        if (document != null) {
+            scrollPane.setVvalue(1.0);
+        }
     }
 
     @FXML
     private void PagAnterior(ActionEvent event) {
-      
+        if (document != null && currentPage > 0) {
+            double targetV = (double) (currentPage - 1) / (document.getNumberOfPages() - 1);
+            scrollPane.setVvalue(targetV);
+        }
     }
 
     @FXML
     private void PagSeguinte(ActionEvent event) {
-      
+        if (document != null && currentPage < document.getNumberOfPages() - 1) {
+            // Calcula a posição aproximada da próxima página
+            double pageHeight = pageContainer.getHeight() / document.getNumberOfPages();
+            double currentPixel = scrollPane.getVvalue() * (pageContainer.getHeight() - scrollPane.getViewportBounds().getHeight());
+            double nextPixel = currentPixel + pageHeight;
+            scrollPane.setVvalue(nextPixel / (pageContainer.getHeight() - scrollPane.getViewportBounds().getHeight()));
+        }
     }
 
 

@@ -22,6 +22,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -234,18 +235,48 @@ public class ResultadoRecomendacao implements Initializable, DisposableControlle
         topicos.getStyleClass().add("question-side-caption");
         topicos.setWrapText(true);
 
-        Label caminho = new Label(String.format(
-            Locale.ROOT,
-            "Abre a biblioteca de %s para rever este bloco com mais exemplos.",
-            textoOuFallback(resultado == null ? null : resultado.getDisciplina(), "a disciplina")
-        ));
-        caminho.getStyleClass().add("question-side-caption");
-        caminho.setWrapText(true);
-
-        VBox card = new VBox(8.0, header, resumo, topicos, caminho);
+        VBox card = new VBox(8.0, header, resumo, topicos);
         card.getStyleClass().add("result-trail-card");
         card.setMaxWidth(Double.MAX_VALUE);
+
+        String disciplina = textoOuFallback(resultado == null ? null : resultado.getDisciplina(), null);
+        String linkLivro = construirLinkLivro(grupo.questoes(), disciplina);
+        if (linkLivro != null) {
+            Hyperlink link = new Hyperlink(linkLivro);
+            link.getStyleClass().add("result-link-livro");
+            link.setOnAction(e -> abrirLivroDaQuestao(grupo.questoes(), disciplina));
+            card.getChildren().add(link);
+        } else {
+            Label caminho = new Label(String.format(
+                Locale.ROOT,
+                "Abre a biblioteca de %s para rever este bloco com mais exemplos.",
+                disciplina != null ? disciplina : "a disciplina")
+            );
+            caminho.getStyleClass().add("question-side-caption");
+            caminho.setWrapText(true);
+            card.getChildren().add(caminho);
+        }
+
         return card;
+    }
+
+    private String construirLinkLivro(List<QuestaoResultado> questoes, String disciplina) {
+        if (disciplina == null || questoes == null || questoes.isEmpty()) return null;
+        QuestaoResultado primeira = questoes.getFirst();
+        if (primeira.getReferenciaLivro() == null) return null;
+        int pagina = primeira.getPaginaInicio() > 0 ? primeira.getPaginaInicio() : primeira.getPaginaFim();
+        if (pagina > 0) {
+            return "Abrir \"" + primeira.getReferenciaLivro() + "\" na página " + pagina;
+        }
+        return "Abrir \"" + primeira.getReferenciaLivro() + "\"";
+    }
+
+    private void abrirLivroDaQuestao(List<QuestaoResultado> questoes, String disciplina) {
+        if (disciplina == null || questoes == null || questoes.isEmpty()) return;
+        QuestaoResultado q = questoes.getFirst();
+        if (q.getReferenciaLivro() == null) return;
+        int pagina = q.getPaginaInicio() > 0 ? q.getPaginaInicio() : (q.getPaginaFim() > 0 ? q.getPaginaFim() : 1);
+        BibliotecaController.abrirLivroNaPagina(null, q.getReferenciaLivro(), pagina);
     }
 
     private VBox criarCardConsolidacao(ResultadoPayload resultado) {
