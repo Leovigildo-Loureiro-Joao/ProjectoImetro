@@ -3,19 +3,22 @@ package com.imetro.ui.controller.candidato;
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
+import com.imetro.domain.dto.biblioteca.LivroMapaTopicos;
+import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
+import com.imetro.persistence.repository.BibliotecaLivroRepository;
+import com.imetro.persistence.repository.LivroMapaTopicosRepository;
 import com.imetro.services.BibliotecaLivroService;
 import com.imetro.services.DisciplinaService;
+import com.imetro.services.GeminiService;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.biblioteca.LivroCard;
 import com.imetro.ui.modals.AddLivroModalController;
-import com.imetro.ui.modals.ModalController;
 import com.imetro.ui.modals.AddLivroModalController.DisciplinaOption;
+import com.imetro.ui.modals.ModalController;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
-import java.awt.image.BufferedImage;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -24,7 +27,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -35,12 +39,22 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import java.util.concurrent.CompletableFuture;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
+
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.time.format.DateTimeFormatter;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,12 +64,7 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
-
-public class BibliotecaController implements Initializable  {
+public class BibliotecaController implements Initializable {
 
     private PDDocument document;
     private PDFRenderer renderer;
@@ -65,87 +74,46 @@ public class BibliotecaController implements Initializable  {
 
     private FXMLLoader modFxml;
     private Node mod;
-    private Node modTop;
     private ModalController cont;
     private BibliotecaLivroDto livro;
+    private List<LivroMapaTopicos> topicos;
+    private int topicoSelecionado = -1;
+    private boolean mostrandoTopicos = true;
+    private int currentPage = 0;
     private final Map<Integer, Image> cache =
             Collections.synchronizedMap(
-                    new LinkedHashMap<>(50, 0.75f, true) {
+                    new LinkedHashMap<>(20, 0.75f, true) {
                         @Override
                         protected boolean removeEldestEntry(Map.Entry<Integer, Image> eldest) {
-                            return size() > 50; // cache LRU
+                            return size() > 20;
                         }
                     }
             );
 
-    private double zoom = 1;
-    private int currentPage = 0;
-
-    @FXML private ScrollPane scrollPane;
-
-    @FXML
-    private JFXButton btnAnterior;
-    @FXML
-    private VBox pageContainer;
-
-    @FXML
-    private JFXComboBox<AddLivroModalController.DisciplinaOption> disciplinaCombo;
-
-    @FXML
-    private JFXButton btnAnterior1;
-
-    @FXML
-    private JFXButton btnProxima;
-
-    @FXML
-    private JFXButton btnProxima1;
-
-    @FXML
-    private JFXButton btnVoltar;
-
-    @FXML
-    private ImageView imgPagina;
-
-    @FXML
-    private Label lblInfo;
-
-    @FXML
-    private Label lblPaginaAtual;
-
-    @FXML
-    private Label lblTitulo;
-
-    @FXML
-    private FlowPane pdfList;
-
-    @FXML
-    private ProgressBar questionProgressBar;
-
-    @FXML
-    private VBox biblioteca;
-
-
-    @FXML
-    private TextField search;
-
-    @FXML
-    private ListView<MenuEntry> sublist;
-
-    @FXML
-    private StackPane pdfViewer;
-
-
-    @FXML
-    private Label textTitle;
-
-    @FXML
-    private StackPane modalPai;
     private BibliotecaLivroService servoce;
+    private GeminiService geminiService;
     private byte[] dados;
     private List<BibliotecaLivroDto> listaLivrosAtual;
     private String filtroAtual = "mybooks";
 
-
+    @FXML private ScrollPane scrollPane;
+    @FXML private VBox pageContainer;
+    @FXML private JFXComboBox<DisciplinaOption> disciplinaCombo;
+    @FXML private JFXButton btnAnterior;
+    @FXML private JFXButton btnProxima;
+    @FXML private JFXButton btnVoltar;
+    @FXML private Label lblInfo;
+    @FXML private Label lblPaginaAtual;
+    @FXML private Label lblTitulo;
+    @FXML private FlowPane pdfList;
+    @FXML private ProgressBar questionProgressBar;
+    @FXML private VBox biblioteca;
+    @FXML private TextField search;
+    @FXML private ProgressBar progressoLeitura;
+    @FXML private ListView<MenuEntry> sublist;
+    @FXML private StackPane pdfViewer;
+    @FXML private Label textTitle;
+    @FXML private StackPane modalPai;
 
     public static void definirDisciplinaPreferida(String disciplina) {
         disciplinaPreferida = disciplina;
@@ -153,15 +121,18 @@ public class BibliotecaController implements Initializable  {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
         pdfViewer.setVisible(false);
         biblioteca.setVisible(true);
         modalPai.setVisible(false);
-        
         pdfList.setVisible(false);
         questionProgressBar.setVisible(true);
 
-        servoce=new BibliotecaLivroService();
+        servoce = new BibliotecaLivroService();
+        geminiService = new GeminiService();
+        if (geminiService.isConfigured()) {
+            geminiService.setBibliotecaLivroRepository(new BibliotecaLivroRepository());
+        }
+
         sublist.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(MenuEntry item, boolean empty) {
@@ -170,6 +141,7 @@ public class BibliotecaController implements Initializable  {
                 setGraphic(empty || item == null ? null : new Item_Cell(item.title(), item.icon()));
             }
         });
+
         carregarDisciplinas();
 
         disciplinaCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -185,7 +157,7 @@ public class BibliotecaController implements Initializable  {
                 livroParaAbrir = null;
                 paginaParaAbrir = -1;
                 try {
-                    servoce.encontrarLivro(pendingId).ifPresent(livro -> abrirLivro(livro, pendingPagina));
+                    servoce.encontrarLivro(pendingId).ifPresent(l -> abrirLivro(l, pendingPagina));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -199,48 +171,19 @@ public class BibliotecaController implements Initializable  {
         );
 
         sublist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-            if (newValue != null) {
-                navigate(newValue.key());
-            }
+            if (newValue != null) navigate(newValue.key());
         });
 
         sublist.getSelectionModel().selectFirst();
-
         search.textProperty().addListener((obs, oldVal, newVal) -> aplicarFiltro());
-
-        scrollPane.vvalueProperty().addListener((obs, oldVal, newVal) -> {
-
-                for (Node node : pageContainer.getChildren()) {
-                    Bounds bounds = node.localToScene(node.getBoundsInLocal());
-
-                    if (bounds.getMinY() >= 0 && bounds.getMinY() < 300) {
-                        int page = (int) node.getUserData();
-
-                        if (page != currentPage) {
-                            currentPage = page;
-                            lblPaginaAtual.setText("Página " + (currentPage + 1));
-                            preloadPages(page);
-                        }
-                        break;
-                    }
-                }
-            });
-
     }
-
 
     private void navigate(String key) {
         filtroAtual = key;
         switch (key) {
-            case "mybooks":
-                textTitle.setText("Meus Livros");
-                break;
-            case "download":
-                textTitle.setText("Baixados");
-                break;
-            case "recomendados":
-                textTitle.setText("Recomendados");
-                break;
+            case "mybooks": textTitle.setText("Meus Livros"); break;
+            case "download": textTitle.setText("Baixados"); break;
+            case "recomendados": textTitle.setText("Recomendados"); break;
         }
         aplicarFiltro();
     }
@@ -248,32 +191,30 @@ public class BibliotecaController implements Initializable  {
     private void carregarLivrosDaDisciplina(UUID disciplinaId) {
         pdfList.setVisible(false);
         questionProgressBar.setVisible(true);
-
         Task<List<BibliotecaLivroDto>> task = new Task<>() {
-        @Override
-        protected List<BibliotecaLivroDto> call() {
-            try {
-                return servoce.listarLivros(disciplinaId);
-            } catch (IOException e) {
-                e.printStackTrace();
+            @Override
+            protected List<BibliotecaLivroDto> call() {
+                try {
+                    return servoce.listarLivros(disciplinaId);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return List.of();
             }
-            return List.of();
-        }
-
-        @Override
-        protected void succeeded() {
-            questionProgressBar.setVisible(false); // Esconder aqui também
-            carregarLivros(getValue());
-        }
-
-        @Override
-        protected void failed() {
-            questionProgressBar.setVisible(false); // Esconder aqui também
-            getException().printStackTrace();              // TODO: Mostrar feedback de erro para o usuário
-        }
-    };
+            @Override
+            protected void succeeded() {
+                questionProgressBar.setVisible(false);
+                carregarLivros(getValue());
+            }
+            @Override
+            protected void failed() {
+                questionProgressBar.setVisible(false);
+                getException().printStackTrace();
+            }
+        };
         App.getExecutorService().execute(task);
     }
+
     private void carregarLivros(List<BibliotecaLivroDto> livros) {
         this.listaLivrosAtual = livros;
         aplicarFiltro();
@@ -281,60 +222,33 @@ public class BibliotecaController implements Initializable  {
 
     private void aplicarFiltro() {
         if (listaLivrosAtual == null) return;
-
         pdfList.getChildren().clear();
-
         List<BibliotecaLivroDto> filtrados = listaLivrosAtual.stream()
-            .filter(livro -> passarFiltro(livro))
-            .filter(livro -> passarBusca(livro))
+            .filter(l -> passarFiltro(l))
+            .filter(l -> passarBusca(l))
             .toList();
-
-        for (BibliotecaLivroDto livro : filtrados) {
-            Image capa;
-            byte[] thumb = livro.capaThumbnail();
-            if (thumb != null) {
-                capa = new Image(new ByteArrayInputStream(thumb));
-            } else {
-                capa = null;
-            }
-            LivroCard card = new LivroCard(
-                capa,
-                livro.titulo(),
-                "Autor desconhecido",
-                livro.disciplinaNome(),
-                livro.totalPaginas(),
-                0.0
-            );
-
-            card.getBtnLer().setOnAction(e -> {
-               abrirLivro(livro);
-            });
-
+        for (BibliotecaLivroDto l : filtrados) {
+            Image capa = l.capaThumbnail() != null ? new Image(new ByteArrayInputStream(l.capaThumbnail())) : null;
+            LivroCard card = new LivroCard(capa, l.titulo(), "Autor desconhecido", l.disciplinaNome(), l.totalPaginas(), 0.0);
+            card.getBtnLer().setOnAction(e -> abrirLivro(l));
             pdfList.getChildren().add(card);
         }
-
         if (filtrados.isEmpty()) {
             Label vazio = new Label("Nenhum livro encontrado.");
             vazio.getStyleClass().add("muted");
             pdfList.getChildren().add(vazio);
         }
-
         pdfList.setVisible(true);
     }
 
-    private boolean passarFiltro(BibliotecaLivroDto livro) {
-        if ("mybooks".equals(filtroAtual)) return true;
-        if ("recomendados".equals(filtroAtual)) return true;
-        if ("download".equals(filtroAtual)) return true;
-        return true;
-    }
+    private boolean passarFiltro(BibliotecaLivroDto l) { return true; }
 
-    private boolean passarBusca(BibliotecaLivroDto livro) {
+    private boolean passarBusca(BibliotecaLivroDto l) {
         String termo = search.getText();
         if (termo == null || termo.isBlank()) return true;
         String q = termo.toLowerCase();
-        if (livro.titulo() != null && livro.titulo().toLowerCase().contains(q)) return true;
-        if (livro.nomeArquivo() != null && livro.nomeArquivo().toLowerCase().contains(q)) return true;
+        if (l.titulo() != null && l.titulo().toLowerCase().contains(q)) return true;
+        if (l.nomeArquivo() != null && l.nomeArquivo().toLowerCase().contains(q)) return true;
         return false;
     }
 
@@ -352,35 +266,52 @@ public class BibliotecaController implements Initializable  {
         }
     }
 
-    private void abrirLivro(BibliotecaLivroDto livro) {
-        abrirLivro(livro, -1);
-    }
+    // ===================== ABRIR LIVRO =====================
 
-    private void abrirLivro(BibliotecaLivroDto livro, int pagina) {
+    private void abrirLivro(BibliotecaLivroDto l) { abrirLivro(l, -1); }
 
+    private void abrirLivro(BibliotecaLivroDto l, int pagina) {
         biblioteca.setVisible(false);
         pdfViewer.setVisible(true);
+        this.livro = l;
+        lblTitulo.setText(l.titulo());
+        pageContainer.getChildren().clear();
+        lblPaginaAtual.setText("");
+        lblInfo.setText("A carregar livro…");
 
         Task<byte[]> task = new Task<>() {
             @Override
             protected byte[] call() throws Exception {
-                return servoce.carregarPdf(livro.id())
-                        .orElseThrow(() -> new IOException("PDF vazio"));
+                return servoce.carregarPdf(l.id()).orElseThrow(() -> new IOException("PDF vazio"));
             }
-
             @Override
             protected void succeeded() {
                 dados = getValue();
-                abrirDocumento(dados, pagina);
+                App.getExecutorService().execute(() -> {
+                    try {
+                        if (document != null) document.close();
+                        document = Loader.loadPDF(dados);
+                        renderer = new PDFRenderer(document);
+                        LivroMapaTopicosRepository repo = new LivroMapaTopicosRepository();
+                        List<LivroMapaTopicos> tops = repo.findAllByField("livro_id", l.id()).stream()
+                            .map(LivroMapaTopicos::fromMap)
+                            .toList();
+                        Platform.runLater(() -> {
+                            topicos = tops;
+                            mostrarTopicos();
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Platform.runLater(() -> voltarBiblioteca());
+                    }
+                });
             }
-
             @Override
             protected void failed() {
                 getException().printStackTrace();
                 voltarBiblioteca();
             }
         };
-
         App.getExecutorService().execute(task);
     }
 
@@ -390,9 +321,9 @@ public class BibliotecaController implements Initializable  {
             Optional<BibliotecaLivroDto> opt = disciplinaId != null
                 ? svc.encontrarLivroPorNome(disciplinaId, nomeLivro)
                 : svc.encontrarLivroPorNome(nomeLivro);
-            opt.ifPresent(livro -> {
-                definirDisciplinaPreferida(livro.disciplinaNome());
-                livroParaAbrir = livro.id();
+            opt.ifPresent(l -> {
+                definirDisciplinaPreferida(l.disciplinaNome());
+                livroParaAbrir = l.id();
                 paginaParaAbrir = pagina < 0 ? 0 : pagina - 1;
                 Platform.runLater(() -> {
                     StackPane contentHost = (StackPane) com.imetro.App.scene.lookup("#contentHost");
@@ -406,63 +337,136 @@ public class BibliotecaController implements Initializable  {
         } catch (Exception ignored) {}
     }
 
-    public void abrirDocumento(byte[] pdfBytes) {
-        abrirDocumento(pdfBytes, -1);
+    // ===================== TÓPICOS =====================
+
+    private void mostrarTopicos() {
+        mostrandoTopicos = true;
+        topicoSelecionado = -1;
+        pageContainer.getChildren().clear();
+        cache.clear();
+        pageContainer.setFillWidth(true);
+        pageContainer.setAlignment(Pos.TOP_CENTER);
+
+        if (topicos.isEmpty()) {
+            lblInfo.setText("A extrair tópicos do livro…");
+            Label carregando = new Label("A processar livro com IA. Aguarde…");
+            carregando.getStyleClass().add("muted");
+            pageContainer.getChildren().add(carregando);
+            extrairTopicosEmBackground();
+            return;
+        }
+
+        lblInfo.setText("Seleccione um tópico para estudar");
+        for (int i = 0; i < topicos.size(); i++) {
+            LivroMapaTopicos t = topicos.get(i);
+            VBox card = criarCardTopico(i, t);
+            pageContainer.getChildren().add(card);
+        }
     }
 
-    public void abrirDocumento(byte[] pdfBytes, int paginaParaIr) {
-        CompletableFuture.runAsync(() -> {
+    private void extrairTopicosEmBackground() {
+        if (!geminiService.isConfigured()) {
+            lblInfo.setText("Gemini não configurado. Não é possível extrair tópicos.");
+            return;
+        }
+        UUID livroId = livro.id();
+        BibliotecaLivroService svc = servoce;
+        App.getExecutorService().execute(() -> {
             try {
-                if (this.document != null) {
-                    this.document.close();
-                }
-                this.document = Loader.loadPDF(pdfBytes);
-                this.renderer = new PDFRenderer(document);
-            } catch (IOException e) {
-                throw new RuntimeException("Falha ao carregar o documento PDF", e);
+                List<TopicoSubtopico> topicosExtraidos = svc.extrairTopicosDoLivro(livroId, geminiService);
+                Platform.runLater(() -> {
+                    if (!topicosExtraidos.isEmpty()) {
+                        carregarTopicosDoLivro(livroId);
+                        mostrarTopicos();
+                    } else {
+                        lblInfo.setText("Não foram encontrados tópicos neste livro.");
+                        pageContainer.getChildren().clear();
+                        Label vazio = new Label("Nenhum tópico detectado. O PDF pode não ter conteúdo estruturado.");
+                        vazio.getStyleClass().add("muted");
+                        pageContainer.getChildren().add(vazio);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    lblInfo.setText("Erro ao extrair tópicos: " + e.getMessage());
+                    e.printStackTrace();
+                });
             }
-        }, App.getExecutorService()).thenRun(() -> {
-            Platform.runLater(() -> {
-                if (document == null) return;
-                int total = document.getNumberOfPages();
-                pageContainer.getChildren().clear();
-                for (int i = 0; i < total; i++) {
-                    StackPane wrapper = new StackPane();
-                    wrapper.setAlignment(javafx.geometry.Pos.CENTER);
-                    wrapper.getStyleClass().add("page-area");
-                    wrapper.setUserData(i);
-                    ImageView view = createPageView(i);
-                    wrapper.getChildren().add(view);
-                    pageContainer.getChildren().add(wrapper);
-                }
-                int paginaDestino = paginaParaIr >= 0 && paginaParaIr < total ? paginaParaIr : 0;
-                preloadPages(paginaDestino);
-                if (paginaDestino > 0 && total > 1) {
-                    scrollPane.setVvalue((double) paginaDestino / (total - 1));
-                }
-                lblPaginaAtual.setText("Página " + (paginaDestino + 1));
-                lblInfo.setText("Total de " + total + " páginas");
-            });
-        }).exceptionally(ex -> {
-            ex.printStackTrace();
-            return null;
         });
     }
 
-    private ImageView createPageView(int pageIndex) {
+    private void carregarTopicosDoLivro(UUID livroId) {
+        try {
+            LivroMapaTopicosRepository repo = new LivroMapaTopicosRepository();
+            topicos = repo.findAllByField("livro_id", livroId).stream()
+                .map(LivroMapaTopicos::fromMap)
+                .toList();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            topicos = List.of();
+        }
+    }
 
+    private VBox criarCardTopico(int index, LivroMapaTopicos t) {
+        VBox card = new VBox(4);
+        card.getStyleClass().add("topico-card");
+        card.setPadding(new Insets(14));
+        card.setUserData(index);
+        card.setCursor(javafx.scene.Cursor.HAND);
+
+        Label lblTopico = new Label(t.topico());
+        lblTopico.getStyleClass().add("h2");
+
+        Label lblSubtopico = new Label(t.subtopico());
+        lblSubtopico.getStyleClass().add("muted");
+
+        Label lblPaginas = new Label("Páginas " + t.paginaInicio() + " — " + t.paginaFim());
+        lblPaginas.setStyle("-fx-text-fill: -color-warning; -fx-font-size: 12px; -fx-font-weight: 700;");
+
+        card.getChildren().addAll(lblTopico, lblSubtopico, lblPaginas);
+        card.setOnMouseClicked(e -> selecionarTopico(index));
+        return card;
+    }
+
+    private void selecionarTopico(int index) {
+        if (index < 0 || index >= topicos.size()) return;
+        topicoSelecionado = index;
+        mostrandoTopicos = false;
+        LivroMapaTopicos t = topicos.get(index);
+
+        lblTitulo.setText(t.topico() + " — " + t.subtopico());
+        lblInfo.setText("Tópico " + (index + 1) + " de " + topicos.size());
+
+        pageContainer.getChildren().clear();
+        cache.clear();
+        pageContainer.setFillWidth(false);
+        pageContainer.setAlignment(Pos.TOP_CENTER);
+
+        int start = Math.max(0, t.paginaInicio() - 1);
+        int end = Math.min(document.getNumberOfPages(), t.paginaFim());
+
+        for (int page = start; page < end; page++) {
+            StackPane wrapper = new StackPane();
+            wrapper.setAlignment(Pos.CENTER);
+            wrapper.getStyleClass().add("page-area");
+            ImageView view = criarViewPagina(page);
+            wrapper.getChildren().add(view);
+            pageContainer.getChildren().add(wrapper);
+        }
+
+        currentPage = start;
+        lblPaginaAtual.setText("Página " + (start + 1));
+        scrollPane.setVvalue(0);
+    }
+
+    // ===================== PÁGINAS =====================
+
+    private ImageView criarViewPagina(int pageIndex) {
         ImageView view = new ImageView();
-
         view.setPreserveRatio(true);
-        view.setFitWidth(500 * zoom);
-
+        view.setFitWidth(500);
         view.setUserData(pageIndex);
 
-        view.imageProperty().set(null);
-
-        view.viewportProperty();
-
-        // Renderiza a página quando a view entra na cena
         view.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 renderPageAsync(pageIndex, view);
@@ -472,94 +476,45 @@ public class BibliotecaController implements Initializable  {
         return view;
     }
 
-
     private void renderPageAsync(int page, ImageView view) {
-
         if (cache.containsKey(page)) {
             view.setImage(cache.get(page));
             return;
         }
-
         CompletableFuture.runAsync(() -> {
             try {
-
-                BufferedImage buffered =
-                        renderer.renderImageWithDPI(page, (int)(150 * zoom));
-
-                Image fxImage =
-                        SwingFXUtils.toFXImage(buffered, null);
-
+                BufferedImage buffered = renderer.renderImageWithDPI(page, 150);
+                Image fxImage = SwingFXUtils.toFXImage(buffered, null);
                 cache.put(page, fxImage);
-
                 Platform.runLater(() -> {
                     if ((int) view.getUserData() == page) {
                         view.setImage(fxImage);
                     }
                 });
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, App.getExecutorService());
     }
 
-    private void preloadPages(int page) {
-
-        int[] targets = { page - 1, page + 1, page + 2 };
-
-        for (int p : targets) {
-            if (p < 0 || p >= document.getNumberOfPages()) continue;
-            if (cache.containsKey(p)) continue;
-
-            CompletableFuture.runAsync(() -> {
-                try {
-                    BufferedImage buffered =
-                            renderer.renderImageWithDPI(p, (int)(150 * zoom));
-
-                    Image img = SwingFXUtils.toFXImage(buffered, null);
-                    cache.put(p, img);
-
-                } catch (Exception ignored) {}
-            }, App.getExecutorService());
-        }
+    private void atualizarPaginaScroll(int paginaAbsoluta) {
+        currentPage = paginaAbsoluta;
+        lblPaginaAtual.setText("Página " + (paginaAbsoluta + 1));
     }
 
-    private void navegarPagina(int pag, BibliotecaLivroDto livro) {
-
-        Task<Image> task = new Task<>() {
-            @Override
-            protected Image call() throws IOException {
-                if (renderer == null) {
-                    throw new IOException("PDF Renderer não foi inicializado.");
-                }
-                BufferedImage bufferedImage = renderer.renderImageWithDPI(pag, 150);
-                return SwingFXUtils.toFXImage(bufferedImage, null);
-            }
-
-            @Override
-            protected void succeeded() {
-                imgPagina.setImage(getValue());
-            }
-
-            @Override
-            protected void failed() {
-                getException().printStackTrace();
-            }
-        };
-
-        App.getExecutorService().execute(task);
-    }
-
-    
+    // ===================== NAVEGAÇÃO =====================
 
     @FXML
     private void voltarBiblioteca() {
+        if (!mostrandoTopicos && topicoSelecionado >= 0) {
+            mostrarTopicos();
+            lblTitulo.setText(livro.titulo());
+            return;
+        }
         pdfViewer.setVisible(false);
         biblioteca.setVisible(true);
         if (document != null) {
-            try {
-                document.close();
-            } catch (IOException ignored) {}
+            try { document.close(); } catch (IOException ignored) {}
             document = null;
             renderer = null;
         }
@@ -567,28 +522,75 @@ public class BibliotecaController implements Initializable  {
     }
 
     @FXML
-    private void Procurar(ActionEvent event) {
-        aplicarFiltro();
+    private void InitPag(ActionEvent event) {
+        if (document == null) return;
+        if (mostrandoTopicos || topicoSelecionado < 0) return;
+        LivroMapaTopicos t = topicos.get(topicoSelecionado);
+        int first = Math.max(0, t.paginaInicio() - 1);
+        scrollPane.setVvalue(0);
+        atualizarPaginaScroll(first);
     }
 
-    private void carregarDisciplinas() {
-        LinkedHashMap<UUID, AddLivroModalController.DisciplinaOption> opcoes = new LinkedHashMap<>();
-        for (ProgressoAlunoDisciplinaDto progresso : DisciplinaService.getProgressoDisciplinasCandidatoSafe()) {
-            if (progresso == null || progresso.disciplinaId() == null) {
-                continue;
-            }
-
-            String nomeDisciplina = firstNonBlank(
-                progresso.disciplina(),
-                DisciplinaService.findByNomeIdSearch(progresso.disciplinaId())
-            );
-            if (!DisciplinaService.isDisciplinaSuportada(nomeDisciplina)) {
-                continue;
-            }
-
-            opcoes.putIfAbsent(progresso.disciplinaId(), new AddLivroModalController.DisciplinaOption(progresso.disciplinaId(), nomeDisciplina));
+    @FXML
+    private void LastPag(ActionEvent event) {
+        if (document == null) return;
+        if (mostrandoTopicos || topicoSelecionado < 0) return;
+        LivroMapaTopicos t = topicos.get(topicoSelecionado);
+        int last = Math.min(document.getNumberOfPages(), t.paginaFim()) - 1;
+        int total = last - Math.max(0, t.paginaInicio() - 1);
+        if (total > 0) {
+            scrollPane.setVvalue(1.0);
+            atualizarPaginaScroll(last);
         }
+    }
 
+    @FXML
+    private void PagAnterior(ActionEvent event) {
+        if (document == null) return;
+        if (mostrandoTopicos || topicoSelecionado < 0) return;
+        if (currentPage > 0) {
+            LivroMapaTopicos t = topicos.get(topicoSelecionado);
+            int first = Math.max(0, t.paginaInicio() - 1);
+            if (currentPage - 1 >= first) {
+                double targetV = (double) (currentPage - 1 - first) / (Math.min(document.getNumberOfPages(), t.paginaFim()) - 1 - first);
+                scrollPane.setVvalue(Math.max(0, targetV));
+                atualizarPaginaScroll(currentPage - 1);
+            }
+        }
+    }
+
+    @FXML
+    private void PagSeguinte(ActionEvent event) {
+        if (document == null) return;
+        if (mostrandoTopicos || topicoSelecionado < 0) return;
+        LivroMapaTopicos t = topicos.get(topicoSelecionado);
+        int last = Math.min(document.getNumberOfPages(), t.paginaFim()) - 1;
+        if (currentPage < last) {
+            int first = Math.max(0, t.paginaInicio() - 1);
+            double targetV = (double) (currentPage + 1 - first) / (last - first);
+            scrollPane.setVvalue(Math.min(1.0, targetV));
+            atualizarPaginaScroll(currentPage + 1);
+        }
+    }
+
+    @FXML
+    private void Procurar(ActionEvent event) { aplicarFiltro(); }
+
+    @FXML
+    private void ZoomIn(ActionEvent event) {}
+    @FXML
+    private void ZoomOut(ActionEvent event) {}
+
+    // ===================== DISCIPLINAS =====================
+
+    private void carregarDisciplinas() {
+        LinkedHashMap<UUID, DisciplinaOption> opcoes = new LinkedHashMap<>();
+        for (ProgressoAlunoDisciplinaDto p : DisciplinaService.getProgressoDisciplinasCandidatoSafe()) {
+            if (p == null || p.disciplinaId() == null) continue;
+            String nome = firstNonBlank(p.disciplina(), DisciplinaService.findByNomeIdSearch(p.disciplinaId()));
+            if (!DisciplinaService.isDisciplinaSuportada(nome)) continue;
+            opcoes.putIfAbsent(p.disciplinaId(), new DisciplinaOption(p.disciplinaId(), nome));
+        }
         disciplinaCombo.setItems(FXCollections.observableArrayList(opcoes.values()));
         if (disciplinaCombo.getItems().isEmpty()) {
             questionProgressBar.setVisible(false);
@@ -596,88 +598,26 @@ public class BibliotecaController implements Initializable  {
             pdfList.setVisible(true);
             return;
         }
-
         disciplinaCombo.getSelectionModel().selectFirst();
         aplicarDisciplinaPreferidaSeExistir();
-
-        // Garante o carregamento inicial dos livros para a disciplina selecionada.
-        DisciplinaOption disciplinaInicial = disciplinaCombo.getSelectionModel().getSelectedItem();
-        if (disciplinaInicial != null) {
-            carregarLivrosDaDisciplina(disciplinaInicial.id());
-        }
+        DisciplinaOption inicial = disciplinaCombo.getSelectionModel().getSelectedItem();
+        if (inicial != null) carregarLivrosDaDisciplina(inicial.id());
     }
 
     private String firstNonBlank(String first, String second) {
-        if (first != null && !first.isBlank()) {
-            return first.trim();
-        }
-        if (second != null && !second.isBlank()) {
-            return second.trim();
-        }
+        if (first != null && !first.isBlank()) return first.trim();
+        if (second != null && !second.isBlank()) return second.trim();
         return "";
     }
 
     private void aplicarDisciplinaPreferidaSeExistir() {
         String preferida = disciplinaPreferida;
         disciplinaPreferida = null;
-
-        if (preferida == null || preferida.isBlank() || disciplinaCombo.getItems().isEmpty()) {
-            return;
-        }
-
+        if (preferida == null || preferida.isBlank() || disciplinaCombo.getItems().isEmpty()) return;
         String alvo = TextoUtil.normalizarMinusculo(preferida);
         disciplinaCombo.getItems().stream()
-            .filter(item -> TextoUtil.normalizarMinusculo(item.nome()).equals(alvo))
+            .filter(i -> TextoUtil.normalizarMinusculo(i.nome()).equals(alvo))
             .findFirst()
-            .ifPresent(item -> disciplinaCombo.getSelectionModel().select(item));
+            .ifPresent(i -> disciplinaCombo.getSelectionModel().select(i));
     }
-
-
-    @FXML
-    private void InitPag(ActionEvent event) {
-        if (document != null) {
-            scrollPane.setVvalue(0);
-        }
-    }
-
-    @FXML
-    private void LastPag(ActionEvent event) {
-        if (document != null) {
-            scrollPane.setVvalue(1.0);
-        }
-    }
-
-    @FXML
-    private void PagAnterior(ActionEvent event) {
-        if (document != null && currentPage > 0) {
-            double targetV = (double) (currentPage - 1) / (document.getNumberOfPages() - 1);
-            scrollPane.setVvalue(targetV);
-        }
-    }
-
-    @FXML
-    private void PagSeguinte(ActionEvent event) {
-        if (document != null && currentPage < document.getNumberOfPages() - 1) {
-            // Calcula a posição aproximada da próxima página
-            double pageHeight = pageContainer.getHeight() / document.getNumberOfPages();
-            double currentPixel = scrollPane.getVvalue() * (pageContainer.getHeight() - scrollPane.getViewportBounds().getHeight());
-            double nextPixel = currentPixel + pageHeight;
-            scrollPane.setVvalue(nextPixel / (pageContainer.getHeight() - scrollPane.getViewportBounds().getHeight()));
-        }
-    }
-
-
-    private String construirResumoBiblioteca(String disciplinaNome, int totalLivros) {
-        if (totalLivros <= 0) {
-            return "A biblioteca de " + disciplinaNome + " ainda esta vazia. Envia o primeiro PDF para gerar perguntas.";
-        }
-        return totalLivros == 1
-            ? "1 livro carregado em " + disciplinaNome + ". Podes relancar a geracao sempre que adicionares novo material."
-            : totalLivros + " livros carregados em " + disciplinaNome + ". A disciplina ja esta pronta para releituras.";
-    }
-
-
-
-
-
 }

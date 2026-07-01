@@ -24,7 +24,7 @@ public class CalculoStats {
 
     public static double calcularVelocidade(int duracaoSegundos, int totalQuestoes, ConfiguracaoDto configuracao) {
         if (duracaoSegundos <= 0 || totalQuestoes <= 0) {
-            return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro de velocidade ainda fixo.
+            return 0.5d;
         }
         double mediaPorQuestao = duracaoSegundos / (double) totalQuestoes;
         double baseline = resolverBaselineVelocidade(configuracao);
@@ -34,7 +34,7 @@ public class CalculoStats {
 
     public static double calcularVelocidadePorQuestao(long duracaoSegundos, double tempoSugerido) {
         if (duracaoSegundos <= 0 || tempoSugerido <= 0) {
-            return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro por questao ainda fixo.
+            return 0.5d;
         }
         double normalizado=duracaoSegundos/tempoSugerido;
         return Math.max(0d, Math.min(1d, normalizado));
@@ -223,9 +223,10 @@ public class CalculoStats {
             return 0d;
         }
 
-        double estabilidadeAcertos = 1d - Math.min(1d, calcularDesvioPadrao(acertos) / 0.5d); // TODO CONFIG_ADAPTATIVA: desvio-base de acertos ainda fixo.
+        double scoreNeutro = resolverScoreNeutro(adaptacao);
+        double estabilidadeAcertos = 1d - Math.min(1d, calcularDesvioPadrao(acertos) / scoreNeutro);
         double estabilidadeRitmo = ritmos.size() < 2
-            ? 0.5d // TODO CONFIG_ADAPTATIVA: fallback de estabilidade de ritmo ainda fixo.
+            ? scoreNeutro
             : 1d - Math.min(1d, calcularCoeficienteVariacao(ritmos));
 
         double pesoAcerto = resolverPesoConsistenciaAcerto(adaptacao);
@@ -244,14 +245,15 @@ public class CalculoStats {
         }
 
         List<ReacaoTeste> janela = ultimasReacoesValidas(historico, resolverJanelaConsistencia(adaptacao));
+        double scoreNeutro = resolverScoreNeutro(adaptacao);
         if (janela.isEmpty()) {
-            return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback de consistencia sem historico ainda fixo.
+            return scoreNeutro;
         }
 
         double mediaAcertos = janela.stream()
             .mapToDouble(reacao -> acertou(reacao) ? 1d : 0d)
             .average()
-            .orElse(0.5d); // TODO CONFIG_ADAPTATIVA: media neutra de acertos ainda fixa.
+            .orElse(scoreNeutro);
 
         double desvioAcerto = Math.abs((acertou(atual) ? 1d : 0d) - mediaAcertos);
 
@@ -261,7 +263,7 @@ public class CalculoStats {
             .filter(java.util.Objects::nonNull)
             .toList();
 
-        double desvioRitmo = 0.5d; // TODO CONFIG_ADAPTATIVA: desvio-base de ritmo ainda fixo.
+        double desvioRitmo = scoreNeutro;
         if (ritmoAtual != null && !ritmosHistoricos.isEmpty()) {
             double mediaRitmo = ritmosHistoricos.stream().mapToDouble(Double::doubleValue).average().orElse(1d);
             desvioRitmo = Math.min(1d, Math.abs(ritmoAtual - mediaRitmo));
@@ -339,12 +341,12 @@ public class CalculoStats {
 
         ReacaoTeste ultimaReacao = ultimaReacaoValida(historico);
         if (ultimaReacao == null) {
-            return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro sem reacao anterior ainda fixo.
+            return resolverScoreNeutro(adaptacao);
         }
 
         double tempoLentoFator = resolverTempoLentoFator(adaptacao);
         if (!ehEventoAdverso(ultimaReacao, tempoLentoFator)) {
-            return 0.5d; // TODO CONFIG_ADAPTATIVA: fallback neutro sem evento adverso ainda fixo.
+            return resolverScoreNeutro(adaptacao);
         }
 
         int adversidadesConsecutivas = contarAdversidadesConsecutivas(historico, tempoLentoFator);
@@ -480,7 +482,8 @@ public class CalculoStats {
         }
 
         double confianca = Math.min(1d, totalAmostras / (double) Math.max(1, amostrasConfiancaPlena));
-        return limitar01((0.5d * (1d - confianca)) + (limitar01(score) * confianca)); // TODO CONFIG_ADAPTATIVA: blending com score neutro ainda fixo.
+        double neutro = PADRAO_V1.scoreNeutro();
+        return limitar01((neutro * (1d - confianca)) + (limitar01(score) * confianca));
     }
 
     private static boolean ehEventoAdverso(ReacaoTeste reacao) {
@@ -617,6 +620,16 @@ public class CalculoStats {
             return 120d;
         }
         return configuracao.velocidade_segundos_por_percent();
+    }
+
+    private static double resolverScoreNeutro(ConfiguracaoTesteAdaptativoDto adaptacao) {
+        if (adaptacao == null) {
+            return PADRAO_V1.scoreNeutro();
+        }
+        if (adaptacao.scoreNeutro() <= 0d) {
+            return PADRAO_V1.scoreNeutro();
+        }
+        return adaptacao.scoreNeutro();
     }
 
     private static double[] normalizarPesos(double primeiro, double segundo) {

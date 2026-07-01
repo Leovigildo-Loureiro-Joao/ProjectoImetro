@@ -18,9 +18,16 @@ public record BibliotecaLivroDto(
     Instant criadoEm,
     Instant atualizadoEm,
     int totalPaginas,
-    int paginasComTexto
+    int paginasComTexto,
+    String geminiFileUri,
+    String geminiFileName,
+    Instant geminiUploadedEm
 ) {
     public boolean possuiPaginasExtraidas() {
         return totalPaginas > 0;
+    }
+
+    public boolean possuiGeminiUpload() {
+        return geminiFileUri != null && !geminiFileUri.isBlank();
     }
 }

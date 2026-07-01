@@ -37,6 +37,7 @@ import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.domain.enums.Foco;
+import com.imetro.persistence.repository.LivroMapaTopicosRepository;
 import com.imetro.persistence.repository.PlaneamentoEstudoRepository;
 import com.imetro.persistence.repository.TesteRepository;
 import com.imetro.util.Authentication;
@@ -53,6 +54,7 @@ public class  PlaneamentoEstudoService {
     private final TesteRepository testeRepository = new TesteRepository();
     private Map<String, Double> progressoPorSubtopico = Map.of();
     private final PlaneamentoEstudoRepository planeamentoRepository = new PlaneamentoEstudoRepository();
+    private final LivroMapaTopicosRepository livroMapaTopicosRepository = new LivroMapaTopicosRepository();
 
     public PlaneamentoEstudoResumo gerarResumo(UUID candidatoId) {
 
@@ -128,6 +130,9 @@ public class  PlaneamentoEstudoService {
         String focoAtual = montarFocoAtual(foco);
         String focoAtual2 = montarFocoAtual(segundo);
 
+        //livroMapaTopicosRepository.findSubTopicos(foco);
+        //livroMapaTopicosRepository.findSubTopicos(foco);
+
         List<PlaneamentoEstudoInsight> insights = construirInsights(disciplinas);
         List<PlaneamentoEstudoEtapa> etapas = construirEtapas(disciplinas);
         List<PlaneamentoEstudoRegistro> registros = construirRegistros(testesRows);
@@ -143,6 +148,8 @@ public class  PlaneamentoEstudoService {
             focoSecundario,
             focoAtual,
             focoAtual2,
+            null,
+            null,
             insights,
             etapas,
             registros,

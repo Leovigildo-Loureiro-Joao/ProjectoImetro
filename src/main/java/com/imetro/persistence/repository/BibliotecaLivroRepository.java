@@ -2,6 +2,7 @@ package com.imetro.persistence.repository;
 
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroPaginaDto;
+import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,6 +31,9 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
           l.criado_em,
           l.atualizado_em,
           l.capa_thumbnail,
+          l.gemini_file_uri,
+          l.gemini_file_name,
+          l.gemini_uploaded_em,
           coalesce(pg.total_paginas, 0) as total_paginas,
           coalesce(pg.paginas_com_texto, 0) as paginas_com_texto
         from biblioteca_livros l
@@ -110,6 +114,37 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
         }
     }
 
+    public Optional<BibliotecaLivroDto> findByNomeArquivoETamanho(String nomeArquivo, long tamanhoBytes)
+        throws SQLException {
+        String sql = LIVRO_QUERY + """
+            where l.nome_arquivo = ? and l.tamanho_bytes = ?
+            limit 1
+            """;
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = preparar(conn, sql, nomeArquivo, tamanhoBytes);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return Optional.of(mapLivro(rs));
+            }
+            return Optional.empty();
+        }
+    }
+
+    public void atualizarGeminiUpload(UUID livroId, String fileUri, String fileName) throws SQLException {
+        String sql = """
+            update biblioteca_livros set
+              gemini_file_uri = ?,
+              gemini_file_name = ?,
+              gemini_uploaded_em = now(),
+              atualizado_em = now()
+            where id = ?
+            """;
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = preparar(conn, sql, fileUri, fileName, livroId)) {
+            stmt.executeUpdate();
+        }
+    }
+
     public List<BibliotecaLivroPaginaDto> listarPaginas(UUID livroId) throws SQLException {
         try (Connection conn = openRequiredConnection()) {
             return listarPaginas(conn, livroId);
@@ -130,6 +165,44 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
                 paginas.add(mapPagina(rs));
             }
             return List.copyOf(paginas);
+        }
+    }
+
+    public void substituirMapaTopicos(UUID livroId, List<TopicoSubtopico> topicos) throws SQLException {
+        try (Connection conn = openRequiredConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement delete = conn.prepareStatement(
+                    "delete from livro_mapa_topicos where livro_id = ?")) {
+                    delete.setObject(1, livroId);
+                    delete.executeUpdate();
+                }
+
+                if (topicos != null && !topicos.isEmpty()) {
+                    String insertSql = """
+                        insert into livro_mapa_topicos (livro_id, topico, subtopico, pagina_inicio, pagina_fim, criado_em)
+                        values (?, ?, ?, ?, ?, now())
+                        """;
+                    try (PreparedStatement insert = conn.prepareStatement(insertSql)) {
+                        for (TopicoSubtopico t : topicos) {
+                            insert.setObject(1, livroId);
+                            insert.setString(2, t.topico());
+                            insert.setString(3, t.subtopico());
+                            insert.setInt(4, t.paginaInicio());
+                            insert.setInt(5, t.paginaFim());
+                            insert.addBatch();
+                        }
+                        insert.executeBatch();
+                    }
+                }
+
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
     }
 
@@ -187,8 +260,8 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
               source_path = excluded.source_path,
               conteudo_pdf = excluded.conteudo_pdf,
               ativo = true,
-              atualizado_em = now()
-              capa_thumbnail = excluded.capa_thumbnail,  
+              atualizado_em = now(),
+              capa_thumbnail = excluded.capa_thumbnail
             returning id
             """;
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -300,7 +373,10 @@ public final class BibliotecaLivroRepository extends JdbcBasicSqlRepository {
             toInstant(rs.getTimestamp("criado_em")),
             toInstant(rs.getTimestamp("atualizado_em")),
             rs.getInt("total_paginas"),
-            rs.getInt("paginas_com_texto")
+            rs.getInt("paginas_com_texto"),
+            rs.getString("gemini_file_uri"),
+            rs.getString("gemini_file_name"),
+            toInstant(rs.getTimestamp("gemini_uploaded_em"))
         );
     }
 

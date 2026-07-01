@@ -1,98 +1,91 @@
 .livro-card {
-
-    -fx-background-color:
-        linear-gradient(
-            to bottom,
-            #fadec7,
-            #ffcea0
-        );
-
-    -fx-background-radius: 8;
-
-    -fx-padding: 15;
-
-    -fx-effect:
-        dropshadow(
-            gaussian,
-            rgba(32, 12, 0, 0.507),
-            25,
-            0.25,
-            0,
-            8
-        );
+    -fx-background-color: -color-surface;
+    -fx-background-radius: 16;
+    -fx-border-color: -color-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0, 0, 4);
+    -fx-padding: 0;
+    -fx-cursor: hand;
 }
-
 
 .livro-card:hover {
-
-    -fx-scale-x: 1.03;
-    -fx-scale-y: 1.03;
+    -fx-border-color: derive(-color-warning, 10%);
+    -fx-effect: dropshadow(gaussian, rgba(180, 83, 9, 0.15), 16, 0, 0, 6);
+    -fx-translate-y: -2;
 }
 
+.livro-capa {
+    -fx-background-radius: 16 16 0 0;
+    -fx-border-radius: 16 16 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
+}
 
 .livro-titulo {
-
-    -fx-text-fill: rgb(70, 70, 70);
-
-    -fx-font-size: 16;
-
-    -fx-font-weight: bold;
+    -fx-text-fill: -color-text;
+    -fx-font-size: 15;
+    -fx-font-weight: 700;
+    -fx-wrap-text: true;
+    -fx-line-spacing: 2;
 }
-
 
 .livro-autor {
-
-    -fx-text-fill: #9CA3AF;
-
+    -fx-text-fill: -color-muted;
     -fx-font-size: 12;
 }
-
 
 .info-icon {
-
-    -fx-icon-color: #ffffff;
-
-    -fx-icon-size: 16;
+    -fx-icon-color: -color-warning;
+    -fx-icon-size: 14;
 }
-
 
 .info-label {
-
-    -fx-text-fill: #636363;
-}
-
-
-.progresso-texto {
-
-    -fx-text-fill: #505050;
-
+    -fx-text-fill: -color-text-secondary;
     -fx-font-size: 12;
 }
 
-
-.progress-bar {
-
-    -fx-pref-height: 8;
+.progresso-texto {
+    -fx-text-fill: -color-warning;
+    -fx-font-size: 11;
+    -fx-font-weight: 700;
 }
 
+.progresso-bar {
+    -fx-pref-height: 6;
+    -fx-max-width: Infinity;
+}
 
+.progresso-bar .bar {
+    -fx-background-color: linear-gradient(to right, #d97706, #eb8525);
+    -fx-background-radius: 3;
+    -fx-padding: 0;
+}
 
+.progresso-bar .track {
+    -fx-background-color: -color-border;
+    -fx-background-radius: 3;
+    -fx-pref-height: 6;
+}
 
 .btn-ler {
-
-    -fx-background-color: #0e0c0c;
-
+    -fx-background-color: linear-gradient(to right, #b45309, #d97706);
     -fx-text-fill: white;
-
-    -fx-background-radius: 14;
-
+    -fx-background-radius: 10;
     -fx-padding: 8 16;
+    -fx-font-size: 13;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(180, 83, 9, 0.25), 6, 0, 0, 2);
 }
 
-.capa-livro {
-    -fx-background-radius: 12;
+.btn-ler:hover {
+    -fx-background-color: linear-gradient(to right, #92400e, #b45309);
 }
 
+.btn-ler FontIcon {
+    -fx-icon-color: white;
+    -fx-icon-size: 12;
+}
 
 .pdf-page {
     -fx-effect:
@@ -104,4 +97,43 @@
             0,
             8
         );
+}
+
+
+.page-area {
+    -fx-padding: 10;
+    -fx-background-color: -color-bg;
+    -fx-border-color: -color-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 6, 0, 0, 2);
+}
+
+.topico-card {
+    -fx-background-color: -color-surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -color-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 8, 0, 0, 2);
+    -fx-max-width: 600;
+    -fx-min-width: 400;
+}
+
+.topico-card:hover {
+    -fx-border-color: -color-warning;
+    -fx-effect: dropshadow(gaussian, rgba(180, 83, 9, 0.12), 10, 0, 0, 4);
+    -fx-translate-x: 2;
+}
+
+.topico-card .h2 {
+    -fx-font-size: 15;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text;
+}
+
+.topico-card .muted {
+    -fx-text-fill: -color-muted;
+    -fx-font-size: 13;
 }

@@ -8,6 +8,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Rectangle;
 
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -31,14 +32,19 @@ public class LivroCard extends VBox {
 
         ImageView capaView = new ImageView(capa);
 
-        capaView.setFitWidth(180);
-        capaView.setFitHeight(240);
+        capaView.setFitWidth(200);
+        capaView.setFitHeight(260);
         capaView.setPreserveRatio(false);
 
         StackPane capaContainer = new StackPane(capaView);
 
         capaContainer.getStyleClass()
                 .add("livro-capa");
+
+        Rectangle clip = new Rectangle(200, 260);
+        clip.setArcWidth(16);
+        clip.setArcHeight(16);
+        capaContainer.setClip(clip);
 
 
         //-------------------------
@@ -49,12 +55,14 @@ public class LivroCard extends VBox {
 
         lblTitulo.getStyleClass()
                 .add("livro-titulo");
+        lblTitulo.setMaxWidth(190);
 
 
         Label lblAutor = new Label(autor);
 
         lblAutor.getStyleClass()
                 .add("livro-autor");
+        lblAutor.setMaxWidth(190);
 
 
         //-------------------------
@@ -111,6 +119,7 @@ public class LivroCard extends VBox {
 
         btnLer.getStyleClass()
                 .add("btn-ler");
+        btnLer.setMaxWidth(Double.MAX_VALUE);
 
 
         //-------------------------
@@ -118,7 +127,7 @@ public class LivroCard extends VBox {
         //-------------------------
 
         VBox info = new VBox(
-                5,
+                4,
                 lblTitulo,
                 lblAutor,
                 disciplinaBox,
@@ -129,7 +138,7 @@ public class LivroCard extends VBox {
         );
 
         info.setPadding(
-                new Insets(10, 5, 5, 5)
+                new Insets(12, 10, 12, 10)
         );
 
 
@@ -139,7 +148,7 @@ public class LivroCard extends VBox {
         );
 
 
-        setSpacing(10);
+        setSpacing(0);
         setAlignment(Pos.TOP_CENTER);
 
         setPrefWidth(220);
@@ -172,7 +181,7 @@ public class LivroCard extends VBox {
 
         HBox box =
                 new HBox(
-                        8,
+                        6,
                         fontIcon,
                         label
                 );

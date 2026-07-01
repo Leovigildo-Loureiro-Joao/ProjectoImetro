@@ -1,10 +1,12 @@
 package com.imetro.services;
 
 import com.imetro.config.Env;
+import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
 import com.imetro.domain.dto.gemini.GeracaoSimuladoRequest;
 import com.imetro.domain.dto.gemini.ParsedJsonString;
 import com.imetro.domain.dto.gemini.UploadedPdf;
+import com.imetro.persistence.repository.BibliotecaLivroRepository;
 import com.imetro.util.TextoUtil;
 import com.imetro.util.AppLogger;
 
@@ -21,8 +23,10 @@ import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,6 +53,8 @@ public class GeminiService {
     private final HttpClient httpClient;
     private final String apiKey;
     private final String defaultModel;
+    private final Map<Path, UploadedPdf> uploadCache = new ConcurrentHashMap<>();
+    private BibliotecaLivroRepository bibliotecaLivroRepository;
 
     public GeminiService() {
         this(
@@ -66,6 +72,10 @@ public class GeminiService {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
         this.apiKey = apiKey == null ? null : apiKey.trim();
         this.defaultModel = firstNonBlank(defaultModel, DEFAULT_MODEL);
+    }
+
+    public void setBibliotecaLivroRepository(BibliotecaLivroRepository bibliotecaLivroRepository) {
+        this.bibliotecaLivroRepository = bibliotecaLivroRepository;
     }
 
     public boolean isConfigured() {
@@ -268,6 +278,20 @@ public class GeminiService {
     }
 
     private UploadedPdf uploadPdf(Path pdfPath) throws IOException, InterruptedException {
+        Path caminhoNormalizado = pdfPath.toAbsolutePath().normalize();
+        UploadedPdf cached = uploadCache.get(caminhoNormalizado);
+        if (cached != null) {
+            LOGGER.info("PDF ja enviado anteriormente: " + pdfPath.getFileName() + " (usa cache de memoria).");
+            return cached;
+        }
+
+        UploadedPdf dbCached = buscarUploadNaBaseDeDados(caminhoNormalizado);
+        if (dbCached != null) {
+            LOGGER.info("PDF ja enviado anteriormente: " + pdfPath.getFileName() + " (usa cache da base de dados).");
+            uploadCache.put(caminhoNormalizado, dbCached);
+            return dbCached;
+        }
+
         long fileSize = Files.size(pdfPath);
         LOGGER.info("A iniciar upload do PDF " + pdfPath.getFileName() + " (" + fileSize + " bytes).");
         String startBody = "{\"file\":{\"display_name\":\"" + escapeJson(pdfPath.getFileName().toString()) + "\"}}";
@@ -321,7 +345,65 @@ public class GeminiService {
             MIME_TYPE_PDF
         );
 
-        return aguardarArquivoAtivo(new UploadedPdf(fileUri, mimeType, fileName, fileState));
+        UploadedPdf uploadedPdf = aguardarArquivoAtivo(new UploadedPdf(fileUri, mimeType, fileName, fileState));
+        uploadCache.put(caminhoNormalizado, uploadedPdf);
+        salvarUploadNaBaseDeDados(caminhoNormalizado, uploadedPdf);
+        return uploadedPdf;
+    }
+
+    private UploadedPdf buscarUploadNaBaseDeDados(Path caminhoNormalizado) {
+        if (bibliotecaLivroRepository == null) {
+            return null;
+        }
+
+        try {
+            String nomeArquivo = caminhoNormalizado.getFileName().toString();
+            long tamanhoBytes = Files.size(caminhoNormalizado);
+            Optional<BibliotecaLivroDto> livro = bibliotecaLivroRepository.findByNomeArquivoETamanho(nomeArquivo, tamanhoBytes);
+            if (livro.isPresent() && livro.get().possuiGeminiUpload()) {
+                BibliotecaLivroDto dto = livro.get();
+                UploadedPdf uploaded = new UploadedPdf(
+                    dto.geminiFileUri(),
+                    dto.mimeType(),
+                    dto.geminiFileName(),
+                    null
+                );
+                try {
+                    UploadedPdf atual = consultarArquivo(uploaded);
+                    if ("ACTIVE".equals(atual.state())) {
+                        return atual;
+                    }
+                    LOGGER.warning("Upload em cache no BD ja nao esta ACTIVE: " + nomeArquivo + " (" + atual.state() + "). Vai re-enviar.");
+                } catch (IOException e) {
+                    LOGGER.warning("Nao foi possivel verificar upload em cache no BD: " + e.getMessage() + ". Vai re-enviar.");
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao consultar cache de upload no BD: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private void salvarUploadNaBaseDeDados(Path caminhoNormalizado, UploadedPdf uploadedPdf) {
+        if (bibliotecaLivroRepository == null) {
+            return;
+        }
+
+        try {
+            String nomeArquivo = caminhoNormalizado.getFileName().toString();
+            long tamanhoBytes = Files.size(caminhoNormalizado);
+            Optional<BibliotecaLivroDto> livro = bibliotecaLivroRepository.findByNomeArquivoETamanho(nomeArquivo, tamanhoBytes);
+            if (livro.isPresent()) {
+                bibliotecaLivroRepository.atualizarGeminiUpload(
+                    livro.get().id(),
+                    uploadedPdf.uri(),
+                    uploadedPdf.name()
+                );
+                LOGGER.info("Upload do PDF salvo no cache da base de dados: " + nomeArquivo);
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao salvar upload no cache do BD: " + e.getMessage());
+        }
     }
 
     private String gerarJsonEstruturado(
@@ -646,6 +728,9 @@ public class GeminiService {
         prompt.append("- Nao geres perguntas, exercicios ou respostas.\n");
         prompt.append("- Nao inventes topicos que nao estejam sustentados pelos documentos.\n");
         prompt.append("- Junta topicos repetidos e organiza os subtopicos sem duplicacao.\n");
+        prompt.append("- Para cada topico e subtopico, indica obrigatoriamente as paginas (pagina_inicio e pagina_fim) onde o conteudo aparece no PDF.\n");
+        prompt.append("- pagina_inicio e pagina_fim sao numeros inteiros baseados na numeracao original do PDF.\n");
+        prompt.append("- Os intervalos de paginas nao podem sobrepor-se entre subtopicos do mesmo topico.\n");
         prompt.append("- O campo fonteResumo deve resumir em poucas linhas o escopo dos livros.\n");
         prompt.append("- O campo observacoes deve citar lacunas, ambiguidades ou mistura de areas, se existirem.\n");
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
@@ -938,9 +1023,19 @@ public class GeminiService {
                 "type": "object",
                 "properties": {
                   "nome": { "type": "string" },
+                  "pagina_inicio": { "type": "integer" },
+                  "pagina_fim": { "type": "integer" },
                   "subtopicos": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "nome": { "type": "string" },
+                        "pagina_inicio": { "type": "integer" },
+                        "pagina_fim": { "type": "integer" }
+                      },
+                      "required": ["nome", "pagina_inicio", "pagina_fim"]
+                    }
                   }
                 },
                 "required": ["nome", "subtopicos"]

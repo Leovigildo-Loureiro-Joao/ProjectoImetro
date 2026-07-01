@@ -465,7 +465,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
 
         botoesDisciplinasBox.getChildren().add(Loading.load());
 
-        CompletableFuture.supplyAsync(() -> service.carregarDisciplinasDisponiveis())
+        CompletableFuture.supplyAsync(() -> service.carregarDisciplinasDisponiveis(), App.getExecutorService())
             .thenAcceptAsync(disciplinasDisponiveis -> {
                 disciplinas = disciplinasDisponiveis;
                 resumos = testeService.carregarResumoHistoricoDisciplinas(disciplinasDisponiveis, 4);
@@ -1396,49 +1396,65 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         String recomendacao = getRecomendacao(porcentagemAcertos);
         UUID candidatoID = Authentication.getCurrentUserId();
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
+        UUID disciplinaId = QuestaoUtil.resolverDisciplinaId(disciplinaSelecionada);
 
-        try {
-            UUID disciplinaId = QuestaoUtil.resolverDisciplinaId(disciplinaSelecionada);
-            DiagnosticoDto diagnos = diagnosticoService.getDiagnosticoRepository()
-                .buscarUltimoDiagnostico(candidatoID, disciplinaId, disciplinaSelecionada);
+        loadingMessage.setText("A guardar resultado...");
+        loadingOverlay.setVisible(true);
+        loadingOverlay.setOpacity(1);
+        loadingProgress.setProgress(-1);
 
-            testeService.registrarTesteConcluido(
-                nivelAtualAdaptativo,
-                candidatoID,
-                diagnos == null ? null : diagnos.id(),
-                focoQuestoes,
-                respostasUsuario,
-                reacao,
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                DiagnosticoDto diagnos = diagnosticoService.getDiagnosticoRepository()
+                    .buscarUltimoDiagnostico(candidatoID, disciplinaId, disciplinaSelecionada);
+
+                testeService.registrarTesteConcluido(
+                    nivelAtualAdaptativo,
+                    candidatoID,
+                    diagnos == null ? null : diagnos.id(),
+                    focoQuestoes,
+                    respostasUsuario,
+                    reacao,
+                    tempo.getText(),
+                    recomendacao
+                );
+            } catch (SQLException e) {
+                throw new RuntimeException("Erro ao guardar teste adaptativo", e);
+            }
+            return null;
+        }, App.getExecutorService())
+        .thenAcceptAsync(ignored -> {
+            loadingOverlay.setVisible(false);
+            ResultadoPayload payload = new ResultadoPayload(
+                "Exame Adaptativo",
+                formatarDisciplina(disciplinaSelecionada),
+                acertos,
+                erros,
+                totalQuestoes,
+                porcentagemAcertos,
                 tempo.getText(),
-                recomendacao
+                nivelAtualAdaptativo.codigo(),
+                perfil,
+                recomendacao,
+                "views/pages/candidato/testes",
+                questoesResultado
             );
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-        }
 
-        ResultadoPayload payload = new ResultadoPayload(
-            "Exame Adaptativo",
-            formatarDisciplina(disciplinaSelecionada),
-            acertos,
-            erros,
-            totalQuestoes,
-            porcentagemAcertos,
-            tempo.getText(),
-            nivelAtualAdaptativo.codigo(),
-            perfil,
-            recomendacao,
-            "views/pages/candidato/testes",
-            questoesResultado
-        );
+            ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = criarResumoTesteCompacto(porcentagemAcertos);
 
-        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = criarResumoTesteCompacto(porcentagemAcertos);
-
-        abrirCelebracaoResultado(
-            payload,
-            celebrationSummary,
-            () -> mostrarResultadoFallbackTeste(celebrationSummary)
-        );
+            abrirCelebracaoResultado(
+                payload,
+                celebrationSummary,
+                () -> mostrarResultadoFallbackTeste(celebrationSummary)
+            );
+        }, Platform::runLater)
+        .exceptionally(ex -> {
+            loadingOverlay.setVisible(false);
+            System.err.println("Erro ao finalizar teste adaptativo: " + ex.getMessage());
+            ex.printStackTrace();
+            Platform.runLater(() -> mostrarAlerta("Erro ao guardar", "Ocorreu um erro ao guardar os resultados: " + ex.getMessage()));
+            return null;
+        });
     }
 
     private String determinarPerfil(double porcentagem, double tempoMedio) {

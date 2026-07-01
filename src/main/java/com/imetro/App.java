@@ -53,10 +53,20 @@ public class App extends Application {
 
     public static final ExecutorService EXECUTOR_DIAGNOSTICO = Executors.newSingleThreadScheduledExecutor(runnable -> {
         Thread thread = new Thread(runnable);
-        thread.setName("imetro-app-executor-diagnotico");
+        thread.setName("imetro-app-executor-diagnostico");
         thread.setDaemon(true);
         thread.setUncaughtExceptionHandler((worker, throwable) ->
             LOGGER.log(Level.SEVERE, "Excecao nao tratada no executor da aplicacao.", throwable)
+        );
+        return thread;
+    });
+
+    public static final ExecutorService EXECUTOR_BOOTSTRAP = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("imetro-bootstrap-executor");
+        thread.setDaemon(true);
+        thread.setUncaughtExceptionHandler((worker, throwable) ->
+            LOGGER.log(Level.SEVERE, "Excecao nao tratada no executor de bootstrap.", throwable)
         );
         return thread;
     });
@@ -93,6 +103,8 @@ public class App extends Application {
     public void stop() {
         EXECUTOR.shutdownNow();
         EXECUTOR_DIAGNOSTICO.shutdownNow();
+        EXECUTOR_BOOTSTRAP.shutdownNow();
+        Database.shutdown();
     }
 
     private static void loadAppFonts() {

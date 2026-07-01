@@ -29,6 +29,7 @@ public record ConfiguracaoTesteAdaptativoDto(
     double resilienciaQuestaoBonusAcerto,
     double resilienciaQuestaoBonusRitmo,
     double resilienciaQuestaoBonusRecuperacao,
+    double scoreNeutro,
     LocalDateTime criadoEm,
     LocalDateTime atualizadoEm,
     List<ConfiguracaoTesteAdaptativoNivelDto> niveis,
@@ -63,6 +64,7 @@ public record ConfiguracaoTesteAdaptativoDto(
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_bonus_acerto")), 0.65d),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_bonus_ritmo")), 0.15d),
             DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("resiliencia_questao_bonus_recuperacao")), 0.10d),
+            DtoMapperSupport.valueOrDefault(DtoMapperSupport.parseDouble(map.get("score_neutro")), 0.50d),
             DtoMapperSupport.parseDateTime(map.get("criado_em")),
             DtoMapperSupport.parseDateTime(map.get("atualizado_em")),
             List.of(),
@@ -91,6 +93,7 @@ public record ConfiguracaoTesteAdaptativoDto(
             0.65d,
             0.15d,
             0.10d,
+            0.50d,
             null,
             null,
             List.of(),
@@ -122,6 +125,7 @@ public record ConfiguracaoTesteAdaptativoDto(
             resilienciaQuestaoBonusAcerto,
             resilienciaQuestaoBonusRitmo,
             resilienciaQuestaoBonusRecuperacao,
+            scoreNeutro,
             criadoEm,
             atualizadoEm,
             novosNiveis,
@@ -168,6 +172,7 @@ public record ConfiguracaoTesteAdaptativoDto(
         values.put("resiliencia_questao_bonus_acerto", resilienciaQuestaoBonusAcerto());
         values.put("resiliencia_questao_bonus_ritmo", resilienciaQuestaoBonusRitmo());
         values.put("resiliencia_questao_bonus_recuperacao", resilienciaQuestaoBonusRecuperacao());
+        values.put("score_neutro", scoreNeutro());
         values.put("criado_em", criadoEm());
         values.put("atualizado_em", atualizadoEm());
         return values;

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.kordamp.ikonli.fontawesome6.FontAwesomeSolid;
@@ -697,49 +698,66 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         String recomendacao = getMensagemMotivacional(porcentagem);
         List<QuestaoResultado> questoesResultado = construirQuestoesResultado();
 
-        diagnosticoService.registrarDiagnosticoConcluido(
-            Authentication.getCurrentUserId(),
-            questoes,
-            respostasUsuario,
-            tempo.getText()
-        );
-        PlaneamentoEstudoBannerSupport.aplicar(
-            diagnosticoField == null ? null : diagnosticoField.getScene(),
-            planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId())
-        );
+        loadingMessage.setText("A guardar resultado...");
+        loadingOverlay.setVisible(true);
+        loadingOverlay.setOpacity(1);
+        loadingProgress.setProgress(-1);
 
-        ResultadoPayload payload = new ResultadoPayload(
-            "Diagnostico Academico",
-            resolverResumoDisciplinas(),
-            acertos,
-            totalQuestoes - acertos,
-            totalQuestoes,
-            porcentagem,
-            tempo.getText(),
-            nivelFinal,
-            "Diagnostico",
-            recomendacao,
-            "views/pages/candidato/diagnostico",
-            questoesResultado
-        );
+        CompletableFuture.runAsync(() -> {
+            diagnosticoService.registrarDiagnosticoConcluido(
+                Authentication.getCurrentUserId(),
+                questoes,
+                respostasUsuario,
+                tempo.getText()
+            );
+        }, App.getExecutorService())
+        .thenRunAsync(() -> {
+            loadingOverlay.setVisible(false);
+            PlaneamentoEstudoBannerSupport.aplicar(
+                diagnosticoField == null ? null : diagnosticoField.getScene(),
+                planeamentoService.resolverEstadoAtual(Authentication.getCurrentUserId())
+            );
 
-        ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = ResultadoCelebracaoSupport.criarResumo(
-            Authentication.getCurrentUserId(),
-            "Diagnostico Academico",
-            resolverResumoDisciplinas(),
-            acertos,
-            totalQuestoes,
-            porcentagem,
-            tempo.getText(),
-            calcularTempoMedioSegundos(),
-            true
-        );
+            ResultadoPayload payload = new ResultadoPayload(
+                "Diagnostico Academico",
+                resolverResumoDisciplinas(),
+                acertos,
+                totalQuestoes - acertos,
+                totalQuestoes,
+                porcentagem,
+                tempo.getText(),
+                nivelFinal,
+                "Diagnostico",
+                recomendacao,
+                "views/pages/candidato/diagnostico",
+                questoesResultado
+            );
 
-        abrirCelebracaoResultado(
-            payload,
-            celebrationSummary,
-            () -> mostrarResultadoFallbackDiagnostico(acertos, porcentagem, nivelFinal, recomendacao)
-        );
+            ResultadoCelebracaoSupport.CelebrationSummary celebrationSummary = ResultadoCelebracaoSupport.criarResumo(
+                Authentication.getCurrentUserId(),
+                "Diagnostico Academico",
+                resolverResumoDisciplinas(),
+                acertos,
+                totalQuestoes,
+                porcentagem,
+                tempo.getText(),
+                calcularTempoMedioSegundos(),
+                true
+            );
+
+            abrirCelebracaoResultado(
+                payload,
+                celebrationSummary,
+                () -> mostrarResultadoFallbackDiagnostico(acertos, porcentagem, nivelFinal, recomendacao)
+            );
+        }, Platform::runLater)
+        .exceptionally(ex -> {
+            loadingOverlay.setVisible(false);
+            System.err.println("Erro ao finalizar diagnostico: " + ex.getMessage());
+            ex.printStackTrace();
+            Platform.runLater(() -> mostrarAlerta("Erro ao guardar", "Ocorreu um erro ao guardar os resultados do diagnostico."));
+            return null;
+        });
     }
 
     private String resolverResumoDisciplinas() {

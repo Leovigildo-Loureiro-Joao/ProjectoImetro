@@ -9,6 +9,7 @@ import com.imetro.domain.dto.perguntas.GeracaoLoteResultado;
 import com.imetro.domain.dto.perguntas.GeracaoQuestoesEmLotes;
 import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.enums.BootstrapStatus;
+import com.imetro.persistence.repository.BibliotecaLivroRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.util.AppLogger;
 import com.imetro.util.QuestaoUtil;
@@ -57,6 +58,7 @@ public class PerguntasBootstrapService {
     public PerguntasBootstrapService() {
         this.geminiService = new GeminiService();
         this.uploadBootstrapService = new DisciplinaUploadBootstrapService();
+        this.geminiService.setBibliotecaLivroRepository(new BibliotecaLivroRepository());
     }
 
     public List<BootstrapResult> processarDisciplinasAutomaticasDoCandidato(UUID candidatoId) {
@@ -690,24 +692,35 @@ public class PerguntasBootstrapService {
         LinkedHashSet<String> chaves = new LinkedHashSet<>();
         ArrayList<TopicoSubtopico> pares = new ArrayList<>();
         for (String objetoTopico : extrairObjetosJsonArray(topicosArray)) {
-            String topico = extrairCampoStringJson(objetoTopico, "nome");
-            List<String> subtopicos = extrairCampoArrayStringsJson(objetoTopico, "subtopicos");
-            if (subtopicos.isEmpty()) {
+            String nomeTopico = extrairCampoStringJson(objetoTopico, "nome");
+            if (nomeTopico == null || nomeTopico.isBlank()) {
+                nomeTopico = "Geral";
+            }
+            nomeTopico = nomeTopico.trim();
+
+            int topicoPagInicio = extrairCampoInteiroJson(objetoTopico, "pagina_inicio", 0);
+            int topicoPagFim = extrairCampoInteiroJson(objetoTopico, "pagina_fim", 0);
+
+            String subtopicosArray = extrairCampoArrayJson(objetoTopico, "subtopicos");
+            if (subtopicosArray == null || subtopicosArray.isBlank()) {
                 continue;
             }
 
-            for (String subtopico : subtopicos) {
-                String nomeTopico = topico == null || topico.isBlank() ? "Geral" : topico.trim();
-                String nomeSubtopico = subtopico == null || subtopico.isBlank() ? null : subtopico.trim();
-                if (nomeSubtopico == null) {
+            for (String objetoSubtopico : extrairObjetosJsonArray(subtopicosArray)) {
+                String nomeSubtopico = extrairCampoStringJson(objetoSubtopico, "nome");
+                if (nomeSubtopico == null || nomeSubtopico.isBlank()) {
                     continue;
                 }
+                nomeSubtopico = nomeSubtopico.trim();
+
+                int pagInicio = extrairCampoInteiroJson(objetoSubtopico, "pagina_inicio", topicoPagInicio);
+                int pagFim = extrairCampoInteiroJson(objetoSubtopico, "pagina_fim", topicoPagFim);
 
                 String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
                 if (!chaves.add(chave)) {
                     continue;
                 }
-                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico));
+                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
             }
         }
 
@@ -725,6 +738,24 @@ public class PerguntasBootstrapService {
             return null;
         }
         return QuestaoUtil.unescapeJson(matcher.group(1));
+    }
+
+    private int extrairCampoInteiroJson(String json, String campo, int padrao) {
+        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
+            return padrao;
+        }
+
+        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*(\\d+)");
+        Matcher matcher = pattern.matcher(json);
+        if (!matcher.find()) {
+            return padrao;
+        }
+
+        try {
+            return Integer.parseInt(matcher.group(1));
+        } catch (NumberFormatException e) {
+            return padrao;
+        }
     }
 
     private List<String> extrairCampoArrayStringsJson(String json, String campo) {
@@ -858,7 +889,11 @@ public class PerguntasBootstrapService {
             .append(" EXTRA.\n");
         instrucao.append("Foca o lote apenas nestes pares topico/subtopico:\n");
         for (TopicoSubtopico foco : lote.focos()) {
-            instrucao.append("- ").append(foco.topico()).append(" -> ").append(foco.subtopico()).append('\n');
+            instrucao.append("- ").append(foco.topico()).append(" -> ").append(foco.subtopico());
+            if (foco.temPaginas()) {
+                instrucao.append(" (paginas ").append(foco.paginaInicio()).append("-").append(foco.paginaFim()).append(')');
+            }
+            instrucao.append('\n');
         }
         instrucao.append("Nao saias desta lista. Se precisares de contexto, usa apenas contexto imediato do mesmo topico e continua ancorado nas paginas citadas.\n");
         instrucao.append("Evita repetir enunciados de outros lotes e mantem a distribuicao equilibrada entre todos os itens desta lista.\n");

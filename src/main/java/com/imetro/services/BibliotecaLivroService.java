@@ -2,6 +2,9 @@ package com.imetro.services;
 
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroPaginaDto;
+import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
+import com.imetro.domain.dto.perguntas.TopicoSubtopico;
+import com.imetro.domain.enums.TopicoExame;
 import com.imetro.persistence.repository.BibliotecaLivroRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.util.AppLogger;
@@ -20,6 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -177,6 +181,192 @@ public class BibliotecaLivroService {
         } catch (SQLException e) {
             throw new IOException("Falha ao procurar livro por nome.", e);
         }
+    }
+
+    public Optional<BibliotecaLivroDto> encontrarLivroPorNomeArquivoETamanho(String nomeArquivo, long tamanhoBytes) throws IOException {
+        if (nomeArquivo == null || nomeArquivo.isBlank()) return Optional.empty();
+        try {
+            return repository.findByNomeArquivoETamanho(nomeArquivo, tamanhoBytes);
+        } catch (SQLException e) {
+            throw new IOException("Falha ao procurar livro por nome de arquivo.", e);
+        }
+    }
+
+    public void substituirMapaTopicos(UUID livroId, List<TopicoSubtopico> topicos) throws IOException {
+        try {
+            repository.substituirMapaTopicos(livroId, topicos);
+        } catch (SQLException e) {
+            throw new IOException("Falha ao guardar o mapa de topicos do livro.", e);
+        }
+    }
+
+    public List<TopicoSubtopico> extrairTopicosDoLivro(UUID livroId, GeminiService geminiService) throws IOException {
+        BibliotecaLivroDto livro = encontrarLivro(livroId)
+            .orElseThrow(() -> new IOException("Livro nao encontrado: " + livroId));
+        String disciplinaNome = livro.disciplinaNome();
+        TopicoExame.Disciplina disciplinaEnum = TopicoExame.resolverDisciplina(disciplinaNome).orElse(null);
+        String instrucoesCanonicas = TopicoExame.instrucoesModoInteligente(disciplinaEnum);
+        String instrucoesExtras = "Organiza os topicos com foco no conteudo programatico da disciplina " + disciplinaNome + "."
+            + (instrucoesCanonicas.isBlank() ? "" : "\n" + instrucoesCanonicas);
+        ExtracaoTopicosRequest request = new ExtracaoTopicosRequest(
+            disciplinaNome,
+            "pt-AO",
+            instrucoesExtras
+        );
+        Path tempPdf = exportarParaArquivoTemporario(livroId)
+            .orElseThrow(() -> new IOException("Nao foi possivel extrair o PDF do livro."));
+        try {
+            String jsonTopicos = geminiService.extrairTopicosJson(List.of(tempPdf), request);
+            ArrayList<TopicoSubtopico> topicos = parseTopicos(jsonTopicos);
+            if (!topicos.isEmpty()) {
+                try {
+                    repository.substituirMapaTopicos(livroId, topicos);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            return topicos;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("A extracao de topicos foi interrompida.", e);
+        } finally {
+            Files.deleteIfExists(tempPdf);
+        }
+    }
+
+    private ArrayList<TopicoSubtopico> parseTopicos(String jsonTopicos) {
+        ArrayList<TopicoSubtopico> pares = new ArrayList<>();
+        String topicosArray = extrairCampoArrayJson(jsonTopicos, "topicos");
+        if (topicosArray == null || topicosArray.isBlank()) return pares;
+
+        LinkedHashSet<String> chaves = new LinkedHashSet<>();
+        for (String objetoTopico : extrairObjetosJsonArray(topicosArray)) {
+            String nomeTopico = extrairCampoStringJson(objetoTopico, "nome");
+            if (nomeTopico == null || nomeTopico.isBlank()) nomeTopico = "Geral";
+            nomeTopico = nomeTopico.trim();
+
+            int topicoPagInicio = extrairCampoInteiroJson(objetoTopico, "pagina_inicio", 0);
+            int topicoPagFim = extrairCampoInteiroJson(objetoTopico, "pagina_fim", 0);
+
+            String subtopicosArray = extrairCampoArrayJson(objetoTopico, "subtopicos");
+            if (subtopicosArray == null || subtopicosArray.isBlank()) continue;
+
+            for (String objetoSubtopico : extrairObjetosJsonArray(subtopicosArray)) {
+                String nomeSubtopico = extrairCampoStringJson(objetoSubtopico, "nome");
+                if (nomeSubtopico == null || nomeSubtopico.isBlank()) continue;
+                nomeSubtopico = nomeSubtopico.trim();
+
+                int pagInicio = extrairCampoInteiroJson(objetoSubtopico, "pagina_inicio", topicoPagInicio);
+                int pagFim = extrairCampoInteiroJson(objetoSubtopico, "pagina_fim", topicoPagFim);
+
+                String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
+                if (!chaves.add(chave)) continue;
+                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
+            }
+        }
+        return pares;
+    }
+
+    private String extrairCampoStringJson(String json, String campo) {
+        if (json == null || campo == null) return null;
+        String procurado = "\"" + campo + "\":\"";
+        int inicio = json.indexOf(procurado);
+        if (inicio < 0) return null;
+        inicio += procurado.length();
+        int fim = json.indexOf("\"", inicio);
+        return fim < 0 ? null : json.substring(inicio, fim);
+    }
+
+    private int extrairCampoInteiroJson(String json, String campo, int padrao) {
+        if (json == null || campo == null) return padrao;
+        String procurado = "\"" + campo + "\":";
+        int inicio = json.indexOf(procurado);
+        if (inicio < 0) return padrao;
+        inicio += procurado.length();
+        StringBuilder num = new StringBuilder();
+        for (int i = inicio; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c >= '0' && c <= '9') {
+                num.append(c);
+            } else if (num.isEmpty()) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        return num.isEmpty() ? padrao : Integer.parseInt(num.toString());
+    }
+
+    private String extrairCampoArrayJson(String json, String campo) {
+        if (json == null || campo == null) return null;
+        String procurado = "\"" + campo + "\":[";
+        int inicio = json.indexOf(procurado);
+        if (inicio < 0) {
+            String procurado2 = "\"" + campo + "\": [";
+            inicio = json.indexOf(procurado2);
+            if (inicio < 0) return null;
+            inicio += procurado2.length();
+        } else {
+            inicio += procurado.length();
+        }
+        int fim = localizarFechoJson(json, inicio);
+        return fim < 0 ? null : json.substring(inicio - 1, fim + 1);
+    }
+
+    private List<String> extrairObjetosJsonArray(String jsonArray) {
+        ArrayList<String> objetos = new ArrayList<>();
+        if (jsonArray == null || jsonArray.isBlank()) return objetos;
+        jsonArray = jsonArray.trim();
+        if (!jsonArray.startsWith("[") || !jsonArray.endsWith("]")) return objetos;
+        jsonArray = jsonArray.substring(1, jsonArray.length() - 1).trim();
+        if (jsonArray.isBlank()) return objetos;
+
+        int i = 0;
+        while (i < jsonArray.length()) {
+            while (i < jsonArray.length() && Character.isWhitespace(jsonArray.charAt(i)) || jsonArray.charAt(i) == ',') i++;
+            if (i >= jsonArray.length()) break;
+            if (jsonArray.charAt(i) == '{') {
+                int fim = localizarFechoJson(jsonArray, i);
+                if (fim < 0) break;
+                objetos.add(jsonArray.substring(i, fim + 1));
+                i = fim + 1;
+            } else {
+                i++;
+            }
+        }
+        return objetos;
+    }
+
+    private int localizarFechoJson(String json, int inicio) {
+        if (inicio < 0 || inicio >= json.length()) return -1;
+        char aberto = json.charAt(inicio);
+        char fechado;
+        if (aberto == '{') fechado = '}';
+        else if (aberto == '[') fechado = ']';
+        else return -1;
+
+        int profundidade = 0;
+        boolean emString = false;
+        for (int i = inicio; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (emString) {
+                if (c == '\\') {
+                    i++;
+                } else if (c == '"') {
+                    emString = false;
+                }
+            } else {
+                if (c == '"') {
+                    emString = true;
+                } else if (c == aberto) {
+                    profundidade++;
+                } else if (c == fechado) {
+                    profundidade--;
+                    if (profundidade == 0) return i;
+                }
+            }
+        }
+        return -1;
     }
 
     public List<BibliotecaLivroDto> listarLivros(UUID disciplinaId) throws IOException {

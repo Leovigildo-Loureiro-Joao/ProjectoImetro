@@ -1,5 +1,6 @@
 package com.imetro.services;
 
+import com.imetro.App;
 import com.imetro.domain.dto.perguntas.BootstrapResult;
 import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.util.AppLogger;
@@ -14,10 +15,15 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,12 +31,6 @@ public final class PerguntasBootstrapAsyncService {
 
     private static final PerguntasBootstrapAsyncService INSTANCE = new PerguntasBootstrapAsyncService();
     private static final Logger LOGGER = AppLogger.getLogger(PerguntasBootstrapAsyncService.class);
-    private static final ExecutorService BOOTSTRAP_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
-        Thread thread = new Thread(runnable);
-        thread.setName("imetro-bootstrap-executor");
-        thread.setDaemon(true);
-        return thread;
-    });
 
     private final PerguntasBootstrapService bootstrapService = new PerguntasBootstrapService();
     private final BooleanProperty running = new SimpleBooleanProperty(false);
@@ -55,6 +55,9 @@ public final class PerguntasBootstrapAsyncService {
         if (candidatoId == null) {
             return false;
         }
+        if (!NetPositive()) {
+            return false;
+        }
 
         if (currentTask != null && currentTask.isRunning()) {
             if (candidatoId.equals(activeCandidateId)) {
@@ -70,9 +73,38 @@ public final class PerguntasBootstrapAsyncService {
         return start(candidatoId);
     }
 
+    public boolean NetPositive(){
+        try {
+            HttpClient pClient= HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(30))
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
+            HttpRequest uploadRequest = HttpRequest.newBuilder()
+                .uri(URI.create(("https://chatgpt.com/")))
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+             HttpResponse<String> uploadResponse = pClient.send(
+                uploadRequest,
+                HttpResponse.BodyHandlers.ofString()
+            );
+            return uploadResponse!=null;
+       } catch (IOException e) {
+            return false;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public synchronized boolean start(UUID candidatoId) {
         if (candidatoId == null) {
             LOGGER.warning("Tentativa de iniciar o bootstrap automatico sem candidatoId.");
+            return false;
+        }
+
+        if (true) {
             return false;
         }
 
@@ -83,48 +115,53 @@ public final class PerguntasBootstrapAsyncService {
             }
             return false;
         }
+        try {
+        
+            LOGGER.info("A iniciar o bootstrap automatico de perguntas para o candidato " + candidatoId + ".");
+            activeCandidateId = candidatoId;
+            title.set("A preparar a tua base de estudo");
+            detail.set("Os livros vao ser lidos em segundo plano e as perguntas vao entrar na base aos poucos.");
+            summary.set("");
+            progress.set(0.0);
+            state.set(BootstrapUiState.RUNNING);
+            running.set(true);
+            showBanner.set(true);
 
-        LOGGER.info("A iniciar o bootstrap automatico de perguntas para o candidato " + candidatoId + ".");
-        activeCandidateId = candidatoId;
-        title.set("A preparar a tua base de estudo");
-        detail.set("Os livros vao ser lidos em segundo plano e as perguntas vao entrar na base aos poucos.");
-        summary.set("");
-        progress.set(0.0);
-        state.set(BootstrapUiState.RUNNING);
-        running.set(true);
-        showBanner.set(true);
+            Task<List<BootstrapResult>> task = new Task<>() {
+                @Override
+                protected List<BootstrapResult> call() {
+                    updateTitle("A preparar a tua base de estudo");
+                    updateMessage("Os livros vao ser lidos em segundo plano e as perguntas vao entrar na base aos poucos.");
+                    updateProgress(0, 1);
 
-        Task<List<BootstrapResult>> task = new Task<>() {
-            @Override
-            protected List<BootstrapResult> call() {
-                updateTitle("A preparar a tua base de estudo");
-                updateMessage("Os livros vao ser lidos em segundo plano e as perguntas vao entrar na base aos poucos.");
-                updateProgress(0, 1);
-
-                return bootstrapService.processarDisciplinasAutomaticasDoCandidato(
-                    candidatoId,
-                    false,
-                    snapshot -> {
-                        updateTitle(snapshot.titulo());
-                        updateMessage(snapshot.detalhe());
-                        if (snapshot.indeterminate()) {
-                            updateProgress(-1, 1);
-                        } else {
-                            updateProgress(snapshot.progress(), 1);
+                    return bootstrapService.processarDisciplinasAutomaticasDoCandidato(
+                        candidatoId,
+                        false,
+                        snapshot -> {
+                            updateTitle(snapshot.titulo());
+                            updateMessage(snapshot.detalhe());
+                            if (snapshot.indeterminate()) {
+                                updateProgress(-1, 1);
+                            } else {
+                                updateProgress(snapshot.progress(), 1);
+                            }
                         }
-                    }
-                );
-            }
-        };
+                    );
+                }
+            };
 
-        bindToTask(task);
-        currentTask = task;
+            bindToTask(task);
+            currentTask = task;
 
-        task.setOnSucceeded(event -> finishSuccessfully(task.getValue()));
-        task.setOnFailed(event -> finishWithFailure(task.getException()));
-        task.setOnCancelled(event -> finishCancelled());
+            task.setOnSucceeded(event -> finishSuccessfully(task.getValue()));
+            task.setOnFailed(event -> finishWithFailure(task.getException()));
+            task.setOnCancelled(event -> finishCancelled());
 
-        BOOTSTRAP_EXECUTOR.execute(task);
+            App.EXECUTOR_BOOTSTRAP.execute(task);
+        } catch (Exception e) { 
+            System.out.println(e.getMessage());
+            return false;
+        }
         return true;
     }
 
@@ -196,7 +233,7 @@ public final class PerguntasBootstrapAsyncService {
         task.setOnFailed(event -> finishWithFailure(task.getException()));
         task.setOnCancelled(event -> finishCancelled());
 
-        BOOTSTRAP_EXECUTOR.execute(task);
+        App.EXECUTOR_BOOTSTRAP.execute(task);
         return true;
     }
 
