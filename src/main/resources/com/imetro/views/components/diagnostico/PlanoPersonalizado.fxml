@@ -185,10 +185,20 @@
                               <VBox fx:id="disciplinesBox" spacing="8.0" />
                            </children>
                         </VBox>
-                     </children>
-                  </HBox>
-               </children>
-            </VBox>
+          </children>
+       </HBox>
+
+       <VBox prefHeight="300.0" spacing="10.0" styleClass="card-blur, shadow">
+          <padding>
+             <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+          </padding>
+          <children>
+             <Label styleClass="h1-thin" text="Leituras recomendadas" />
+             <VBox fx:id="readingBox" spacing="8.0" />
+          </children>
+       </VBox>
+    </children>
+</VBox>
 
             <VBox fx:id="emptyStateBox" alignment="CENTER_LEFT" maxWidth="560.0" prefWidth="560.0" spacing="16.0" styleClass="placeholder-card diagnostico-first-card" visible="false">
                <padding>

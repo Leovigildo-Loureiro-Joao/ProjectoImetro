@@ -1,5 +1,9 @@
 package com.imetro.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.imetro.config.Env;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
@@ -54,6 +58,7 @@ public class GeminiService {
     private final String apiKey;
     private final String defaultModel;
     private final Map<Path, UploadedPdf> uploadCache = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private BibliotecaLivroRepository bibliotecaLivroRepository;
 
     public GeminiService() {
@@ -427,10 +432,11 @@ public class GeminiService {
 
         String responseBody = postGenerateContent(requestBody);
 
-        String json = extrairTextoResposta(responseBody);
-        if (json == null || json.isBlank()) {
+        String text = extrairTextoResposta(responseBody);
+        if (text == null || text.isBlank()) {
             throw new IOException(emptyResponseMessage + " Corpo: " + resumir(responseBody));
         }
+        String json = extrairBlocoJson(text);
         return json;
     }
 
@@ -447,10 +453,11 @@ public class GeminiService {
         );
 
         String responseBody = postGenerateContent(requestBody);
-        String json = extrairTextoResposta(responseBody);
-        if (json == null || json.isBlank()) {
+        String text = extrairTextoResposta(responseBody);
+        if (text == null || text.isBlank()) {
             throw new IOException(emptyResponseMessage + " Corpo: " + resumir(responseBody));
         }
+        String json = extrairBlocoJson(text);
         return json;
     }
 
@@ -570,6 +577,24 @@ public class GeminiService {
             text.append(trecho);
         }
         return text.toString();
+    }
+
+    public String extrairBlocoJson(String resposta) throws IOException {
+        if (resposta == null || resposta.isBlank()) {
+            throw new IOException("Resposta vazia do Gemini.");
+        }
+        int inicio = resposta.indexOf('{');
+        int fim = resposta.lastIndexOf('}');
+        if (inicio == -1 || fim == -1 || fim < inicio) {
+            throw new IOException("Resposta do Gemini nao contem um JSON valido.");
+        }
+        String json = resposta.substring(inicio, fim + 1);
+        try {
+            objectMapper.readTree(json);
+        } catch (Exception e) {
+            throw new IOException("JSON devolvido pelo Gemini e invalido: " + e.getMessage());
+        }
+        return json;
     }
 
     private String extractFirstJsonStringValue(String json, String fieldName) {
@@ -734,6 +759,13 @@ public class GeminiService {
         prompt.append("- O campo fonteResumo deve resumir em poucas linhas o escopo dos livros.\n");
         prompt.append("- O campo observacoes deve citar lacunas, ambiguidades ou mistura de areas, se existirem.\n");
         prompt.append("- Responde estritamente no JSON definido pelo schema, sem markdown.\n");
+        prompt.append("- Se o documento nao tiver uma estrutura clara de topicos (sem capitulos ou secoes visiveis),\n");
+        prompt.append("  identifica as sessoes principais pelo conteudo, mesmo que nao haja capitulos explicitos.\n");
+        prompt.append("- Se o PDF estiver mal estruturado ou for uma compilacao de exercicios sem divisao clara,\n");
+        prompt.append("  agrupa por assunto ou tipo de conteudo e cria topicos genericos como 'Introducao', 'Exercicios', 'Revisao'.\n");
+        prompt.append("- Se nao conseguires identificar subtopicos, cria pelo menos um topico com o nome 'Geral'\n");
+        prompt.append("  cobrindo a faixa completa de paginas do documento.\n");
+        prompt.append("- NUNCA devolvas texto explicativo fora do JSON. Responde apenas o JSON puro, sem ```, sem markdown.\n");
 
         if (request.instrucoesExtras() != null && !request.instrucoesExtras().isBlank()) {
             prompt.append("Instrucoes extra:\n");

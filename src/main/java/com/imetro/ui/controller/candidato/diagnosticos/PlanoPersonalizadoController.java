@@ -1,21 +1,28 @@
 package com.imetro.ui.controller.candidato.diagnosticos;
 
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.imetro.App;
+import com.imetro.domain.dto.leitura.LeituraProgresso;
+import com.imetro.domain.dto.planejamento.LeituraRecomendada;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoDisciplina;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEtapa;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoInsight;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoPonto;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
+import com.imetro.persistence.repository.LeituraProgressoRepository;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.relatorio.InsightCard;
+import com.imetro.ui.components.relatorio.LeituraCard;
 import com.imetro.ui.components.relatorio.TimelineStep;
 import com.imetro.ui.controller.lifecycle.DisposableController;
 import com.imetro.util.Authentication;
@@ -94,6 +101,9 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
     private VBox disciplinesBox;
 
     @FXML
+    private VBox readingBox;
+
+    @FXML
     private AreaChart<String, Number> evolucaoChart;
 
     @FXML
@@ -107,6 +117,7 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
 
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
+    private final LeituraProgressoRepository leituraProgressoRepository = new LeituraProgressoRepository();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -173,6 +184,7 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
         preencherInsights(resumo.insights());
         preencherEtapas(resumo.etapas());
         preencherDisciplinas(resumo.disciplinas());
+        preencherLeituras(resumo.leituras());
     }
 
     private void mostrarEstadoBloqueado() {
@@ -312,6 +324,61 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
         }
 
         disciplinesBox.getChildren().setAll(nodes);
+    }
+
+    private void preencherLeituras(List<LeituraRecomendada> leituras) {
+        if (readingBox == null) return;
+
+        ArrayList<Node> nodes = new ArrayList<>();
+        if (leituras != null && !leituras.isEmpty()) {
+            UUID alunoId = Authentication.getCurrentUserId();
+            Map<UUID, Double> progressos = carregarProgressosLeitura(alunoId, leituras);
+
+            for (LeituraRecomendada leitura : leituras) {
+                double progresso = progressos.getOrDefault(leitura.livroId(), 0.0);
+                LeituraRecomendada leituraComProgresso = new LeituraRecomendada(
+                    leitura.livroId(),
+                    leitura.tituloLivro(),
+                    leitura.disciplina(),
+                    leitura.topico(),
+                    leitura.subtopico(),
+                    leitura.paginaInicio(),
+                    leitura.paginaFim(),
+                    leitura.totalPaginas(),
+                    progresso
+                );
+                LeituraCard card = new LeituraCard(leituraComProgresso);
+                card.getMiniTesteButton().setOnAction(e ->
+                    System.out.println("Mini teste para " + leitura.tituloLivro() + " - " + leitura.topico())
+                );
+                nodes.add(card);
+            }
+        }
+
+        if (nodes.isEmpty()) {
+            nodes.add(criarEstadoSecaoVazio(
+                "Nenhuma leitura recomendada",
+                "As leituras aparecerao quando houver topicos mapeados nos livros da disciplina."
+            ));
+        }
+
+        readingBox.getChildren().setAll(nodes);
+    }
+
+    private Map<UUID, Double> carregarProgressosLeitura(UUID alunoId, List<LeituraRecomendada> leituras) {
+        Map<UUID, Double> progressos = new HashMap<>();
+        for (LeituraRecomendada leitura : leituras) {
+            double progresso = 0.0;
+            try {
+                LeituraProgresso lp = leituraProgressoRepository.findByAlunoAndLivro(alunoId, leitura.livroId());
+                if (lp != null && lp.totalPaginas() != null && lp.totalPaginas() > 0) {
+                    int lidas = lp.paginaAtual() != null ? lp.paginaAtual() : 0;
+                    progresso = Math.min(100.0, (lidas * 100.0) / lp.totalPaginas());
+                }
+            } catch (SQLException ignored) {}
+            progressos.put(leitura.livroId(), progresso);
+        }
+        return progressos;
     }
 
     private VBox criarCardDisciplina(int ordem, PlaneamentoEstudoDisciplina disciplina) {

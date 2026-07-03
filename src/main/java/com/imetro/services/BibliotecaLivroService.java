@@ -1,5 +1,7 @@
 package com.imetro.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroPaginaDto;
 import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
@@ -34,6 +36,7 @@ public class BibliotecaLivroService {
 
     private static final Logger LOGGER = AppLogger.getLogger(BibliotecaLivroService.class);
     private static final long MAX_PDF_BYTES = 50L * 1024L * 1024L;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final BibliotecaLivroRepository repository;
 
@@ -236,137 +239,55 @@ public class BibliotecaLivroService {
 
     private ArrayList<TopicoSubtopico> parseTopicos(String jsonTopicos) {
         ArrayList<TopicoSubtopico> pares = new ArrayList<>();
-        String topicosArray = extrairCampoArrayJson(jsonTopicos, "topicos");
-        if (topicosArray == null || topicosArray.isBlank()) return pares;
-
-        LinkedHashSet<String> chaves = new LinkedHashSet<>();
-        for (String objetoTopico : extrairObjetosJsonArray(topicosArray)) {
-            String nomeTopico = extrairCampoStringJson(objetoTopico, "nome");
-            if (nomeTopico == null || nomeTopico.isBlank()) nomeTopico = "Geral";
-            nomeTopico = nomeTopico.trim();
-
-            int topicoPagInicio = extrairCampoInteiroJson(objetoTopico, "pagina_inicio", 0);
-            int topicoPagFim = extrairCampoInteiroJson(objetoTopico, "pagina_fim", 0);
-
-            String subtopicosArray = extrairCampoArrayJson(objetoTopico, "subtopicos");
-            if (subtopicosArray == null || subtopicosArray.isBlank()) continue;
-
-            for (String objetoSubtopico : extrairObjetosJsonArray(subtopicosArray)) {
-                String nomeSubtopico = extrairCampoStringJson(objetoSubtopico, "nome");
-                if (nomeSubtopico == null || nomeSubtopico.isBlank()) continue;
-                nomeSubtopico = nomeSubtopico.trim();
-
-                int pagInicio = extrairCampoInteiroJson(objetoSubtopico, "pagina_inicio", topicoPagInicio);
-                int pagFim = extrairCampoInteiroJson(objetoSubtopico, "pagina_fim", topicoPagFim);
-
-                String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
-                if (!chaves.add(chave)) continue;
-                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
+        if (jsonTopicos == null || jsonTopicos.isBlank()) {
+            return pares;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(jsonTopicos);
+            JsonNode topicosNode = root.get("topicos");
+            if (topicosNode == null || !topicosNode.isArray()) {
+                return pares;
             }
+
+            LinkedHashSet<String> chaves = new LinkedHashSet<>();
+            for (JsonNode topicoNode : topicosNode) {
+                String nomeTopico = topicoNode.has("nome") && !topicoNode.get("nome").isNull()
+                    ? topicoNode.get("nome").asText().trim()
+                    : "Geral";
+                if (nomeTopico.isBlank()) {
+                    nomeTopico = "Geral";
+                }
+
+                int topicoPagInicio = topicoNode.has("pagina_inicio") ? topicoNode.get("pagina_inicio").asInt(0) : 0;
+                int topicoPagFim = topicoNode.has("pagina_fim") ? topicoNode.get("pagina_fim").asInt(0) : 0;
+
+                JsonNode subtopicosNode = topicoNode.get("subtopicos");
+                if (subtopicosNode == null || !subtopicosNode.isArray()) {
+                    continue;
+                }
+
+                for (JsonNode subtopicoNode : subtopicosNode) {
+                    String nomeSubtopico = subtopicoNode.has("nome") && !subtopicoNode.get("nome").isNull()
+                        ? subtopicoNode.get("nome").asText().trim()
+                        : "";
+                    if (nomeSubtopico.isBlank()) {
+                        continue;
+                    }
+
+                    int pagInicio = subtopicoNode.has("pagina_inicio") ? subtopicoNode.get("pagina_inicio").asInt(topicoPagInicio) : topicoPagInicio;
+                    int pagFim = subtopicoNode.has("pagina_fim") ? subtopicoNode.get("pagina_fim").asInt(topicoPagFim) : topicoPagFim;
+
+                    String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
+                    if (!chaves.add(chave)) {
+                        continue;
+                    }
+                    pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao fazer parse do JSON de topicos: " + e.getMessage());
         }
         return pares;
-    }
-
-    private String extrairCampoStringJson(String json, String campo) {
-        if (json == null || campo == null) return null;
-        String procurado = "\"" + campo + "\":\"";
-        int inicio = json.indexOf(procurado);
-        if (inicio < 0) return null;
-        inicio += procurado.length();
-        int fim = json.indexOf("\"", inicio);
-        return fim < 0 ? null : json.substring(inicio, fim);
-    }
-
-    private int extrairCampoInteiroJson(String json, String campo, int padrao) {
-        if (json == null || campo == null) return padrao;
-        String procurado = "\"" + campo + "\":";
-        int inicio = json.indexOf(procurado);
-        if (inicio < 0) return padrao;
-        inicio += procurado.length();
-        StringBuilder num = new StringBuilder();
-        for (int i = inicio; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (c >= '0' && c <= '9') {
-                num.append(c);
-            } else if (num.isEmpty()) {
-                continue;
-            } else {
-                break;
-            }
-        }
-        return num.isEmpty() ? padrao : Integer.parseInt(num.toString());
-    }
-
-    private String extrairCampoArrayJson(String json, String campo) {
-        if (json == null || campo == null) return null;
-        String procurado = "\"" + campo + "\":[";
-        int inicio = json.indexOf(procurado);
-        if (inicio < 0) {
-            String procurado2 = "\"" + campo + "\": [";
-            inicio = json.indexOf(procurado2);
-            if (inicio < 0) return null;
-            inicio += procurado2.length();
-        } else {
-            inicio += procurado.length();
-        }
-        int fim = localizarFechoJson(json, inicio);
-        return fim < 0 ? null : json.substring(inicio - 1, fim + 1);
-    }
-
-    private List<String> extrairObjetosJsonArray(String jsonArray) {
-        ArrayList<String> objetos = new ArrayList<>();
-        if (jsonArray == null || jsonArray.isBlank()) return objetos;
-        jsonArray = jsonArray.trim();
-        if (!jsonArray.startsWith("[") || !jsonArray.endsWith("]")) return objetos;
-        jsonArray = jsonArray.substring(1, jsonArray.length() - 1).trim();
-        if (jsonArray.isBlank()) return objetos;
-
-        int i = 0;
-        while (i < jsonArray.length()) {
-            while (i < jsonArray.length() && Character.isWhitespace(jsonArray.charAt(i)) || jsonArray.charAt(i) == ',') i++;
-            if (i >= jsonArray.length()) break;
-            if (jsonArray.charAt(i) == '{') {
-                int fim = localizarFechoJson(jsonArray, i);
-                if (fim < 0) break;
-                objetos.add(jsonArray.substring(i, fim + 1));
-                i = fim + 1;
-            } else {
-                i++;
-            }
-        }
-        return objetos;
-    }
-
-    private int localizarFechoJson(String json, int inicio) {
-        if (inicio < 0 || inicio >= json.length()) return -1;
-        char aberto = json.charAt(inicio);
-        char fechado;
-        if (aberto == '{') fechado = '}';
-        else if (aberto == '[') fechado = ']';
-        else return -1;
-
-        int profundidade = 0;
-        boolean emString = false;
-        for (int i = inicio; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (emString) {
-                if (c == '\\') {
-                    i++;
-                } else if (c == '"') {
-                    emString = false;
-                }
-            } else {
-                if (c == '"') {
-                    emString = true;
-                } else if (c == aberto) {
-                    profundidade++;
-                } else if (c == fechado) {
-                    profundidade--;
-                    if (profundidade == 0) return i;
-                }
-            }
-        }
-        return -1;
     }
 
     public List<BibliotecaLivroDto> listarLivros(UUID disciplinaId) throws IOException {

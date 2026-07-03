@@ -1,5 +1,9 @@
 package com.imetro.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.gemini.GeracaoSimuladoRequest;
 import com.imetro.domain.dto.perguntas.BootstrapProgressSnapshot;
@@ -12,7 +16,6 @@ import com.imetro.domain.enums.BootstrapStatus;
 import com.imetro.persistence.repository.BibliotecaLivroRepository;
 import com.imetro.persistence.repository.JdbcBasicSqlRepository;
 import com.imetro.util.AppLogger;
-import com.imetro.util.QuestaoUtil;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,8 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,10 +49,8 @@ public class PerguntasBootstrapService {
     private static final int MAX_LOTES_POR_DISCIPLINA = 8;
     private static final int MIN_SUBTOPICOS_POR_LOTE = 4;
     private static final String GENERATED_QUESTIONS_FILE = "questoes-geradas.json";
-    private static final Pattern SUBTOPICOS_ARRAY_PATTERN =
-        Pattern.compile("\"subtopicos\"\\s*:\\s*\\[(.*?)]", Pattern.DOTALL);
-    private static final Pattern JSON_STRING_PATTERN = Pattern.compile("\"((?:\\\\.|[^\"\\\\])*)\"");
     private static final Logger LOGGER = AppLogger.getLogger(PerguntasBootstrapService.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final GeminiService geminiService;
     private final DisciplinaUploadBootstrapService uploadBootstrapService;
@@ -587,8 +587,8 @@ public class PerguntasBootstrapService {
                 throw new InterruptedException("Lote interrompido antes de iniciar.");
             }
 
-            String jsonQuestoes = geminiService.gerarSimuladoJson(
-                pdfs,
+            String jsonQuestoes = geminiService.gerarSimuladoJsonAPartirDeTopicosEmLote(
+                jsonTopicos,
                 new GeracaoSimuladoRequest(
                     disciplina.nome(),
                     "pt-AO",
@@ -684,174 +684,56 @@ public class PerguntasBootstrapService {
     }
 
     private ArrayList<TopicoSubtopico> extrairTopicosSubtopicos(String jsonTopicos) {
-        String topicosArray = extrairCampoArrayJson(jsonTopicos, "topicos");
-        if (topicosArray == null || topicosArray.isBlank()) {
-            return new ArrayList<>();
-        }
-
-        LinkedHashSet<String> chaves = new LinkedHashSet<>();
         ArrayList<TopicoSubtopico> pares = new ArrayList<>();
-        for (String objetoTopico : extrairObjetosJsonArray(topicosArray)) {
-            String nomeTopico = extrairCampoStringJson(objetoTopico, "nome");
-            if (nomeTopico == null || nomeTopico.isBlank()) {
-                nomeTopico = "Geral";
-            }
-            nomeTopico = nomeTopico.trim();
-
-            int topicoPagInicio = extrairCampoInteiroJson(objetoTopico, "pagina_inicio", 0);
-            int topicoPagFim = extrairCampoInteiroJson(objetoTopico, "pagina_fim", 0);
-
-            String subtopicosArray = extrairCampoArrayJson(objetoTopico, "subtopicos");
-            if (subtopicosArray == null || subtopicosArray.isBlank()) {
-                continue;
-            }
-
-            for (String objetoSubtopico : extrairObjetosJsonArray(subtopicosArray)) {
-                String nomeSubtopico = extrairCampoStringJson(objetoSubtopico, "nome");
-                if (nomeSubtopico == null || nomeSubtopico.isBlank()) {
-                    continue;
-                }
-                nomeSubtopico = nomeSubtopico.trim();
-
-                int pagInicio = extrairCampoInteiroJson(objetoSubtopico, "pagina_inicio", topicoPagInicio);
-                int pagFim = extrairCampoInteiroJson(objetoSubtopico, "pagina_fim", topicoPagFim);
-
-                String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
-                if (!chaves.add(chave)) {
-                    continue;
-                }
-                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
-            }
+        if (jsonTopicos == null || jsonTopicos.isBlank()) {
+            return pares;
         }
-
-        return pares;
-    }
-
-    private String extrairCampoStringJson(String json, String campo) {
-        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return null;
-        }
-        return QuestaoUtil.unescapeJson(matcher.group(1));
-    }
-
-    private int extrairCampoInteiroJson(String json, String campo, int padrao) {
-        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
-            return padrao;
-        }
-
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*(\\d+)");
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return padrao;
-        }
-
         try {
-            return Integer.parseInt(matcher.group(1));
-        } catch (NumberFormatException e) {
-            return padrao;
-        }
-    }
-
-    private List<String> extrairCampoArrayStringsJson(String json, String campo) {
-        String arrayJson = extrairCampoArrayJson(json, campo);
-        if (arrayJson == null || arrayJson.isBlank()) {
-            return List.of();
-        }
-
-        LinkedHashSet<String> valores = new LinkedHashSet<>();
-        Matcher matcher = JSON_STRING_PATTERN.matcher(arrayJson);
-        while (matcher.find()) {
-            String valor = QuestaoUtil.unescapeJson(matcher.group(1));
-            if (valor != null && !valor.isBlank()) {
-                valores.add(valor.trim());
-            }
-        }
-        return List.copyOf(valores);
-    }
-
-    private String extrairCampoArrayJson(String json, String campo) {
-        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*\\[", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return null;
-        }
-
-        int inicioArray = matcher.end() - 1;
-        int fimArray = localizarFechoJson(json, inicioArray, '[', ']');
-        if (fimArray < 0) {
-            return null;
-        }
-        return json.substring(inicioArray, fimArray + 1);
-    }
-
-    private ArrayList<String> extrairObjetosJsonArray(String arrayJson) {
-        ArrayList<String> objetos = new ArrayList<>();
-        if (arrayJson == null || arrayJson.isBlank()) {
-            return objetos;
-        }
-
-        int cursor = 0;
-        while (cursor < arrayJson.length()) {
-            char atual = arrayJson.charAt(cursor);
-            if (atual != '{') {
-                cursor++;
-                continue;
+            JsonNode root = objectMapper.readTree(jsonTopicos);
+            JsonNode topicosNode = root.get("topicos");
+            if (topicosNode == null || !topicosNode.isArray()) {
+                return pares;
             }
 
-            int fimObjeto = localizarFechoJson(arrayJson, cursor, '{', '}');
-            if (fimObjeto < 0) {
-                break;
-            }
+            LinkedHashSet<String> chaves = new LinkedHashSet<>();
+            for (JsonNode topicoNode : topicosNode) {
+                String nomeTopico = topicoNode.has("nome") && !topicoNode.get("nome").isNull()
+                    ? topicoNode.get("nome").asText().trim()
+                    : "Geral";
+                if (nomeTopico.isBlank()) {
+                    nomeTopico = "Geral";
+                }
 
-            objetos.add(arrayJson.substring(cursor, fimObjeto + 1));
-            cursor = fimObjeto + 1;
-        }
+                int topicoPagInicio = topicoNode.has("pagina_inicio") ? topicoNode.get("pagina_inicio").asInt(0) : 0;
+                int topicoPagFim = topicoNode.has("pagina_fim") ? topicoNode.get("pagina_fim").asInt(0) : 0;
 
-        return objetos;
-    }
+                JsonNode subtopicosNode = topicoNode.get("subtopicos");
+                if (subtopicosNode == null || !subtopicosNode.isArray()) {
+                    continue;
+                }
 
-    private int localizarFechoJson(String valor, int inicio, char abre, char fecha) {
-        boolean emString = false;
-        int profundidade = 0;
+                for (JsonNode subtopicoNode : subtopicosNode) {
+                    String nomeSubtopico = subtopicoNode.has("nome") && !subtopicoNode.get("nome").isNull()
+                        ? subtopicoNode.get("nome").asText().trim()
+                        : "";
+                    if (nomeSubtopico.isBlank()) {
+                        continue;
+                    }
 
-        for (int i = inicio; i < valor.length(); i++) {
-            char atual = valor.charAt(i);
-            if (atual == '"' && !isEscaped(valor, i)) {
-                emString = !emString;
-                continue;
-            }
-            if (emString) {
-                continue;
-            }
-            if (atual == abre) {
-                profundidade++;
-            } else if (atual == fecha) {
-                profundidade--;
-                if (profundidade == 0) {
-                    return i;
+                    int pagInicio = subtopicoNode.has("pagina_inicio") ? subtopicoNode.get("pagina_inicio").asInt(topicoPagInicio) : topicoPagInicio;
+                    int pagFim = subtopicoNode.has("pagina_fim") ? subtopicoNode.get("pagina_fim").asInt(topicoPagFim) : topicoPagFim;
+
+                    String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
+                    if (!chaves.add(chave)) {
+                        continue;
+                    }
+                    pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
                 }
             }
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao fazer parse do JSON de topicos: " + e.getMessage());
         }
-
-        return -1;
-    }
-
-    private boolean isEscaped(String valor, int indice) {
-        int barras = 0;
-        for (int i = indice - 1; i >= 0 && valor.charAt(i) == '\\'; i--) {
-            barras++;
-        }
-        return barras % 2 != 0;
+        return pares;
     }
 
     private String construirInstrucaoBaseInicial(int totalSubtopicos, int quantidadeInicial) {
@@ -917,37 +799,31 @@ public class PerguntasBootstrapService {
         int lotesSucesso,
         int lotesFalha
     ) {
-        StringBuilder questoes = new StringBuilder();
-        boolean primeiro = true;
-        for (String jsonLote : jsonLotesComSucesso) {
-            String arrayQuestoes = extrairCampoArrayJson(jsonLote, "questoes");
-            if (arrayQuestoes == null || arrayQuestoes.length() < 2) {
-                continue;
+        try {
+            ObjectNode root = objectMapper.createObjectNode();
+            root.put("titulo", "Base inicial de estudo - " + disciplina.nome());
+            root.put("disciplina", disciplina.nome());
+            root.put("idioma", "pt-AO");
+            root.put("fonteResumo", lotesFalha > 0
+                ? "Base inicial gerada em " + lotesSucesso + " lotes com " + lotesFalha + " falhas toleradas."
+                : "Base inicial gerada em " + lotesSucesso + " lotes com ate " + MAX_GEMINI_WORKERS + " workers.");
+
+            ArrayNode todasQuestoes = root.putArray("questoes");
+            for (String jsonLote : jsonLotesComSucesso) {
+                JsonNode loteRoot = objectMapper.readTree(jsonLote);
+                JsonNode questoesNode = loteRoot.get("questoes");
+                if (questoesNode != null && questoesNode.isArray()) {
+                    for (JsonNode questao : questoesNode) {
+                        todasQuestoes.add(questao);
+                    }
+                }
             }
 
-            String conteudo = arrayQuestoes.substring(1, arrayQuestoes.length() - 1).trim();
-            if (conteudo.isBlank()) {
-                continue;
-            }
-
-            if (!primeiro) {
-                questoes.append(',');
-            }
-            questoes.append(conteudo);
-            primeiro = false;
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao montar JSON agregado de questoes: " + e.getMessage());
+            return "{\"titulo\":\"Base inicial de estudo\",\"questoes\":[]}";
         }
-
-        String fonteResumo = lotesFalha > 0
-            ? "Base inicial gerada em " + lotesSucesso + " lotes com " + lotesFalha + " falhas toleradas."
-            : "Base inicial gerada em " + lotesSucesso + " lotes com ate " + MAX_GEMINI_WORKERS + " workers.";
-
-        return new StringBuilder()
-            .append("{\"titulo\":\"Base inicial de estudo - ").append(QuestaoUtil.escapeJson(disciplina.nome())).append("\",")
-            .append("\"disciplina\":\"").append(QuestaoUtil.escapeJson(disciplina.nome())).append("\",")
-            .append("\"idioma\":\"pt-AO\",")
-            .append("\"fonteResumo\":\"").append(QuestaoUtil.escapeJson(fonteResumo)).append("\",")
-            .append("\"questoes\":[").append(questoes).append("]}")
-            .toString();
     }
 
     private String construirResumoGeracaoEmLotes(GeracaoQuestoesEmLotes geracao) {
@@ -1281,16 +1157,24 @@ public class PerguntasBootstrapService {
         if (jsonTopicos == null || jsonTopicos.isBlank()) {
             return 0;
         }
-
-        int total = 0;
-        Matcher arrays = SUBTOPICOS_ARRAY_PATTERN.matcher(jsonTopicos);
-        while (arrays.find()) {
-            Matcher strings = JSON_STRING_PATTERN.matcher(arrays.group(1));
-            while (strings.find()) {
-                total++;
+        try {
+            JsonNode root = objectMapper.readTree(jsonTopicos);
+            JsonNode topicosNode = root.get("topicos");
+            if (topicosNode == null || !topicosNode.isArray()) {
+                return 0;
             }
+            int total = 0;
+            for (JsonNode topico : topicosNode) {
+                JsonNode subtopicos = topico.get("subtopicos");
+                if (subtopicos != null && subtopicos.isArray()) {
+                    total += subtopicos.size();
+                }
+            }
+            return total;
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao contar subtopicos com Jackson: " + e.getMessage());
+            return 0;
         }
-        return total;
     }
 
     private int calcularQuantidadeInicial(int totalSubtopicos) {

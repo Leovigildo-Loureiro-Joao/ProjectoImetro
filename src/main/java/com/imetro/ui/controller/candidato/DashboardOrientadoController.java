@@ -23,6 +23,7 @@ import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.CacheService;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaDia;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
+import com.imetro.domain.dto.planejamento.LeituraRecomendada;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoDisciplina;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEtapa;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoInsight;
@@ -216,7 +217,8 @@ public class DashboardOrientadoController implements Initializable {
                 new PlaneamentoEstudoPonto("Sem 4", 66d),
                 new PlaneamentoEstudoPonto("Sem 5", 74d),
                 new PlaneamentoEstudoPonto("Sem 6", 81d)
-            )
+            ),
+            List.of()
         );
         
         dashboardMelhoriaResumo = DashboardMelhoriaResumo.empty();
@@ -450,16 +452,22 @@ public class DashboardOrientadoController implements Initializable {
             ? List.of()
             : planeamentoResumo.etapas();
 
+        List<LeituraRecomendada> leituras = planeamentoResumo == null || planeamentoResumo.leituras() == null
+            ? List.of()
+            : planeamentoResumo.leituras();
+
+        int totalPassos = etapas.size() + Math.min(2, leituras.size());
+
         if (planBadge != null) {
-            planBadge.setText(etapas.isEmpty() ? "Hoje" : etapas.size() + (etapas.size() == 1 ? " passo" : " passos"));
+            planBadge.setText(totalPassos == 0 ? "Hoje" : totalPassos + (totalPassos == 1 ? " passo" : " passos"));
         }
         if (planTitle != null) {
-            planTitle.setText(etapas.isEmpty() ? "Plano de hoje" : "Plano diário em 3 blocos");
+            planTitle.setText(totalPassos == 0 ? "Plano de hoje" : "Plano diário");
         }
         if (planSummary != null) {
-            planSummary.setText(etapas.isEmpty()
+            planSummary.setText(etapas.isEmpty() && leituras.isEmpty()
                 ? planeamentoResumo.resumoHero()
-                : "Mostrando só as 3 etapas pendentes do plano diário.");
+                : "Etapas e leituras recomendadas para hoje.");
         }
         if (planFocus != null) {
             planFocus.setText("Foco actual: " + safeText(planeamentoResumo.focoAtual(), "—"));
@@ -469,17 +477,58 @@ public class DashboardOrientadoController implements Initializable {
                 " · ritmo " + safeText(planeamentoResumo.ritmoMedio(), "—"));
         }
         if (planStepsBox != null) {
-            planStepsBox.getChildren().setAll(buildPlanStepCards(etapas));
+            planStepsBox.getChildren().setAll(buildPlanStepCards(etapas, leituras));
         }
     }
 
-    private List<Node> buildPlanStepCards(List<PlaneamentoEstudoEtapa> etapas) {
+    private List<Node> buildPlanStepCards(List<PlaneamentoEstudoEtapa> etapas, List<LeituraRecomendada> leituras) {
         List<Node> cards = new ArrayList<>();
         for (int index = 0; index < 3; index++) {
             PlaneamentoEstudoEtapa etapa = index < etapas.size() ? etapas.get(index) : null;
             cards.add(PlanStepCardFactory.create(index + 1, etapa, planeamentoResumo));
         }
+        int leituraOffset = 3;
+        for (int i = 0; i < Math.min(2, leituras.size()); i++) {
+            LeituraRecomendada leitura = leituras.get(i);
+            cards.add(criarLeituraStepCard(leituraOffset + i, leitura));
+        }
         return cards;
+    }
+
+    private Node criarLeituraStepCard(int ordem, LeituraRecomendada leitura) {
+        Label badge = new Label(String.valueOf(ordem));
+        badge.getStyleClass().addAll("plan-step-number", "plan-step-number-4");
+        badge.setAlignment(Pos.CENTER);
+        badge.setMinSize(38.0, 38.0);
+        badge.setPrefSize(38.0, 38.0);
+        badge.setMaxSize(38.0, 38.0);
+
+        VBox infoBox = new VBox(2);
+        Label titulo = new Label("Ler: " + leitura.tituloLivro());
+        titulo.getStyleClass().add("plan-step-title");
+        Label detalhe = new Label(leitura.topico() + " " + leitura.formatarPaginas());
+        detalhe.getStyleClass().add("plan-step-detail");
+
+        double progresso = Math.max(0, Math.min(1, leitura.progressoLeitura() / 100.0));
+        ProgressBar bar = new ProgressBar(progresso);
+        bar.setPrefWidth(80);
+        bar.getStyleClass().add("progresso-bar");
+
+        Label percent = new Label(String.format("%.0f%%", leitura.progressoLeitura()));
+        percent.getStyleClass().add("progresso-texto");
+
+        HBox progressoBox = new HBox(4, bar, percent);
+        progressoBox.setAlignment(Pos.CENTER_LEFT);
+
+        infoBox.getChildren().addAll(titulo, detalhe, progressoBox);
+
+        HBox card = new HBox(10, badge, infoBox);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setPadding(new Insets(10));
+        card.getStyleClass().add("plan-step-card");
+        card.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(infoBox, Priority.ALWAYS);
+        return card;
     }
 
     private void setupSequenceChart() {

@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import com.imetro.domain.dto.planejamento.PlaneamentoEstudoDisciplina;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEtapa;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoInsight;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoPonto;
+import com.imetro.domain.dto.planejamento.LeituraRecomendada;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoRegistro;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
@@ -55,6 +57,7 @@ public class  PlaneamentoEstudoService {
     private Map<String, Double> progressoPorSubtopico = Map.of();
     private final PlaneamentoEstudoRepository planeamentoRepository = new PlaneamentoEstudoRepository();
     private final LivroMapaTopicosRepository livroMapaTopicosRepository = new LivroMapaTopicosRepository();
+    private final TrilhoLeituraService trilhoLeituraService = new TrilhoLeituraService();
 
     public PlaneamentoEstudoResumo gerarResumo(UUID candidatoId) {
 
@@ -130,13 +133,14 @@ public class  PlaneamentoEstudoService {
         String focoAtual = montarFocoAtual(foco);
         String focoAtual2 = montarFocoAtual(segundo);
 
-        //livroMapaTopicosRepository.findSubTopicos(foco);
-        //livroMapaTopicosRepository.findSubTopicos(foco);
+        List<LeituraRecomendada> leituras = recomendarLeituras(disciplinas);
 
-        List<PlaneamentoEstudoInsight> insights = construirInsights(disciplinas);
-        List<PlaneamentoEstudoEtapa> etapas = construirEtapas(disciplinas);
-        List<PlaneamentoEstudoRegistro> registros = construirRegistros(testesRows);
-        List<PlaneamentoEstudoPonto> evolucao = construirEvolucao(testesRows);
+        List<PlaneamentoEstudoInsight> insights = new ArrayList<>(construirInsights(disciplinas));
+        List<PlaneamentoEstudoEtapa> etapas = new ArrayList<>(construirEtapas(disciplinas));
+        List<PlaneamentoEstudoRegistro> registros = new ArrayList<>(construirRegistros(testesRows));
+        List<PlaneamentoEstudoPonto> evolucao = new ArrayList<>(construirEvolucao(testesRows));
+
+        adicionarInsightsDeLeitura(insights, etapas, leituras);
 
         PlaneamentoEstudoResumo resumo = new PlaneamentoEstudoResumo(
             heroScore,
@@ -148,13 +152,12 @@ public class  PlaneamentoEstudoService {
             focoSecundario,
             focoAtual,
             focoAtual2,
-            null,
-            null,
             insights,
             etapas,
             registros,
             disciplinas,
-            evolucao
+            evolucao,
+            leituras
         );
 
         return finalizarResumo(candidatoId, resumo);
@@ -808,6 +811,79 @@ return List.of(
             System.err.println("Erro ao carregar progresso dos subtópicos: " + e.getMessage());
             String fallback = subtopicoAtual != null ? subtopicoAtual : topico.topicos();
             return foco.disciplina() + "-" + topico.topicos() + "-" + fallback;
+        }
+    }
+
+    private List<LeituraRecomendada> recomendarLeituras(List<PlaneamentoEstudoDisciplina> disciplinas) {
+        ArrayList<LeituraRecomendada> leituras = new ArrayList<>();
+        LinkedHashSet<String> chavesVistas = new LinkedHashSet<>();
+
+        for (PlaneamentoEstudoDisciplina disc : disciplinas) {
+            if (disc == null || disc.foco() == null || disc.foco().topico() == null) continue;
+
+            Foco foco = disc.foco();
+            String topicoNome = foco.topico().topicos();
+            String subtopicoNome = foco.subtopico();
+
+            List<String> topicos = List.of(topicoNome);
+            List<String> subtopicos = subtopicoNome != null && !subtopicoNome.isBlank()
+                ? List.of(subtopicoNome)
+                : List.of();
+
+            try {
+                List<LeituraRecomendada> recomendadas = trilhoLeituraService.recomendarLeiturasParaSubtopicos(
+                    null,
+                    disc.disciplina(),
+                    topicos,
+                    subtopicos
+                );
+                for (LeituraRecomendada leitura : recomendadas) {
+                    String chave = leitura.livroId() + "::" + leitura.topico() + "::" + leitura.subtopico();
+                    if (chavesVistas.add(chave)) {
+                        leituras.add(leitura);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao recomendar leituras para " + disc.disciplina() + ": " + e.getMessage());
+            }
+        }
+
+        return List.copyOf(leituras);
+    }
+
+    private void adicionarInsightsDeLeitura(
+        List<PlaneamentoEstudoInsight> insights,
+        List<PlaneamentoEstudoEtapa> etapas,
+        List<LeituraRecomendada> leituras
+    ) {
+        if (leituras == null || leituras.isEmpty()) return;
+
+        StringBuilder descricao = new StringBuilder();
+        int maxLeituras = Math.min(3, leituras.size());
+        for (int i = 0; i < maxLeituras; i++) {
+            LeituraRecomendada leitura = leituras.get(i);
+            if (descricao.length() > 0) descricao.append("\n");
+            descricao.append("\u2022 ").append(leitura.tituloLivro())
+                .append(": ").append(leitura.topico())
+                .append(" (").append(leitura.paginaInicio())
+                .append("-").append(leitura.paginaFim()).append(")");
+        }
+        if (leituras.size() > 3) {
+            descricao.append("\n... e mais ").append(leituras.size() - 3).append(" seccoes");
+        }
+
+        insights.add(new PlaneamentoEstudoInsight(
+            "Leituras recomendadas",
+            descricao.toString()
+        ));
+
+        for (int i = 0; i < Math.min(2, leituras.size()); i++) {
+            LeituraRecomendada leitura = leituras.get(i);
+            etapas.add(new PlaneamentoEstudoEtapa(
+                "Leitura",
+                "Ler " + leitura.topico() + " em " + leitura.tituloLivro(),
+                leitura.formatarPaginas()
+            ));
         }
     }
 

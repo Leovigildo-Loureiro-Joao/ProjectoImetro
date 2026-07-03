@@ -75,27 +75,20 @@ public final class PerguntasBootstrapAsyncService {
 
     public boolean NetPositive(){
         try {
-            HttpClient pClient= HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(30))
+            HttpClient pClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(3))
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .version(HttpClient.Version.HTTP_1_1)
                 .build();
-            HttpRequest uploadRequest = HttpRequest.newBuilder()
-                .uri(URI.create(("https://chatgpt.com/")))
-                .header("Content-Type", "application/json")
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://clients3.google.com/generate_204"))
                 .GET()
                 .build();
-             HttpResponse<String> uploadResponse = pClient.send(
-                uploadRequest,
-                HttpResponse.BodyHandlers.ofString()
-            );
-            return uploadResponse!=null;
-       } catch (IOException e) {
+            HttpResponse<Void> response = pClient.send(request,
+                HttpResponse.BodyHandlers.discarding());
+            return response.statusCode() == 204;
+        } catch (IOException | InterruptedException e) {
             return false;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
-        return false;
     }
 
     public synchronized boolean start(UUID candidatoId) {

@@ -1,5 +1,9 @@
 package com.imetro.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.disciplina.DisciplinaDto;
 import com.imetro.domain.dto.gemini.ExtracaoTopicosRequest;
@@ -7,6 +11,10 @@ import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.enums.TopicoExame;
 import com.imetro.persistence.repository.BibliotecaLivroRepository;
 import com.imetro.util.AppLogger;
+
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -24,8 +32,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class DisciplinaUploadBootstrapService {
@@ -33,7 +39,11 @@ public class DisciplinaUploadBootstrapService {
     private static final String DEFAULT_OUTPUT_FILE = "topicos-extraidos.json";
     private static final String PROCESSED_STATE_FILE = ".livros-processados.snapshot";
     private static final Logger LOGGER = AppLogger.getLogger(DisciplinaUploadBootstrapService.class);
-    private static final Pattern JSON_STRING_PATTERN = Pattern.compile("\"((?:\\\\.|[^\"\\\\])*)\"");
+
+    private static final int CHUNK_PAGE_SIZE = 30;
+    private static final int MAX_PAGES_BEFORE_CHUNK = 50;
+    private static final int MIN_TEXT_LENGTH = 100;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final GeminiService geminiService;
     private final BibliotecaLivroService bibliotecaLivroService;
     private final Path uploadRoot;
@@ -156,6 +166,47 @@ public class DisciplinaUploadBootstrapService {
         );
     }
 
+    private boolean pdfTemTextoExtraivel(Path pdfPath) {
+        try (PDDocument doc = Loader.loadPDF(pdfPath.toFile())) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            String texto = stripper.getText(doc);
+            if (texto == null || texto.trim().length() < MIN_TEXT_LENGTH) {
+                LOGGER.warning("PDF sem texto extraivel suficiente: " + pdfPath.getFileName()
+                    + " (" + (texto == null ? 0 : texto.trim().length()) + " caracteres)");
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            LOGGER.warning("Nao foi possivel extrair texto do PDF " + pdfPath.getFileName() + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    private List<Path> criarChunksPdf(Path pdfPath, int totalPaginas) throws IOException {
+        ArrayList<Path> chunks = new ArrayList<>();
+        String nomeBase = pdfPath.getFileName().toString();
+        int ponto = nomeBase.lastIndexOf('.');
+        String nomeSemExt = ponto > 0 ? nomeBase.substring(0, ponto) : nomeBase;
+
+        for (int inicio = 1; inicio <= totalPaginas; inicio += CHUNK_PAGE_SIZE) {
+            int fim = Math.min(inicio + CHUNK_PAGE_SIZE - 1, totalPaginas);
+
+            try (PDDocument original = Loader.loadPDF(pdfPath.toFile())) {
+                PDDocument chunk = new PDDocument();
+                for (int i = inicio; i <= fim; i++) {
+                    chunk.addPage(original.getPage(i - 1));
+                }
+                Path tempFile = Files.createTempFile("imetro-chunk-", "-" + nomeSemExt + "-paginas-" + inicio + "-" + fim + ".pdf");
+                chunk.save(tempFile.toFile());
+                chunk.close();
+                tempFile.toFile().deleteOnExit();
+                chunks.add(tempFile);
+            }
+        }
+        LOGGER.info("PDF " + pdfPath.getFileName() + " dividido em " + chunks.size() + " chunks de ate " + CHUNK_PAGE_SIZE + " paginas cada.");
+        return chunks;
+    }
+
     private String extrairTopicosComMapaPorPdf(
         DisciplinaDto disciplina,
         List<Path> pdfs,
@@ -167,21 +218,89 @@ public class DisciplinaUploadBootstrapService {
             String nomeArquivo = pdf.getFileName().toString();
             LOGGER.info("A extrair topicos do PDF: " + nomeArquivo);
 
-            String jsonTopicos = geminiService.extrairTopicosJson(
-                List.of(pdf),
-                new ExtracaoTopicosRequest(
-                    disciplina.nome(),
-                    "pt-AO",
-                    "Organiza os topicos com foco no conteudo programatico da disciplina " + disciplina.nome() + "."
-                        + (instrucoesCanonicas.isBlank() ? "" : "\n" + instrucoesCanonicas)
-                )
-            );
+            if (!pdfTemTextoExtraivel(pdf)) {
+                LOGGER.warning("PDF ignorado por nao ter texto extraivel: " + nomeArquivo);
+                continue;
+            }
 
-            resultados.add(jsonTopicos);
-            salvarMapaTopicosDoPdf(pdf, jsonTopicos);
+            int totalPaginas = contarPaginas(pdf);
+
+            if (totalPaginas > MAX_PAGES_BEFORE_CHUNK) {
+                LOGGER.info("PDF " + nomeArquivo + " tem " + totalPaginas
+                    + " paginas. A dividir em chunks para melhor processamento.");
+                String jsonAgregado = extrairTopicosPorChunks(disciplina, pdf, totalPaginas, instrucoesCanonicas);
+                resultados.add(jsonAgregado);
+                salvarMapaTopicosDoPdf(pdf, jsonAgregado);
+            } else {
+                String jsonTopicos = geminiService.extrairTopicosJson(
+                    List.of(pdf),
+                    new ExtracaoTopicosRequest(
+                        disciplina.nome(),
+                        "pt-AO",
+                        "Organiza os topicos com foco no conteudo programatico da disciplina " + disciplina.nome() + "."
+                            + (instrucoesCanonicas.isBlank() ? "" : "\n" + instrucoesCanonicas)
+                    )
+                );
+                resultados.add(jsonTopicos);
+                salvarMapaTopicosDoPdf(pdf, jsonTopicos);
+            }
         }
 
         return agregarTopicosJson(resultados);
+    }
+
+    private String extrairTopicosPorChunks(
+        DisciplinaDto disciplina,
+        Path pdf,
+        int totalPaginas,
+        String instrucoesCanonicas
+    ) throws IOException, InterruptedException {
+        List<Path> chunks = criarChunksPdf(pdf, totalPaginas);
+        ArrayList<String> resultadosChunks = new ArrayList<>();
+
+        try {
+            for (Path chunk : chunks) {
+                LOGGER.info("A processar chunk: " + chunk.getFileName());
+                String jsonTopicos = geminiService.extrairTopicosJson(
+                    List.of(chunk),
+                    new ExtracaoTopicosRequest(
+                        disciplina.nome(),
+                        "pt-AO",
+                        "Extrai os topicos deste fragmento do livro (paginas " + extrairFaixaPaginas(chunk) + ")."
+                            + (instrucoesCanonicas.isBlank() ? "" : "\n" + instrucoesCanonicas)
+                    )
+                );
+                resultadosChunks.add(jsonTopicos);
+            }
+        } finally {
+            for (Path chunk : chunks) {
+                try {
+                    Files.deleteIfExists(chunk);
+                } catch (IOException e) {
+                    LOGGER.warning("Nao foi possivel apagar chunk temporario: " + chunk);
+                }
+            }
+        }
+
+        return agregarTopicosJson(resultadosChunks);
+    }
+
+    private String extrairFaixaPaginas(Path chunkPath) {
+        String nome = chunkPath.getFileName().toString();
+        int idx = nome.lastIndexOf("-paginas-");
+        if (idx > 0) {
+            String rest = nome.substring(idx + "-paginas-".length());
+            int ponto = rest.lastIndexOf('.');
+            if (ponto > 0) return rest.substring(0, ponto);
+            return rest;
+        }
+        return "desconhecida";
+    }
+
+    private int contarPaginas(Path pdfPath) throws IOException {
+        try (PDDocument doc = Loader.loadPDF(pdfPath.toFile())) {
+            return doc.getNumberOfPages();
+        }
     }
 
     private void salvarMapaTopicosDoPdf(Path pdf, String jsonTopicos) {
@@ -211,43 +330,53 @@ public class DisciplinaUploadBootstrapService {
 
     private ArrayList<TopicoSubtopico> parseTopicosDoJson(String jsonTopicos) {
         ArrayList<TopicoSubtopico> pares = new ArrayList<>();
-        String topicosArray = extrairCampoArrayJson(jsonTopicos, "topicos");
-        if (topicosArray == null || topicosArray.isBlank()) {
+        if (jsonTopicos == null || jsonTopicos.isBlank()) {
             return pares;
         }
-
-        LinkedHashSet<String> chaves = new LinkedHashSet<>();
-        for (String objetoTopico : extrairObjetosJsonArray(topicosArray)) {
-            String nomeTopico = extrairCampoStringJson(objetoTopico, "nome");
-            if (nomeTopico == null || nomeTopico.isBlank()) {
-                nomeTopico = "Geral";
-            }
-            nomeTopico = nomeTopico.trim();
-
-            int topicoPagInicio = extrairCampoInteiroJson(objetoTopico, "pagina_inicio", 0);
-            int topicoPagFim = extrairCampoInteiroJson(objetoTopico, "pagina_fim", 0);
-
-            String subtopicosArray = extrairCampoArrayJson(objetoTopico, "subtopicos");
-            if (subtopicosArray == null || subtopicosArray.isBlank()) {
-                continue;
+        try {
+            JsonNode root = objectMapper.readTree(jsonTopicos);
+            JsonNode topicosNode = root.get("topicos");
+            if (topicosNode == null || !topicosNode.isArray()) {
+                return pares;
             }
 
-            for (String objetoSubtopico : extrairObjetosJsonArray(subtopicosArray)) {
-                String nomeSubtopico = extrairCampoStringJson(objetoSubtopico, "nome");
-                if (nomeSubtopico == null || nomeSubtopico.isBlank()) {
+            LinkedHashSet<String> chaves = new LinkedHashSet<>();
+            for (JsonNode topicoNode : topicosNode) {
+                String nomeTopico = topicoNode.has("nome") && !topicoNode.get("nome").isNull()
+                    ? topicoNode.get("nome").asText().trim()
+                    : "Geral";
+                if (nomeTopico.isBlank()) {
+                    nomeTopico = "Geral";
+                }
+
+                int topicoPagInicio = topicoNode.has("pagina_inicio") ? topicoNode.get("pagina_inicio").asInt(0) : 0;
+                int topicoPagFim = topicoNode.has("pagina_fim") ? topicoNode.get("pagina_fim").asInt(0) : 0;
+
+                JsonNode subtopicosNode = topicoNode.get("subtopicos");
+                if (subtopicosNode == null || !subtopicosNode.isArray()) {
                     continue;
                 }
-                nomeSubtopico = nomeSubtopico.trim();
 
-                int pagInicio = extrairCampoInteiroJson(objetoSubtopico, "pagina_inicio", topicoPagInicio);
-                int pagFim = extrairCampoInteiroJson(objetoSubtopico, "pagina_fim", topicoPagFim);
+                for (JsonNode subtopicoNode : subtopicosNode) {
+                    String nomeSubtopico = subtopicoNode.has("nome") && !subtopicoNode.get("nome").isNull()
+                        ? subtopicoNode.get("nome").asText().trim()
+                        : "";
+                    if (nomeSubtopico.isBlank()) {
+                        continue;
+                    }
 
-                String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
-                if (!chaves.add(chave)) {
-                    continue;
+                    int pagInicio = subtopicoNode.has("pagina_inicio") ? subtopicoNode.get("pagina_inicio").asInt(topicoPagInicio) : topicoPagInicio;
+                    int pagFim = subtopicoNode.has("pagina_fim") ? subtopicoNode.get("pagina_fim").asInt(topicoPagFim) : topicoPagFim;
+
+                    String chave = (nomeTopico + "::" + nomeSubtopico).toLowerCase();
+                    if (!chaves.add(chave)) {
+                        continue;
+                    }
+                    pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
                 }
-                pares.add(new TopicoSubtopico(nomeTopico, nomeSubtopico, pagInicio, pagFim));
             }
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao fazer parse do JSON de topicos com Jackson: " + e.getMessage());
         }
         return pares;
     }
@@ -260,28 +389,27 @@ public class DisciplinaUploadBootstrapService {
             return resultados.getFirst();
         }
 
-        StringBuilder agregado = new StringBuilder();
-        agregado.append("{\"topicos\":[");
-        boolean primeiro = true;
-        for (String json : resultados) {
-            String topicosArray = extrairCampoArrayJson(json, "topicos");
-            if (topicosArray == null || topicosArray.isBlank()) {
-                continue;
+        try {
+            ObjectNode agregado = objectMapper.createObjectNode();
+            ArrayNode todosTopicos = agregado.putArray("topicos");
+
+            for (String json : resultados) {
+                JsonNode root = objectMapper.readTree(json);
+                JsonNode topicosNode = root.get("topicos");
+                if (topicosNode != null && topicosNode.isArray()) {
+                    for (JsonNode topico : topicosNode) {
+                        todosTopicos.add(topico);
+                    }
+                }
             }
-            String conteudo = topicosArray.substring(1, topicosArray.length() - 1).trim();
-            if (conteudo.isBlank()) {
-                continue;
-            }
-            if (!primeiro) {
-                agregado.append(',');
-            }
-            agregado.append(conteudo);
-            primeiro = false;
+
+            agregado.put("fonteResumo", "Agregado de " + resultados.size() + " PDF(s).");
+            agregado.put("observacoes", "Mapa de topicos agregado de varios PDFs.");
+            return objectMapper.writeValueAsString(agregado);
+        } catch (Exception e) {
+            LOGGER.warning("Falha ao agregar JSONs de topicos: " + e.getMessage());
+            return "{\"topicos\":[],\"observacoes\":\"Erro ao agregar topicos: " + e.getMessage() + "\"}";
         }
-        agregado.append("],\"fonteResumo\":\"Agregado de ")
-            .append(resultados.size()).append(" PDF(s).\",");
-        agregado.append("\"observacoes\":\"Mapa de topicos agregado de varios PDFs.\"}");
-        return agregado.toString();
     }
 
     public List<Path> listarPdfs(UUID disciplinaId) throws IOException {
@@ -425,118 +553,6 @@ public class DisciplinaUploadBootstrapService {
             }
             sequencia++;
         }
-    }
-
-    private String extrairCampoStringJson(String json, String campo) {
-        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return null;
-        }
-        return matcher.group(1);
-    }
-
-    private int extrairCampoInteiroJson(String json, String campo, int padrao) {
-        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
-            return padrao;
-        }
-
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*(\\d+)");
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return padrao;
-        }
-
-        try {
-            return Integer.parseInt(matcher.group(1));
-        } catch (NumberFormatException e) {
-            return padrao;
-        }
-    }
-
-    private String extrairCampoArrayJson(String json, String campo) {
-        if (json == null || json.isBlank() || campo == null || campo.isBlank()) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("\"" + Pattern.quote(campo) + "\"\\s*:\\s*\\[", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return null;
-        }
-
-        int inicioArray = matcher.end() - 1;
-        int fimArray = localizarFechoJson(json, inicioArray, '[', ']');
-        if (fimArray < 0) {
-            return null;
-        }
-        return json.substring(inicioArray, fimArray + 1);
-    }
-
-    private ArrayList<String> extrairObjetosJsonArray(String arrayJson) {
-        ArrayList<String> objetos = new ArrayList<>();
-        if (arrayJson == null || arrayJson.isBlank()) {
-            return objetos;
-        }
-
-        int cursor = 0;
-        while (cursor < arrayJson.length()) {
-            char atual = arrayJson.charAt(cursor);
-            if (atual != '{') {
-                cursor++;
-                continue;
-            }
-
-            int fimObjeto = localizarFechoJson(arrayJson, cursor, '{', '}');
-            if (fimObjeto < 0) {
-                break;
-            }
-
-            objetos.add(arrayJson.substring(cursor, fimObjeto + 1));
-            cursor = fimObjeto + 1;
-        }
-
-        return objetos;
-    }
-
-    private int localizarFechoJson(String json, int inicio, char aberto, char fechado) {
-        if (json == null || inicio < 0 || inicio >= json.length()) {
-            return -1;
-        }
-
-        int profundidade = 0;
-        boolean emString = false;
-        for (int i = inicio; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (emString) {
-                if (c == '\\') {
-                    i++;
-                } else if (c == '"') {
-                    emString = false;
-                }
-                continue;
-            }
-
-            if (c == '"') {
-                emString = true;
-                continue;
-            }
-
-            if (c == aberto) {
-                profundidade++;
-            } else if (c == fechado) {
-                profundidade--;
-                if (profundidade == 0) {
-                    return i;
-                }
-            }
-        }
-
-        return -1;
     }
 
     private DisciplinaDto localizarDisciplina(UUID disciplinaId) {

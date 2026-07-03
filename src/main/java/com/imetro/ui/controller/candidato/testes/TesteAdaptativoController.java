@@ -26,6 +26,7 @@ import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.domain.dto.test.Percent;
 import com.imetro.domain.dto.test.TesteDto;
+import com.imetro.services.TesteService.ResumoHistoricoDisciplina;
 import com.imetro.domain.dto.test.ReacaoTeste;
 import com.imetro.domain.dto.test.TrilhaAdaptacaoSubtopico;
 import com.imetro.domain.dto.test.TrilhoDTO;
@@ -474,7 +475,36 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 botoesDisciplinasBox.getChildren().clear();
                 botoesDisciplinasBox.getChildren().add(titulo);
                 renderDisciplineCards();
+                atualizarMetricasGlobais();
             }));
+    }
+
+    private void atualizarMetricasGlobais() {
+        Stats stats = candidatoService.CalcularStats();
+
+        int totalTestes = 0;
+        int totalQuestoes = 0;
+        double somaAcertos = 0;
+
+        for (ResumoHistoricoDisciplina resumo : resumos.values()) {
+            totalTestes += resumo.totalTestes();
+            totalQuestoes += resumo.totalQuestoesRespondidas();
+            somaAcertos += resumo.acertoMedio() * resumo.totalQuestoesRespondidas();
+        }
+
+        double acertoGlobal = totalQuestoes > 0 ? (somaAcertos / totalQuestoes) * 100 : stats.precisao() * 100;
+
+        if (teste_realizado != null) {
+            teste_realizado.setText(String.valueOf(totalTestes));
+        }
+        if (media_acerto != null) {
+            media_acerto.setText(String.format("%.0f%%", Math.min(100, acertoGlobal)));
+        }
+        if (percent_test != null) {
+            double media = (stats.velocidade() + stats.precisao() + stats.consistencia() +
+                stats.logica() + stats.resiliencia()) / 5.0 * 100;
+            percent_test.setText(String.format("%.0f%%", Math.min(100, media)));
+        }
     }
 
     private void renderDisciplineCards() {
@@ -1781,11 +1811,45 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     }
 
     @FXML
-    void Continuar(ActionEvent event) {}
+    void Continuar(ActionEvent event) {
+        if (disciplinaSelecionada != null && !disciplinaSelecionada.isBlank()) {
+            List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplinaSelecionada);
+            if (topicos != null && !topicos.isEmpty()) {
+                iniciarTestePadrao(disciplinaSelecionada, topicos);
+                return;
+            }
+        }
+        if (!disciplinas.isEmpty()) {
+            String primeira = disciplinas.get(0);
+            List<Topico> topicos = service.carregarTopicosPorDisciplina(primeira);
+            if (topicos != null && !topicos.isEmpty()) {
+                iniciarTestePadrao(primeira, topicos);
+            }
+        }
+    }
 
     @FXML
-    void Fazer_Teste(ActionEvent event) {}
+    void Fazer_Teste(ActionEvent event) {
+        if (disciplinaSelecionada != null && !disciplinaSelecionada.isBlank()) {
+            List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplinaSelecionada);
+            if (topicos != null && !topicos.isEmpty()) {
+                iniciarTestePadrao(disciplinaSelecionada, topicos);
+            }
+        }
+    }
 
     @FXML
-    void Ver_Livros(ActionEvent event) {}
+    void Ver_Livros(ActionEvent event) {
+        try {
+            Node source = event.getSource() instanceof Node node ? node : null;
+            StackPane contentHost = source != null && source.getScene() != null
+                ? (StackPane) source.getScene().lookup("#contentHost")
+                : null;
+            if (contentHost != null) {
+                App.swapContent(contentHost, "views/pages/candidato/biblioteca");
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao abrir biblioteca: " + e.getMessage());
+        }
+    }
 }
