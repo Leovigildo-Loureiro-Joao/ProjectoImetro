@@ -19,6 +19,8 @@ public class LeituraCard extends VBox {
     public LeituraCard(LeituraRecomendada leitura) {
         this.leitura = leitura;
 
+        setCursor(javafx.scene.Cursor.HAND);
+
         Label tituloLabel = new Label(leitura.tituloLivro());
         tituloLabel.getStyleClass().add("h3-thin-big");
 
@@ -62,5 +64,13 @@ public class LeituraCard extends VBox {
 
     public JFXButton getMiniTesteButton() {
         return miniTesteButton;
+    }
+
+    public void setOnOpenBook(Runnable action) {
+        setOnMouseClicked(e -> {
+            if (e.getTarget() != miniTesteButton) {
+                action.run();
+            }
+        });
     }
 }

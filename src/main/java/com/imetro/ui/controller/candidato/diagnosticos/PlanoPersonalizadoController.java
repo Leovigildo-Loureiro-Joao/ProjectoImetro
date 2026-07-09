@@ -20,23 +20,27 @@ import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
 import com.imetro.persistence.repository.LeituraProgressoRepository;
 import com.imetro.services.DiagnosticoService;
+import com.imetro.services.MiniTesteService;
 import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.relatorio.InsightCard;
 import com.imetro.ui.components.relatorio.LeituraCard;
 import com.imetro.ui.components.relatorio.TimelineStep;
 import com.imetro.ui.controller.lifecycle.DisposableController;
+import com.imetro.ui.model.Questao;
 import com.imetro.util.Authentication;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -118,6 +122,7 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final LeituraProgressoRepository leituraProgressoRepository = new LeituraProgressoRepository();
+    private final MiniTesteService miniTesteService = new MiniTesteService();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -329,12 +334,14 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
     private void preencherLeituras(List<LeituraRecomendada> leituras) {
         if (readingBox == null) return;
 
-        ArrayList<Node> nodes = new ArrayList<>();
-        if (leituras != null && !leituras.isEmpty()) {
-            UUID alunoId = Authentication.getCurrentUserId();
-            Map<UUID, Double> progressos = carregarProgressosLeitura(alunoId, leituras);
+        List<LeituraRecomendada> filtradas = filtrarLeiturasPorSelecao(leituras);
 
-            for (LeituraRecomendada leitura : leituras) {
+        ArrayList<Node> nodes = new ArrayList<>();
+        if (filtradas != null && !filtradas.isEmpty()) {
+            UUID alunoId = Authentication.getCurrentUserId();
+            Map<UUID, Double> progressos = carregarProgressosLeitura(alunoId, filtradas);
+
+            for (LeituraRecomendada leitura : filtradas) {
                 double progresso = progressos.getOrDefault(leitura.livroId(), 0.0);
                 LeituraRecomendada leituraComProgresso = new LeituraRecomendada(
                     leitura.livroId(),
@@ -348,8 +355,11 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
                     progresso
                 );
                 LeituraCard card = new LeituraCard(leituraComProgresso);
+
+                card.setOnOpenBook(() -> abrirLivro(leitura));
+
                 card.getMiniTesteButton().setOnAction(e ->
-                    System.out.println("Mini teste para " + leitura.tituloLivro() + " - " + leitura.topico())
+                    iniciarMiniTeste(leitura)
                 );
                 nodes.add(card);
             }
@@ -363,6 +373,91 @@ public class PlanoPersonalizadoController implements Initializable, DisposableCo
         }
 
         readingBox.getChildren().setAll(nodes);
+    }
+
+    private List<LeituraRecomendada> filtrarLeiturasPorSelecao(List<LeituraRecomendada> leituras) {
+        if (leituras == null || leituras.isEmpty()) return leituras;
+
+        Map<String, List<String>> subtopicosSelecionados = DiagnosticoCoordinator.getSubtopicosSelecionados();
+        if (subtopicosSelecionados.isEmpty()) return leituras;
+
+        return leituras.stream()
+            .filter(l -> {
+                String topico = l.topico() != null ? l.topico().toLowerCase().trim() : "";
+                String subtopico = l.subtopico() != null ? l.subtopico().toLowerCase().trim() : "";
+                return subtopicosSelecionados.entrySet().stream().anyMatch(entry -> {
+                    String topicoSel = entry.getKey().toLowerCase().trim();
+                    if (!topico.contains(topicoSel) && !topicoSel.contains(topico)) return false;
+                    if (entry.getValue() == null || entry.getValue().isEmpty()) return true;
+                    return entry.getValue().stream().anyMatch(s ->
+                        subtopico.contains(s.toLowerCase().trim()) || s.toLowerCase().trim().contains(subtopico)
+                    );
+                });
+            })
+            .toList();
+    }
+
+    private void abrirLivro(LeituraRecomendada leitura) {
+        StackPane contentHost = readingBox == null || readingBox.getScene() == null
+            ? null
+            : (StackPane) readingBox.getScene().lookup("#contentHost");
+        if (contentHost == null) return;
+
+        String disciplina = leitura.disciplina();
+        if (disciplina != null && !disciplina.isBlank()) {
+            com.imetro.ui.controller.candidato.BibliotecaController.definirDisciplinaPreferida(disciplina);
+        }
+        com.imetro.ui.controller.candidato.BibliotecaController.abrirLivroNaPagina(
+            null,
+            leitura.tituloLivro(),
+            leitura.paginaInicio()
+        );
+    }
+
+    private void iniciarMiniTeste(LeituraRecomendada leitura) {
+        List<Questao> questoes = miniTesteService.carregarMiniTeste(
+            leitura.livroId(),
+            leitura.tituloLivro(),
+            leitura.paginaInicio(),
+            leitura.paginaFim()
+        );
+
+        if (questoes.isEmpty()) {
+            mostrarAlerta(
+                "Mini teste indisponivel",
+                "Nao ha questoes disponiveis para \"" + leitura.tituloLivro()
+                    + "\" (paginas " + leitura.paginaInicio() + "-" + leitura.paginaFim()
+                    + "). As questoes sao geradas a partir do Gemini quando o livro e processado."
+            );
+            return;
+        }
+
+        StackPane modalPai = readingBox == null || readingBox.getScene() == null
+            ? null
+            : (StackPane) readingBox.getScene().lookup("#modalPai");
+        if (modalPai == null) return;
+
+        try {
+            FXMLLoader modFxml = App.loadFXMLModal("MiniTeste");
+            Node modalNode = modFxml.load();
+            com.imetro.ui.modals.MiniTesteModalController controller = modFxml.getController();
+            controller.configurar(questoes, leitura.tituloLivro(), leitura.topico(), leitura.subtopico(), modalPai);
+            modalPai.getChildren().add(modalNode);
+            controller.init();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            mostrarAlerta("Erro", "Nao foi possivel abrir o mini teste.");
+        }
+    }
+
+    private void mostrarAlerta(String titulo, String mensagem) {
+        Alert alert = new Alert(
+            Alert.AlertType.INFORMATION
+        );
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensagem);
+        alert.showAndWait();
     }
 
     private Map<UUID, Double> carregarProgressosLeitura(UUID alunoId, List<LeituraRecomendada> leituras) {

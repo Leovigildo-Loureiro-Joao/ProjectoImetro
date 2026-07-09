@@ -2,15 +2,20 @@
 
 ## Visao Geral
 
-O Projecto Imetro e uma aplicacao desktop em JavaFX para estudo individual de candidatos.
-O sistema trabalha hoje com foco em `Matematica` e `Fisica`, usa um banco de perguntas reais e cria, a partir do desempenho do candidato, um ciclo adaptativo de diagnostico, teste e planeamento.
+O Projecto Imetro e uma aplicacao desktop em JavaFX para estudo individual de candidatos a exames de acceso ao ensino superior em Angola.
+O sistema trabalha com foco em `Matematica` e `Fisica`, usa um banco de perguntas reais e cria, a partir do desempenho do candidato, um ciclo adaptativo de diagnostico, teste, leitura e planeamento.
 
 A ideia central e simples:
 
 - o diagnostico e o mapa do estado atual do candidato
 - o planeamento e gerado pelo sistema a partir desse diagnostico
 - os testes adaptativos validam se o plano esta a ser cumprido
-- os relatarios mostram apenas o resultado do que o backend ja calculou
+- a biblioteca de livros fornece material de estudo personalizado
+- os trilhos de leitura recomendam leituras especificas por topico/subtopico
+- os mini-testes validam apos a leitura
+- os desafios adaptativos motivam o candidato
+- as bolsas simuladas criam competicao semanal
+- os relatorios mostram apenas o resultado do que o backend ja calculou
 
 ## Principios Do Sistema
 
@@ -37,7 +42,25 @@ A ideia central e simples:
 - O Gemini pode gerar perguntas reais a partir desses PDFs.
 - A base de perguntas fica pronta para diagnostico e teste.
 
-### 3. Primeiro Diagnostico
+### 3. Biblioteca de Livros
+
+- O candidato pode fazer upload de PDFs de livros por disciplina.
+- O sistema extrai texto pagina-a-pagina usando PDFBox.
+- Gera automaticamente uma thumbnail/capa do PDF.
+- O **Gemini (IA)** extrai topicos e subtopicos do conteudo do livro.
+- O candidato pode ler o PDF diretamente na aplicacao com viewer integrado.
+- A navegacao e feita por topicos e subtopicos extraidos.
+- Cada livro fica associado a disciplina e guardado na tabela `biblioteca_livros`.
+
+### 4. Trilhos de Leitura
+
+- O sistema recomenda leituras especificas para topicos/subtopicos onde o candidato tem dificuldade.
+- Cada trilho e uma sequencia ordemada de passos com estados: `PENDENTE`, `A_LER`, `LIDO`.
+- O progresso de leitura e rastreado por livro: pagina atual, paginas lidas, sessoes de leitura.
+- As recomendacoes de leitura sao integradas no Planeamento de Estudo.
+- O candidato pode iniciar a leitura diretamente do plano personalizado.
+
+### 5. Primeiro Diagnostico
 
 - Se o candidato ainda nao tem historico, o sistema permite o primeiro diagnostico normalmente.
 - Esse primeiro diagnostico e a fotografia inicial do candidato.
@@ -48,7 +71,7 @@ A ideia central e simples:
   - `recomendacoes_rigor`
   - `planeamentos_estudo`
 
-### 4. Planeamento De Estudo
+### 6. Planeamento De Estudo
 
 - O planeamento e gerado por `PlaneamentoEstudoService`.
 - O plano usa:
@@ -57,6 +80,8 @@ A ideia central e simples:
   - testes anteriores
   - dias sem estudo
   - precisao, velocidade e consistencia
+  - leituras recomendadas (via `TrilhoLeituraService`)
+  - desafios adaptativos (via `DesafioService`)
 
 - O resultado e gravado em `planeamentos_estudo`.
 - Cada linha representa um snapshot semanal do candidato.
@@ -69,8 +94,18 @@ A ideia central e simples:
   - registros recentes
   - disciplinas priorizadas
   - evolucao
+  - leituras recomendadas
 
-### 5. Teste Adaptativo
+### 7. Mini-Testes
+
+- Testes curtos (5 questões) associados a livros e faixas de paginas.
+- Carrega questoes reais do banco filtradas por titulo do livro e intervalo de paginas.
+- Apresenta interface de teste com 4 alternativas (A-D).
+- Avalia respostas e calcula percentual de acerto.
+- Criterio de aprovacao: >= 70% de acerto.
+- Usado para validar conhecimento apos a leitura de um topico.
+
+### 8. Teste Adaptativo
 
 - O teste adaptativo trabalha em cima do estado construido pelo diagnostico.
 - O motor ajusta a dificuldade de acordo com o desempenho.
@@ -79,7 +114,27 @@ A ideia central e simples:
   - `teste_perguntas`
   - `stats`
 
-### 6. Relatorios E Acompanhamento
+### 9. Desafios Adaptativos
+
+- O sistema gera desafios personalizados baseados no desempenho do candidato.
+- Tipos de desafio:
+  - `NOVO_DIAGNOSTICO`: Para alunos sem dados suficientes
+  - `RECUPERACAO`: Quando pontuacao < 45%, identifica subtopicos com mais erros
+  - `DESAFIO_AVANCADO`: Quando pontuacao > 90%, pede subida de dificuldade
+  - `VALIDACAO_PRECISAO`: Quando ha evolucao positiva, valida com exercicios
+  - `REVISAO_GERAL`: Caso geral para manutencao
+- Os desafios sao derivados de erros comuns encontrados nos testes anteriores.
+
+### 10. Bolsas Simuladas (Competicao Semanal)
+
+- Simula concorrencia por bolsas de estudo reais (Bolsa Merito Atlas, Programa Horizonte STEM, etc.).
+- Cada bolsa tem criterios de elegibilidade (medalhas, desempenho, evolucao, precisao, velocidade).
+- Prova cronometrada com resposta digitada (A-D ou texto).
+- Calculo de "match" ponderado entre perfil do candidato e criterios da bolsa.
+- Ranking semanal com leaderboard.
+- Registro de scores e perfil de resultado.
+
+### 11. Relatorios E Acompanhamento
 
 - A tela de relatorios nao cria o plano.
 - Ela apenas le o resumo ja calculado pelo backend.
@@ -112,7 +167,7 @@ A ideia central e simples:
 ## Ciclo De Vida Do Candidato
 
 ```text
-Onboarding -> Bootstrap -> Primeiro Diagnostico -> Planeamento -> Teste Adaptativo -> Relatorios
+Onboarding -> Bootstrap -> Biblioteca -> Diagnostico -> Planeamento -> Leitura -> Mini-Testes -> Teste Adaptativo -> Desafios -> Bolsas -> Relatorios
 ```
 
 Depois do primeiro diagnostico:
@@ -120,6 +175,10 @@ Depois do primeiro diagnostico:
 - o sistema conhece melhor as fraquezas reais do candidato
 - o planeamento passa a ser mais inteligente
 - cada novo diagnostico reforca ou ajusta o plano
+- os trilhos de leitura recomendam materias especificas
+- os mini-testes validam apos a leitura
+- os desafios motivam a continuidade
+- as bolsas criam competicao semanal
 - o historico fica guardado para comparacao futura
 
 ## Persistencia Em Base De Dados
@@ -136,12 +195,27 @@ Depois do primeiro diagnostico:
 | `testes` | Guarda cada teste adaptativo concluido |
 | `teste_perguntas` | Guarda o detalhe de cada resposta |
 | `stats` | Guarda o resumo consolidado do teste |
+| `biblioteca_livros` | Guarda os livros PDF com metadados e cache Gemini |
+| `biblioteca_livro_paginas` | Guarda o texto extraído pagina a pagina |
+| `livro_mapa_topicos` | Guarda o mapa de topicos extraidos por IA |
+| `trilho_leitura` | Guarda as recomendacoes de leitura por topico |
+| `leitura_progresso` | Guarda o progresso de leitura por livro |
+| `mini_testes` | Cache de mini-testes por livro e faixa de paginas |
+| `bolsas` | Definicao das bolsas e criterios de elegibilidade |
+| `score_bolsas` | Scores semanais dos candidatos por bolsa |
 
-### Migration Mais Recente
+### Migrations Mais Recentes
 
-- `V29__planeamento_estudo.sql`
-
-Essa migration cria a tabela `planeamentos_estudo` e os indices para o plano semanal do candidato.
+| # | Arquivo | Tema |
+|---|---------|------|
+| V32 | `V32__biblioteca_livros.sql` | Biblioteca de livros e paginas |
+| V35 | `V35__biblioteca_add_capa.sql` | Capa thumbnail |
+| V36 | `V36__trilho_leitura.sql` | Trilhos de leitura |
+| V37 | `V37__leitura_progresso.sql` | Progresso de leitura |
+| V38 | `V38__mini_testes.sql` | Mini-testes |
+| V39 | `V39__stats_origem_confirmacao_leitura.sql` | CONFIRMACAO_LEITURA como origem |
+| V40 | `V40__biblioteca_livros_gemini_upload_cache.sql` | Cache Gemini |
+| V41 | `V41__livro_mapa_topicos.sql` | Mapa de topicos dos livros |
 
 ## Componentes Principais
 
@@ -153,6 +227,12 @@ Essa migration cria a tabela `planeamentos_estudo` e os indices para o plano sem
 - `TesteService`
 - `DisciplinaService`
 - `GeminiService`
+- `BibliotecaLivroService`
+- `TrilhoLeituraService`
+- `MiniTesteService`
+- `DesafioService`
+- `BolsaSimuladoService`
+- `CatalogoQuestoesService`
 
 ### Repositories
 
@@ -163,6 +243,13 @@ Essa migration cria a tabela `planeamentos_estudo` e os indices para o plano sem
 - `TesteRepository`
 - `TesteStatsRepository`
 - `RecomendacaoRepository`
+- `BibliotecaLivroRepository`
+- `LivroMapaTopicosRepository`
+- `TrilhoLeituraRepository`
+- `LeituraProgressoRepository`
+- `MiniTesteRepository`
+- `BolsaRepository`
+- `ScoreBolsaRepository`
 
 ### Controllers
 
@@ -170,6 +257,17 @@ Essa migration cria a tabela `planeamentos_estudo` e os indices para o plano sem
 - `DiagnosticoListController`
 - `RelatoriosController`
 - `TesteAdaptativoController`
+- `BibliotecaController`
+- `BolsasController`
+- `BolsaSimuladoController`
+- `PlanoPersonalizadoController`
+
+### Modals
+
+- `AddLivroModalController`
+- `MiniTesteModalController`
+- `TopicModalController`
+- `AvatarPickerModalController`
 
 ## Como Executar
 
@@ -185,5 +283,9 @@ O comportamento atual do sistema e este:
 - cada diagnostico concluido gera planeamento
 - o planeamento fica gravado na base de dados
 - o sistema bloqueia novos diagnosticos quando nao ha plano ativo para quem ja tem historico
+- a biblioteca de livros fornece material de estudo com extracao de topicos por IA
+- os trilhos de leitura recomendam leituras especificas baseadas nas fraquezas do candidato
+- os mini-testes validam o conhecimento apos a leitura
+- os desafios adaptativos motivam o candidato com missoes personalizadas
+- as bolsas simuladas criam competicao semanal com ranking
 - se o candidato quiser recomecar, basta limpar os diagnosticos e o estado derivado
-

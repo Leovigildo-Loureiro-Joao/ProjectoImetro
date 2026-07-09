@@ -1015,7 +1015,11 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
         DiagnosticoCoordinator.DiagnosticoConfig config = DiagnosticoCoordinator.getConfiguracaoAtual();
 
         if (config == null) {
-            String topico= planeamentoService.gerarResumo().focoAtual().trim().split("·")[1].toLowerCase();
+            String[] partes = planeamentoService.gerarResumo().focoAtual().trim().split("-");
+            if (partes.length < 2) {
+                return base;
+            }
+            String topico = partes[1].toLowerCase();
             return base.stream().filter(filt -> filt.getSubtopico().toLowerCase().contains(topico.trim())).toList();
         }
         List<Questao> filtradas = List.of();

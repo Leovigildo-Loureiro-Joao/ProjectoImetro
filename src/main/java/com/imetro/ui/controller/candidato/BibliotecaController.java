@@ -4,18 +4,22 @@ import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.biblioteca.LivroMapaTopicos;
+import com.imetro.domain.dto.leitura.LeituraProgresso;
 import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
 import com.imetro.persistence.repository.BibliotecaLivroRepository;
+import com.imetro.persistence.repository.LeituraProgressoRepository;
 import com.imetro.persistence.repository.LivroMapaTopicosRepository;
 import com.imetro.services.BibliotecaLivroService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.GeminiService;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.biblioteca.LivroCard;
+import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
 import com.imetro.ui.modals.AddLivroModalController;
 import com.imetro.ui.modals.AddLivroModalController.DisciplinaOption;
 import com.imetro.ui.modals.ModalController;
+import com.imetro.util.Authentication;
 import com.imetro.util.TextoUtil;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
@@ -92,6 +96,7 @@ public class BibliotecaController implements Initializable {
 
     private BibliotecaLivroService servoce;
     private GeminiService geminiService;
+    private LeituraProgressoRepository leituraProgressoRepository = new LeituraProgressoRepository();
     private byte[] dados;
     private List<BibliotecaLivroDto> listaLivrosAtual;
     private String filtroAtual = "mybooks";
@@ -356,12 +361,40 @@ public class BibliotecaController implements Initializable {
             return;
         }
 
+        List<LivroMapaTopicos> filtrados = filtrarTopicosPorSelecao(topicos);
+
         lblInfo.setText("Seleccione um tópico para estudar");
-        for (int i = 0; i < topicos.size(); i++) {
-            LivroMapaTopicos t = topicos.get(i);
-            VBox card = criarCardTopico(i, t);
+        for (int i = 0; i < filtrados.size(); i++) {
+            LivroMapaTopicos t = filtrados.get(i);
+            VBox card = criarCardTopicoComProgresso(i, t);
             pageContainer.getChildren().add(card);
         }
+
+        if (filtrados.isEmpty()) {
+            Label vazio = new Label("Nenhum tópico corresponde à seleção atual.");
+            vazio.getStyleClass().add("muted");
+            pageContainer.getChildren().add(vazio);
+        }
+    }
+
+    private List<LivroMapaTopicos> filtrarTopicosPorSelecao(List<LivroMapaTopicos> topicos) {
+        Map<String, List<String>> subtopicosSelecionados = DiagnosticoCoordinator.getSubtopicosSelecionados();
+        if (subtopicosSelecionados == null || subtopicosSelecionados.isEmpty()) return topicos;
+
+        return topicos.stream()
+            .filter(t -> {
+                String topico = t.topico() != null ? t.topico().toLowerCase().trim() : "";
+                String subtopico = t.subtopico() != null ? t.subtopico().toLowerCase().trim() : "";
+                return subtopicosSelecionados.entrySet().stream().anyMatch(entry -> {
+                    String topicoSel = entry.getKey().toLowerCase().trim();
+                    if (!topico.contains(topicoSel) && !topicoSel.contains(topico)) return false;
+                    if (entry.getValue() == null || entry.getValue().isEmpty()) return true;
+                    return entry.getValue().stream().anyMatch(s ->
+                        subtopico.contains(s.toLowerCase().trim()) || s.toLowerCase().trim().contains(subtopico)
+                    );
+                });
+            })
+            .toList();
     }
 
     private void extrairTopicosEmBackground() {
@@ -407,8 +440,8 @@ public class BibliotecaController implements Initializable {
         }
     }
 
-    private VBox criarCardTopico(int index, LivroMapaTopicos t) {
-        VBox card = new VBox(4);
+    private VBox criarCardTopicoComProgresso(int index, LivroMapaTopicos t) {
+        VBox card = new VBox(6);
         card.getStyleClass().add("topico-card");
         card.setPadding(new Insets(14));
         card.setUserData(index);
@@ -423,9 +456,32 @@ public class BibliotecaController implements Initializable {
         Label lblPaginas = new Label("Páginas " + t.paginaInicio() + " — " + t.paginaFim());
         lblPaginas.setStyle("-fx-text-fill: -color-warning; -fx-font-size: 12px; -fx-font-weight: 700;");
 
-        card.getChildren().addAll(lblTopico, lblSubtopico, lblPaginas);
+        double progresso = carregarProgressoTopico(t);
+        ProgressBar bar = new ProgressBar(Math.max(0, Math.min(1, progresso)));
+        bar.setPrefWidth(200);
+        bar.getStyleClass().add("progresso-bar");
+        Label percentLabel = new Label(String.format("%.0f%%", progresso * 100));
+        percentLabel.getStyleClass().add("progresso-texto");
+        HBox progressoBox = new HBox(8, bar, percentLabel);
+        progressoBox.setAlignment(Pos.CENTER_LEFT);
+
+        card.getChildren().addAll(lblTopico, lblSubtopico, lblPaginas, progressoBox);
         card.setOnMouseClicked(e -> selecionarTopico(index));
         return card;
+    }
+
+    private double carregarProgressoTopico(LivroMapaTopicos t) {
+        if (livro == null) return 0.0;
+        UUID alunoId = Authentication.getCurrentUserId();
+        if (alunoId == null) return 0.0;
+        try {
+            LeituraProgresso lp = leituraProgressoRepository.findByAlunoAndLivro(alunoId, livro.id());
+            if (lp != null && lp.totalPaginas() != null && lp.totalPaginas() > 0) {
+                int lidas = lp.paginaAtual() != null ? lp.paginaAtual() : 0;
+                return Math.min(1.0, (lidas * 1.0) / lp.totalPaginas());
+            }
+        } catch (SQLException ignored) {}
+        return 0.0;
     }
 
     private void selecionarTopico(int index) {
