@@ -472,6 +472,7 @@
 
 .nav-button:hover {
     -fx-background-color: rgba(15, 23, 42, 0.04);
+    -fx-effect: dropshadow(gaussian, rgba(233, 113, 21, 0.25), 8, 0.15, 0, 0);
 }
 
 /* ==================== NAV BAR ==================== */
@@ -804,22 +805,35 @@
 
 .nav-bar.sub .list-cell:hover {
     -fx-background-color: #d3d3d300;
+    -fx-effect: dropshadow(gaussian, rgba(233, 113, 21, 0.15), 6, 0.1, 0, 0);
   }
 
 
 .nav-bar .list-cell:hover {
   -fx-background-color: #e9711542;
+  -fx-effect: dropshadow(gaussian, rgba(233, 113, 21, 0.3), 12, 0.2, 0, 0);
+}
+
+.nav-bar .list-cell:hover .item-cell .glyph-icon,
+.nav-bar .list-cell:hover .item-cell .ikonli-font-icon {
+  -fx-effect: dropshadow(gaussian, rgba(233, 113, 21, 0.5), 8, 0.3, 0, 0);
 }
 
 .nav-bar .list-cell:selected,
 .nav-bar .list-cell:selected:hover {
   -fx-background-color: #ec731625;
+  -fx-effect: dropshadow(gaussian, rgba(236, 115, 22, 0.4), 16, 0.3, 0, 0);
 }
 
 .nav-bar .list-cell:filled:selected {
-  -fx-border-color: #ffffff38;
+  -fx-border-color: rgba(233, 113, 21, 0.5);
   -fx-border-width: 1;
   -fx-border-radius: 12;
+}
+
+.nav-bar .list-cell:selected .item-cell .glyph-icon,
+.nav-bar .list-cell:selected .item-cell .ikonli-font-icon {
+  -fx-effect: dropshadow(gaussian, rgba(236, 115, 22, 0.6), 10, 0.4, 0, 0);
 }
 
 .nav-bar.sub .list-cell:filled:selected {
