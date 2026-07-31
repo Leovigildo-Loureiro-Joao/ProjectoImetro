@@ -100,7 +100,7 @@ public class ChooseDisciplinasOnboardingController implements Initializable {
                 card.getDisciplina().peso()
             );
         }
-        //candidatoService.insertFocos(focos, candidatoId);
+        candidatoService.insertFocos(focos, candidatoId);
         for (DisciplinaCard card : cardsSemSelecao) {
             candidatoService.RemoverProgressoDisciplina(candidatoId, card.getDisciplina().id());
         }

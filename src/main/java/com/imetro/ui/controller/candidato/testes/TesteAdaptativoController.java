@@ -164,6 +164,8 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     @FXML private VBox trilhoAdaptacaoCard;
     @FXML private JFXComboBox<String> trilhoDisciplinaCombo;
 
+   private Desafio desafio;
+
     private double PROGRESSO_TARGET = 0d;
     private ConfiguracaoDto configCandidato;
     private List<String> disciplinas = List.of();
@@ -219,6 +221,20 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         initializeServices();
         configureUIComponents();
         configureListeners();
+
+        Runnable inicioPendente = TesteAdaptativoCoordinator.consumirInicioPendente();
+        if (inicioPendente != null) {
+            Platform.runLater(() -> {
+                if (diagnosticoService.temHistoricoDiagnostico(Authentication.getCurrentUserId())) {
+                    startTesteAdaptativo();
+                } else {
+                    carregarBloqueioPrimeiroDiagnostico();
+                    initializeUIState();
+                    updateHeroProgress();
+                }
+            });
+            return;
+        }
 
         if (restaurarSessaoPausada()) {
             Platform.runLater(this::atualizarEstadoPlanejamento);
@@ -304,7 +320,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
     private void CarregarDataTrilho() {
         var plano = planeamentoService.gerarResumo();
         try {
-            Desafio desafio = desafioService.gerarDesafio(plano);
+            desafio = desafioService.gerarDesafio(plano);
             desafui.setText(desafio.descricao());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1833,7 +1849,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
         if (disciplinaSelecionada != null && !disciplinaSelecionada.isBlank()) {
             List<Topico> topicos = service.carregarTopicosPorDisciplina(disciplinaSelecionada);
             if (topicos != null && !topicos.isEmpty()) {
-                iniciarTestePadrao(disciplinaSelecionada, topicos);
+                iniciarTestePadrao(disciplinaSelecionada, topicos.stream().filter((Topico t) -> t.topicos().equals(desafio.topico())).toList());
             }
         }
     }
@@ -1846,7 +1862,7 @@ public class TesteAdaptativoController implements DisposableController, TesteAda
                 ? (StackPane) source.getScene().lookup("#contentHost")
                 : null;
             if (contentHost != null) {
-                App.swapContent(contentHost, "views/pages/candidato/biblioteca");
+                App.swapContent(contentHost, "views/pages/candidato/livro");
             }
         } catch (Exception e) {
             System.err.println("Erro ao abrir biblioteca: " + e.getMessage());

@@ -1,6 +1,6 @@
 /* ==================== VARIÁVEIS GLOBAIS ==================== */
 .root {
-    -fx-font-family: "Roboto", "Segoe UI", system-font;
+    -fx-font-family: "Roboto Condensed","Roboto","Roboto" "Segoe UI", system-font;
 
     /* Cores principais - Light Theme */
     -color-bg: #f8fafc;
@@ -449,7 +449,7 @@
 
 /* ==================== SIDEBAR ==================== */
 .sidebar {
-    -fx-background-color: -color-secondary;
+    -fx-background-color: -color-primary-dark;
     -fx-border-color: -color-secondary;
     -fx-border-width: 0 1 0 0;
     -fx-min-width: 24px;

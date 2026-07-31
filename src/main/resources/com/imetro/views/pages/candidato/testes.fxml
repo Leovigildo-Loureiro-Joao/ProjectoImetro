@@ -542,6 +542,26 @@
                                                                      <JFXButton fx:id="btnProximo" disable="true" maxWidth="1.7976931348623157E308" onAction="#proximaQuestao" prefHeight="40.0" prefWidth="160.0" styleClass="btn-primary" text="Proxima Questao" HBox.hgrow="ALWAYS" />
                                                                   </children>
                                                                </HBox>
+                                                               <StackPane>
+                                                                  <children>
+                        
+                                                                           <!-- FEEDBACK ADAPTATIVO -->
+                                                                     <VBox fx:id="feedbackContainer" alignment="CENTER" maxHeight="400.0" maxWidth="400.0" spacing="10.0" styleClass="sub-card" visible="false">
+                                                                        <padding>
+                                                                           <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                                                        </padding>
+                                                                        <children>
+                                                                           <ImageView fx:id="feedbackImg" fitHeight="69.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
+                                                                              <image>
+                                                                                 <Image url="@../../../assets/imgs/corret.png" />
+                                                                              </image>
+                                                                           </ImageView>
+                                                                           <Label fx:id="feedbackIcon" styleClass="h2-thin" text="OK" visible="false" />
+                                                                           <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h3-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
+                                                                        </children>
+                                                                     </VBox>
+                                                                  </children>
+                                                               </StackPane>
                                                             </children>
                                                          </VBox>
                                                       </children>
@@ -613,22 +633,6 @@
                                                    </VBox>
                                                 </children>
                                              </HBox>
-
-                                                   <!-- FEEDBACK ADAPTATIVO -->
-                                             <VBox fx:id="feedbackContainer" alignment="CENTER" maxHeight="400.0" maxWidth="400.0" spacing="10.0" styleClass="sub-card" visible="false">
-                                                <padding>
-                                                   <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
-                                                </padding>
-                                                <children>
-                                                   <ImageView fx:id="feedbackImg" fitHeight="69.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
-                                                      <image>
-                                                         <Image url="@../../../assets/imgs/corret.png" />
-                                                      </image>
-                                                   </ImageView>
-                                                   <Label fx:id="feedbackIcon" styleClass="h2-thin" text="OK" visible="false" />
-                                                   <Label fx:id="feedbackMessage" alignment="CENTER" styleClass="h3-thin" text="Excelente! Subindo de nivel..." wrapText="true" />
-                                                </children>
-                                             </VBox>
                                           </children>
                                        </StackPane>
                                     </content>

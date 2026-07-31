@@ -88,7 +88,10 @@ public class App extends Application {
         loadAppFonts();
 
         App.stage = stage;
-        App.stage.setTitle("SimulatorBolsaStudy");
+        
+        stage.getIcons().add(new Image("/com/imetro/assets/imgs/icone_solid.png"));
+        App.stage.setTitle("KBols");
+        
         App.stage.setMinWidth(1100);
         App.stage.setMinHeight(600);
         stage.setMaximized(true);

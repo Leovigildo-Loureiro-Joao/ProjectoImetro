@@ -2,9 +2,13 @@ package com.imetro.ui.controller.candidato;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.imetro.domain.CacheService;
 import com.imetro.domain.model.Candidato;
@@ -15,9 +19,12 @@ import com.imetro.config.RuntimeConfig;
 import com.imetro.domain.dto.candidato.DashboardMelhoriaResumo;
 import com.imetro.domain.dto.MenuEntry;
 import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEstado;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoEtapa;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.stats.Stats;
 import com.imetro.domain.enums.NivelDisciplina;
 import com.imetro.persistence.repository.UserRepository;
+import com.imetro.persistence.repository.LeituraProgressoRepository;
 import com.imetro.services.CandidatoService;
 import com.imetro.services.DiagnosticoService;
 import com.imetro.services.PerguntasBootstrapAsyncService;
@@ -32,6 +39,7 @@ import com.imetro.util.ProfileSessionState;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.geometry.Pos;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
@@ -53,9 +61,19 @@ public class CandidatoLayoutController implements Initializable {
     private static final String BANNER_SUCCESS_CLASS = "bootstrap-banner-success";
     private static final String BANNER_WARNING_CLASS = "bootstrap-banner-warning";
     private static final String BANNER_ERROR_CLASS = "bootstrap-banner-error";
+
+    private static CandidatoLayoutController instance;
+
+    public static void navegar(String destino) {
+        if (instance != null) {
+            instance.navigate(destino);
+        }
+    }
+
     private final DiagnosticoService diagnosticoService=new DiagnosticoService();
     private final CandidatoService candidatoService = new CandidatoService();
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
+    private final LeituraProgressoRepository leituraProgressoRepository = new LeituraProgressoRepository();
 
     @FXML
     private VBox bootstrapBanner;
@@ -114,12 +132,19 @@ public class CandidatoLayoutController implements Initializable {
     @FXML
     private HBox sidebarSummary;
 
+    @FXML
+    private VBox dailyPlanPanel;
+
+    @FXML
+    private VBox dailyPlanStepsBox;
+
     private final UserRepository userRepository = new UserRepository();
     private final PerguntasBootstrapAsyncService perguntasBootstrapAsyncService =
         PerguntasBootstrapAsyncService.getInstance();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        instance = this;
         boolean dbEnabled = RuntimeConfig.isDbEnabled();
         if (dbModeBanner != null) {
             dbModeBanner.setVisible(!dbEnabled);
@@ -336,6 +361,128 @@ public class CandidatoLayoutController implements Initializable {
         });
     }
 
+    @FXML
+    private void toggleDailyPlan() {
+        double translate = dailyPlanPanel.getTranslateX();
+        if (translate >= 300) {
+            refreshDailyPlan();
+            Timeline expand = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(dailyPlanPanel.translateXProperty(), 320)),
+                new KeyFrame(Duration.seconds(0.3), new KeyValue(dailyPlanPanel.translateXProperty(), 0))
+            );
+            expand.play();
+        } else {
+            Timeline collapse = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(dailyPlanPanel.translateXProperty(), 0)),
+                new KeyFrame(Duration.seconds(0.3), new KeyValue(dailyPlanPanel.translateXProperty(), 320))
+            );
+            collapse.play();
+        }
+    }
+
+    @FXML
+    private void hideDailyPlan() {
+        Timeline collapse = new Timeline(
+            new KeyFrame(Duration.ZERO, new KeyValue(dailyPlanPanel.translateXProperty(), dailyPlanPanel.getTranslateX())),
+            new KeyFrame(Duration.seconds(0.3), new KeyValue(dailyPlanPanel.translateXProperty(), 320))
+        );
+        collapse.play();
+    }
+
+    private boolean temAtividadeHoje(UUID candidatoId) {
+        if (candidatoId == null) return false;
+        LocalDateTime ultimoDiag = diagnosticoService.obterDataUltimoDiagnostico(candidatoId);
+        if (ultimoDiag != null && ultimoDiag.toLocalDate().equals(LocalDate.now())) return true;
+        try {
+            if (leituraProgressoRepository.existeLeituraHoje(candidatoId)) return true;
+        } catch (SQLException ignored) {}
+        return false;
+    }
+
+    private void refreshDailyPlan() {
+        if (dailyPlanStepsBox == null) return;
+        UUID candidatoId = Authentication.getCurrentUserId();
+        if (candidatoId == null) return;
+
+        PlaneamentoEstudoResumo resumo = planeamentoService.gerarResumo(candidatoId);
+        List<PlaneamentoEstudoEtapa> todasEtapas = resumo == null ? List.of() : resumo.etapas();
+        boolean atividadeHoje = temAtividadeHoje(candidatoId);
+
+        List<PlaneamentoEstudoEtapa> etapas = todasEtapas.stream()
+            .filter(e -> "Hoje".equals(e.janela()) || "Amanhã".equals(e.janela()))
+            .collect(Collectors.toList());
+
+        dailyPlanStepsBox.getChildren().clear();
+
+        if (etapas.isEmpty()) {
+            Label empty = new Label("Nenhuma tarefa pendente. Conclui um diagnóstico para gerar o plano.");
+            empty.setWrapText(true);
+            empty.getStyleClass().add("muted");
+            dailyPlanStepsBox.getChildren().add(empty);
+            return;
+        }
+
+        for (int i = 0; i < etapas.size(); i++) {
+            PlaneamentoEstudoEtapa etapa = etapas.get(i);
+            boolean concluida = "Hoje".equals(etapa.janela()) && atividadeHoje;
+            HBox card = criarTaskCard(i + 1, etapa, concluida);
+            dailyPlanStepsBox.getChildren().add(card);
+        }
+    }
+
+    private HBox criarTaskCard(int index, PlaneamentoEstudoEtapa etapa, boolean concluida) {
+        Label badge = new Label(String.valueOf(index));
+        badge.getStyleClass().addAll("plan-step-number", "plan-step-number-" + (index % 4 + 1));
+        badge.setAlignment(Pos.CENTER);
+        badge.setMinSize(34.0, 34.0);
+        badge.setPrefSize(34.0, 34.0);
+        badge.setMaxSize(34.0, 34.0);
+
+        Label window = new Label(etapa.janela());
+        window.getStyleClass().add("plan-step-window");
+
+        Label action = new Label(etapa.acao());
+        action.getStyleClass().add("plan-step-title");
+
+        Label detail = new Label(etapa.detalhe());
+        detail.getStyleClass().add("plan-step-detail");
+        detail.setWrapText(true);
+
+        VBox infoBox = new VBox(2, window, action, detail);
+        infoBox.setFillWidth(true);
+
+        HBox card = new HBox(10, badge, infoBox);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.getStyleClass().add("daily-plan-task-card");
+
+        if (concluida) {
+            card.getStyleClass().add("daily-plan-task-done");
+            window.getStyleClass().add("daily-plan-striked");
+            action.getStyleClass().add("daily-plan-striked");
+            detail.getStyleClass().add("daily-plan-striked");
+
+            Label doneBadge = new Label("✓");
+            doneBadge.getStyleClass().add("daily-plan-done-badge");
+            card.getChildren().addFirst(doneBadge);
+        }
+
+        String acaoLower = etapa.acao().toLowerCase();
+        String destino = "dashboard";
+        if (acaoLower.contains("diagnóstico") || acaoLower.contains("diagnostico")) {
+            destino = "diagnostico";
+        } else if (acaoLower.contains("teste") || acaoLower.contains("exame") || acaoLower.contains("adaptativo")) {
+            destino = "testes";
+        } else if (acaoLower.contains("leitura") || acaoLower.contains("ler")) {
+            destino = "livro";
+        }
+
+        final String destinoFinal = "testes".equals(destino) ? "exame_adaptativo" : destino;
+        card.setOnMouseClicked(e -> navigate(destinoFinal));
+        card.setStyle("-fx-cursor: hand;");
+
+        return card;
+    }
+
     private void navigate(String key) {
         menu.getItems().stream().filter(item -> item.key().equals(key)).findFirst().ifPresent(item -> menu.getSelectionModel().select(item));
         try {
@@ -354,6 +501,9 @@ public class CandidatoLayoutController implements Initializable {
             if (!"logout".equals(key)) {
                 refreshSidebarSummaryAsync();
                 atualizarBannerPlaneamento();
+                if (dailyPlanPanel.getTranslateX() < 300) {
+                    refreshDailyPlan();
+                }
             }
         } catch (IOException ignored) {
 

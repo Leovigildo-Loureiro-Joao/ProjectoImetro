@@ -36,6 +36,7 @@ import com.imetro.domain.enums.Foco;
 import com.imetro.domain.model.Candidato;
 import com.imetro.persistence.repository.MedalhaRepository;
 import com.imetro.services.CandidatoService;
+import com.imetro.services.DiagnosticoService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.CircleProgress;
@@ -43,6 +44,7 @@ import com.imetro.util.Authentication;
 import com.imetro.util.MedalSupport;
 
 import javafx.animation.FadeTransition;
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -95,7 +97,6 @@ public class DashboardOrientadoController implements Initializable {
     @FXML private Label planSummary;
     @FXML private Label planFocus;
     @FXML private Label planMeta;
-    @FXML private VBox planStepsBox;
     @FXML private Label disciplineBadge;
     @FXML private Label disciplineSummary;
     @FXML private HBox achievementCardsBox;
@@ -106,8 +107,15 @@ public class DashboardOrientadoController implements Initializable {
     @FXML private Label sequenceSummary;
     @FXML private AreaChart<String, Number> areaActivityChart;
     @FXML private VBox tela;
+    @FXML private HBox guidedFlowBox;
+    @FXML private StackPane stepCircle;
+    @FXML private Label stepNumber;
+    @FXML private Label stepTitle;
+    @FXML private Label stepDescription;
+    @FXML private JFXButton stepActionButton;
 
     private final CandidatoService candidatoService = new CandidatoService();
+    private final DiagnosticoService diagnosticoService = new DiagnosticoService();
     private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
     private final MedalhaRepository medalhaRepository = new MedalhaRepository();
 
@@ -127,18 +135,12 @@ public class DashboardOrientadoController implements Initializable {
 
     @FXML
     public void StartDiagnostic(javafx.event.ActionEvent event) {
-        StackPane contentHost = getContentHost();
-        if (contentHost != null) {
-            App.swapContent(contentHost, "views/pages/candidato/diagnostico");
-        }
+        CandidatoLayoutController.navegar("diagnostico");
     }
 
     @FXML
     public void StartExam(javafx.event.ActionEvent event) {
-        StackPane contentHost = getContentHost();
-        if (contentHost != null) {
-            App.swapContent(contentHost, "views/pages/candidato/testes");
-        }
+        CandidatoLayoutController.navegar("exame_adaptativo");
     }
 
     @Override
@@ -171,10 +173,10 @@ public class DashboardOrientadoController implements Initializable {
 
     private void renderDashboard() {
         updateHeader();
+        renderGuidedFlow();
         setupHeroProgress();
         setupHeroCopy();
         setupAchievementCard();
-        setupPlanCard();
         setupSequenceChart();
         setupDisciplineProgress();
         animateSections();
@@ -449,87 +451,16 @@ public class DashboardOrientadoController implements Initializable {
     }
 
     private void setupPlanCard() {
-        List<PlaneamentoEstudoEtapa> etapas = planeamentoResumo == null || planeamentoResumo.etapas() == null
-            ? List.of()
-            : planeamentoResumo.etapas();
-
-        List<LeituraRecomendada> leituras = planeamentoResumo == null || planeamentoResumo.leituras() == null
-            ? List.of()
-            : planeamentoResumo.leituras();
-
-        int totalPassos = etapas.size() + Math.min(2, leituras.size());
-
-        if (planBadge != null) {
-            planBadge.setText(totalPassos == 0 ? "Hoje" : totalPassos + (totalPassos == 1 ? " passo" : " passos"));
-        }
-        if (planTitle != null) {
-            planTitle.setText(totalPassos == 0 ? "Plano de hoje" : "Plano diário");
-        }
-        if (planSummary != null) {
-            planSummary.setText(etapas.isEmpty() && leituras.isEmpty()
-                ? planeamentoResumo.resumoHero()
-                : "Etapas e leituras recomendadas para hoje.");
-        }
+        if (planBadge != null) planBadge.setText("Foco");
+        if (planTitle != null) planTitle.setText("Foco actual");
+        if (planSummary != null) planSummary.setText(planeamentoResumo == null ? "—" : planeamentoResumo.resumoHero());
         if (planFocus != null) {
-            planFocus.setText("Foco actual: " + safeText(planeamentoResumo.focoAtual(), "—"));
+            planFocus.setText("Foco actual: " + safeText(planeamentoResumo == null ? null : planeamentoResumo.focoAtual(), "—"));
         }
         if (planMeta != null) {
-            planMeta.setText("Acerto médio " + safeText(planeamentoResumo.acertoMedio(), "—") +
-                " · ritmo " + safeText(planeamentoResumo.ritmoMedio(), "—"));
+            planMeta.setText("Acerto médio " + safeText(planeamentoResumo == null ? null : planeamentoResumo.acertoMedio(), "—") +
+                " · ritmo " + safeText(planeamentoResumo == null ? null : planeamentoResumo.ritmoMedio(), "—"));
         }
-        if (planStepsBox != null) {
-            planStepsBox.getChildren().setAll(buildPlanStepCards(etapas, leituras));
-        }
-    }
-
-    private List<Node> buildPlanStepCards(List<PlaneamentoEstudoEtapa> etapas, List<LeituraRecomendada> leituras) {
-        List<Node> cards = new ArrayList<>();
-        for (int index = 0; index < 3; index++) {
-            PlaneamentoEstudoEtapa etapa = index < etapas.size() ? etapas.get(index) : null;
-            cards.add(PlanStepCardFactory.create(index + 1, etapa, planeamentoResumo));
-        }
-        int leituraOffset = 3;
-        for (int i = 0; i < Math.min(2, leituras.size()); i++) {
-            LeituraRecomendada leitura = leituras.get(i);
-            cards.add(criarLeituraStepCard(leituraOffset + i, leitura));
-        }
-        return cards;
-    }
-
-    private Node criarLeituraStepCard(int ordem, LeituraRecomendada leitura) {
-        Label badge = new Label(String.valueOf(ordem));
-        badge.getStyleClass().addAll("plan-step-number", "plan-step-number-4");
-        badge.setAlignment(Pos.CENTER);
-        badge.setMinSize(38.0, 38.0);
-        badge.setPrefSize(38.0, 38.0);
-        badge.setMaxSize(38.0, 38.0);
-
-        VBox infoBox = new VBox(2);
-        Label titulo = new Label("Ler: " + leitura.tituloLivro());
-        titulo.getStyleClass().add("plan-step-title");
-        Label detalhe = new Label(leitura.topico() + " " + leitura.formatarPaginas());
-        detalhe.getStyleClass().add("plan-step-detail");
-
-        double progresso = Math.max(0, Math.min(1, leitura.progressoLeitura() / 100.0));
-        ProgressBar bar = new ProgressBar(progresso);
-        bar.setPrefWidth(80);
-        bar.getStyleClass().add("progresso-bar");
-
-        Label percent = new Label(String.format("%.0f%%", leitura.progressoLeitura()));
-        percent.getStyleClass().add("progresso-texto");
-
-        HBox progressoBox = new HBox(4, bar, percent);
-        progressoBox.setAlignment(Pos.CENTER_LEFT);
-
-        infoBox.getChildren().addAll(titulo, detalhe, progressoBox);
-
-        HBox card = new HBox(10, badge, infoBox);
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setPadding(new Insets(10));
-        card.getStyleClass().add("plan-step-card");
-        card.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(infoBox, Priority.ALWAYS);
-        return card;
     }
 
     private void setupSequenceChart() {
@@ -687,10 +618,42 @@ public class DashboardOrientadoController implements Initializable {
         return value == null || value.isBlank() ? fallback : value;
     }
 
-    private StackPane getContentHost() {
-        if (tela == null || tela.getParent() == null) return null;
-        if (tela.getParent() instanceof StackPane host) return host;
-        return null;
+    private void renderGuidedFlow() {
+        if (guidedFlowBox == null) return;
+        UUID candidatoId = candidato.getIdCandidato();
+
+        boolean temDiagnostico = diagnosticoService.temHistoricoDiagnostico(candidatoId);
+
+        if (!temDiagnostico) {
+            stepNumber.setText("1");
+            stepTitle.setText("Fazer o Diagnóstico Inicial");
+            stepDescription.setText("Mapeia o teu conhecimento atual para o sistema criar um plano de estudo personalizado.");
+            stepActionButton.setText("EXECUTAR DIAGNÓSTICO");
+            stepActionButton.setUserData("diagnostico");
+            stepCircle.getStyleClass().add("guided-step-active");
+        } else if (diagnosticoService.diagnosticoEmCooldown(candidatoId)) {
+            stepNumber.setText("2");
+            stepTitle.setText("Estudar os Tópicos Pendentes");
+            stepDescription.setText("Revisa os tópicos recomendados no plano de estudo antes de fazeres um novo diagnóstico.");
+            stepActionButton.setText("VER PLANO DE ESTUDO");
+            stepActionButton.setUserData("plano");
+        } else {
+            stepNumber.setText("3");
+            stepTitle.setText("Validar Conhecimento");
+            stepDescription.setText("Faz um teste adaptativo para validar o que aprendeste e subir de nível.");
+            stepActionButton.setText("INICIAR EXAME ADAPTATIVO");
+            stepActionButton.setUserData("teste");
+        }
+    }
+
+    @FXML
+    private void onStepAction(javafx.event.ActionEvent event) {
+        String action = stepActionButton.getUserData().toString();
+        if ("teste".equals(action)) {
+            CandidatoLayoutController.navegar("exame_adaptativo");
+        } else {
+            CandidatoLayoutController.navegar("diagnostico");
+        }
     }
 
     private static final class AchievementCardFactory {
@@ -765,88 +728,6 @@ public class DashboardOrientadoController implements Initializable {
                 icon.setSmooth(true);
                 container.getChildren().add(icon);
             }
-        }
-    }
-
-    private static final class PlanStepCardFactory {
-        private PlanStepCardFactory() {}
-
-        static HBox create(int number, PlaneamentoEstudoEtapa etapa, PlaneamentoEstudoResumo resumo) {
-            String window = etapa == null ? fallbackWindow(number) : safeText(etapa.janela(), fallbackWindow(number));
-            String title = etapa == null ? fallbackTitle(number) : safeText(etapa.acao(), fallbackTitle(number));
-            String detail = etapa == null ? fallbackDetail(number, resumo) : safeText(etapa.detalhe(), fallbackDetail(number, resumo));
-
-            Label stepNumber = new Label(String.valueOf(number));
-            stepNumber.getStyleClass().addAll("plan-step-number", "plan-step-number-" + number);
-            stepNumber.setAlignment(Pos.CENTER);
-            stepNumber.setMinSize(38.0, 38.0);
-            stepNumber.setPrefSize(38.0, 38.0);
-            stepNumber.setMaxSize(38.0, 38.0);
-
-            Label windowLabel = new Label(window);
-            windowLabel.getStyleClass().add("plan-step-window");
-            windowLabel.setWrapText(true);
-            windowLabel.setMaxWidth(Double.MAX_VALUE);
-            windowLabel.setMinWidth(0);
-
-            Label titleLabel = new Label(title);
-            titleLabel.getStyleClass().add("plan-step-title");
-            titleLabel.setWrapText(true);
-            titleLabel.setMaxWidth(Double.MAX_VALUE);
-            titleLabel.setMinWidth(0);
-
-            Label detailLabel = new Label(detail);
-            detailLabel.getStyleClass().add("plan-step-detail");
-            detailLabel.setWrapText(true);
-            detailLabel.setMaxWidth(Double.MAX_VALUE);
-            detailLabel.setMinWidth(0);
-
-            VBox textBox = new VBox(2.0, windowLabel, titleLabel, detailLabel);
-            textBox.setFillWidth(true);
-            textBox.setMaxWidth(Double.MAX_VALUE);
-            textBox.setMinWidth(0);
-
-            HBox card = new HBox(10.0, stepNumber, textBox);
-            card.getStyleClass().addAll("plan-step-card", "plan-step-card-" + number);
-            card.setAlignment(Pos.CENTER_LEFT);
-            card.setFillHeight(false);
-            card.setMinWidth(0);
-            card.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(textBox, Priority.ALWAYS);
-
-            return card;
-        }
-
-        private static String fallbackWindow(int number) {
-            return switch (number) {
-                case 1 -> "Agora";
-                case 2 -> "Depois";
-                case 3 -> "Fecho";
-                default -> "Passo " + number;
-            };
-        }
-
-        private static String fallbackTitle(int number) {
-            return switch (number) {
-                case 1 -> "Arranque";
-                case 2 -> "Ritmo";
-                case 3 -> "Revisao";
-                default -> "Bloco " + number;
-            };
-        }
-
-        private static String fallbackDetail(int number, PlaneamentoEstudoResumo resumo) {
-            String hero = resumo == null ? "Comeca com o plano base do dia." : safeText(resumo.resumoHero(), "Comeca com o plano base do dia.");
-            return switch (number) {
-                case 1 -> hero;
-                case 2 -> "Mantem a execucao com um bloco curto e focado.";
-                case 3 -> "Fecha o dia com uma revisao rapida e mede o progresso.";
-                default -> "Mantem a sequencia do dia.";
-            };
-        }
-
-        private static String safeText(String value, String fallback) {
-            return value == null || value.isBlank() ? fallback : value;
         }
     }
 

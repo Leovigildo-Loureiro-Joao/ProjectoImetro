@@ -18,7 +18,7 @@
 
 <VBox fx:id="tela" minHeight="982.0" prefHeight="982.0" prefWidth="1211.0" spacing="20.0" styleClass="page" stylesheets="@../../../../../styles/candidato-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.imetro.ui.controller.candidato.DashboardOrientadoController">
     <padding>
-        <Insets bottom="18" left="18" right="18" top="18" />
+        <Insets bottom="18.0" left="18.0" right="18.0" />
     </padding>
    <HBox alignment="CENTER_LEFT" prefHeight="64.0" prefWidth="1175.0" spacing="20.0">
       <children>
@@ -35,6 +35,21 @@
          <Insets bottom="4.0" top="4.0" />
       </padding>
    </HBox>
+   <HBox fx:id="guidedFlowBox" prefHeight="80.0" styleClass="card" spacing="16.0" alignment="CENTER_LEFT">
+      <padding>
+         <Insets bottom="16.0" left="20.0" right="20.0" top="16.0" />
+      </padding>
+      <children>
+         <StackPane fx:id="stepCircle" minHeight="48.0" minWidth="48.0" maxHeight="48.0" maxWidth="48.0" styleClass="guided-step-circle">
+            <Label fx:id="stepNumber" styleClass="h3-bold" text="1" />
+         </StackPane>
+         <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label fx:id="stepTitle" styleClass="h3-bold" text="Próxima ação" />
+            <Label fx:id="stepDescription" styleClass="compact-copy" text="Carregando..." wrapText="true" />
+         </VBox>
+         <JFXButton fx:id="stepActionButton" onAction="#onStepAction" prefHeight="44.0" prefWidth="280.0" styleClass="btn-primary" text="CONTINUAR" />
+      </children>
+   </HBox>
    <HBox prefHeight="320.0" prefWidth="1175.0" spacing="20.0">
       <children>
          <AnchorPane HBox.hgrow="ALWAYS">
@@ -50,13 +65,16 @@
                               </children>
                            </VBox>
                            <Region HBox.hgrow="ALWAYS" />
-                           <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                           <VBox alignment="CENTER_RIGHT" spacing="7.0">
                               <children>
                                  <Label styleClass="muted" text="Progresso geral" />
-                                 <Label fx:id="progressText" styleClass="mid-h2" text="0% progresso" />
+                                 <Label fx:id="progressText" styleClass="mid-h2" text="0% progresso">
+                                    <VBox.margin>
+                                       <Insets bottom="-2.0" />
+                                    </VBox.margin></Label>
                               </children>
                            </VBox>
-                           <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                           <VBox alignment="CENTER_RIGHT" prefHeight="54.0" prefWidth="93.0" spacing="10.0">
                               <children>
                                  <Label styleClass="muted" text="Próximo nível" />
                                  <Label fx:id="next_level" styleClass="h3-bold" text="INTERMEDIÁRIO" />
@@ -158,33 +176,32 @@
                <String fx:value="achievement-card shadow" />
             </styleClass>
          </VBox>
-         <VBox prefWidth="358.0" spacing="12.0" HBox.hgrow="ALWAYS">
-            <children>
-               <HBox alignment="CENTER_LEFT">
-                  <children>
-                     <Label styleClass="timeline-pill" text="Plano de hoje" />
-                     <Region HBox.hgrow="ALWAYS" />
-                     <Label fx:id="planBadge" styleClass="badge-new" text="Hoje" />
-                  </children>
-               </HBox>
-               <Label fx:id="planTitle" styleClass="h1-thin" text="Bloco de arranque" wrapText="true" />
-               <Label fx:id="planSummary" styleClass="compact-copy" text="O teu plano diário aparece aqui com base no histórico." wrapText="true" />
-               <VBox fx:id="planStepsBox" spacing="10.0" styleClass="plan-steps-box" />
-               <VBox spacing="4.0">
-                  <children>
-                     <Label fx:id="planFocus" styleClass="muted" text="Foco actual: -" wrapText="true" />
-                     <Label fx:id="planMeta" styleClass="muted" text="Acerto médio e ritmo a carregar." wrapText="true" />
-                  </children>
-               </VBox>
-            </children>
-            <padding>
-               <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
-            </padding>
-            <styleClass>
-               <String fx:value="card" />
-               <String fx:value="plan-card shadow" />
-            </styleClass>
-         </VBox>
+          <VBox prefWidth="358.0" spacing="12.0" HBox.hgrow="ALWAYS">
+             <children>
+                <HBox alignment="CENTER_LEFT">
+                   <children>
+                      <Label styleClass="timeline-pill" text="Foco de Estudo" />
+                      <Region HBox.hgrow="ALWAYS" />
+                      <Label fx:id="planBadge" styleClass="badge-new" text="Hoje" />
+                   </children>
+                </HBox>
+                <Label fx:id="planTitle" styleClass="h1-thin" text="Foco actual" wrapText="true" />
+                <Label fx:id="planSummary" styleClass="compact-copy" text="Detalhes do teu foco de estudo aparecem aqui." wrapText="true" />
+                <VBox spacing="4.0">
+                   <children>
+                      <Label fx:id="planFocus" styleClass="muted" text="Foco actual: -" wrapText="true" />
+                      <Label fx:id="planMeta" styleClass="muted" text="Acerto médio e ritmo a carregar." wrapText="true" />
+                   </children>
+                </VBox>
+             </children>
+             <padding>
+                <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+             </padding>
+             <styleClass>
+                <String fx:value="card" />
+                <String fx:value="plan-card shadow" />
+             </styleClass>
+          </VBox>
          <VBox prefWidth="358.0" spacing="12.0" HBox.hgrow="ALWAYS">
             <children>
                <HBox alignment="CENTER_LEFT">

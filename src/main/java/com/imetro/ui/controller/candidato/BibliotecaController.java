@@ -2,8 +2,11 @@ package com.imetro.ui.controller.candidato;
 
 import com.imetro.App;
 import com.imetro.domain.dto.MenuEntry;
+import com.imetro.domain.dto.Topico;
 import com.imetro.domain.dto.biblioteca.BibliotecaLivroDto;
 import com.imetro.domain.dto.biblioteca.LivroMapaTopicos;
+import com.imetro.domain.dto.planejamento.LeituraRecomendada;
+import com.imetro.domain.dto.planejamento.PlaneamentoEstudoResumo;
 import com.imetro.domain.dto.leitura.LeituraProgresso;
 import com.imetro.domain.dto.perguntas.TopicoSubtopico;
 import com.imetro.domain.dto.progresso.ProgressoAlunoDisciplinaDto;
@@ -13,9 +16,11 @@ import com.imetro.persistence.repository.LivroMapaTopicosRepository;
 import com.imetro.services.BibliotecaLivroService;
 import com.imetro.services.DisciplinaService;
 import com.imetro.services.GeminiService;
+import com.imetro.services.PlaneamentoEstudoService;
 import com.imetro.ui.components.Item_Cell;
 import com.imetro.ui.components.biblioteca.LivroCard;
 import com.imetro.ui.controller.candidato.diagnosticos.DiagnosticoCoordinator;
+import com.imetro.ui.controller.candidato.testes.TesteAdaptativoCoordinator;
 import com.imetro.ui.modals.AddLivroModalController;
 import com.imetro.ui.modals.AddLivroModalController.DisciplinaOption;
 import com.imetro.ui.modals.ModalController;
@@ -35,6 +40,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
@@ -59,6 +66,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,6 +74,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.concurrent.CompletableFuture;
 
 public class BibliotecaController implements Initializable {
@@ -97,6 +106,8 @@ public class BibliotecaController implements Initializable {
     private BibliotecaLivroService servoce;
     private GeminiService geminiService;
     private LeituraProgressoRepository leituraProgressoRepository = new LeituraProgressoRepository();
+    private final PlaneamentoEstudoService planeamentoService = new PlaneamentoEstudoService();
+    private static Boolean seguindoPlano = null;
     private byte[] dados;
     private List<BibliotecaLivroDto> listaLivrosAtual;
     private String filtroAtual = "mybooks";
@@ -119,6 +130,7 @@ public class BibliotecaController implements Initializable {
     @FXML private StackPane pdfViewer;
     @FXML private Label textTitle;
     @FXML private StackPane modalPai;
+    @FXML private JFXButton btnFazerTeste;
 
     public static void definirDisciplinaPreferida(String disciplina) {
         disciplinaPreferida = disciplina;
@@ -303,7 +315,7 @@ public class BibliotecaController implements Initializable {
                             .toList();
                         Platform.runLater(() -> {
                             topicos = tops;
-                            mostrarTopicos();
+                            iniciarLeitura();
                         });
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -344,9 +356,110 @@ public class BibliotecaController implements Initializable {
 
     // ===================== TÓPICOS =====================
 
+    private void iniciarLeitura() {
+        if (topicos == null || topicos.isEmpty()) {
+            mostrarTopicos();
+            return;
+        }
+
+        UUID candidatoId = Authentication.getCurrentUserId();
+        if (candidatoId == null) {
+            mostrarTopicos();
+            return;
+        }
+
+        PlaneamentoEstudoResumo resumo = planeamentoService.gerarResumo(candidatoId);
+        boolean temLeituras = resumo != null && resumo.leituras() != null && !resumo.leituras().isEmpty();
+
+        if (!temLeituras) {
+            if (seguindoPlano == null) seguindoPlano = false;
+            mostrarTopicos();
+            return;
+        }
+
+        if (Boolean.TRUE.equals(seguindoPlano)) {
+            topicos = filtrarTopicosDoPlano(resumo);
+            if (!topicos.isEmpty()) {
+                //registrarLeituraHoje(candidatoId);
+            }
+            if (topicos.isEmpty()) {
+                Alert info = new Alert(Alert.AlertType.INFORMATION);
+                info.setTitle("Fora do Plano");
+                info.setHeaderText(null);
+                info.setContentText("Este livro não tem tópicos planeados para hoje.");
+                info.showAndWait();
+                voltarBiblioteca();
+            } else {
+                mostrarTopicos();
+            }
+            return;
+        }
+
+        if (Boolean.FALSE.equals(seguindoPlano)) {
+            Alert info = new Alert(Alert.AlertType.INFORMATION);
+            info.setTitle("Leitura bloqueada");
+            info.setHeaderText(null);
+            info.setContentText("Segue o planeamento de estudo para aproveitares melhor o teu tempo. Vai ao Dashboard e vê o plano de hoje.");
+            info.showAndWait();
+            voltarBiblioteca();
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Plano de Estudo");
+        alert.setHeaderText(null);
+        alert.setContentText("Desejas seguir o planeamento de leitura de hoje?");
+        alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                seguindoPlano = true;
+                topicos = filtrarTopicosDoPlano(resumo);
+                if (!topicos.isEmpty()) {
+                   // registrarLeituraHoje(candidatoId);
+                }
+                if (topicos.isEmpty()) {
+                    Alert info = new Alert(Alert.AlertType.INFORMATION);
+                    info.setTitle("Fora do Plano");
+                    info.setHeaderText(null);
+                    info.setContentText("Este livro não faz parte do teu plano de hoje. Segue as recomendações do plano para estudar o prioritário.");
+                    info.showAndWait();
+                    voltarBiblioteca();
+                } else {
+                    mostrarTopicos();
+                }
+            } else {
+                seguindoPlano = false;
+                Alert info = new Alert(Alert.AlertType.INFORMATION);
+                info.setTitle("Leitura bloqueada");
+                info.setHeaderText(null);
+                info.setContentText("Segue o planeamento de estudo para aproveitares melhor o teu tempo. Vai ao Dashboard e vê o plano de hoje.");
+                info.showAndWait();
+                voltarBiblioteca();
+            }
+        });
+    }
+
+    private List<LivroMapaTopicos> filtrarTopicosDoPlano(PlaneamentoEstudoResumo resumo) {
+        return topicos.stream()
+            .filter(t -> resumo.leituras().stream().anyMatch(l ->
+                TextoUtil.normalizarMinusculo(l.topico()).equals(TextoUtil.normalizarMinusculo(t.topico()))
+            ))
+            .collect(Collectors.toList());
+    }
+
+    private void registrarLeituraHoje(UUID candidatoId) {
+        if (livro == null) return;
+        try {
+            leituraProgressoRepository.registrarAtividadeHoje(candidatoId, livro.id());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void mostrarTopicos() {
         mostrandoTopicos = true;
         topicoSelecionado = -1;
+        if (btnFazerTeste != null) btnFazerTeste.setVisible(false);
         pageContainer.getChildren().clear();
         cache.clear();
         pageContainer.setFillWidth(true);
@@ -488,6 +601,7 @@ public class BibliotecaController implements Initializable {
         if (index < 0 || index >= topicos.size()) return;
         topicoSelecionado = index;
         mostrandoTopicos = false;
+        if (btnFazerTeste != null) btnFazerTeste.setVisible(true);
         LivroMapaTopicos t = topicos.get(index);
 
         lblTitulo.setText(t.topico() + " — " + t.subtopico());
@@ -513,6 +627,25 @@ public class BibliotecaController implements Initializable {
         currentPage = start;
         lblPaginaAtual.setText("Página " + (start + 1));
         scrollPane.setVvalue(0);
+    }
+
+    @FXML
+    private void fazerTesteDoTopico(ActionEvent event) {
+        if (topicoSelecionado < 0 || topicoSelecionado >= topicos.size()) return;
+        if (livro == null) return;
+
+        LivroMapaTopicos t = topicos.get(topicoSelecionado);
+        String disciplinaNome = livro.disciplinaNome();
+        UUID disciplinaId = livro.disciplinaId();
+
+        Topico topico = new Topico(disciplinaId, disciplinaNome, t.topico(), null,
+            t.subtopico() != null ? new String[]{t.subtopico()} : new String[0]);
+
+        ArrayList<Topico> listaTopicos = new ArrayList<>();
+        listaTopicos.add(topico);
+
+        TesteAdaptativoCoordinator.definirContextoTeste(disciplinaNome, listaTopicos);
+        CandidatoLayoutController.navegar("exame_adaptativo");
     }
 
     // ===================== PÁGINAS =====================
@@ -676,4 +809,6 @@ public class BibliotecaController implements Initializable {
             .findFirst()
             .ifPresent(i -> disciplinaCombo.getSelectionModel().select(i));
     }
+
+   
 }

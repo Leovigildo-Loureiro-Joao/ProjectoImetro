@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -187,6 +188,15 @@ public class  PlaneamentoEstudoService {
             }
 
             prolongarPlanejamentoSeNecessario(candidatoId, ultimoPlaneamento.get());
+
+            LocalDateTime ultimoDiagnostico = diagnosticoService.obterDataUltimoDiagnostico(candidatoId);
+            if (ultimoDiagnostico != null) {
+                long diasDesdeUltimo = ChronoUnit.DAYS.between(ultimoDiagnostico.toLocalDate(), LocalDate.now());
+                if (diasDesdeUltimo < 7) {
+                    return false;
+                }
+            }
+
             return true;
         } catch (Exception e) {
             System.err.println("Erro ao validar planeamento antes do diagnostico: " + e.getMessage());

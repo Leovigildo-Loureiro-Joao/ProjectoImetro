@@ -206,7 +206,7 @@
                               </graphic>
                            </JFXButton>
                            <Region minWidth="36.0" prefHeight="39.0" prefWidth="36.0" HBox.hgrow="ALWAYS" />
-                           <JFXButton styleClass="btn-primary-two" text="Vamos exercitar seu conhecimento" visible="false" />
+                           <JFXButton fx:id="btnFazerTeste" onAction="#fazerTesteDoTopico" styleClass="btn-primary-two" text="Fazer teste deste tópico" visible="false" />
                         </children>
                      </HBox>
                      <ProgressBar fx:id="questionProgressBar" maxWidth="1.7976931348623157E308" minHeight="12.0" prefHeight="12.0" prefWidth="944.0" progress="0.0" />

@@ -54,7 +54,7 @@ public class DesafioService {
         }
 
 
-        return new Desafio(TipoDesafio.REVISAO_GERAL, "Voce esta indo muito bem", "Revise seus estudo de "+foco, disciplina, foco);
+        return new Desafio(TipoDesafio.REVISAO_GERAL, "Voce esta indo muito bem", "Revise seus estudo de - "+foco, disciplina, foco);
     }
 
     private Desafio DesafioErros(List<Teste_Stat> testStats,String disciplina){

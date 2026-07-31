@@ -495,6 +495,29 @@ public class DiagnosticoRepository extends JdbcBasicSqlRepository{
             .orElse(1.0d);
     }
 
+    public LocalDateTime buscarDataUltimoDiagnostico(UUID candidatoId) throws SQLException {
+        String sql = """
+            select concluido_em
+            from diagnosticos
+            where candidato_id = ?
+              and concluido_em is not null
+            order by concluido_em desc
+            limit 1
+            """;
+
+        try (Connection conn = openRequiredConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, candidatoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Timestamp ts = rs.getTimestamp("concluido_em");
+                    return ts != null ? ts.toLocalDateTime() : null;
+                }
+                return null;
+            }
+        }
+    }
+
     private Integer[] appendUltimoValor(Integer[] origem, int valor) {
         ArrayList<Integer> valores = new ArrayList<>();
         if (origem != null) {

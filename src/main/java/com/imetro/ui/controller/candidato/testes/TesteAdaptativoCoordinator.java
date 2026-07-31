@@ -34,6 +34,7 @@ public final class TesteAdaptativoCoordinator {
         new AtomicReference<>(new LinkedHashMap<>());
     private static final AtomicReference<TesteConfig> CONFIG_ATUAL = new AtomicReference<>();
     private static final AtomicReference<AlertRequest> ALERTA_ATUAL = new AtomicReference<>();
+    private static final AtomicReference<Runnable> PENDENTE_INICIO = new AtomicReference<>();
 
     private TesteAdaptativoCoordinator() {
     }
@@ -83,6 +84,22 @@ public final class TesteAdaptativoCoordinator {
         if (host != null) {
             host.StartInteligente();
         }
+    }
+
+    public static void definirContextoTeste(String disciplina, ArrayList<Topico> topicos) {
+        FluxoModalContext.setOrigem(FluxoModalContext.Origem.TESTE_ADAPTATIVO);
+        DISCIPLINA_SELECIONADA.set(disciplina);
+        TOPICOS_SELECIONADOS.set(new ArrayList<>(topicos));
+        SUBTOPICOS_SELECIONADOS.set(new LinkedHashMap<>());
+        CONFIG_ATUAL.set(null);
+    }
+
+    public static void agendarInicio(Runnable runnable) {
+        PENDENTE_INICIO.set(runnable);
+    }
+
+    public static Runnable consumirInicioPendente() {
+        return PENDENTE_INICIO.getAndSet(null);
     }
 
     public static void requestStartSoRun() {

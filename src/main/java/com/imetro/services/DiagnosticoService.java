@@ -42,8 +42,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -390,6 +392,22 @@ for (String subtopico : topico.subTopicos()) {
 
 return Map.copyOf(resultado);
 }
+
+    public LocalDateTime obterDataUltimoDiagnostico(UUID candidatoId) {
+        if (candidatoId == null) return null;
+        try {
+            return diagnosticoRepository.buscarDataUltimoDiagnostico(candidatoId);
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar data do ultimo diagnostico: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public boolean diagnosticoEmCooldown(UUID candidatoId) {
+        LocalDateTime ultimo = obterDataUltimoDiagnostico(candidatoId);
+        if (ultimo == null) return false;
+        return ChronoUnit.DAYS.between(ultimo.toLocalDate(), LocalDate.now()) < 7;
+    }
 
     public boolean temHistoricoDiagnostico(UUID candidatoId) {
         if (candidatoId == null) {

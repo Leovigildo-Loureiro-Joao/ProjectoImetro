@@ -959,8 +959,8 @@ public class DiagnosticoCandidatoController implements DisposableController, Dia
     public void startDiagnostico() {
         if (!planeamentoService.podeIniciarDiagnostico(Authentication.getCurrentUserId())) {
             mostrarAlerta(
-                "Planeamento em falta",
-                "Nao existe um planeamento ativo para continuar este diagnostico. Se quiseres recomecar do zero, limpa os diagnosticos primeiro."
+                "Diagnostico indisponivel",
+                "Aguarda 7 dias desde o ultimo diagnostico ou completa os topicos pendentes no plano de estudo. Se quiseres recomecar do zero, limpa os diagnosticos primeiro."
             );
             return;
         }

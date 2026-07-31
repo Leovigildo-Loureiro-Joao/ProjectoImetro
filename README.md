@@ -1,4 +1,4 @@
-# Projecto Imetro
+# KBols
 
 Aplicacao desktop em JavaFX para estudo individual de candidatos, com foco atual em Matematica e Fisica. O produto usa um banco de perguntas reais, uploads de PDFs por disciplina e geracao assistida pelo Gemini para montar a base inicial quando necessario.
 
