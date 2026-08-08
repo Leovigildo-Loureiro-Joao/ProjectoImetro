@@ -136,20 +136,25 @@ public class BibliotecaController implements Initializable {
         disciplinaPreferida = disciplina;
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        pdfViewer.setVisible(false);
-        biblioteca.setVisible(true);
+    public void HiddemItemsInitial(){
         modalPai.setVisible(false);
         pdfList.setVisible(false);
-        questionProgressBar.setVisible(true);
+        pdfViewer.setVisible(false);
+    }
 
-        servoce = new BibliotecaLivroService();
+    public void ShowItemsInitial(){
+        biblioteca.setVisible(true);
+        questionProgressBar.setVisible(true);
+    }
+
+    public void InitializeGemeni(){
         geminiService = new GeminiService();
         if (geminiService.isConfigured()) {
             geminiService.setBibliotecaLivroRepository(new BibliotecaLivroRepository());
         }
+    }
 
+    public void ConfigureTopList(){
         sublist.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(MenuEntry item, boolean empty) {
@@ -159,26 +164,8 @@ public class BibliotecaController implements Initializable {
             }
         });
 
-        carregarDisciplinas();
-
-        disciplinaCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                carregarLivrosDaDisciplina(newVal.id());
-            }
-        });
-
-        Platform.runLater(() -> {
-            UUID pendingId = livroParaAbrir;
-            int pendingPagina = paginaParaAbrir;
-            if (pendingId != null) {
-                livroParaAbrir = null;
-                paginaParaAbrir = -1;
-                try {
-                    servoce.encontrarLivro(pendingId).ifPresent(l -> abrirLivro(l, pendingPagina));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        sublist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null) navigate(newValue.key());
         });
 
         sublist.getItems().setAll(
@@ -187,13 +174,43 @@ public class BibliotecaController implements Initializable {
             new MenuEntry("recomendados", "Recomendados", FontAwesomeSolid.RECEIPT)
         );
 
-        sublist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-            if (newValue != null) navigate(newValue.key());
-        });
-
         sublist.getSelectionModel().selectFirst();
+    }
+
+    public void ConfiguratedSelectionDisciplinaItems(){
+        disciplinaCombo.getSelectionModel().
+        selectedItemProperty().
+        addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                carregarLivrosDaDisciplina(newVal.id());
+            }
+        });
+    }
+
+    public void ConfiguratedMainItens(){
+        ConfigureTopList();
+        ConfiguratedSelectionDisciplinaItems();
         search.textProperty().addListener((obs, oldVal, newVal) -> aplicarFiltro());
     }
+
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        HiddemItemsInitial();
+        ShowItemsInitial();
+
+        ConfiguratedMainItens();
+
+        servoce = new BibliotecaLivroService();
+        InitializeGemeni();
+
+        carregarDisciplinas();
+
+    }
+    
+
+
+
 
     private void navigate(String key) {
         filtroAtual = key;
@@ -354,7 +371,6 @@ public class BibliotecaController implements Initializable {
         } catch (Exception ignored) {}
     }
 
-    // ===================== TÓPICOS =====================
 
     private void iniciarLeitura() {
         if (topicos == null || topicos.isEmpty()) {
